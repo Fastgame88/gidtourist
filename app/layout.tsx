@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Гід туриста — Етап 1",
+  title: "Гід туриста",
   description:
-    "Клікабельний прототип Telegram Mini App, партнерського кабінету й адмінсистеми.",
-  other: {
-    "codex-preview": "development",
-  },
+    "Місця, маршрути, бронювання та бонуси для подорожей Україною.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
@@ -21,7 +19,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="uk">
-      <body>{children}</body>
+      <body>
+        <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
+        {children}
+      </body>
     </html>
   );
 }

@@ -64,7 +64,7 @@ import {
   Wifi,
   Zap,
 } from "lucide-react";
-import type { RoleKey } from "../../lib/prototype-data";
+import type { RoleKey } from "../../lib/navigation";
 import {
   Avatar,
   Card,
@@ -79,7 +79,7 @@ import {
   TimelineItem,
   TimeBadge,
   Toggle,
-} from "../prototype-ui";
+} from "../ui";
 
 type Navigate = (role: RoleKey, slug: string) => void;
 
@@ -109,7 +109,7 @@ function MobileTopBar({
   return (
     <div className="mobile-topbar">
       {back ? (
-        <IconButton label="Назад">
+        <IconButton label="Назад" onClick={() => window.history.back()}>
           <ChevronLeft size={20} />
         </IconButton>
       ) : (
@@ -132,7 +132,7 @@ function MobileTopBar({
 
 function MockQr() {
   return (
-    <div className="mock-qr" aria-label="Демонстраційний QR-код">
+    <div className="mock-qr" aria-label="QR-код">
       {qrPattern.flatMap((row, rowIndex) =>
         row.split("").map((cell, cellIndex) => (
           <i
@@ -790,7 +790,7 @@ function BookingScreen({ navigate }: { navigate: Navigate }) {
           <span>Чан №1 · {dates[day][0]}, {dates[day][1]} липня · {slot}</span>
           <strong>2 400 ₴</strong>
         </div>
-        <p>Оплата на місці · без завдатку в MVP</p>
+        <p>Оплата на місці · без завдатку</p>
       </Card>
       <PrimaryButton onClick={() => navigate("tourist", "plan")}>
         Підтвердити бронювання
@@ -1027,7 +1027,7 @@ function QrScreen({ navigate }: { navigate: Navigate }) {
         </div>
       </div>
       <SecondaryButton onClick={() => navigate("tourist", "purchase-confirmation")} icon={<ReceiptText size={17} />}>
-        Демонстрація підтвердження
+        Перейти до підтвердження
       </SecondaryButton>
     </div>
   );
@@ -1080,13 +1080,13 @@ function PurchaseConfirmationScreen({ navigate }: { navigate: Navigate }) {
       <Card tone="soft" className="confirmation-safety">
         <ShieldCheck size={20} />
         <p>
-          Після підтвердження буде створено транзакцію та незмінні записи у
-          ledger. Повторне проведення заблоковано.
+          Операцію буде захищено від повторного проведення. Ви одразу побачите
+          оновлений бонусний баланс.
         </p>
       </Card>
       <div className="confirmation-actions">
-        <PrimaryButton onClick={() => navigate("tourist", "wallet")} icon={<Check size={18} />}>
-          Підтвердити операцію
+        <PrimaryButton onClick={() => navigate("tourist", "review")} icon={<Check size={18} />}>
+          Підтвердити й продовжити
         </PrimaryButton>
         <button className="button button--danger-ghost" type="button">
           Відхилити
@@ -1227,7 +1227,7 @@ function EmergencyScreen() {
   );
 }
 
-function ProfileScreen() {
+function ProfileScreen({ navigate }: { navigate: Navigate }) {
   return (
     <div className="tourist-screen">
       <MobileTopBar title="Профіль" subtitle="Налаштування" />
@@ -1265,7 +1265,8 @@ function ProfileScreen() {
         <div className="list-card">
           <RowLink icon={<Heart size={18} />} title="Обране" subtitle="12 збережених місць" leadingTone="red" />
           <RowLink icon={<CalendarDays size={18} />} title="Мої бронювання" subtitle="1 майбутнє · 3 завершені" leadingTone="blue" />
-          <RowLink icon={<ReceiptText size={18} />} title="Історія активності" subtitle="Покупки, бонуси й відгуки" leadingTone="green" />
+          <RowLink icon={<ReceiptText size={18} />} title="Історія активності" subtitle="Покупки та бонуси" leadingTone="green" />
+          <RowLink icon={<MessageCircle size={18} />} title="Мої відгуки" subtitle="Оцінки та відповіді закладів" leadingTone="lime" onClick={() => navigate("tourist", "review")} />
         </div>
       </section>
       <section className="mobile-section">
@@ -1275,6 +1276,7 @@ function ProfileScreen() {
         <div className="list-card">
           <RowLink icon={<Languages size={18} />} title="Мова" value="Українська" leadingTone="blue" />
           <RowLink icon={<Bell size={18} />} title="Сповіщення" subtitle="Сервісні увімкнено" leadingTone="orange" />
+          <RowLink icon={<UsersRound size={18} />} title="Спільнота мандрівників" subtitle="Події, маршрути та локальні новини" leadingTone="lime" onClick={() => navigate("tourist", "community")} />
           <RowLink icon={<ShieldCheck size={18} />} title="Приватність і дані" subtitle="Consent, експорт, видалення" leadingTone="green" />
         </div>
       </section>
@@ -1390,7 +1392,7 @@ export function TouristScreen({
     case "emergency":
       return <EmergencyScreen />;
     case "profile":
-      return <ProfileScreen />;
+      return <ProfileScreen navigate={navigate} />;
     case "community":
       return <CommunityScreen />;
     default:

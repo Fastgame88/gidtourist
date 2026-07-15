@@ -7,7 +7,6 @@ export class HealthController {
     return {
       status: "ok",
       service: "gid-turysta-backend",
-      stage: 1,
       uptimeSeconds: Math.round(process.uptime()),
       timestamp: new Date().toISOString(),
     };

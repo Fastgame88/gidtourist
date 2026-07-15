@@ -1,5 +1,4 @@
 export type RoleKey =
-  | "overview"
   | "tourist"
   | "partner"
   | "ambassador"
@@ -13,7 +12,6 @@ export type ScreenDefinition = {
   shortTitle: string;
   description: string;
   role: RoleKey;
-  status?: "prototype" | "structure";
 };
 
 export const roles: Array<{
@@ -22,12 +20,6 @@ export const roles: Array<{
   shortLabel: string;
   description: string;
 }> = [
-  {
-    key: "overview",
-    label: "Структура етапу",
-    shortLabel: "Структура",
-    description: "Карта продукту, ролі, сценарії та межі MVP",
-  },
   {
     key: "tourist",
     label: "Турист",
@@ -61,43 +53,6 @@ export const roles: Array<{
 ];
 
 export const screens: ScreenDefinition[] = [
-  {
-    id: "S01",
-    slug: "project-overview",
-    title: "Огляд першого етапу",
-    shortTitle: "Огляд етапу",
-    description: "Склад прототипу, дизайн-система і статус погодження",
-    role: "overview",
-    status: "structure",
-  },
-  {
-    id: "S02",
-    slug: "screen-map",
-    title: "Карта екранів",
-    shortTitle: "Карта екранів",
-    description: "Повна структура туристичного, партнерського й адмін-модулів",
-    role: "overview",
-    status: "structure",
-  },
-  {
-    id: "S03",
-    slug: "roles-access",
-    title: "Ролі та права доступу",
-    shortTitle: "Ролі й доступи",
-    description: "Розмежування прав на рівні платформи, організації та закладу",
-    role: "overview",
-    status: "structure",
-  },
-  {
-    id: "S04",
-    slug: "core-flows",
-    title: "Ключові сценарії",
-    shortTitle: "QR · бронювання · ledger",
-    description: "Погоджена логіка QR, ресурсів, бонусів і фінансових записів",
-    role: "overview",
-    status: "structure",
-  },
-
   {
     id: "C01",
     slug: "welcome",
@@ -167,7 +122,7 @@ export const screens: ScreenDefinition[] = [
     slug: "plan",
     title: "Мій план",
     shortTitle: "Мій план",
-    description: "Шаблонні сценарії на 1–5 днів без AI",
+    description: "Готові сценарії відпочинку на 1–5 днів",
     role: "tourist",
   },
   {
@@ -396,7 +351,7 @@ export const screensForRole = (role: RoleKey) =>
   screens.filter((screen) => screen.role === role);
 
 export const defaultScreenForRole = (role: RoleKey) =>
-  screensForRole(role)[0]?.slug ?? "project-overview";
+  screensForRole(role)[0]?.slug ?? "welcome";
 
 export const getScreen = (role: RoleKey, slug: string) =>
   screens.find((screen) => screen.role === role && screen.slug === slug) ??
@@ -405,18 +360,3 @@ export const getScreen = (role: RoleKey, slug: string) =>
       screen.role === role && screen.slug === defaultScreenForRole(role),
   ) ??
   screens[0];
-
-export const roleCounts = roles.reduce<Record<RoleKey, number>>(
-  (accumulator, role) => {
-    accumulator[role.key] = screensForRole(role.key).length;
-    return accumulator;
-  },
-  {
-    overview: 0,
-    tourist: 0,
-    partner: 0,
-    ambassador: 0,
-    regional: 0,
-    admin: 0,
-  },
-);

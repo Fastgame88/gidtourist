@@ -42,7 +42,7 @@ import {
   Waves,
   X,
 } from "lucide-react";
-import type { RoleKey } from "../../lib/prototype-data";
+import type { RoleKey } from "../../lib/navigation";
 import {
   Avatar,
   Card,
@@ -61,7 +61,7 @@ import {
   TableRow,
   TimeBadge,
   Toggle,
-} from "../prototype-ui";
+} from "../ui";
 
 type Navigate = (role: RoleKey, slug: string) => void;
 
@@ -266,11 +266,11 @@ function ScannerScreen({ navigate }: { navigate: Navigate }) {
           <Card tone="lime" className="scanner-demo-card">
             <span><Sparkles size={21} /></span>
             <div>
-              <strong>Демо-режим етапу 1</strong>
-              <p>Сканування показано як прототип без доступу до бойової камери.</p>
+              <strong>QR клієнта зчитано</strong>
+              <p>Код активний. Перейдіть до введення суми операції.</p>
             </div>
             <PrimaryButton onClick={() => navigate("partner", "new-operation")} icon={<ArrowRight size={17} />}>
-              Показати результат
+              Продовжити
             </PrimaryButton>
           </Card>
         </div>
@@ -494,7 +494,7 @@ function BookingDetailsScreen() {
             <small>Вартість бронювання</small>
             <strong>2 400 ₴</strong>
             <span>Оплата на місці</span>
-            <div><span>Завдаток</span><strong>Не потрібен у MVP</strong></div>
+            <div><span>Завдаток</span><strong>Не потрібен</strong></div>
           </Card>
           <Card>
             <CardHeader title="Дії" />

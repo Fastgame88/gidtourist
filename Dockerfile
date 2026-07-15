@@ -11,7 +11,7 @@ RUN npm ci
 FROM base AS builder
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
-RUN npm run build:railway
+RUN npm run build
 
 FROM node:22-alpine AS runner
 WORKDIR /app

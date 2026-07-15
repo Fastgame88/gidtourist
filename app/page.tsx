@@ -1,5 +1,5 @@
-import StageOnePrototype from "./components/stage-one-prototype";
+import { redirect } from "next/navigation";
 
 export default function Home() {
-  return <StageOnePrototype />;
+  redirect("/tourist/welcome");
 }

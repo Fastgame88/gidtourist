@@ -3,6 +3,7 @@ builder = "DOCKERFILE"
 watchPatterns = ["/backend/**", "/backend/Dockerfile", "/backend/railway.toml"]
 
 [deploy]
+startCommand = "node dist/main.js"
 healthcheckPath = "/api/v1/health"
 healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"

@@ -54,7 +54,7 @@ import {
   WalletCards,
   XCircle,
 } from "lucide-react";
-import type { RoleKey } from "../../lib/prototype-data";
+import type { RoleKey } from "../../lib/navigation";
 import {
   ActivityRow,
   Avatar,
@@ -73,7 +73,7 @@ import {
   TableRow,
   Tag,
   Toggle,
-} from "../prototype-ui";
+} from "../ui";
 
 type Navigate = (role: RoleKey, slug: string) => void;
 
@@ -150,7 +150,7 @@ function AmbassadorCampaigns() {
       </div>
       <Card tone="soft" className="attribution-rule-card">
         <Fingerprint size={22} />
-        <div><strong>Правило first-touch у MVP</strong><p>Амбасадор фіксується під час першого валідного входу. Повторні переходи не перепризначають attribution. Self-referral, однакові пристрої та аномальна активність потрапляють у review.</p></div>
+        <div><strong>Правило першого переходу</strong><p>Амбасадор фіксується під час першого підтвердженого входу. Повторні переходи не змінюють джерело, а підозріла активність потрапляє на перевірку.</p></div>
       </Card>
     </div>
   );
@@ -159,7 +159,7 @@ function AmbassadorCampaigns() {
 function RegionalDashboard({ navigate }: { navigate: Navigate }) {
   return (
     <div className="screen-stack">
-      <PageHeading eyebrow="Регіональна адмінка" title="Івано‑Франківська область" description="Доступ обмежено tenant scope · дані інших регіонів недоступні" action={<div className="heading-actions"><StatusBadge tone="blue"><LockKeyhole size={13} /> Region: IF‑01</StatusBadge><IconButton label="Сповіщення"><Bell size={19} /></IconButton></div>} />
+      <PageHeading eyebrow="Регіональна адмінка" title="Івано‑Франківська область" description="Ви бачите партнерів, контент і статистику лише свого регіону" action={<div className="heading-actions"><StatusBadge tone="blue"><LockKeyhole size={13} /> Регіон IF‑01</StatusBadge><IconButton label="Сповіщення"><Bell size={19} /></IconButton></div>} />
       <div className="metric-grid metric-grid--four">
         <MetricCard label="Активні партнери" value="128" delta="+12 за місяць" icon={<Building2 size={20} />} />
         <MetricCard label="Точки QR" value="486" delta="42 180 сканувань" icon={<QrCode size={20} />} tone="lime" />
@@ -227,7 +227,7 @@ function RegionalContent() {
       </div>
       <div className="content-columns">
         <Card>
-          <CardHeader title="Сценарії відпочинку" subtitle="Rule-based, без AI" action={<button type="button">Усі</button>} />
+          <CardHeader title="Сценарії відпочинку" subtitle="Готові маршрути для різних форматів подорожі" action={<button type="button">Усі</button>} />
           <div className="scenario-list">
             {[
               ["Карпати за 3 дні", "12 місць · авто · середній бюджет", "Опубліковано", "green"], ["З дітьми у дощ", "6 місць · без авто · 1 день", "Опубліковано", "green"], ["Романтичний weekend", "8 місць · 2 дні", "Чернетка", "neutral"], ["Активна Верховина", "10 місць · 2 дні", "На перевірці", "orange"],

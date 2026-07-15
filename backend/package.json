@@ -1,8 +1,8 @@
 {
   "name": "gid-turysta-backend",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
-  "description": "Stage 1 backend foundation for the Gid Turysta platform",
+  "description": "Backend API for the Gid Turysta platform",
   "license": "UNLICENSED",
   "engines": {
     "node": ">=22.13.0"
