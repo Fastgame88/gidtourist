@@ -102,3 +102,4 @@ npm --prefix backend test
 - [Відкриті рішення перед наступними етапами](docs/OPEN_DECISIONS.md)
 - [Інструкція Railway](docs/RAILWAY_DEPLOY.md)
 "# gidtourist" 
+"# gidtourist" 
