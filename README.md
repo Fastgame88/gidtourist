@@ -30,7 +30,9 @@
 │   ├── src/modules/health/ # healthcheck
 │   └── src/modules/project/# структура етапу, ролі й модулі
 ├── docs/                   # архітектура, приймання та Railway
+├── Dockerfile              # production-образ frontend
 ├── railway.toml            # frontend service config
+├── backend/Dockerfile      # production-образ backend
 └── backend/railway.toml    # backend service config
 ```
 
@@ -45,7 +47,7 @@ npm install
 npm run dev
 ```
 
-Production-режим, ідентичний Railway:
+Локальна production-збірка:
 
 ```bash
 npm run build:railway
@@ -78,8 +80,11 @@ npm --prefix backend test
 
 У Railway створіть два сервіси з одного GitHub-репозиторію:
 
-1. `Frontend`: Root Directory `/`, Config File `/railway.toml` (`next build` / `next start`).
+1. `Frontend`: Root Directory `/`, Config File `/railway.toml`, Dockerfile `/Dockerfile`.
 2. `Backend`: Root Directory `/backend`, Config File `/backend/railway.toml`.
+
+Обидва сервіси збираються через явні Dockerfile з Node.js 22, тому Railway не
+залежить від автоматичного визначення Node/npm у Railpack.
 
 Після першого деплою згенеруйте публічні домени й додайте:
 
@@ -101,5 +106,3 @@ npm --prefix backend test
 - [Критерії приймання етапу 1](docs/STAGE_1_ACCEPTANCE.md)
 - [Відкриті рішення перед наступними етапами](docs/OPEN_DECISIONS.md)
 - [Інструкція Railway](docs/RAILWAY_DEPLOY.md)
-"# gidtourist" 
-"# gidtourist" 
