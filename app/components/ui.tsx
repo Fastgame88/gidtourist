@@ -115,7 +115,7 @@ export function PrimaryButton({
       disabled={disabled}
     >
       <span>{children}</span>
-      {icon ?? <ArrowUpRight size={17} strokeWidth={2.2} />}
+      {icon ?? <ArrowUpRight size={20} strokeWidth={2.2} />}
     </button>
   );
 }
@@ -138,7 +138,7 @@ export function SecondaryButton({
       onClick={onClick}
     >
       <span>{children}</span>
-      {icon ?? <ChevronRight size={17} />}
+      {icon ?? <ChevronRight size={20} />}
     </button>
   );
 }
@@ -184,7 +184,7 @@ export function StatusBadge({
 export function SearchField({ placeholder = "Пошук" }: { placeholder?: string }) {
   return (
     <label className="search-field">
-      <Search size={18} />
+      <Search size={22} />
       <input aria-label={placeholder} placeholder={placeholder} />
     </label>
   );
@@ -231,7 +231,7 @@ export function RowLink({
         {subtitle ? <small>{subtitle}</small> : null}
       </span>
       {value ? <span className="row-link__value">{value}</span> : null}
-      <ChevronRight className="row-link__chevron" size={17} />
+      <ChevronRight className="row-link__chevron" size={20} />
     </button>
   );
 }
@@ -303,7 +303,7 @@ export function TimelineItem({
     <div className={`timeline-item timeline-item--${state}`}>
       <span className="timeline-item__time">{time}</span>
       <span className="timeline-item__marker">
-        {state === "done" ? <Check size={12} /> : null}
+        {state === "done" ? <Check size={14} /> : null}
       </span>
       <div className="timeline-item__content">
         <strong>{title}</strong>
@@ -395,7 +395,7 @@ export function SelectLike({
     <label className="field-like">
       <span>{label}</span>
       <strong>{value}</strong>
-      <ChevronRight size={17} />
+      <ChevronRight size={20} />
     </label>
   );
 }
@@ -420,7 +420,7 @@ export function ActivityRow({
       </div>
       <StatusBadge tone={tone}>{status}</StatusBadge>
       <button type="button" aria-label="Більше">
-        <MoreHorizontal size={19} />
+        <MoreHorizontal size={23} />
       </button>
     </div>
   );
@@ -429,7 +429,7 @@ export function ActivityRow({
 export function TimeBadge({ children }: { children: ReactNode }) {
   return (
     <span className="time-badge">
-      <Clock3 size={14} />
+      <Clock3 size={17} />
       {children}
     </span>
   );

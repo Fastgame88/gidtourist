@@ -75,9 +75,9 @@ function PartnerDashboard({ navigate }: { navigate: Navigate }) {
         action={
           <div className="heading-actions">
             <IconButton label="Сповіщення">
-              <Bell size={19} />
+              <Bell size={23} />
             </IconButton>
-            <PrimaryButton onClick={() => navigate("partner", "scanner")} icon={<ScanLine size={17} />}>
+            <PrimaryButton onClick={() => navigate("partner", "scanner")} icon={<ScanLine size={20} />}>
               Сканувати QR
             </PrimaryButton>
           </div>
@@ -85,10 +85,10 @@ function PartnerDashboard({ navigate }: { navigate: Navigate }) {
       />
 
       <div className="metric-grid metric-grid--four">
-        <MetricCard label="Бронювання сьогодні" value="18" delta="+4 до вчора" icon={<CalendarCheck size={20} />} />
-        <MetricCard label="Підтверджений виторг" value="42 680 ₴" delta="+12,4% за тиждень" icon={<TrendingUp size={20} />} tone="lime" />
-        <MetricCard label="QR-операції" value="24" delta="Середній чек 1 778 ₴" icon={<QrCode size={20} />} tone="blue" />
-        <MetricCard label="Рейтинг" value="4.9" delta="328 перевірених відгуків" icon={<Star size={20} />} tone="neutral" />
+        <MetricCard label="Бронювання сьогодні" value="18" delta="+4 до вчора" icon={<CalendarCheck size={24} />} />
+        <MetricCard label="Підтверджений виторг" value="42 680 ₴" delta="+12,4% за тиждень" icon={<TrendingUp size={24} />} tone="lime" />
+        <MetricCard label="QR-операції" value="24" delta="Середній чек 1 778 ₴" icon={<QrCode size={24} />} tone="blue" />
+        <MetricCard label="Рейтинг" value="4.9" delta="328 перевірених відгуків" icon={<Star size={24} />} tone="neutral" />
       </div>
 
       <div className="dashboard-grid dashboard-grid--main">
@@ -98,7 +98,7 @@ function PartnerDashboard({ navigate }: { navigate: Navigate }) {
             subtitle="Підтверджені покупки через QR"
             action={
               <button className="select-button" type="button">
-                7 днів <ChevronDown size={15} />
+                7 днів <ChevronDown size={18} />
               </button>
             }
           />
@@ -107,7 +107,7 @@ function PartnerDashboard({ navigate }: { navigate: Navigate }) {
               <small>Загальна сума</small>
               <strong>284 560 ₴</strong>
               <span className="positive-value">
-                <ArrowUpRight size={14} /> 18,2%
+                <ArrowUpRight size={17} /> 18,2%
               </span>
             </div>
             <div className="chart-legend">
@@ -185,7 +185,7 @@ function PartnerDashboard({ navigate }: { navigate: Navigate }) {
                   <small>{service as string}</small>
                 </div>
                 <StatusBadge tone={tone as "green" | "orange"}>{status as string}</StatusBadge>
-                <ChevronRight size={17} />
+                <ChevronRight size={20} />
               </button>
             ))}
           </div>
@@ -193,10 +193,10 @@ function PartnerDashboard({ navigate }: { navigate: Navigate }) {
         <Card tone="dark" className="partner-balance-card">
           <div className="partner-balance-card__top">
             <span>
-              <WalletCards size={19} /> Баланс взаєморозрахунків
+              <WalletCards size={23} /> Баланс взаєморозрахунків
             </span>
             <button type="button" aria-label="Переглянути">
-              <Eye size={18} />
+              <Eye size={22} />
             </button>
           </div>
           <div>
@@ -205,7 +205,7 @@ function PartnerDashboard({ navigate }: { navigate: Navigate }) {
             <span>за 01–15 липня</span>
           </div>
           <button type="button" onClick={() => navigate("partner", "partner-finance")}>
-            Відкрити фінанси <ArrowRight size={16} />
+            Відкрити фінанси <ArrowRight size={19} />
           </button>
         </Card>
       </div>
@@ -226,10 +226,10 @@ function ScannerScreen({ navigate }: { navigate: Navigate }) {
         <Card tone="dark" className="scanner-camera-card">
           <div className="scanner-camera-card__top">
             <span>
-              <ScanLine size={19} /> Сканування
+              <ScanLine size={23} /> Сканування
             </span>
             <button type="button">
-              <Camera size={18} /> Змінити камеру
+              <Camera size={22} /> Змінити камеру
             </button>
           </div>
           <div className="scanner-camera">
@@ -238,12 +238,12 @@ function ScannerScreen({ navigate }: { navigate: Navigate }) {
             <span className="scanner-corner scanner-corner--bl" />
             <span className="scanner-corner scanner-corner--br" />
             <i className="scanner-line" />
-            <QrCode size={76} strokeWidth={1.3} />
+            <QrCode size={91} strokeWidth={1.3} />
           </div>
           <h2>Наведіть камеру на QR клієнта</h2>
           <p>Код має бути згенерований у розділі «Мій QR» і діяти не більше 60 секунд.</p>
           <button className="scanner-manual" type="button">
-            <Link2 size={16} /> Ввести код вручну
+            <Link2 size={19} /> Ввести код вручну
           </button>
         </Card>
         <div className="scanner-side">
@@ -257,19 +257,19 @@ function ScannerScreen({ navigate }: { navigate: Navigate }) {
                 "Операція створиться лише після підтвердження",
               ].map((item) => (
                 <div key={item}>
-                  <span><Check size={13} /></span>
+                  <span><Check size={16} /></span>
                   <p>{item}</p>
                 </div>
               ))}
             </div>
           </Card>
           <Card tone="lime" className="scanner-demo-card">
-            <span><Sparkles size={21} /></span>
+            <span><Sparkles size={25} /></span>
             <div>
               <strong>QR клієнта зчитано</strong>
               <p>Код активний. Перейдіть до введення суми операції.</p>
             </div>
-            <PrimaryButton onClick={() => navigate("partner", "new-operation")} icon={<ArrowRight size={17} />}>
+            <PrimaryButton onClick={() => navigate("partner", "new-operation")} icon={<ArrowRight size={20} />}>
               Продовжити
             </PrimaryButton>
           </Card>
@@ -287,7 +287,7 @@ function NewOperationScreen({ navigate }: { navigate: Navigate }) {
         eyebrow="QR успішно перевірено"
         title="Нова операція"
         description="Токен дійсний ще 38 секунд · повторне використання заблоковано"
-        action={<StatusBadge tone="green"><BadgeCheck size={13} /> Клієнта знайдено</StatusBadge>}
+        action={<StatusBadge tone="green"><BadgeCheck size={16} /> Клієнта знайдено</StatusBadge>}
       />
       <div className="operation-grid">
         <div className="operation-main">
@@ -327,9 +327,9 @@ function NewOperationScreen({ navigate }: { navigate: Navigate }) {
               <label className="bonus-spend-field">
                 <span>Списати бонусів</span>
                 <div>
-                  <button type="button"><ChevronLeft size={16} /></button>
+                  <button type="button"><ChevronLeft size={19} /></button>
                   <input aria-label="Списати бонусів" defaultValue="400" />
-                  <button type="button"><ChevronRight size={16} /></button>
+                  <button type="button"><ChevronRight size={19} /></button>
                 </div>
                 <small>Максимум 20% чека · доступно 1 280</small>
               </label>
@@ -339,7 +339,7 @@ function NewOperationScreen({ navigate }: { navigate: Navigate }) {
         <Card tone="soft" className="operation-summary-card">
           <CardHeader title="Попередній розрахунок" subtitle="Quote не змінює баланс" />
           <div className="operation-summary-merchant">
-            <span><Waves size={21} /></span>
+            <span><Waves size={25} /></span>
             <div>
               <strong>Коруна SPA</strong>
               <small>Партнер · Татарів</small>
@@ -353,10 +353,10 @@ function NewOperationScreen({ navigate }: { navigate: Navigate }) {
             <div><span>Комісія платформи</span><strong>120,00 ₴</strong></div>
           </div>
           <Card tone="lime" className="operation-note">
-            <ShieldCheck size={18} />
+            <ShieldCheck size={22} />
             <p>Після підтвердження клієнтом створяться transaction, bonus entries і settlement entries.</p>
           </Card>
-          <PrimaryButton onClick={() => navigate("partner", "partner-dashboard")} icon={<Send size={17} />}>
+          <PrimaryButton onClick={() => navigate("partner", "partner-dashboard")} icon={<Send size={20} />}>
             Надіслати на підтвердження
           </PrimaryButton>
           <button className="button button--danger-ghost" type="button">Скасувати операцію</button>
@@ -391,21 +391,21 @@ function CalendarScreen({ navigate }: { navigate: Navigate }) {
         description="Коруна SPA · середа, 15 липня"
         action={
           <div className="heading-actions">
-            <button className="select-button" type="button">День <ChevronDown size={15} /></button>
-            <PrimaryButton icon={<Plus size={17} />}>Ручне бронювання</PrimaryButton>
+            <button className="select-button" type="button">День <ChevronDown size={18} /></button>
+            <PrimaryButton icon={<Plus size={20} />}>Ручне бронювання</PrimaryButton>
           </div>
         }
       />
       <Card className="calendar-toolbar-card">
         <div className="calendar-nav">
-          <button type="button"><ChevronLeft size={18} /></button>
+          <button type="button"><ChevronLeft size={22} /></button>
           <div><strong>15 липня 2026</strong><small>Середа · сьогодні</small></div>
-          <button type="button"><ChevronRight size={18} /></button>
+          <button type="button"><ChevronRight size={22} /></button>
           <button type="button" className="today-button">Сьогодні</button>
         </div>
         <div className="calendar-filters">
-          <button type="button"><Filter size={16} /> 4 ресурси</button>
-          <button type="button"><ListFilter size={16} /> Усі статуси</button>
+          <button type="button"><Filter size={19} /> 4 ресурси</button>
+          <button type="button"><ListFilter size={19} /> Усі статуси</button>
         </div>
       </Card>
       <Card className="resource-calendar-card">
@@ -442,10 +442,10 @@ function CalendarScreen({ navigate }: { navigate: Navigate }) {
         </div>
       </Card>
       <div className="calendar-summary-grid">
-        <Card><span className="summary-icon summary-icon--green"><CalendarCheck size={19} /></span><div><small>Підтверджено</small><strong>14</strong></div></Card>
-        <Card><span className="summary-icon summary-icon--orange"><Clock3 size={19} /></span><div><small>Очікує</small><strong>3</strong></div></Card>
-        <Card><span className="summary-icon summary-icon--blue"><Plus size={19} /></span><div><small>Ручні записи</small><strong>5</strong></div></Card>
-        <Card><span className="summary-icon summary-icon--neutral"><RefreshCcw size={19} /></span><div><small>Перенесено</small><strong>1</strong></div></Card>
+        <Card><span className="summary-icon summary-icon--green"><CalendarCheck size={23} /></span><div><small>Підтверджено</small><strong>14</strong></div></Card>
+        <Card><span className="summary-icon summary-icon--orange"><Clock3 size={23} /></span><div><small>Очікує</small><strong>3</strong></div></Card>
+        <Card><span className="summary-icon summary-icon--blue"><Plus size={23} /></span><div><small>Ручні записи</small><strong>5</strong></div></Card>
+        <Card><span className="summary-icon summary-icon--neutral"><RefreshCcw size={23} /></span><div><small>Перенесено</small><strong>1</strong></div></Card>
       </div>
     </div>
   );
@@ -467,25 +467,25 @@ function BookingDetailsScreen() {
             <div className="customer-profile-row">
               <Avatar initials="АМ" tone="green" size="large" />
               <div><strong>Андрій Мазка</strong><span>@andrii_travel</span></div>
-              <button type="button"><Phone size={17} /> +380 67 123 45 67</button>
-              <IconButton label="Написати"><MessageSquareText size={18} /></IconButton>
+              <button type="button"><Phone size={20} /> +380 67 123 45 67</button>
+              <IconButton label="Написати"><MessageSquareText size={22} /></IconButton>
             </div>
           </Card>
           <Card>
             <CardHeader title="Деталі бронювання" />
             <div className="booking-detail-fields">
-              <div><span><CalendarDays size={17} /></span><small>Дата</small><strong>15 липня 2026</strong></div>
-              <div><span><Clock3 size={17} /></span><small>Час</small><strong>18:00–20:00</strong></div>
-              <div><span><Waves size={17} /></span><small>Ресурс</small><strong>Чан №1</strong></div>
-              <div><span><UsersRound size={17} /></span><small>Гості</small><strong>2 дорослих</strong></div>
+              <div><span><CalendarDays size={20} /></span><small>Дата</small><strong>15 липня 2026</strong></div>
+              <div><span><Clock3 size={20} /></span><small>Час</small><strong>18:00–20:00</strong></div>
+              <div><span><Waves size={20} /></span><small>Ресурс</small><strong>Чан №1</strong></div>
+              <div><span><UsersRound size={20} /></span><small>Гості</small><strong>2 дорослих</strong></div>
             </div>
             <div className="booking-comment"><strong>Коментар клієнта</strong><p>Підготуйте, будь ласка, чай без цукру. Будемо на 10 хвилин раніше.</p></div>
           </Card>
           <Card>
             <CardHeader title="Історія статусів" />
             <div className="status-history">
-              <div><span><Check size={13} /></span><div><strong>Підтверджено партнером</strong><p>Оксана Романюк · 10:04</p></div></div>
-              <div><span><Check size={13} /></span><div><strong>Створено клієнтом</strong><p>Telegram Mini App · 09:42</p></div></div>
+              <div><span><Check size={16} /></span><div><strong>Підтверджено партнером</strong><p>Оксана Романюк · 10:04</p></div></div>
+              <div><span><Check size={16} /></span><div><strong>Створено клієнтом</strong><p>Telegram Mini App · 09:42</p></div></div>
             </div>
           </Card>
         </div>
@@ -499,13 +499,13 @@ function BookingDetailsScreen() {
           <Card>
             <CardHeader title="Дії" />
             <div className="booking-actions-list">
-              <button type="button"><CalendarDays size={17} /> Перенести бронювання <ChevronRight size={16} /></button>
-              <button type="button"><RefreshCcw size={17} /> Запропонувати інший час <ChevronRight size={16} /></button>
-              <button type="button"><MessageSquareText size={17} /> Написати клієнту <ChevronRight size={16} /></button>
-              <button type="button" className="is-danger"><X size={17} /> Скасувати бронювання <ChevronRight size={16} /></button>
+              <button type="button"><CalendarDays size={20} /> Перенести бронювання <ChevronRight size={19} /></button>
+              <button type="button"><RefreshCcw size={20} /> Запропонувати інший час <ChevronRight size={19} /></button>
+              <button type="button"><MessageSquareText size={20} /> Написати клієнту <ChevronRight size={19} /></button>
+              <button type="button" className="is-danger"><X size={20} /> Скасувати бронювання <ChevronRight size={19} /></button>
             </div>
           </Card>
-          <Card tone="lime" className="conflict-free-card"><ShieldCheck size={19} /><div><strong>Конфліктів немає</strong><p>Buffer 30 хв до і після слота збережено.</p></div></Card>
+          <Card tone="lime" className="conflict-free-card"><ShieldCheck size={23} /><div><strong>Конфліктів немає</strong><p>Buffer 30 хв до і після слота збережено.</p></div></Card>
         </div>
       </div>
     </div>
@@ -520,7 +520,7 @@ function PlaceEditorScreen() {
         eyebrow="Редактор закладу"
         title="Коруна SPA"
         description="Шаблон: чан / сауна · востаннє оновлено сьогодні о 10:12"
-        action={<div className="heading-actions"><SecondaryButton icon={<Eye size={17} />}>Попередній перегляд</SecondaryButton><PrimaryButton icon={<Check size={17} />}>Зберегти зміни</PrimaryButton></div>}
+        action={<div className="heading-actions"><SecondaryButton icon={<Eye size={20} />}>Попередній перегляд</SecondaryButton><PrimaryButton icon={<Check size={20} />}>Зберегти зміни</PrimaryButton></div>}
       />
       <div className="editor-status-bar">
         <div><StatusBadge tone="green" dot>Опубліковано</StatusBadge><span>Повнота профілю 86%</span></div>
@@ -532,7 +532,7 @@ function PlaceEditorScreen() {
             ["Основне", Store], ["Медіа", ImageIcon], ["Графік", Clock3], ["Послуги", Sparkles], ["Ресурси", Waves], ["Бонуси", Percent], ["Контакти", Phone],
           ].map(([label, Icon]) => {
             const TabIcon = Icon as typeof Store;
-            return <button className={tab === label ? "is-active" : ""} type="button" key={label as string} onClick={() => setTab(label as string)}><TabIcon size={18} />{label as string}<ChevronRight size={15} /></button>;
+            return <button className={tab === label ? "is-active" : ""} type="button" key={label as string} onClick={() => setTab(label as string)}><TabIcon size={22} />{label as string}<ChevronRight size={18} /></button>;
           })}
         </Card>
         <div className="editor-content">
@@ -549,8 +549,8 @@ function PlaceEditorScreen() {
           <Card>
             <CardHeader title="Головне фото" subtitle="Рекомендований формат 16:9, до 10 МБ" />
             <div className="image-editor-row">
-              <span className="image-editor-preview"><Waves size={29} /></span>
-              <div><strong>koruna-spa-cover.jpg</strong><small>1920 × 1080 · 1,8 МБ</small><span><button type="button"><Upload size={15} /> Замінити</button><button type="button" className="is-danger"><X size={15} /> Видалити</button></span></div>
+              <span className="image-editor-preview"><Waves size={35} /></span>
+              <div><strong>koruna-spa-cover.jpg</strong><small>1920 × 1080 · 1,8 МБ</small><span><button type="button"><Upload size={18} /> Замінити</button><button type="button" className="is-danger"><X size={18} /> Видалити</button></span></div>
             </div>
           </Card>
           <Card>
@@ -564,9 +564,9 @@ function PlaceEditorScreen() {
           <CardHeader title="Як бачить турист" subtitle="Мобільна картка" />
           <div className="mini-place-preview">
             <span className="mini-place-preview__art"><StatusBadge tone="lime">Партнер</StatusBadge></span>
-            <div><small>Чани та SPA</small><h3>Коруна SPA</h3><p><Star size={12} fill="currentColor" /> 4.9 · Татарів</p><StatusBadge tone="green" dot>Відкрито до 21:00</StatusBadge></div>
+            <div><small>Чани та SPA</small><h3>Коруна SPA</h3><p><Star size={14} fill="currentColor" /> 4.9 · Татарів</p><StatusBadge tone="green" dot>Відкрито до 21:00</StatusBadge></div>
           </div>
-          <button type="button" className="text-button">Відкрити повний preview <ArrowRight size={15} /></button>
+          <button type="button" className="text-button">Відкрити повний preview <ArrowRight size={18} /></button>
         </Card>
       </div>
     </div>
@@ -576,12 +576,12 @@ function PlaceEditorScreen() {
 function ReviewsOffersScreen() {
   return (
     <div className="screen-stack">
-      <PageHeading eyebrow="Репутація та попит" title="Відгуки й акції" description="Відповідайте гостям і заповнюйте вільні слоти без прихованої реклами." action={<PrimaryButton icon={<Plus size={17} />}>Створити акцію</PrimaryButton>} />
+      <PageHeading eyebrow="Репутація та попит" title="Відгуки й акції" description="Відповідайте гостям і заповнюйте вільні слоти без прихованої реклами." action={<PrimaryButton icon={<Plus size={20} />}>Створити акцію</PrimaryButton>} />
       <div className="metric-grid metric-grid--four">
-        <MetricCard label="Середній рейтинг" value="4.9" delta="+0,1 за місяць" icon={<Star size={20} />} />
-        <MetricCard label="Нові відгуки" value="18" delta="5 без відповіді" icon={<MessageSquareText size={20} />} tone="orange" />
-        <MetricCard label="Активні акції" value="3" delta="1 завершується сьогодні" icon={<Sparkles size={20} />} tone="lime" />
-        <MetricCard label="Конверсія акцій" value="12.8%" delta="84 бронювання" icon={<TrendingUp size={20} />} tone="blue" />
+        <MetricCard label="Середній рейтинг" value="4.9" delta="+0,1 за місяць" icon={<Star size={24} />} />
+        <MetricCard label="Нові відгуки" value="18" delta="5 без відповіді" icon={<MessageSquareText size={24} />} tone="orange" />
+        <MetricCard label="Активні акції" value="3" delta="1 завершується сьогодні" icon={<Sparkles size={24} />} tone="lime" />
+        <MetricCard label="Конверсія акцій" value="12.8%" delta="84 бронювання" icon={<TrendingUp size={24} />} tone="blue" />
       </div>
       <div className="reviews-offers-grid">
         <Card>
@@ -593,9 +593,9 @@ function ReviewsOffersScreen() {
               ["Ігор Левченко", "5.0", "Чудовий масаж і дуже привітний персонал.", "13 липня · бронювання #10398", true],
             ].map(([name, rating, text, meta, answered]) => (
               <article key={name as string}>
-                <div className="review-admin-list__head"><Avatar initials={(name as string).split(" ").map((p) => p[0]).join("")} /><div><strong>{name as string}</strong><span><Star size={12} fill="currentColor" /> {rating as string}</span></div><StatusBadge tone="green"><BadgeCheck size={12} /> Перевірений</StatusBadge></div>
+                <div className="review-admin-list__head"><Avatar initials={(name as string).split(" ").map((p) => p[0]).join("")} /><div><strong>{name as string}</strong><span><Star size={14} fill="currentColor" /> {rating as string}</span></div><StatusBadge tone="green"><BadgeCheck size={14} /> Перевірений</StatusBadge></div>
                 <p>{text as string}</p><small>{meta as string}</small>
-                <button type="button">{answered ? "Переглянути відповідь" : "Відповісти"} <ArrowRight size={14} /></button>
+                <button type="button">{answered ? "Переглянути відповідь" : "Відповісти"} <ArrowRight size={17} /></button>
               </article>
             ))}
           </div>
@@ -608,7 +608,7 @@ function ReviewsOffersScreen() {
               ["SPA для двох + чай", "SPA-кімната · будні", "126 переглядів · 14 бронювань", "До 31.07", "green"],
               ["+10% бонусами", "Усі послуги · нові клієнти", "84 операції", "До 20.07", "blue"],
             ].map(([title, meta, stat, date, tone]) => (
-              <div key={title as string} className="offer-row"><span className={`offer-row__icon offer-row__icon--${tone}`}><Percent size={18} /></span><div><strong>{title as string}</strong><small>{meta as string}</small><p>{stat as string}</p></div><div><StatusBadge tone={tone as "green" | "lime" | "blue"}>{date as string}</StatusBadge><button type="button"><MoreHorizontal size={18} /></button></div></div>
+              <div key={title as string} className="offer-row"><span className={`offer-row__icon offer-row__icon--${tone}`}><Percent size={22} /></span><div><strong>{title as string}</strong><small>{meta as string}</small><p>{stat as string}</p></div><div><StatusBadge tone={tone as "green" | "lime" | "blue"}>{date as string}</StatusBadge><button type="button"><MoreHorizontal size={22} /></button></div></div>
             ))}
           </div>
         </Card>
@@ -620,12 +620,12 @@ function ReviewsOffersScreen() {
 function PartnerFinanceScreen() {
   return (
     <div className="screen-stack">
-      <PageHeading eyebrow="Фінанси партнера" title="Взаєморозрахунки" description="Коруна SPA · звітний період 01–15 липня 2026" action={<div className="heading-actions"><button className="select-button" type="button">01–15 липня <ChevronDown size={15} /></button><SecondaryButton icon={<FileText size={17} />}>Експорт</SecondaryButton></div>} />
+      <PageHeading eyebrow="Фінанси партнера" title="Взаєморозрахунки" description="Коруна SPA · звітний період 01–15 липня 2026" action={<div className="heading-actions"><button className="select-button" type="button">01–15 липня <ChevronDown size={18} /></button><SecondaryButton icon={<FileText size={20} />}>Експорт</SecondaryButton></div>} />
       <div className="finance-balance-grid">
-        <Card tone="dark" className="finance-main-balance"><span><WalletCards size={20} /> Поточне сальдо</span><strong>−12 480 ₴</strong><p>Партнер винен платформі</p><div><small>Наступний розрахунок</small><strong>20 липня 2026</strong></div></Card>
-        <MetricCard label="Підтверджені продажі" value="284 560 ₴" delta="160 QR-операцій" icon={<CreditCard size={20} />} />
-        <MetricCard label="Комісія платформи" value="14 228 ₴" delta="Середня ставка 5%" icon={<Percent size={20} />} tone="orange" />
-        <MetricCard label="Компенсація бонусів" value="1 748 ₴" delta="За використані бонуси" icon={<CircleDollarSign size={20} />} tone="lime" />
+        <Card tone="dark" className="finance-main-balance"><span><WalletCards size={24} /> Поточне сальдо</span><strong>−12 480 ₴</strong><p>Партнер винен платформі</p><div><small>Наступний розрахунок</small><strong>20 липня 2026</strong></div></Card>
+        <MetricCard label="Підтверджені продажі" value="284 560 ₴" delta="160 QR-операцій" icon={<CreditCard size={24} />} />
+        <MetricCard label="Комісія платформи" value="14 228 ₴" delta="Середня ставка 5%" icon={<Percent size={24} />} tone="orange" />
+        <MetricCard label="Компенсація бонусів" value="1 748 ₴" delta="За використані бонуси" icon={<CircleDollarSign size={24} />} tone="lime" />
       </div>
       <div className="finance-grid">
         <Card>
@@ -641,10 +641,10 @@ function PartnerFinanceScreen() {
         <Card>
           <CardHeader title="Статус розрахунку" subtitle="Період закриває фінансовий оператор" />
           <div className="settlement-status">
-            <div className="settlement-status__progress"><span className="is-done"><Check size={13} /></span><i /><span className="is-done"><Check size={13} /></span><i /><span>3</span></div>
+            <div className="settlement-status__progress"><span className="is-done"><Check size={16} /></span><i /><span className="is-done"><Check size={16} /></span><i /><span>3</span></div>
             <div className="settlement-status__labels"><span><strong>Період завершено</strong><small>15 липня</small></span><span><strong>Звірка операцій</strong><small>До 18 липня</small></span><span><strong>Оплата</strong><small>До 20 липня</small></span></div>
           </div>
-          <Card tone="lime" className="settlement-document"><FileText size={20} /><div><strong>Statement #ST‑2026‑0715</strong><p>Буде доступний після звірки</p></div><StatusBadge tone="orange">Формується</StatusBadge></Card>
+          <Card tone="lime" className="settlement-document"><FileText size={24} /><div><strong>Statement #ST‑2026‑0715</strong><p>Буде доступний після звірки</p></div><StatusBadge tone="orange">Формується</StatusBadge></Card>
         </Card>
       </div>
       <Card>

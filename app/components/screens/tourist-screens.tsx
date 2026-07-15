@@ -110,20 +110,20 @@ function MobileTopBar({
     <div className="mobile-topbar">
       {back ? (
         <IconButton label="Назад" onClick={() => window.history.back()}>
-          <ChevronLeft size={20} />
+          <ChevronLeft size={24} />
         </IconButton>
       ) : (
         <span className="brand-mark brand-mark--small">
-          <Compass size={19} />
+          <Compass size={23} />
         </span>
       )}
       <button type="button" className="location-switcher">
         <span>{subtitle}</span>
         <strong>{title}</strong>
-        <ChevronDown size={14} />
+        <ChevronDown size={17} />
       </button>
       <IconButton label="Сповіщення">
-        <Bell size={19} />
+        <Bell size={23} />
         <i className="notification-dot" />
       </IconButton>
     </div>
@@ -142,7 +142,7 @@ function MockQr() {
         )),
       )}
       <span className="mock-qr__logo">
-        <Compass size={17} />
+        <Compass size={20} />
       </span>
     </div>
   );
@@ -154,7 +154,7 @@ function WelcomeScreen({ navigate }: { navigate: Navigate }) {
       <div className="welcome-visual">
         <span className="welcome-grid" />
         <div className="welcome-logo">
-          <Compass size={28} />
+          <Compass size={34} />
         </div>
         <div className="welcome-route" aria-hidden="true">
           <span className="route-point route-point--one" />
@@ -178,16 +178,16 @@ function WelcomeScreen({ navigate }: { navigate: Navigate }) {
       </div>
       <Card className="context-card">
         <div className="context-card__icon">
-          <Hotel size={22} />
+          <Hotel size={26} />
         </div>
         <div>
           <small>Точка входу</small>
           <strong>Готель «Коруна»</strong>
           <span>
-            <MapPin size={13} /> вул. Пігівська, 660
+            <MapPin size={16} /> вул. Пігівська, 660
           </span>
         </div>
-        <BadgeCheck size={21} />
+        <BadgeCheck size={25} />
       </Card>
       <div className="welcome-actions">
         <PrimaryButton onClick={() => navigate("tourist", "home")}>
@@ -198,7 +198,7 @@ function WelcomeScreen({ navigate }: { navigate: Navigate }) {
         </button>
       </div>
       <p className="privacy-note">
-        <LockKeyhole size={13} /> Геолокацію запитаємо лише для функції «Поруч
+        <LockKeyhole size={16} /> Геолокацію запитаємо лише для функції «Поруч
         зі мною»
       </p>
     </div>
@@ -227,7 +227,7 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
           <p>Знайдемо найкращий план на сьогодні?</p>
         </div>
         <div className="weather-orb">
-          <SunMedium size={29} />
+          <SunMedium size={35} />
           <span>18°</span>
         </div>
       </section>
@@ -252,7 +252,7 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
                 onClick={() => navigate("tourist", category.slug)}
               >
                 <span>
-                  <Icon size={22} />
+                  <Icon size={26} />
                 </span>
                 <strong>{category.title}</strong>
                 <small>{category.note}</small>
@@ -279,15 +279,15 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
         >
           <div className="featured-place__art featured-place__art--restaurant">
             <span className="place-badge">
-              <BadgeCheck size={13} /> Ми рекомендуємо
+              <BadgeCheck size={16} /> Ми рекомендуємо
             </span>
-            <Heart size={18} />
+            <Heart size={22} />
           </div>
           <div className="featured-place__copy">
             <div>
               <strong>Грибова хата</strong>
               <span>
-                <Star size={13} fill="currentColor" /> 4.9 · 328 відгуків
+                <Star size={16} fill="currentColor" /> 4.9 · 328 відгуків
               </span>
             </div>
             <p>Українська кухня · 1,2 км</p>
@@ -314,36 +314,36 @@ function AboutScreen() {
         <StatusBadge tone="lime">Ваше місце проживання</StatusBadge>
         <h1>Готель «Коруна»</h1>
         <p>
-          <MapPin size={14} /> Татарів · 0 м від вас
+          <MapPin size={17} /> Татарів · 0 м від вас
         </p>
       </section>
       <div className="quick-info-grid">
         <Card>
-          <Clock3 size={19} />
+          <Clock3 size={23} />
           <span>Check-in</span>
           <strong>з 14:00</strong>
         </Card>
         <Card>
-          <Clock3 size={19} />
+          <Clock3 size={23} />
           <span>Check-out</span>
           <strong>до 11:00</strong>
         </Card>
         <Card>
-          <Wifi size={19} />
+          <Wifi size={23} />
           <span>Wi‑Fi</span>
           <strong>Koruna_Guest</strong>
         </Card>
       </div>
       <Card className="wifi-card" tone="lime">
         <span>
-          <Wifi size={23} />
+          <Wifi size={28} />
         </span>
         <div>
           <small>Пароль до Wi‑Fi</small>
           <strong>KORUNA2026</strong>
         </div>
         <button type="button" aria-label="Копіювати пароль">
-          <Copy size={18} />
+          <Copy size={22} />
         </button>
       </Card>
       <section className="mobile-section">
@@ -351,13 +351,13 @@ function AboutScreen() {
           <h2>Послуги та інформація</h2>
         </div>
         <div className="list-card">
-          <RowLink icon={<Coffee size={18} />} title="Сніданок" subtitle="08:00–11:00 · ресторан, 1 поверх" />
-          <RowLink icon={<Waves size={18} />} title="Басейн і SPA" subtitle="09:00–21:00 · за попереднім записом" />
-          <RowLink icon={<BedDouble size={18} />} title="Замовити прибирання" subtitle="Заявка до адміністратора" />
-          <RowLink icon={<Info size={18} />} title="Правила проживання" subtitle="Тиша, паркування, домашні тварини" />
+          <RowLink icon={<Coffee size={22} />} title="Сніданок" subtitle="08:00–11:00 · ресторан, 1 поверх" />
+          <RowLink icon={<Waves size={22} />} title="Басейн і SPA" subtitle="09:00–21:00 · за попереднім записом" />
+          <RowLink icon={<BedDouble size={22} />} title="Замовити прибирання" subtitle="Заявка до адміністратора" />
+          <RowLink icon={<Info size={22} />} title="Правила проживання" subtitle="Тиша, паркування, домашні тварини" />
         </div>
       </section>
-      <SecondaryButton icon={<Phone size={17} />}>Зателефонувати на рецепцію</SecondaryButton>
+      <SecondaryButton icon={<Phone size={20} />}>Зателефонувати на рецепцію</SecondaryButton>
     </div>
   );
 }
@@ -387,15 +387,15 @@ function PlaceListCard({
       <span className="place-list-card__copy">
         <span className="place-list-card__topline">
           <strong>{title}</strong>
-          <Heart size={17} />
+          <Heart size={20} />
         </span>
         <small>{meta}</small>
         <span className="place-list-card__meta">
           <span>
-            <Star size={13} fill="currentColor" /> {rating}
+            <Star size={16} fill="currentColor" /> {rating}
           </span>
           <span>
-            <MapPin size={13} /> {distance}
+            <MapPin size={16} /> {distance}
           </span>
         </span>
       </span>
@@ -413,7 +413,7 @@ function CatalogScreen({ navigate }: { navigate: Navigate }) {
           <h1>Смачно поруч</h1>
         </div>
         <IconButton label="Фільтри">
-          <SlidersHorizontal size={19} />
+          <SlidersHorizontal size={23} />
         </IconButton>
       </div>
       <SearchField placeholder="Ресторан, кухня або страва" />
@@ -426,7 +426,7 @@ function CatalogScreen({ navigate }: { navigate: Navigate }) {
       </div>
       <Card tone="lime" className="catalog-promo">
         <div>
-          <Sparkles size={19} />
+          <Sparkles size={23} />
           <strong>+5% бонусами сьогодні</strong>
         </div>
         <p>У 8 партнерських закладах · до 23:59</p>
@@ -434,7 +434,7 @@ function CatalogScreen({ navigate }: { navigate: Navigate }) {
       <div className="catalog-sort">
         <span>Знайдено 42 місця</span>
         <button type="button">
-          За релевантністю <ChevronDown size={14} />
+          За релевантністю <ChevronDown size={17} />
         </button>
       </div>
       <div className="place-list">
@@ -476,7 +476,7 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
       <div className="map-search-overlay">
         <SearchField placeholder="Знайти поруч" />
         <IconButton label="Фільтри">
-          <SlidersHorizontal size={18} />
+          <SlidersHorizontal size={22} />
         </IconButton>
       </div>
       <div className="mock-map mock-map--mobile">
@@ -495,13 +495,13 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
           const PinIcon = Icon as typeof Hotel;
           return (
             <button className={`map-pin ${className}`} type="button" key={label as string}>
-              <PinIcon size={16} />
+              <PinIcon size={19} />
               <span>{label as string}</span>
             </button>
           );
         })}
         <button className="map-locate" type="button" aria-label="Моє місце">
-          <LocateFixed size={20} />
+          <LocateFixed size={24} />
         </button>
       </div>
       <div className="nearby-sheet">
@@ -519,10 +519,10 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
             <strong>Кухня гір</strong>
             <small>Карпатська кухня · відкрито</small>
             <span>
-              <MapPin size={13} /> 350 м · 5 хв пішки
+              <MapPin size={16} /> 350 м · 5 хв пішки
             </span>
           </div>
-          <ChevronRight size={18} />
+          <ChevronRight size={22} />
         </button>
       </div>
     </div>
@@ -535,20 +535,20 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
       <section className="place-cover">
         <div className="place-cover__top">
           <IconButton label="Назад">
-            <ArrowLeft size={19} />
+            <ArrowLeft size={23} />
           </IconButton>
           <div>
             <IconButton label="Поділитися">
-              <Send size={18} />
+              <Send size={22} />
             </IconButton>
             <IconButton label="Зберегти">
-              <Heart size={18} />
+              <Heart size={22} />
             </IconButton>
           </div>
         </div>
         <div className="place-cover__badges">
           <StatusBadge tone="lime">
-            <BadgeCheck size={13} /> Ми рекомендуємо
+            <BadgeCheck size={16} /> Ми рекомендуємо
           </StatusBadge>
           <StatusBadge tone="green" dot>
             Відкрито
@@ -566,36 +566,36 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
         <h1>Грибова хата</h1>
         <div className="place-rating-row">
           <span>
-            <Star size={14} fill="currentColor" /> <strong>4.9</strong> · 328
+            <Star size={17} fill="currentColor" /> <strong>4.9</strong> · 328
             перевірених
           </span>
           <span>
-            <MapPin size={14} /> 1,2 км
+            <MapPin size={17} /> 1,2 км
           </span>
         </div>
       </section>
       <Card tone="lime" className="place-bonus-card">
         <span>
-          <Gift size={22} />
+          <Gift size={26} />
         </span>
         <div>
           <strong>Отримайте 5% бонусами</strong>
           <p>Списати можна до 20% наступного чека</p>
         </div>
-        <ChevronRight size={18} />
+        <ChevronRight size={22} />
       </Card>
       <div className="place-actions-grid">
         <button type="button">
-          <Navigation size={19} /> <span>Маршрут</span>
+          <Navigation size={23} /> <span>Маршрут</span>
         </button>
         <button type="button">
-          <Phone size={19} /> <span>Дзвінок</span>
+          <Phone size={23} /> <span>Дзвінок</span>
         </button>
         <button type="button" onClick={() => navigate("tourist", "booking")}>
-          <CalendarDays size={19} /> <span>Бронювати</span>
+          <CalendarDays size={23} /> <span>Бронювати</span>
         </button>
         <button type="button">
-          <MessageCircle size={19} /> <span>Написати</span>
+          <MessageCircle size={23} /> <span>Написати</span>
         </button>
       </div>
       <section className="mobile-section">
@@ -609,20 +609,20 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
         </p>
         <div className="attribute-grid">
           <span>
-            <UsersRound size={16} /> З дітьми
+            <UsersRound size={19} /> З дітьми
           </span>
           <span>
-            <CarFront size={16} /> Паркування
+            <CarFront size={19} /> Паркування
           </span>
           <span>
-            <PawPrint size={16} /> Pet friendly
+            <PawPrint size={19} /> Pet friendly
           </span>
           <span>
-            <Wifi size={16} /> Wi‑Fi
+            <Wifi size={19} /> Wi‑Fi
           </span>
         </div>
       </section>
-      <PrimaryButton onClick={() => navigate("tourist", "booking")} icon={<CalendarDays size={17} />}>
+      <PrimaryButton onClick={() => navigate("tourist", "booking")} icon={<CalendarDays size={20} />}>
         Забронювати столик
       </PrimaryButton>
     </div>
@@ -640,7 +640,7 @@ function AvailableScreen({ navigate }: { navigate: Navigate }) {
       <MobileTopBar title="Доступно зараз" subtitle="Реальні вільні слоти" back />
       <section className="available-hero">
         <span>
-          <Zap size={19} fill="currentColor" /> Оновлено щойно
+          <Zap size={23} fill="currentColor" /> Оновлено щойно
         </span>
         <h1>Можна забронювати сьогодні</h1>
         <p>Показуємо лише ресурси з актуальним календарем партнера.</p>
@@ -656,7 +656,7 @@ function AvailableScreen({ navigate }: { navigate: Navigate }) {
         {resources.map((resource, index) => (
           <Card className="available-card" key={resource.title}>
             <span className={`available-card__art available-card__art--${resource.tone}`}>
-              {index === 0 ? <Waves size={24} /> : index === 1 ? <HeartHandshake size={24} /> : <CarFront size={24} />}
+              {index === 0 ? <Waves size={29} /> : index === 1 ? <HeartHandshake size={29} /> : <CarFront size={29} />}
             </span>
             <div className="available-card__copy">
               <div>
@@ -667,7 +667,7 @@ function AvailableScreen({ navigate }: { navigate: Navigate }) {
               <div>
                 <strong>{resource.price}</strong>
                 <button type="button" onClick={() => navigate("tourist", "booking")}>
-                  Обрати <ChevronRight size={15} />
+                  Обрати <ChevronRight size={18} />
                 </button>
               </div>
             </div>
@@ -675,7 +675,7 @@ function AvailableScreen({ navigate }: { navigate: Navigate }) {
         ))}
       </div>
       <Card tone="soft" className="availability-note">
-        <TimerReset size={20} />
+        <TimerReset size={24} />
         <div>
           <strong>Чим «Доступно» відрізняється від «Відкрито»?</strong>
           <p>Відкрито — працює зараз. Доступно — є конкретний вільний слот.</p>
@@ -704,7 +704,7 @@ function BookingScreen({ navigate }: { navigate: Navigate }) {
           <small>Коруна SPA · Татарів</small>
           <strong>Карпатський чан</strong>
           <span>
-            <Star size={12} fill="currentColor" /> 4.9 · 1,3 км
+            <Star size={14} fill="currentColor" /> 4.9 · 1,3 км
           </span>
         </div>
       </Card>
@@ -719,15 +719,15 @@ function BookingScreen({ navigate }: { navigate: Navigate }) {
         </div>
         <div className="resource-selector">
           <button className="is-active" type="button">
-            <Waves size={19} />
+            <Waves size={23} />
             <span>
               <strong>Чан №1</strong>
               <small>до 6 гостей</small>
             </span>
-            <CheckCircle2 size={18} />
+            <CheckCircle2 size={22} />
           </button>
           <button type="button">
-            <Waves size={19} />
+            <Waves size={23} />
             <span>
               <strong>Чан №2</strong>
               <small>до 8 гостей</small>
@@ -781,7 +781,7 @@ function BookingScreen({ navigate }: { navigate: Navigate }) {
           ))}
         </div>
         <p className="slot-note">
-          <Clock3 size={13} /> Тривалість 2 год · buffer між бронюваннями 30 хв
+          <Clock3 size={16} /> Тривалість 2 год · buffer між бронюваннями 30 хв
         </p>
       </section>
 
@@ -810,17 +810,17 @@ function PlanScreen({ navigate }: { navigate: Navigate }) {
           <p>4 місця · 28 км · приблизно 8 годин</p>
         </div>
         <div className="plan-weather">
-          <SunMedium size={24} />
+          <SunMedium size={29} />
           <strong>18°</strong>
           <span>без опадів</span>
         </div>
       </section>
       <div className="plan-pills">
         <StatusBadge tone="green">
-          <CarFront size={13} /> На авто
+          <CarFront size={16} /> На авто
         </StatusBadge>
         <StatusBadge tone="lime">
-          <UsersRound size={13} /> Для двох
+          <UsersRound size={16} /> Для двох
         </StatusBadge>
         <StatusBadge tone="blue">Середній бюджет</StatusBadge>
       </div>
@@ -846,7 +846,7 @@ function PlanScreen({ navigate }: { navigate: Navigate }) {
             state="active"
           >
             <button type="button" className="timeline-action">
-              <Navigation size={14} /> Відкрити маршрут
+              <Navigation size={17} /> Відкрити маршрут
             </button>
           </TimelineItem>
           <TimelineItem
@@ -865,15 +865,15 @@ function PlanScreen({ navigate }: { navigate: Navigate }) {
       </section>
       <Card tone="lime" className="plan-suggestion">
         <span>
-          <Sparkles size={20} />
+          <Sparkles size={24} />
         </span>
         <div>
           <strong>Маєте ще 1,5 години</strong>
           <p>Додайте оглядовий майданчик дорогою до ресторану.</p>
         </div>
-        <Plus size={18} />
+        <Plus size={22} />
       </Card>
-      <SecondaryButton onClick={() => navigate("tourist", "catalog")} icon={<RefreshCcw size={17} />}>
+      <SecondaryButton onClick={() => navigate("tourist", "catalog")} icon={<RefreshCcw size={20} />}>
         Змінити одне місце
       </SecondaryButton>
     </div>
@@ -887,10 +887,10 @@ function WalletScreen({ navigate }: { navigate: Navigate }) {
       <section className="wallet-card">
         <div className="wallet-card__top">
           <span className="wallet-brand">
-            <Compass size={18} /> Гід туриста
+            <Compass size={22} /> Гід туриста
           </span>
           <button type="button" aria-label="Приховати баланс">
-            <Eye size={18} />
+            <Eye size={22} />
           </button>
         </div>
         <div className="wallet-card__balance">
@@ -913,14 +913,14 @@ function WalletScreen({ navigate }: { navigate: Navigate }) {
       <div className="wallet-actions">
         <button type="button" onClick={() => navigate("tourist", "qr")}>
           <span>
-            <QrCode size={20} />
+            <QrCode size={24} />
           </span>
           <strong>Мій QR</strong>
           <small>Нарахувати або списати</small>
         </button>
         <button type="button">
           <span>
-            <Gift size={20} />
+            <Gift size={24} />
           </span>
           <strong>Пропозиції</strong>
           <small>Де використати</small>
@@ -929,7 +929,7 @@ function WalletScreen({ navigate }: { navigate: Navigate }) {
       <Card tone="lime" className="bonus-progress-card">
         <div>
           <span>
-            <Coffee size={19} />
+            <Coffee size={23} />
           </span>
           <div>
             <strong>Ще 2 покупки до подарунка</strong>
@@ -945,21 +945,21 @@ function WalletScreen({ navigate }: { navigate: Navigate }) {
         </div>
         <div className="wallet-history">
           <RowLink
-            icon={<Utensils size={18} />}
+            icon={<Utensils size={22} />}
             title="Грибова хата"
             subtitle="Сьогодні, 14:28 · нарахування"
             value={<strong className="positive-value">+120</strong>}
             leadingTone="orange"
           />
           <RowLink
-            icon={<Waves size={18} />}
+            icon={<Waves size={22} />}
             title="Коруна SPA"
             subtitle="14 липня · часткова оплата"
             value={<strong className="negative-value">−400</strong>}
             leadingTone="blue"
           />
           <RowLink
-            icon={<CarFront size={18} />}
+            icon={<CarFront size={22} />}
             title="Tatariv Transfer"
             subtitle="12 липня · нарахування"
             value={<strong className="positive-value">+75</strong>}
@@ -985,7 +985,7 @@ function QrScreen({ navigate }: { navigate: Navigate }) {
       </div>
       <Card className="qr-card">
         <div className={`qr-card__code ${visible ? "" : "is-hidden"}`}>
-          {visible ? <MockQr /> : <EyeOff size={42} />}
+          {visible ? <MockQr /> : <EyeOff size={50} />}
         </div>
         <div className="qr-countdown">
           <span>
@@ -998,13 +998,13 @@ function QrScreen({ navigate }: { navigate: Navigate }) {
           </div>
         </div>
         <button type="button" className="qr-visibility" onClick={() => setVisible(!visible)}>
-          {visible ? <EyeOff size={17} /> : <Eye size={17} />}
+          {visible ? <EyeOff size={20} /> : <Eye size={20} />}
           {visible ? "Приховати QR" : "Показати QR"}
         </button>
       </Card>
       <Card tone="lime" className="qr-balance-row">
         <span>
-          <WalletCards size={21} />
+          <WalletCards size={25} />
         </span>
         <div>
           <small>Ваш баланс</small>
@@ -1014,19 +1014,19 @@ function QrScreen({ navigate }: { navigate: Navigate }) {
       </Card>
       <div className="safe-list">
         <div>
-          <ShieldCheck size={17} />
+          <ShieldCheck size={20} />
           <span>Одноразовий токен</span>
         </div>
         <div>
-          <TimerReset size={17} />
+          <TimerReset size={20} />
           <span>Автоматичне оновлення</span>
         </div>
         <div>
-          <BadgeCheck size={17} />
+          <BadgeCheck size={20} />
           <span>Суму підтверджуєте ви</span>
         </div>
       </div>
-      <SecondaryButton onClick={() => navigate("tourist", "purchase-confirmation")} icon={<ReceiptText size={17} />}>
+      <SecondaryButton onClick={() => navigate("tourist", "purchase-confirmation")} icon={<ReceiptText size={20} />}>
         Перейти до підтвердження
       </SecondaryButton>
     </div>
@@ -1039,7 +1039,7 @@ function PurchaseConfirmationScreen({ navigate }: { navigate: Navigate }) {
       <MobileTopBar title="Підтвердження" subtitle="Нова операція" back />
       <div className="confirmation-status">
         <span className="pulse-ring">
-          <ReceiptText size={26} />
+          <ReceiptText size={31} />
         </span>
         <StatusBadge tone="orange" dot>
           Очікує вашої дії
@@ -1049,13 +1049,13 @@ function PurchaseConfirmationScreen({ navigate }: { navigate: Navigate }) {
       </div>
       <Card className="merchant-card">
         <span className="merchant-card__logo">
-          <Utensils size={21} />
+          <Utensils size={25} />
         </span>
         <div>
           <small>Партнер</small>
           <strong>Грибова хата</strong>
           <span>
-            <BadgeCheck size={13} /> Перевірений партнер
+            <BadgeCheck size={16} /> Перевірений партнер
           </span>
         </div>
       </Card>
@@ -1078,14 +1078,14 @@ function PurchaseConfirmationScreen({ navigate }: { navigate: Navigate }) {
         </div>
       </Card>
       <Card tone="soft" className="confirmation-safety">
-        <ShieldCheck size={20} />
+        <ShieldCheck size={24} />
         <p>
           Операцію буде захищено від повторного проведення. Ви одразу побачите
           оновлений бонусний баланс.
         </p>
       </Card>
       <div className="confirmation-actions">
-        <PrimaryButton onClick={() => navigate("tourist", "review")} icon={<Check size={18} />}>
+        <PrimaryButton onClick={() => navigate("tourist", "review")} icon={<Check size={22} />}>
           Підтвердити й продовжити
         </PrimaryButton>
         <button className="button button--danger-ghost" type="button">
@@ -1109,7 +1109,7 @@ function ReviewScreen() {
     <div className="tourist-screen">
       <MobileTopBar title="Ваш відгук" subtitle="Грибова хата" back />
       <Card tone="lime" className="verified-event-card">
-        <BadgeCheck size={22} />
+        <BadgeCheck size={26} />
         <div>
           <strong>Візит підтверджено</strong>
           <p>Покупка #TRX‑24819 · сьогодні о 14:28</p>
@@ -1117,7 +1117,7 @@ function ReviewScreen() {
       </Card>
       <section className="review-heading">
         <span className="review-place-logo">
-          <Utensils size={23} />
+          <Utensils size={28} />
         </span>
         <h1>Як вам «Грибова хата»?</h1>
         <p>Відгук буде позначено як перевірений.</p>
@@ -1125,7 +1125,7 @@ function ReviewScreen() {
       <div className="rating-picker">
         {[1, 2, 3, 4, 5].map((value) => (
           <button type="button" key={value} onClick={() => setRating(value)} aria-label={`${value} зірок`}>
-            <Star size={32} fill={value <= rating ? "currentColor" : "none"} className={value <= rating ? "is-active" : ""} />
+            <Star size={38} fill={value <= rating ? "currentColor" : "none"} className={value <= rating ? "is-active" : ""} />
           </button>
         ))}
         <strong>{rating === 5 ? "Чудово!" : rating >= 4 ? "Добре" : "Можна краще"}</strong>
@@ -1142,7 +1142,7 @@ function ReviewScreen() {
               className={selected.includes(item) ? "is-active" : ""}
               onClick={() => toggle(item)}
             >
-              {selected.includes(item) ? <Check size={14} /> : <Plus size={14} />}
+              {selected.includes(item) ? <Check size={17} /> : <Plus size={17} />}
               {item}
             </button>
           ))}
@@ -1154,14 +1154,14 @@ function ReviewScreen() {
         <small>96 / 1000</small>
       </label>
       <button className="photo-upload" type="button">
-        <Camera size={20} />
+        <Camera size={24} />
         <span>
           <strong>Додати фото</strong>
           <small>До 5 зображень</small>
         </span>
-        <Plus size={18} />
+        <Plus size={22} />
       </button>
-      <PrimaryButton icon={<Send size={17} />}>Опублікувати відгук</PrimaryButton>
+      <PrimaryButton icon={<Send size={20} />}>Опублікувати відгук</PrimaryButton>
     </div>
   );
 }
@@ -1179,7 +1179,7 @@ function EmergencyScreen() {
       <MobileTopBar title="Халепа?" subtitle="Допомога поруч" back />
       <section className="emergency-hero">
         <span>
-          <LifeBuoy size={27} />
+          <LifeBuoy size={32} />
         </span>
         <div>
           <p className="eyebrow">Не хвилюйтеся</p>
@@ -1189,13 +1189,13 @@ function EmergencyScreen() {
       </section>
       <button className="location-share" type="button">
         <span>
-          <LocateFixed size={21} />
+          <LocateFixed size={25} />
         </span>
         <div>
           <strong>Поділитися геолокацією</strong>
           <small>Надішлемо координати обраній службі</small>
         </div>
-        <Send size={18} />
+        <Send size={22} />
       </button>
       <section className="mobile-section">
         <div className="mobile-section__heading">
@@ -1207,7 +1207,7 @@ function EmergencyScreen() {
             return (
               <button type="button" key={contact.title}>
                 <span className={`emergency-icon emergency-icon--${contact.tone}`}>
-                  <Icon size={19} />
+                  <Icon size={23} />
                 </span>
                 <div>
                   <strong>{contact.title}</strong>
@@ -1220,7 +1220,7 @@ function EmergencyScreen() {
         </div>
       </section>
       <Card tone="soft" className="emergency-note">
-        <Info size={18} />
+        <Info size={22} />
         <p>Контакти перевірено регіональним адміністратором 14 липня 2026.</p>
       </Card>
     </div>
@@ -1237,11 +1237,11 @@ function ProfileScreen({ navigate }: { navigate: Navigate }) {
           <h1>Андрій Мазка</h1>
           <p>@andrii_travel · Telegram</p>
           <StatusBadge tone="green">
-            <BadgeCheck size={13} /> Профіль підтверджено
+            <BadgeCheck size={16} /> Профіль підтверджено
           </StatusBadge>
         </div>
         <IconButton label="Редагувати">
-          <Settings2 size={18} />
+          <Settings2 size={22} />
         </IconButton>
       </section>
       <div className="profile-stats">
@@ -1263,10 +1263,10 @@ function ProfileScreen({ navigate }: { navigate: Navigate }) {
           <h2>Мій профіль</h2>
         </div>
         <div className="list-card">
-          <RowLink icon={<Heart size={18} />} title="Обране" subtitle="12 збережених місць" leadingTone="red" />
-          <RowLink icon={<CalendarDays size={18} />} title="Мої бронювання" subtitle="1 майбутнє · 3 завершені" leadingTone="blue" />
-          <RowLink icon={<ReceiptText size={18} />} title="Історія активності" subtitle="Покупки та бонуси" leadingTone="green" />
-          <RowLink icon={<MessageCircle size={18} />} title="Мої відгуки" subtitle="Оцінки та відповіді закладів" leadingTone="lime" onClick={() => navigate("tourist", "review")} />
+          <RowLink icon={<Heart size={22} />} title="Обране" subtitle="12 збережених місць" leadingTone="red" />
+          <RowLink icon={<CalendarDays size={22} />} title="Мої бронювання" subtitle="1 майбутнє · 3 завершені" leadingTone="blue" />
+          <RowLink icon={<ReceiptText size={22} />} title="Історія активності" subtitle="Покупки та бонуси" leadingTone="green" />
+          <RowLink icon={<MessageCircle size={22} />} title="Мої відгуки" subtitle="Оцінки та відповіді закладів" leadingTone="lime" onClick={() => navigate("tourist", "review")} />
         </div>
       </section>
       <section className="mobile-section">
@@ -1274,14 +1274,14 @@ function ProfileScreen({ navigate }: { navigate: Navigate }) {
           <h2>Налаштування</h2>
         </div>
         <div className="list-card">
-          <RowLink icon={<Languages size={18} />} title="Мова" value="Українська" leadingTone="blue" />
-          <RowLink icon={<Bell size={18} />} title="Сповіщення" subtitle="Сервісні увімкнено" leadingTone="orange" />
-          <RowLink icon={<UsersRound size={18} />} title="Спільнота мандрівників" subtitle="Події, маршрути та локальні новини" leadingTone="lime" onClick={() => navigate("tourist", "community")} />
-          <RowLink icon={<ShieldCheck size={18} />} title="Приватність і дані" subtitle="Consent, експорт, видалення" leadingTone="green" />
+          <RowLink icon={<Languages size={22} />} title="Мова" value="Українська" leadingTone="blue" />
+          <RowLink icon={<Bell size={22} />} title="Сповіщення" subtitle="Сервісні увімкнено" leadingTone="orange" />
+          <RowLink icon={<UsersRound size={22} />} title="Спільнота мандрівників" subtitle="Події, маршрути та локальні новини" leadingTone="lime" onClick={() => navigate("tourist", "community")} />
+          <RowLink icon={<ShieldCheck size={22} />} title="Приватність і дані" subtitle="Consent, експорт, видалення" leadingTone="green" />
         </div>
       </section>
       <button className="logout-button" type="button">
-        <LogOut size={17} /> Вийти з профілю
+        <LogOut size={20} /> Вийти з профілю
       </button>
     </div>
   );
@@ -1304,7 +1304,7 @@ function CommunityScreen() {
           Актуальні маршрути, погода, події та нові місця від локальної
           редакції.
         </p>
-        <PrimaryButton icon={<ExternalLink size={17} />}>
+        <PrimaryButton icon={<ExternalLink size={20} />}>
           Відкрити Telegram-канал
         </PrimaryButton>
       </section>
@@ -1315,7 +1315,7 @@ function CommunityScreen() {
         <div className="community-benefits">
           <div>
             <span>
-              <SunMedium size={19} />
+              <SunMedium size={23} />
             </span>
             <div>
               <strong>Погода і стан маршрутів</strong>
@@ -1324,7 +1324,7 @@ function CommunityScreen() {
           </div>
           <div>
             <span>
-              <TentTree size={19} />
+              <TentTree size={23} />
             </span>
             <div>
               <strong>Нові місця й добірки</strong>
@@ -1333,7 +1333,7 @@ function CommunityScreen() {
           </div>
           <div>
             <span>
-              <CircleHelp size={19} />
+              <CircleHelp size={23} />
             </span>
             <div>
               <strong>Підтримка в Telegram</strong>
@@ -1344,7 +1344,7 @@ function CommunityScreen() {
       </section>
       <Card tone="soft" className="consent-card">
         <div>
-          <ShieldCheck size={20} />
+          <ShieldCheck size={24} />
           <strong>Керування згодами</strong>
         </div>
         <Toggle checked label="Сервісні повідомлення" />

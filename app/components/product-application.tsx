@@ -101,7 +101,7 @@ function TouristBottomNav({
           className={activeSlug === itemSlug ? "is-active" : ""}
           onClick={() => navigate("tourist", itemSlug)}
         >
-          <Icon size={19} />
+          <Icon size={23} />
           <span>{label}</span>
         </button>
       ))}
@@ -159,13 +159,13 @@ export default function ProductApplication({ role, slug }: { role: RoleKey; slug
     <div className={`portal-shell portal-shell--${role}`}>
       <aside className={`portal-sidebar ${menuOpen ? "is-open" : ""}`}>
         <div className="portal-brand">
-          <span><Compass size={23} /></span>
+          <span><Compass size={28} /></span>
           <div><strong>Гід туриста</strong><small>{roleInfo.label}</small></div>
-          <button type="button" aria-label="Закрити меню" onClick={() => setMenuOpen(false)}><X size={19} /></button>
+          <button type="button" aria-label="Закрити меню" onClick={() => setMenuOpen(false)}><X size={23} /></button>
         </div>
 
         <div className="portal-context">
-          <span><RoleIcon size={18} /></span>
+          <span><RoleIcon size={22} /></span>
           <div><small>Робочий простір</small><strong>{account.name}</strong></div>
         </div>
 
@@ -181,9 +181,9 @@ export default function ProductApplication({ role, slug }: { role: RoleKey; slug
                 className={active ? "is-active" : ""}
                 onClick={() => navigate(role, screen.slug)}
               >
-                <span><Icon size={18} /></span>
+                <span><Icon size={22} /></span>
                 <strong>{screen.shortTitle}</strong>
-                {active ? <Check size={14} /> : <ChevronRight size={14} />}
+                {active ? <Check size={17} /> : <ChevronRight size={17} />}
               </button>
             );
           })}
@@ -192,7 +192,7 @@ export default function ProductApplication({ role, slug }: { role: RoleKey; slug
         <div className="portal-account">
           <Avatar initials={account.initials} tone="green" />
           <div><strong>{account.name}</strong><small>{account.detail}</small></div>
-          <IconButton label="Вийти"><LogOut size={17} /></IconButton>
+          <IconButton label="Вийти"><LogOut size={20} /></IconButton>
         </div>
       </aside>
 
@@ -200,10 +200,10 @@ export default function ProductApplication({ role, slug }: { role: RoleKey; slug
 
       <main className="portal-main">
         <header className="portal-topbar">
-          <button type="button" className="portal-menu-button" aria-label="Відкрити меню" onClick={() => setMenuOpen(true)}><Menu size={20} /></button>
+          <button type="button" className="portal-menu-button" aria-label="Відкрити меню" onClick={() => setMenuOpen(true)}><Menu size={24} /></button>
           <div><small>{roleInfo.label}</small><strong>{activeScreen.title}</strong></div>
           <div className="portal-topbar__actions">
-            <IconButton label="Сповіщення"><Bell size={18} /></IconButton>
+            <IconButton label="Сповіщення"><Bell size={22} /></IconButton>
             <Avatar initials={account.initials} tone="green" />
           </div>
         </header>
