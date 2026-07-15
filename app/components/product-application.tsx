@@ -116,11 +116,28 @@ export default function ProductApplication({ role, slug }: { role: RoleKey; slug
 
   useEffect(() => {
     if (role !== "tourist") return;
-    const webApp = (window as TelegramWindow).Telegram?.WebApp;
-    webApp?.ready();
-    webApp?.expand();
-    webApp?.setHeaderColor?.("#f8fbf9");
-    webApp?.setBackgroundColor?.("#f8fbf9");
+
+    let attempts = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const connectTelegram = () => {
+      const webApp = (window as TelegramWindow).Telegram?.WebApp;
+      if (!webApp && attempts < 20) {
+        attempts += 1;
+        timer = setTimeout(connectTelegram, 150);
+        return;
+      }
+
+      webApp?.ready();
+      webApp?.expand();
+      webApp?.setHeaderColor?.("#f8fbf9");
+      webApp?.setBackgroundColor?.("#f8fbf9");
+    };
+
+    connectTelegram();
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [role]);
 
   const navigate = (nextRole: RoleKey, nextSlug: string) => {

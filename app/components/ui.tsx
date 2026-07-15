@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { Children, createContext, useContext, type ReactNode } from "react";
 import {
   ArrowUpRight,
   Check,
@@ -354,10 +354,14 @@ export function Table({
           <span key={header}>{header}</span>
         ))}
       </div>
-      <div className="data-table__body">{children}</div>
+      <TableHeadersContext.Provider value={headers}>
+        <div className="data-table__body">{children}</div>
+      </TableHeadersContext.Provider>
     </div>
   );
 }
+
+const TableHeadersContext = createContext<string[]>([]);
 
 export function TableRow({
   children,
@@ -366,9 +370,15 @@ export function TableRow({
   children: ReactNode;
   columns?: string;
 }) {
+  const headers = useContext(TableHeadersContext);
+
   return (
     <div className="data-table data-table__row" style={{ gridTemplateColumns: columns }}>
-      {children}
+      {Children.map(children, (child, index) => (
+        <div className="data-table__cell" data-label={headers[index] ?? ""}>
+          {child}
+        </div>
+      ))}
     </div>
   );
 }
