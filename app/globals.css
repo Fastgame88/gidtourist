@@ -952,17 +952,28 @@ code {
   position: absolute;
   inset: auto 0 0;
   z-index: 9;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  height: 66px;
-  padding: 6px 8px 9px;
+  display: flex;
+  height: calc(66px + env(safe-area-inset-bottom));
+  padding: 6px 8px calc(9px + env(safe-area-inset-bottom));
+  overflow-x: auto;
+  overflow-y: hidden;
   border-top: 1px solid var(--line-soft);
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(12px);
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+}
+
+.tourist-bottom-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .tourist-bottom-nav button {
   display: flex;
+  min-width: 82px;
+  flex: 1 0 82px;
   align-items: center;
   justify-content: center;
   flex-direction: column;
@@ -972,6 +983,7 @@ code {
   color: var(--ink-faint);
   font-size: 12px;
   font-weight: 650;
+  scroll-snap-align: start;
 }
 
 .tourist-bottom-nav button.is-active {
