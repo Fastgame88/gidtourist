@@ -158,6 +158,14 @@ export const screens: ScreenDefinition[] = [
     role: "tourist",
   },
   {
+    id: "C14A",
+    slug: "transfer",
+    title: "Трансфер",
+    shortTitle: "Трансфер",
+    description: "Перевірені водії, популярні напрямки та допомога рецепції",
+    role: "tourist",
+  },
+  {
     id: "C14",
     slug: "emergency",
     title: "Халепа?",

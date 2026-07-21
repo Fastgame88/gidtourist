@@ -2925,3 +2925,50 @@ code {
 @media (prefers-reduced-motion: reduce) {
   *,*::before,*::after { scroll-behavior:auto !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
 }
+
+/* Tourist UX refinements */
+.tourist-home-screen { padding-top: 12px; }
+.hotel-welcome-strip { display:flex; align-items:center; gap:10px; margin-bottom:10px; padding:11px 13px; border-radius:16px; background:linear-gradient(135deg,#1b7652,#249266); color:#fff; box-shadow:var(--shadow-sm); }
+.hotel-welcome-strip > span { display:inline-flex; width:38px; height:38px; align-items:center; justify-content:center; border-radius:12px; background:rgba(255,255,255,.14); color:var(--lime-300); }
+.hotel-welcome-strip small,.hotel-welcome-strip strong { display:block; }
+.hotel-welcome-strip small { color:rgba(255,255,255,.7); font-size:10.5px; }
+.hotel-welcome-strip strong { margin-top:1px; font-size:15px; }
+.home-about-card { display:grid; grid-template-columns:74px minmax(0,1fr) 22px; align-items:center; gap:11px; width:100%; margin-top:11px; padding:9px; border:1px solid var(--line-soft); border-radius:18px; background:#fff; box-shadow:var(--shadow-sm); text-align:left; }
+.home-about-card__visual { display:flex; height:66px; align-items:center; justify-content:center; overflow:hidden; border-radius:14px; background:linear-gradient(145deg,#153e2f,#4b8b62); color:var(--lime-300); }
+.home-about-card small,.home-about-card strong,.home-about-card em { display:block; }
+.home-about-card small { color:var(--green-700); font-size:10px; font-weight:700; }
+.home-about-card strong { margin-top:2px; font-size:17px; }
+.home-about-card em { margin-top:3px; overflow:hidden; color:var(--ink-faint); font-size:10.5px; font-style:normal; text-overflow:ellipsis; white-space:nowrap; }
+.home-about-card > svg { color:var(--ink-faint); }
+.category-tile--image { grid-column:span 2; min-height:120px; background:linear-gradient(180deg,rgba(18,56,42,.08),rgba(18,56,42,.88)),linear-gradient(135deg,#bd8546,#62452d); color:#fff; }
+.category-tile--image .category-tile__photo { width:100%; height:62px; margin-bottom:4px; justify-content:flex-end; padding:10px; background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(0,0,0,.08)); color:var(--lime-300); }
+.category-tile--image small { color:rgba(255,255,255,.68); }
+.about-cover { padding-bottom:76px; }
+.about-cover-actions { position:absolute !important; right:12px; bottom:10px; left:12px; z-index:3 !important; display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+.about-cover-actions button { display:flex; min-width:0; min-height:54px; align-items:center; justify-content:center; flex-direction:column; gap:4px; padding:6px 3px; border-radius:12px; background:rgba(255,255,255,.92); color:var(--forest-900); box-shadow:0 6px 18px rgba(0,0,0,.16); }
+.about-cover-actions span { max-width:100%; overflow:hidden; font-size:9.5px; font-weight:800; text-overflow:ellipsis; white-space:nowrap; }
+.wifi-card--inline { margin-top:10px; }
+.about-tabs { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:12px; padding:4px; border-radius:13px; background:#eaf1ed; }
+.about-tabs button { min-height:37px; border-radius:10px; background:transparent; color:var(--ink-soft); font-weight:800; }
+.about-tabs button.is-active { background:#fff; color:var(--forest-900); box-shadow:var(--shadow-sm); }
+.about-content-section { margin-top:10px; }
+.visited-place-button { display:flex; align-items:center; gap:6px; margin-top:10px; padding:8px 11px; border-radius:11px; background:var(--mint-100); color:var(--green-700); font-size:12px; font-weight:800; }
+.transfer-hero { background:linear-gradient(140deg,#263f69,#486ca8); }
+.plan-setup-hero { display:flex; align-items:center; flex-direction:column; margin-top:10px; padding:26px 20px; border-radius:22px; background:linear-gradient(145deg,#103b2c,#247451); color:#fff; text-align:center; }
+.plan-setup-hero > span { display:flex; width:62px; height:62px; align-items:center; justify-content:center; margin-bottom:14px; border-radius:20px; background:rgba(204,236,88,.15); color:var(--lime-300); }
+.plan-setup-hero h1 { font-size:30px; line-height:1.05; letter-spacing:-.04em; }
+.plan-setup-hero p { margin-top:9px; color:rgba(255,255,255,.68); font-size:13px; line-height:1.5; }
+.plan-filter-card { margin-top:12px; padding:15px; border:1px solid var(--line-soft); border-radius:18px; background:#fff; box-shadow:var(--shadow-sm); }
+.plan-filter-card h2 { margin-bottom:13px; font-size:20px; }
+.plan-filter-group { margin-bottom:13px; }
+.plan-filter-group > small { display:block; margin-bottom:6px; color:var(--ink-faint); font-weight:800; }
+.plan-filter-group > div { display:flex; flex-wrap:wrap; gap:6px; }
+.editable-plan-list { display:grid; gap:8px; }
+.editable-plan-list article { display:grid; grid-template-columns:46px minmax(0,1fr) 34px; align-items:start; gap:8px; padding:11px; border:1px solid var(--line-soft); border-radius:15px; background:#fff; box-shadow:var(--shadow-sm); }
+.editable-plan-time { padding-top:2px; color:var(--green-700); font-size:12px; font-weight:900; }
+.editable-plan-list strong,.editable-plan-list small { display:block; }
+.editable-plan-list strong { font-size:13px; }
+.editable-plan-list small { margin-top:3px; color:var(--ink-faint); font-size:10.5px; }
+.visited-inline { display:flex; align-items:center; gap:4px; margin-top:8px; background:transparent; color:var(--green-700); font-size:10.5px; font-weight:800; }
+.remove-plan-item { display:flex; width:31px; height:31px; align-items:center; justify-content:center; border-radius:10px; background:var(--red-100); color:var(--red-600); }
+@media (max-width:430px){.category-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.category-tile--image{grid-column:span 2;}.tourist-bottom-nav button span{font-size:9px;}}

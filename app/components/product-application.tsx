@@ -89,6 +89,7 @@ function TouristBottomNav({
     ["home", "Головна", Home],
     ["plan", "Мій план", BookOpenCheck],
     ["wallet", "Бонуси", WalletCards],
+    ["qr", "QR-код", QrCode],
     ["profile", "Профіль", UserRound],
   ] as const;
 
@@ -117,6 +118,11 @@ export default function ProductApplication({ role, slug }: { role: RoleKey; slug
   useEffect(() => {
     if (role !== "tourist") return;
 
+    if (slug === "welcome") {
+      router.replace("/tourist/home");
+      return;
+    }
+
     let attempts = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
 
@@ -138,7 +144,7 @@ export default function ProductApplication({ role, slug }: { role: RoleKey; slug
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [role]);
+  }, [role, router, slug]);
 
   const navigate = (nextRole: RoleKey, nextSlug: string) => {
     const screen = getScreen(nextRole, nextSlug);
