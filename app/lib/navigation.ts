@@ -181,6 +181,30 @@ export const screens: ScreenDefinition[] = [
     description: "Регіональний канал, підтримка та згода на повідомлення",
     role: "tourist",
   },
+  {
+    id: "C17",
+    slug: "shop",
+    title: "Де купити",
+    shortTitle: "Де купити",
+    description: "Магазини, аптеки, сувеніри та корисні товари поруч",
+    role: "tourist",
+  },
+  {
+    id: "C18",
+    slug: "entertainment",
+    title: "Розваги",
+    shortTitle: "Розваги",
+    description: "Джип-тури, рафтинг, зіплайн та активності в регіоні",
+    role: "tourist",
+  },
+  {
+    id: "C19",
+    slug: "transfer",
+    title: "Трансфер",
+    shortTitle: "Трансфер",
+    description: "Таксі, міжміські трансфери та оренда автомобілів",
+    role: "tourist",
+  },
 
   {
     id: "P01",

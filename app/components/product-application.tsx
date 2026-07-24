@@ -195,9 +195,10 @@ export default function ProductApplication({ role, slug }: { role: RoleKey; slug
   };
 
   if (role === "tourist") {
+    const isHomeScreen = slug === "home" || slug === "welcome";
     return (
       <main className="tourist-app-shell">
-        <div className={`tourist-app-frame ${slug === "welcome" ? "tourist-app-frame--welcome" : ""}`}>
+        <div className={`tourist-app-frame ${slug === "welcome" ? "tourist-app-frame--welcome" : ""} ${isHomeScreen ? "tourist-app-frame--home" : ""}`}>
           <div className="phone-content">
             <TouristScreen slug={activeScreen.slug} navigate={navigate} />
           </div>

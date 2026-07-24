@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import {
+  Ambulance,
   BadgeCheck,
   BedDouble,
   Bike,
   BookOpenCheck,
+  BusFront,
   CalendarDays,
   CarFront,
+  CarTaxiFront,
   Check,
   ChevronRight,
   CircleHelp,
@@ -15,6 +18,7 @@ import {
   Copy,
   Cross,
   ExternalLink,
+  Flame,
   Gift,
   Heart,
   Hotel,
@@ -30,6 +34,7 @@ import {
   Navigation,
   Pencil,
   Phone,
+  Pill,
   QrCode,
   ReceiptText,
   RefreshCcw,
@@ -39,6 +44,7 @@ import {
   ShoppingBag,
   Sparkles,
   Star,
+  Stethoscope,
   SunMedium,
   TentTree,
   UserPlus,
@@ -238,18 +244,18 @@ const categories: Array<{
   { title: "Що поруч", note: "Памʼятки, сервіси та корисні місця", slug: "nearby", tone: "green", icon: MapPin },
   { title: "Де поїсти", note: "Кафе, ресторани та колиби", slug: "catalog", tone: "orange", icon: Utensils },
   { title: "Де відпочити", note: "Готелі, садиби й апартаменти", slug: "available", tone: "blue", icon: BedDouble },
-  { title: "Розваги", note: "Активності та цікаві враження", slug: "catalog", tone: "purple", icon: Bike },
-  { title: "Трансфер", note: "Таксі, трансфери та оренда авто", slug: "catalog", tone: "teal", icon: CarFront },
+  { title: "Розваги", note: "Активності та цікаві враження", slug: "entertainment", tone: "purple", icon: Bike },
+  { title: "Трансфер", note: "Таксі, трансфери та оренда авто", slug: "transfer", tone: "teal", icon: CarFront },
   { title: "Халепа?", note: "Допомога, аптеки, поліція, лікарі", slug: "emergency", tone: "red", icon: LifeBuoy },
-  { title: "Де купити", note: "Магазини, сувеніри та місцеві товари", slug: "catalog", tone: "yellow", icon: ShoppingBag },
+  { title: "Де купити", note: "Магазини, сувеніри та місцеві товари", slug: "shop", tone: "yellow", icon: ShoppingBag },
 ];
 
 function HomeScreen({ navigate }: { navigate: Navigate }) {
   return (
-    <div className="tourist-screen gt-screen">
+    <div className="tourist-screen gt-screen gt-home-screen">
       <section className="gt-home-hero">
         <div className="gt-home-hero__copy">
-          <MapPin size={35} fill="currentColor" />
+          <span className="gt-hero-pin"><MapPin size={34} fill="currentColor" /></span>
           <p>Вітаємо в</p>
           <h1>Татарові</h1>
           <span>Раді, що ви з нами!</span>
@@ -364,7 +370,7 @@ function AboutScreen() {
 
 function CatalogScreen({ navigate }: { navigate: Navigate }) {
   return (
-    <div className="tourist-screen gt-screen">
+    <div className="tourist-screen gt-screen gt-large-type">
       <main className="gt-content">
         <CategoryHeader icon={Utensils} title="Де поїсти" subtitle="Кафе, ресторани та заклади" tone="orange" />
         <SearchBar placeholder="Пошук закладу, кухні або страви" />
@@ -384,7 +390,7 @@ function CatalogScreen({ navigate }: { navigate: Navigate }) {
 
 function NearbyScreen({ navigate }: { navigate: Navigate }) {
   return (
-    <div className="tourist-screen gt-screen">
+    <div className="tourist-screen gt-screen gt-large-type">
       <main className="gt-content">
         <CategoryHeader icon={MapPin} title="Що поруч" subtitle="Корисні місця в радіусі 500 м" tone="green" />
         <Chips items={["Усі", "Їжа", "Проживання", "Сервіси", "Розваги"]} />
@@ -445,7 +451,7 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
 
 function AvailableScreen({ navigate }: { navigate: Navigate }) {
   return (
-    <div className="tourist-screen gt-screen">
+    <div className="tourist-screen gt-screen gt-large-type">
       <main className="gt-content">
         <CategoryHeader icon={BedDouble} title="Де відпочити" subtitle="Місця для релаксу та відпочинку" tone="purple" />
         <SearchBar placeholder="Пошук відпочинку та розваг" />
@@ -457,6 +463,97 @@ function AvailableScreen({ navigate }: { navigate: Navigate }) {
           <PlaceRow photo="sauna" title="Сауна в «Карпатському затишку»" subtitle="Сауна" rating="4.7 (86)" distance="350 м" walk="4 хв" tags={["Сауна", "Віники", "Душ"]} />
           <PlaceRow photo="pool" title="Басейн «Aqua Relax»" subtitle="Басейн" rating="4.6 (93)" distance="450 м" walk="6 хв" tags={["Басейн", "Шезлонги", "Бар"]} />
           <PlaceRow photo="jeep" title="Екскурсія «Озеро Несамовите»" subtitle="Екскурсія по горах" rating="4.8 (74)" distance="1,2 км" walk="15 хв" tags={["Екскурсії", "Похід", "Гід"]} />
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function ShopScreen({ navigate }: { navigate: Navigate }) {
+  return (
+    <div className="tourist-screen gt-screen gt-large-type">
+      <main className="gt-content">
+        <CategoryHeader icon={ShoppingBag} title="Де купити" subtitle="Магазини та корисні покупки" tone="blue" />
+        <SearchBar placeholder="Пошук магазину або товарів" />
+        <Chips items={["Усі", "Продовольчі", "Промтовари", "Сувеніри"]} />
+        <MapStrip />
+        <SectionTitle title="Магазини поруч" action="Переглянути всі" />
+        <div className="gt-place-list">
+          <PlaceRow photo="store" title="Магазин продуктів «Смак»" subtitle="Продукти харчування" rating="4.8 (126)" distance="120 м" walk="2 хв" tags={["Продукти", "Хліб", "Молочні вироби"]} />
+          <PlaceRow photo="hotel" title="Сувеніри «Карпати»" subtitle="Сувеніри та подарунки" rating="4.7 (89)" distance="180 м" walk="3 хв" tags={["Сувеніри", "Подарунки", "Кераміка"]} />
+          <PlaceRow photo="pharmacy" title="Аптека «Здоровʼя»" subtitle="Ліки та товари для здоровʼя" rating="4.6 (72)" distance="220 м" walk="4 хв" tags={["Ліки", "Вітаміни", "Косметика"]} />
+          <PlaceRow photo="store" title="Госптовари «Все для дому»" subtitle="Господарські товари" rating="4.5 (51)" distance="260 м" walk="4 хв" tags={["Побутова хімія", "Інструменти", "Посуд"]} onClick={() => navigate("tourist", "place")} />
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function EntertainmentScreen({ navigate }: { navigate: Navigate }) {
+  return (
+    <div className="tourist-screen gt-screen gt-large-type">
+      <main className="gt-content">
+        <CategoryHeader icon={Bike} title="Розваги" subtitle="Активності та яскраві враження" tone="red" />
+        <SearchBar placeholder="Пошук розваг" />
+        <Chips items={["Усі", "Джипи", "Квадроцикли", "Рафтинг", "Зіплайн", "Для дітей", "Коні"]} />
+        <MapStrip />
+        <SectionTitle title="Активні розваги поруч" action="Переглянути всі" />
+        <div className="gt-place-list">
+          <PlaceRow photo="jeep" title="Джип-тур Гірськими стежками" subtitle="Маршрут на полонини та водоспади" rating="4.9 (128)" distance="2,3 км" walk="5 хв" tags={["Джипи", "Природа", "Екстрим"]} onClick={() => navigate("tourist", "booking")} />
+          <PlaceRow photo="jeep" title="Квадроцикли в Карпатах" subtitle="Лісові маршрути та драйв" rating="4.8 (96)" distance="3,1 км" walk="6 хв" tags={["Квадроцикли", "Екстрим", "Група"]} />
+          <PlaceRow photo="pool" title="Рафтинг на Пруті" subtitle="Сплави різної складності" rating="4.7 (74)" distance="4,0 км" walk="8 хв" tags={["Рафтинг", "Вода", "Пригоди"]} />
+          <PlaceRow photo="van" title="Зіплайн над карпатським лісом" subtitle="Політ, що захоплює дух" rating="4.9 (58)" distance="4,6 км" walk="9 хв" tags={["Зіплайн", "Екстрим", "Панорами"]} />
+        </div>
+      </main>
+    </div>
+  );
+}
+
+const transferPartners: Array<{
+  photo: PhotoName;
+  title: string;
+  note: string;
+  rating: string;
+  trips: string;
+  price: string;
+  action: string;
+}> = [
+  { photo: "van", title: "Uklon Transfer", note: "Комфортні поїздки по місту та між містами", rating: "4.8", trips: "5 хв", price: "Від 250 ₴", action: "Замовити" },
+  { photo: "van", title: "Visit Carpathians", note: "Трансфери в Карпати та по Західній Україні", rating: "4.9", trips: "10 хв", price: "Від 650 ₴", action: "Замовити" },
+  { photo: "van", title: "Local Taxi", note: "Таксі по місту та районах. Подача швидко", rating: "4.7", trips: "3 хв", price: "Від 120 ₴", action: "Замовити" },
+  { photo: "jeep", title: "Carpathian Drive", note: "Оренда авто без застави та прихованих платежів", rating: "4.8", trips: "15 хв", price: "Від 900 ₴/доба", action: "Деталі" },
+];
+
+function TransferScreen() {
+  return (
+    <div className="tourist-screen gt-screen gt-transfer-screen gt-large-type">
+      <section className="gt-transfer-hero">
+        <span><CarFront size={35} /></span>
+        <h1>Трансфер</h1>
+        <p>Таксі, трансфери та оренда авто</p>
+        <div className="gt-transfer-kinds">
+          <button type="button"><CarTaxiFront size={27} /><strong>Таксі</strong><small>Швидко та зручно</small></button>
+          <button type="button"><BusFront size={27} /><strong>Трансфер</strong><small>По місту та між містами</small></button>
+          <button type="button"><CarFront size={27} /><strong>Оренда авто</strong><small>Обирай авто та вирушай</small></button>
+        </div>
+      </section>
+      <main className="gt-content gt-transfer-content">
+        <SectionTitle title="Наші партнери" />
+        <div className="gt-transfer-list">
+          {transferPartners.map((partner) => (
+            <article key={partner.title}>
+              <Thumb name={partner.photo} />
+              <div>
+                <strong>{partner.title}</strong>
+                <p>{partner.note}</p>
+                <small><Star size={14} fill="currentColor" /> {partner.rating} · {partner.trips}</small>
+              </div>
+              <span>
+                <button type="button">{partner.action}{partner.action === "Деталі" ? <ChevronRight size={16} /> : null}</button>
+                <small>{partner.price}</small>
+              </span>
+            </article>
+          ))}
         </div>
       </main>
     </div>
@@ -537,7 +634,7 @@ function PlanScreen({ navigate }: { navigate: Navigate }) {
 
 function WalletScreen({ navigate }: { navigate: Navigate }) {
   return (
-    <div className="tourist-screen gt-screen">
+    <div className="tourist-screen gt-screen gt-wallet-screen gt-large-type">
       <main className="gt-content">
         <h1 className="gt-simple-title">Бонуси</h1>
         <section className="gt-bonus-card">
@@ -654,15 +751,16 @@ function ReviewScreen() {
 
 const emergencyContacts = [
   { icon: Cross, title: "Єдиний номер допомоги", note: "Поліція · швидка · рятувальники", phone: "112", tone: "red" },
-  { icon: Cross, title: "Швидка допомога", note: "Цілодобово", phone: "103", tone: "red" },
+  { icon: Ambulance, title: "Швидка допомога", note: "Цілодобово", phone: "103", tone: "red" },
   { icon: ShieldCheck, title: "Поліція", note: "Допомога та правопорядок", phone: "102", tone: "blue" },
-  { icon: LifeBuoy, title: "ДСНС / рятувальники", note: "Пожежі · аварії · надзвичайні ситуації", phone: "101", tone: "orange" },
+  { icon: Flame, title: "ДСНС / рятувальники", note: "Пожежі · аварії · надзвичайні ситуації", phone: "101", tone: "orange" },
   { icon: MountainSnow, title: "Гірські рятувальники", note: "Яремче, найближчий пост", phone: "+380 67 342 18 68", tone: "orange" },
 ];
 
 function EmergencyScreen() {
   return (
-    <div className="tourist-screen gt-screen gt-emergency">
+    <div className="tourist-screen gt-screen gt-emergency gt-large-type">
+      <div className="gt-emergency-mountains" aria-hidden="true" />
       <main className="gt-content">
         <CategoryHeader icon={LifeBuoy} title="Халепа?" subtitle="Швидка допомога та корисні контакти" tone="red" />
         <section className="gt-help-hero">
@@ -682,8 +780,8 @@ function EmergencyScreen() {
         </div>
         <SectionTitle title="Корисні сервіси" />
         <div className="gt-service-mini-grid">
-          <button type="button"><span className="gt-tone--green"><UserRound size={21} /></span><strong>Приватний лікар</strong><small>Консультація</small></button>
-          <button type="button"><span className="gt-tone--green"><Cross size={21} /></span><strong>Аптека</strong><small>Пошук аптек</small></button>
+          <button type="button"><span className="gt-tone--green"><Stethoscope size={21} /></span><strong>Приватний лікар</strong><small>Консультація</small></button>
+          <button type="button"><span className="gt-tone--green"><Pill size={21} /></span><strong>Аптека</strong><small>Пошук аптек</small></button>
           <button type="button"><span className="gt-tone--purple"><Wrench size={21} /></span><strong>СТО</strong><small>Автосервіси</small></button>
           <button type="button"><span className="gt-tone--orange"><CarFront size={21} /></span><strong>Евакуатор</strong><small>Допомога</small></button>
         </div>
@@ -695,7 +793,7 @@ function EmergencyScreen() {
 
 function ProfileScreen({ navigate }: { navigate: Navigate }) {
   return (
-    <div className="tourist-screen gt-screen">
+    <div className="tourist-screen gt-screen gt-profile-screen gt-large-type">
       <main className="gt-content">
         <h1 className="gt-simple-title">Профіль</h1>
         <section className="gt-profile-card">
@@ -762,6 +860,12 @@ export function TouristScreen({
       return <AboutScreen />;
     case "catalog":
       return <CatalogScreen navigate={navigate} />;
+    case "shop":
+      return <ShopScreen navigate={navigate} />;
+    case "entertainment":
+      return <EntertainmentScreen navigate={navigate} />;
+    case "transfer":
+      return <TransferScreen />;
     case "nearby":
       return <NearbyScreen navigate={navigate} />;
     case "place":
