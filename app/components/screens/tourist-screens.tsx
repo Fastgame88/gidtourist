@@ -37,7 +37,6 @@ import {
   LogOut,
   MapPin,
   MessageCircle,
-  Minus,
   MountainSnow,
   Navigation,
   PawPrint,
@@ -207,25 +206,20 @@ function WelcomeScreen({ navigate }: { navigate: Navigate }) {
 }
 
 const categories = [
-  { title: "Де поїсти", note: "42 місця", icon: Utensils, tone: "orange", slug: "catalog", image: true },
+  { title: "Про заклад", note: "Wi‑Fi, правила", icon: Hotel, tone: "dark", slug: "about" },
+  { title: "Де поїсти", note: "42 місця", icon: Utensils, tone: "orange", slug: "catalog" },
   { title: "Де купити", note: "Магазини", icon: ShoppingBag, tone: "blue", slug: "catalog" },
   { title: "Де відпочити", note: "Чани, SPA", icon: Waves, tone: "green", slug: "available" },
   { title: "Розваги", note: "Для всіх", icon: Bike, tone: "lime", slug: "catalog" },
   { title: "Що поруч", note: "До 500 м", icon: MapPin, tone: "teal", slug: "nearby" },
-  { title: "Трансфер", note: "Таксі, авто", icon: CarFront, tone: "purple", slug: "transfer" },
+  { title: "Трансфер", note: "Таксі, авто", icon: CarFront, tone: "purple", slug: "catalog" },
   { title: "Халепа?", note: "Допомога", icon: LifeBuoy, tone: "red", slug: "emergency" },
 ];
 
 function HomeScreen({ navigate }: { navigate: Navigate }) {
   return (
-    <div className="tourist-screen tourist-home-screen">
-      <section className="hotel-welcome-strip">
-        <span><Hotel size={22} /></span>
-        <div>
-          <small>Вітаємо в Татарові</small>
-          <strong>Готель «Коруна»</strong>
-        </div>
-      </section>
+    <div className="tourist-screen">
+      <MobileTopBar />
       <section className="mobile-hero-card">
         <div>
           <StatusBadge tone="lime">Середа · +18°C</StatusBadge>
@@ -237,16 +231,7 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
           <span>18°</span>
         </div>
       </section>
-
-      <button type="button" className="home-about-card" onClick={() => navigate("tourist", "about")}>
-        <span className="home-about-card__visual"><Hotel size={31} /></span>
-        <span>
-          <small>Ваше місце проживання</small>
-          <strong>Про заклад</strong>
-          <em>Wi‑Fi, графік, послуги та рецепція</em>
-        </span>
-        <ChevronRight size={22} />
-      </button>
+      <SearchField placeholder="Знайти місце, послугу або маршрут" />
 
       <section className="mobile-section">
         <div className="mobile-section__heading">
@@ -254,6 +239,7 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
             <p className="eyebrow">Оберіть напрям</p>
             <h2>Що вас цікавить?</h2>
           </div>
+          <button type="button">Усі</button>
         </div>
         <div className="category-grid">
           {categories.map((category) => {
@@ -261,11 +247,13 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
             return (
               <button
                 type="button"
-                className={`category-tile category-tile--${category.tone} ${category.image ? "category-tile--image" : ""}`}
+                className={`category-tile category-tile--${category.tone}`}
                 key={category.title}
                 onClick={() => navigate("tourist", category.slug)}
               >
-                {category.image ? <span className="category-tile__photo"><Utensils size={28} /></span> : <span><Icon size={26} /></span>}
+                <span>
+                  <Icon size={26} />
+                </span>
                 <strong>{category.title}</strong>
                 <small>{category.note}</small>
               </button>
@@ -273,54 +261,103 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
           })}
         </div>
       </section>
+
+      <section className="mobile-section">
+        <div className="mobile-section__heading">
+          <div>
+            <p className="eyebrow">Перевірено редакцією</p>
+            <h2>Рекомендуємо поруч</h2>
+          </div>
+          <button type="button" onClick={() => navigate("tourist", "catalog")}>
+            Дивитися
+          </button>
+        </div>
+        <button
+          type="button"
+          className="featured-place"
+          onClick={() => navigate("tourist", "place")}
+        >
+          <div className="featured-place__art featured-place__art--restaurant">
+            <span className="place-badge">
+              <BadgeCheck size={16} /> Ми рекомендуємо
+            </span>
+            <Heart size={22} />
+          </div>
+          <div className="featured-place__copy">
+            <div>
+              <strong>Грибова хата</strong>
+              <span>
+                <Star size={16} fill="currentColor" /> 4.9 · 328 відгуків
+              </span>
+            </div>
+            <p>Українська кухня · 1,2 км</p>
+            <StatusBadge tone="green" dot>
+              Відкрито до 22:00
+            </StatusBadge>
+          </div>
+        </button>
+      </section>
     </div>
   );
 }
 
 function AboutScreen() {
-  const [showWifi, setShowWifi] = useState(false);
-  const [infoTab, setInfoTab] = useState<"services" | "information">("services");
   return (
     <div className="tourist-screen">
       <MobileTopBar title="Про заклад" subtitle="Готель «Коруна»" back />
       <section className="about-cover">
-        <div className="about-cover__mountains" aria-hidden="true"><span /><span /><span /></div>
+        <div className="about-cover__mountains" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
         <StatusBadge tone="lime">Ваше місце проживання</StatusBadge>
         <h1>Готель «Коруна»</h1>
-        <p><MapPin size={17} /> Татарів · 0 м від вас</p>
-        <div className="about-cover-actions">
-          <button type="button" onClick={() => setShowWifi((value) => !value)}><Wifi size={21} /><span>Wi‑Fi</span></button>
-          <button type="button" onClick={() => setInfoTab("information")}><Info size={21} /><span>Інформація</span></button>
-          <button type="button"><Phone size={21} /><span>Рецепція</span></button>
-          <button type="button" onClick={() => setInfoTab("information")}><Clock3 size={21} /><span>Графік</span></button>
+        <p>
+          <MapPin size={17} /> Татарів · 0 м від вас
+        </p>
+      </section>
+      <div className="quick-info-grid">
+        <Card>
+          <Clock3 size={23} />
+          <span>Check-in</span>
+          <strong>з 14:00</strong>
+        </Card>
+        <Card>
+          <Clock3 size={23} />
+          <span>Check-out</span>
+          <strong>до 11:00</strong>
+        </Card>
+        <Card>
+          <Wifi size={23} />
+          <span>Wi‑Fi</span>
+          <strong>Koruna_Guest</strong>
+        </Card>
+      </div>
+      <Card className="wifi-card" tone="lime">
+        <span>
+          <Wifi size={28} />
+        </span>
+        <div>
+          <small>Пароль до Wi‑Fi</small>
+          <strong>KORUNA2026</strong>
+        </div>
+        <button type="button" aria-label="Копіювати пароль">
+          <Copy size={22} />
+        </button>
+      </Card>
+      <section className="mobile-section">
+        <div className="mobile-section__heading">
+          <h2>Послуги та інформація</h2>
+        </div>
+        <div className="list-card">
+          <RowLink icon={<Coffee size={22} />} title="Сніданок" subtitle="08:00–11:00 · ресторан, 1 поверх" />
+          <RowLink icon={<Waves size={22} />} title="Басейн і SPA" subtitle="09:00–21:00 · за попереднім записом" />
+          <RowLink icon={<BedDouble size={22} />} title="Замовити прибирання" subtitle="Заявка до адміністратора" />
+          <RowLink icon={<Info size={22} />} title="Правила проживання" subtitle="Тиша, паркування, домашні тварини" />
         </div>
       </section>
-      {showWifi ? (
-        <Card className="wifi-card wifi-card--inline" tone="lime">
-          <span><Wifi size={28} /></span>
-          <div><small>Мережа: Koruna_Guest</small><strong>KORUNA2026</strong></div>
-          <button type="button" aria-label="Копіювати пароль"><Copy size={22} /></button>
-        </Card>
-      ) : null}
-      <div className="about-tabs">
-        <button type="button" className={infoTab === "services" ? "is-active" : ""} onClick={() => setInfoTab("services")}>Послуги</button>
-        <button type="button" className={infoTab === "information" ? "is-active" : ""} onClick={() => setInfoTab("information")}>Інформація</button>
-      </div>
-      <section className="mobile-section about-content-section">
-        {infoTab === "services" ? (
-          <div className="list-card">
-            <RowLink icon={<Coffee size={22} />} title="Сніданок" subtitle="08:00–11:00 · ресторан, 1 поверх" />
-            <RowLink icon={<Waves size={22} />} title="Басейн і SPA" subtitle="09:00–21:00 · за попереднім записом" />
-            <RowLink icon={<BedDouble size={22} />} title="Замовити прибирання" subtitle="Заявка до адміністратора" />
-          </div>
-        ) : (
-          <div className="list-card">
-            <RowLink icon={<Clock3 size={22} />} title="Графік роботи" subtitle="Щодня 08:00–22:00 · зараз відкрито" />
-            <RowLink icon={<Info size={22} />} title="Правила проживання" subtitle="Тиша, паркування, домашні тварини" />
-            <RowLink icon={<Phone size={22} />} title="Рецепція" subtitle="Цілодобово · внутрішній номер 100" />
-          </div>
-        )}
-      </section>
+      <SecondaryButton icon={<Phone size={20} />}>Зателефонувати на рецепцію</SecondaryButton>
     </div>
   );
 }
@@ -350,7 +387,7 @@ function PlaceListCard({
       <span className="place-list-card__copy">
         <span className="place-list-card__topline">
           <strong>{title}</strong>
-          <CheckCircle2 size={20} />
+          <Heart size={20} />
         </span>
         <small>{meta}</small>
         <span className="place-list-card__meta">
@@ -504,8 +541,8 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
             <IconButton label="Поділитися">
               <Send size={22} />
             </IconButton>
-            <IconButton label="Я тут був">
-              <CheckCircle2 size={22} />
+            <IconButton label="Зберегти">
+              <Heart size={22} />
             </IconButton>
           </div>
         </div>
@@ -557,8 +594,8 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
         <button type="button" onClick={() => navigate("tourist", "booking")}>
           <CalendarDays size={23} /> <span>Бронювати</span>
         </button>
-        <button type="button" onClick={() => navigate("tourist", "plan")}>
-          <Plus size={23} /> <span>У план</span>
+        <button type="button">
+          <MessageCircle size={23} /> <span>Написати</span>
         </button>
       </div>
       <section className="mobile-section">
@@ -570,7 +607,6 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
           Автентична карпатська кухня, страви з локальних продуктів і тераса з
           видом на гори. Інформацію перевірено 12 липня 2026 року.
         </p>
-        <button type="button" className="visited-place-button"><CheckCircle2 size={20} /> Я відвідував це місце</button>
         <div className="attribute-grid">
           <span>
             <UsersRound size={19} /> З дітьми
@@ -764,47 +800,82 @@ function BookingScreen({ navigate }: { navigate: Navigate }) {
 }
 
 function PlanScreen({ navigate }: { navigate: Navigate }) {
-  const [started, setStarted] = useState(false);
-  const [reminders, setReminders] = useState(true);
-  const [places, setPlaces] = useState([
-    ["09:00", "Сніданок у готелі", "Готель «Коруна» · 60 хв"],
-    ["10:30", "Водоспад Женецький Гук", "18 км · маршрут 2,5 години"],
-    ["14:00", "Обід у «Грибовій хаті»", "Заброньовано на 2 гостей"],
-    ["18:00", "Карпатський чан №1", "Коруна SPA · 2 години"],
-  ]);
-
-  if (!started) {
-    return (
-      <div className="tourist-screen">
-        <MobileTopBar title="Мій план" subtitle="Персональний маршрут" />
-        <section className="plan-setup-hero"><span><Sparkles size={34} /></span><h1>Ми сплануємо ваш відпочинок</h1><p>Оберіть формат, тривалість і побажання — маршрут можна змінювати у будь-який момент.</p></section>
-        <section className="plan-filter-card">
-          <h2>Який відпочинок бажаєте?</h2>
-          <div className="plan-filter-group"><small>Тривалість</small><div><Tag active>1 день</Tag><Tag>2–3 дні</Tag><Tag>5 днів</Tag></div></div>
-          <div className="plan-filter-group"><small>Формат</small><div><Tag active>Спокійний</Tag><Tag>Активний</Tag><Tag>З дітьми</Tag></div></div>
-          <div className="plan-filter-group"><small>Транспорт</small><div><Tag active>Авто</Tag><Tag>Пішки</Tag><Tag>Трансфер</Tag></div></div>
-          <Toggle checked={reminders} label="Нагадувати про наступне місце" />
-        </section>
-        <PrimaryButton onClick={() => setStarted(true)}>Створити мій план</PrimaryButton>
-      </div>
-    );
-  }
-
   return (
     <div className="tourist-screen">
       <MobileTopBar title="Мій план" subtitle="Середа, 15 липня" />
-      <section className="plan-hero"><div><p className="eyebrow">Ваш день у Карпатах</p><h1>Спокійний день із краєвидами</h1><p>{places.length} місця · приблизно 8 годин</p></div><div className="plan-weather"><SunMedium size={29} /><strong>18°</strong><span>без опадів</span></div></section>
-      <div className="plan-pills"><StatusBadge tone="green"><CarFront size={16} /> На авто</StatusBadge><StatusBadge tone="lime"><Bell size={16} /> Нагадування</StatusBadge></div>
-      <section className="mobile-section">
-        <div className="mobile-section__heading"><div><p className="eyebrow">Сьогодні</p><h2>План по часу</h2></div><button type="button" onClick={() => setStarted(false)}>Фільтри</button></div>
-        <div className="editable-plan-list">
-          {places.map(([time, title, description], index) => (
-            <article key={`${time}-${title}`}><span className="editable-plan-time">{time}</span><div><strong>{title}</strong><small>{description}</small><button type="button" className="visited-inline"><CheckCircle2 size={16} /> Я тут був</button></div><button type="button" className="remove-plan-item" aria-label="Прибрати з плану" onClick={() => setPlaces((items) => items.filter((_, itemIndex) => itemIndex !== index))}><Minus size={19} /></button></article>
-          ))}
+      <section className="plan-hero">
+        <div>
+          <p className="eyebrow">Ваш день у Карпатах</p>
+          <h1>Спокійний день із краєвидами</h1>
+          <p>4 місця · 28 км · приблизно 8 годин</p>
+        </div>
+        <div className="plan-weather">
+          <SunMedium size={29} />
+          <strong>18°</strong>
+          <span>без опадів</span>
         </div>
       </section>
-      <Card tone="lime" className="plan-suggestion"><span><Sparkles size={24} /></span><div><strong>Маєте ще 1,5 години</strong><p>Додайте оглядовий майданчик дорогою до ресторану.</p></div><Plus size={22} /></Card>
-      <SecondaryButton onClick={() => navigate("tourist", "catalog")} icon={<Plus size={20} />}>Додати місце до плану</SecondaryButton>
+      <div className="plan-pills">
+        <StatusBadge tone="green">
+          <CarFront size={16} /> На авто
+        </StatusBadge>
+        <StatusBadge tone="lime">
+          <UsersRound size={16} /> Для двох
+        </StatusBadge>
+        <StatusBadge tone="blue">Середній бюджет</StatusBadge>
+      </div>
+      <section className="mobile-section">
+        <div className="mobile-section__heading">
+          <div>
+            <p className="eyebrow">Сьогодні</p>
+            <h2>План по часу</h2>
+          </div>
+          <button type="button">Редагувати</button>
+        </div>
+        <div className="timeline">
+          <TimelineItem
+            time="09:00"
+            title="Сніданок у готелі"
+            description="Готель «Коруна» · 60 хв"
+            state="done"
+          />
+          <TimelineItem
+            time="10:30"
+            title="Водоспад Женецький Гук"
+            description="18 км · маршрут 2,5 години"
+            state="active"
+          >
+            <button type="button" className="timeline-action">
+              <Navigation size={17} /> Відкрити маршрут
+            </button>
+          </TimelineItem>
+          <TimelineItem
+            time="14:00"
+            title="Обід у «Грибовій хаті»"
+            description="Заброньовано на 2 гостей"
+            state="upcoming"
+          />
+          <TimelineItem
+            time="18:00"
+            title="Карпатський чан №1"
+            description="Коруна SPA · 2 години"
+            state="upcoming"
+          />
+        </div>
+      </section>
+      <Card tone="lime" className="plan-suggestion">
+        <span>
+          <Sparkles size={24} />
+        </span>
+        <div>
+          <strong>Маєте ще 1,5 години</strong>
+          <p>Додайте оглядовий майданчик дорогою до ресторану.</p>
+        </div>
+        <Plus size={22} />
+      </Card>
+      <SecondaryButton onClick={() => navigate("tourist", "catalog")} icon={<RefreshCcw size={20} />}>
+        Змінити одне місце
+      </SecondaryButton>
     </div>
   );
 }
@@ -1095,26 +1166,6 @@ function ReviewScreen() {
   );
 }
 
-function TransferScreen() {
-  return (
-    <div className="tourist-screen emergency-screen transfer-screen">
-      <MobileTopBar title="Трансфер" subtitle="Поїздки та таксі" back />
-      <section className="emergency-hero transfer-hero">
-        <span><CarFront size={35} /></span>
-        <div><p className="eyebrow">Допоможемо дістатися</p><h1>Трансфер без зайвих дзвінків</h1><p>Оберіть напрям і зв’яжіться з перевіреним водієм або рецепцією.</p></div>
-      </section>
-      <section className="mobile-section">
-        <div className="mobile-section__heading"><h2>Популярні напрямки</h2></div>
-        <div className="emergency-list">
-          <button type="button"><span className="emergency-icon emergency-icon--blue"><CarFront size={21} /></span><div><strong>Буковель</strong><small>від 35 хв · попереднє замовлення</small></div><span className="emergency-value">Замовити</span></button>
-          <button type="button"><span className="emergency-icon emergency-icon--green"><Navigation size={21} /></span><div><strong>Вокзал Татарів</strong><small>зустріч або трансфер до готелю</small></div><span className="emergency-value">Замовити</span></button>
-          <button type="button"><span className="emergency-icon emergency-icon--orange"><Phone size={21} /></span><div><strong>Рецепція готелю</strong><small>допоможе підібрати авто</small></div><span className="emergency-value">Подзвонити</span></button>
-        </div>
-      </section>
-    </div>
-  );
-}
-
 function EmergencyScreen() {
   const contacts = [
     { title: "Єдиний номер допомоги", subtitle: "Поліція · швидка · рятувальники", value: "112", icon: Cross, tone: "red" as const },
@@ -1338,8 +1389,6 @@ export function TouristScreen({
       return <PurchaseConfirmationScreen navigate={navigate} />;
     case "review":
       return <ReviewScreen />;
-    case "transfer":
-      return <TransferScreen />;
     case "emergency":
       return <EmergencyScreen />;
     case "profile":

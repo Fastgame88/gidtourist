@@ -536,40 +536,6 @@ function PlaceEditorScreen() {
           })}
         </Card>
         <div className="editor-content">
-          {tab === "Графік" ? (
-            <Card>
-              <CardHeader title="Графік роботи" subtitle="Турист бачить актуальний статус відкрито / зачинено" />
-              <div className="editor-form-grid">
-                <label className="text-field"><span>Відкриття</span><input type="time" defaultValue="08:00" /></label>
-                <label className="text-field"><span>Закриття</span><input type="time" defaultValue="22:00" /></label>
-                <label className="text-field text-field--full"><span>Примітка до графіка</span><input defaultValue="Рецепція працює цілодобово" /></label>
-              </div>
-              <div className="toggle-grid"><Toggle checked label="Заклад зараз відкритий" /><Toggle checked={false} label="Тимчасово зачинити заклад" /></div>
-            </Card>
-          ) : null}
-          {tab === "Послуги" ? (
-            <Card>
-              <CardHeader title="Послуги закладу" subtitle="Заповнюються окремо від довідкової інформації" />
-              <div className="editor-form-grid">
-                <label className="text-field"><span>Назва послуги</span><input defaultValue="Сніданок" /></label>
-                <label className="text-field"><span>Час надання</span><input defaultValue="08:00–11:00" /></label>
-                <label className="text-field text-field--full"><span>Опис послуги</span><textarea defaultValue="Ресторан, 1 поверх. Входить у вартість окремих тарифів." /></label>
-                <label className="text-field"><span>Назва послуги</span><input defaultValue="Басейн і SPA" /></label>
-                <label className="text-field"><span>Час надання</span><input defaultValue="09:00–21:00" /></label>
-              </div>
-              <PrimaryButton icon={<Plus size={20} />}>Додати послугу</PrimaryButton>
-            </Card>
-          ) : null}
-          {tab === "Основне" ? (
-            <Card>
-              <CardHeader title="Інформація про заклад" subtitle="Окремий блок для правил, Wi‑Fi та рецепції" />
-              <div className="editor-form-grid">
-                <label className="text-field"><span>Wi‑Fi мережа</span><input defaultValue="Koruna_Guest" /></label>
-                <label className="text-field"><span>Пароль Wi‑Fi</span><input defaultValue="KORUNA2026" /></label>
-                <label className="text-field text-field--full"><span>Правила та корисна інформація</span><textarea defaultValue="Тиша після 22:00. Паркування для гостей безкоштовне. Рецепція працює цілодобово." /></label>
-              </div>
-            </Card>
-          ) : null}
           <Card>
             <CardHeader title="Основна інформація" subtitle="Ці дані бачить турист у картці місця" />
             <div className="editor-form-grid">
