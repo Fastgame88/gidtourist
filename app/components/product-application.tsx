@@ -13,6 +13,7 @@ import {
   Compass,
   FileCheck2,
   Fingerprint,
+  Gift,
   Home,
   Layers3,
   LayoutDashboard,
@@ -88,7 +89,8 @@ function TouristBottomNav({
   const items = [
     ["home", "Головна", Home],
     ["plan", "Мій план", BookOpenCheck],
-    ["wallet", "Бонуси", WalletCards],
+    ["qr", "QR", QrCode],
+    ["wallet", "Бонуси", Gift],
     ["profile", "Профіль", UserRound],
   ] as const;
 
@@ -98,7 +100,7 @@ function TouristBottomNav({
         <button
           key={itemSlug}
           type="button"
-          className={activeSlug === itemSlug ? "is-active" : ""}
+          className={`${activeSlug === itemSlug ? "is-active" : ""} ${itemSlug === "qr" ? "is-qr" : ""}`}
           onClick={() => navigate("tourist", itemSlug)}
         >
           <Icon size={23} />
@@ -153,7 +155,7 @@ export default function ProductApplication({ role, slug }: { role: RoleKey; slug
           <div className="phone-content">
             <TouristScreen slug={activeScreen.slug} navigate={navigate} />
           </div>
-          {slug !== "welcome" ? <TouristBottomNav activeSlug={slug} navigate={navigate} /> : null}
+          <TouristBottomNav activeSlug={slug} navigate={navigate} />
         </div>
       </main>
     );
