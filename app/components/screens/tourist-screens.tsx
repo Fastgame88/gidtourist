@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import {
-  ArrowLeft,
   BadgeCheck,
   BedDouble,
   Bike,
@@ -15,7 +14,6 @@ import {
   Clock3,
   Copy,
   Cross,
-  Ellipsis,
   ExternalLink,
   Gift,
   Heart,
@@ -24,7 +22,6 @@ import {
   Languages,
   LifeBuoy,
   LocateFixed,
-  LockKeyhole,
   LogOut,
   Map,
   MapPin,
@@ -85,29 +82,6 @@ const qrPattern = [
   "01110001110",
   "11001110101",
 ];
-
-function AppHeader({ back = true }: { back?: boolean }) {
-  return (
-    <header className="gt-header">
-      <button
-        type="button"
-        className={`gt-header__back ${back ? "" : "is-hidden"}`}
-        aria-label="Назад"
-        onClick={() => window.history.back()}
-      >
-        <ArrowLeft size={22} />
-        <span>Назад</span>
-      </button>
-      <div className="gt-header__brand">
-        <strong>Гід туриста</strong>
-        <small>mini app</small>
-      </div>
-      <button type="button" className="gt-header__more" aria-label="Більше">
-        <Ellipsis size={20} />
-      </button>
-    </header>
-  );
-}
 
 function Thumb({ name, className = "" }: { name: PhotoName; className?: string }) {
   return <span className={`gt-photo gt-photo--${name} ${className}`} aria-hidden="true" />;
@@ -254,50 +228,6 @@ function MockQr() {
   );
 }
 
-function WelcomeScreen({ navigate }: { navigate: Navigate }) {
-  return (
-    <div className="tourist-screen gt-screen gt-welcome">
-      <section className="gt-welcome__hero">
-        <div className="gt-welcome__brand">
-          <span><MapPin size={29} /></span>
-          <strong>Гід туриста</strong>
-        </div>
-        <div className="gt-welcome__copy">
-          <span className="gt-pill gt-pill--glass">
-            <BadgeCheck size={16} /> QR-контекст визначено
-          </span>
-          <p>Вітаємо в</p>
-          <h1>Татарові</h1>
-          <small>Гірський відпочинок починається тут</small>
-        </div>
-      </section>
-      <section className="gt-welcome__panel">
-        <div className="gt-context-card">
-          <Thumb name="hotel" />
-          <div>
-            <small>Ви відкрили гід закладу</small>
-            <strong>Готель «Гірський затишок»</strong>
-            <span><MapPin size={15} /> вул. Незалежності, 15Б</span>
-          </div>
-          <BadgeCheck size={23} />
-        </div>
-        <h2>Усе потрібне для подорожі — в одному місці</h2>
-        <p>Заклади поруч, бронювання, бонуси, маршрути та допомога.</p>
-        <button
-          type="button"
-          className="gt-primary-button"
-          onClick={() => navigate("tourist", "home")}
-        >
-          Відкрити додаток <ChevronRight size={21} />
-        </button>
-        <small className="gt-privacy">
-          <LockKeyhole size={15} /> Геолокація використовується лише для пошуку поруч
-        </small>
-      </section>
-    </div>
-  );
-}
-
 const categories: Array<{
   title: string;
   note: string;
@@ -317,7 +247,6 @@ const categories: Array<{
 function HomeScreen({ navigate }: { navigate: Navigate }) {
   return (
     <div className="tourist-screen gt-screen">
-      <AppHeader back={false} />
       <section className="gt-home-hero">
         <div className="gt-home-hero__copy">
           <MapPin size={35} fill="currentColor" />
@@ -382,7 +311,6 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
 function AboutScreen() {
   return (
     <div className="tourist-screen gt-screen">
-      <AppHeader />
       <section className="gt-about-hero">
         <div className="gt-about-logo">
           <MountainSnow size={43} />
@@ -437,7 +365,6 @@ function AboutScreen() {
 function CatalogScreen({ navigate }: { navigate: Navigate }) {
   return (
     <div className="tourist-screen gt-screen">
-      <AppHeader />
       <main className="gt-content">
         <CategoryHeader icon={Utensils} title="Де поїсти" subtitle="Кафе, ресторани та заклади" tone="orange" />
         <SearchBar placeholder="Пошук закладу, кухні або страви" />
@@ -458,7 +385,6 @@ function CatalogScreen({ navigate }: { navigate: Navigate }) {
 function NearbyScreen({ navigate }: { navigate: Navigate }) {
   return (
     <div className="tourist-screen gt-screen">
-      <AppHeader />
       <main className="gt-content">
         <CategoryHeader icon={MapPin} title="Що поруч" subtitle="Корисні місця в радіусі 500 м" tone="green" />
         <Chips items={["Усі", "Їжа", "Проживання", "Сервіси", "Розваги"]} />
@@ -484,7 +410,6 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
 function PlaceScreen({ navigate }: { navigate: Navigate }) {
   return (
     <div className="tourist-screen gt-screen">
-      <AppHeader />
       <section className="gt-place-hero">
         <span className="gt-pill gt-pill--glass"><BadgeCheck size={16} /> Перевірено</span>
         <div>
@@ -521,7 +446,6 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
 function AvailableScreen({ navigate }: { navigate: Navigate }) {
   return (
     <div className="tourist-screen gt-screen">
-      <AppHeader />
       <main className="gt-content">
         <CategoryHeader icon={BedDouble} title="Де відпочити" subtitle="Місця для релаксу та відпочинку" tone="purple" />
         <SearchBar placeholder="Пошук відпочинку та розваг" />
@@ -546,7 +470,6 @@ function BookingScreen({ navigate }: { navigate: Navigate }) {
 
   return (
     <div className="tourist-screen gt-screen">
-      <AppHeader />
       <main className="gt-content">
         <div className="gt-page-heading">
           <span className="gt-tone--green"><CalendarDays size={23} /></span>
@@ -591,7 +514,6 @@ function BookingScreen({ navigate }: { navigate: Navigate }) {
 function PlanScreen({ navigate }: { navigate: Navigate }) {
   return (
     <div className="tourist-screen gt-screen">
-      <AppHeader />
       <main className="gt-content">
         <div className="gt-page-heading">
           <span className="gt-tone--blue"><BookOpenCheck size={23} /></span>
@@ -616,7 +538,6 @@ function PlanScreen({ navigate }: { navigate: Navigate }) {
 function WalletScreen({ navigate }: { navigate: Navigate }) {
   return (
     <div className="tourist-screen gt-screen">
-      <AppHeader />
       <main className="gt-content">
         <h1 className="gt-simple-title">Бонуси</h1>
         <section className="gt-bonus-card">
@@ -646,7 +567,6 @@ function WalletScreen({ navigate }: { navigate: Navigate }) {
 function QrScreen({ navigate }: { navigate: Navigate }) {
   return (
     <div className="tourist-screen gt-screen">
-      <AppHeader />
       <main className="gt-content gt-qr-screen">
         <div className="gt-page-heading gt-page-heading--center">
           <span className="gt-tone--green"><QrCode size={25} /></span>
@@ -670,7 +590,6 @@ function PurchaseConfirmationScreen({ navigate }: { navigate: Navigate }) {
   const [confirmed, setConfirmed] = useState(false);
   return (
     <div className="tourist-screen gt-screen">
-      <AppHeader />
       <main className="gt-content">
         <div className="gt-page-heading">
           <span className="gt-tone--green"><ReceiptText size={23} /></span>
@@ -704,7 +623,6 @@ function ReviewScreen() {
   const [rating, setRating] = useState(5);
   return (
     <div className="tourist-screen gt-screen">
-      <AppHeader />
       <main className="gt-content">
         <div className="gt-page-heading">
           <span className="gt-tone--yellow"><Star size={23} /></span>
@@ -745,7 +663,6 @@ const emergencyContacts = [
 function EmergencyScreen() {
   return (
     <div className="tourist-screen gt-screen gt-emergency">
-      <AppHeader />
       <main className="gt-content">
         <CategoryHeader icon={LifeBuoy} title="Халепа?" subtitle="Швидка допомога та корисні контакти" tone="red" />
         <section className="gt-help-hero">
@@ -779,7 +696,6 @@ function EmergencyScreen() {
 function ProfileScreen({ navigate }: { navigate: Navigate }) {
   return (
     <div className="tourist-screen gt-screen">
-      <AppHeader />
       <main className="gt-content">
         <h1 className="gt-simple-title">Профіль</h1>
         <section className="gt-profile-card">
@@ -810,7 +726,6 @@ function ProfileScreen({ navigate }: { navigate: Navigate }) {
 function CommunityScreen() {
   return (
     <div className="tourist-screen gt-screen">
-      <AppHeader />
       <main className="gt-content">
         <section className="gt-community-hero">
           <span><MessageCircle size={31} /></span>
@@ -840,7 +755,7 @@ export function TouristScreen({
 }) {
   switch (slug) {
     case "welcome":
-      return <WelcomeScreen navigate={navigate} />;
+      return <HomeScreen navigate={navigate} />;
     case "home":
       return <HomeScreen navigate={navigate} />;
     case "about":

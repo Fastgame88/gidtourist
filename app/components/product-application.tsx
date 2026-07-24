@@ -45,9 +45,19 @@ type TelegramWindow = Window & {
       expand: () => void;
       setHeaderColor?: (color: string) => void;
       setBackgroundColor?: (color: string) => void;
+      BackButton?: {
+        show: () => void;
+        hide: () => void;
+        onClick: (callback: () => void) => void;
+        offClick: (callback: () => void) => void;
+      };
     };
   };
 };
+
+type TelegramBackButton = NonNullable<
+  NonNullable<TelegramWindow["Telegram"]>["WebApp"]
+>["BackButton"];
 
 const portalAccounts: Record<Exclude<RoleKey, "tourist">, { name: string; detail: string; initials: string }> = {
   partner: { name: "Коруна SPA", detail: "Оксана Романюк", initials: "ОР" },
@@ -86,6 +96,7 @@ function TouristBottomNav({
   activeSlug: string;
   navigate: (role: RoleKey, slug: string) => void;
 }) {
+  const normalizedActiveSlug = activeSlug === "welcome" ? "home" : activeSlug;
   const items = [
     ["home", "Головна", Home],
     ["plan", "Мій план", BookOpenCheck],
@@ -100,7 +111,7 @@ function TouristBottomNav({
         <button
           key={itemSlug}
           type="button"
-          className={`${activeSlug === itemSlug ? "is-active" : ""} ${itemSlug === "qr" ? "is-qr" : ""}`}
+          className={`${normalizedActiveSlug === itemSlug ? "is-active" : ""} ${itemSlug === "qr" ? "is-qr" : ""}`}
           onClick={() => navigate("tourist", itemSlug)}
         >
           <Icon size={23} />
@@ -141,6 +152,41 @@ export default function ProductApplication({ role, slug }: { role: RoleKey; slug
       if (timer) clearTimeout(timer);
     };
   }, [role]);
+
+  useEffect(() => {
+    if (role !== "tourist") return;
+
+    let attempts = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let connectedBackButton: TelegramBackButton;
+    const handleBack = () => window.history.back();
+
+    const connectBackButton = () => {
+      const backButton = (window as TelegramWindow).Telegram?.WebApp?.BackButton;
+      if (!backButton && attempts < 20) {
+        attempts += 1;
+        timer = setTimeout(connectBackButton, 150);
+        return;
+      }
+
+      connectedBackButton = backButton;
+      if (!backButton) return;
+
+      if (slug === "home" || slug === "welcome") {
+        backButton.hide();
+        return;
+      }
+
+      backButton.onClick(handleBack);
+      backButton.show();
+    };
+
+    connectBackButton();
+    return () => {
+      if (timer) clearTimeout(timer);
+      connectedBackButton?.offClick(handleBack);
+    };
+  }, [role, slug]);
 
   const navigate = (nextRole: RoleKey, nextSlug: string) => {
     const screen = getScreen(nextRole, nextSlug);
