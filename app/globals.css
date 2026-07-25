@@ -5625,3 +5625,89 @@ button.gt-service-card {
     grid-row:1;
   }
 }
+
+/* Emergency screen: balanced vertical scale from the approved reference */
+.gt-emergency .gt-content {
+  min-height:calc(100dvh - 92px - env(safe-area-inset-bottom));
+  align-content:space-between;
+  gap:7px;
+  padding:12px 14px 10px;
+}
+
+.gt-emergency-head {
+  min-height:60px;
+  padding:3px 2px;
+}
+
+.gt-emergency-sos {
+  width:46px;
+  height:46px;
+}
+
+.gt-emergency-head h1 {
+  font-size:30px;
+}
+
+.gt-emergency .gt-help-hero {
+  min-height:92px;
+  padding:11px 15px;
+}
+
+.gt-emergency .gt-help-hero h2 {
+  font-size:25px;
+}
+
+.gt-emergency .gt-location-button {
+  min-height:52px;
+  padding:8px 13px;
+}
+
+.gt-emergency .gt-section-title {
+  min-height:24px;
+}
+
+.gt-emergency .gt-section-title h2 {
+  font-size:20.5px;
+}
+
+.gt-emergency .gt-contact-list a {
+  min-height:44px;
+  padding:4px 9px;
+}
+
+.gt-emergency .gt-contact-list a > span {
+  width:36px;
+  height:36px;
+}
+
+.gt-emergency .gt-contact-list i {
+  width:29px;
+  height:29px;
+}
+
+.gt-emergency .gt-service-mini-grid {
+  padding:2px 0 4px;
+}
+
+.gt-emergency .gt-service-mini-grid button {
+  min-height:88px;
+  padding:7px;
+}
+
+.gt-emergency .gt-service-mini-grid button > span {
+  width:36px;
+  height:36px;
+}
+
+.gt-emergency .gt-service-mini-grid strong {
+  font-size:10.5px;
+}
+
+.gt-emergency .gt-service-mini-grid small {
+  font-size:9px;
+}
+
+.gt-emergency .gt-expiry {
+  min-height:25px;
+  padding:5px 8px;
+}
