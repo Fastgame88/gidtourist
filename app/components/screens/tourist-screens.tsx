@@ -255,7 +255,7 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
     <div className="tourist-screen gt-screen gt-home-screen">
       <section className="gt-home-hero">
         <div className="gt-home-hero__copy">
-          <span className="gt-hero-pin"><MapPin size={43} fill="currentColor" /></span>
+          <span className="gt-hero-pin"><MapPin size={43} strokeWidth={3} /></span>
           <p>Вітаємо в</p>
           <h1>Татарові</h1>
           <span>Раді, що ви з нами!</span>
@@ -768,10 +768,6 @@ function EmergencyScreen() {
             <h1>Халепа?</h1>
             <p>Швидка допомога та корисні контакти</p>
           </div>
-          <button type="button">
-            <Map size={21} />
-            <span>На мапі</span>
-          </button>
         </header>
         <section className="gt-help-hero">
           <LifeBuoy size={41} />
@@ -781,7 +777,11 @@ function EmergencyScreen() {
         <SectionTitle title="Екстрені контакти" />
         <div className="gt-contact-list">
           {emergencyContacts.map(({ icon: Icon, title, note, phone, tone }) => (
-            <a href={`tel:${phone.replaceAll(" ", "")}`} key={title}>
+            <a
+              className={phone.startsWith("+") ? "is-long-number" : undefined}
+              href={`tel:${phone.replaceAll(" ", "")}`}
+              key={title}
+            >
               <span className={`gt-tone--${tone}`}><Icon size={21} /></span>
               <div><strong>{title}</strong><small>{note}</small></div>
               <b>{phone}</b><i><Phone size={17} /></i>

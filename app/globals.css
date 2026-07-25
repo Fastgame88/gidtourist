@@ -4278,26 +4278,26 @@ button.gt-service-card {
 .gt-emergency .gt-content {
   position:relative;
   z-index:1;
-  gap:7px;
+  gap:5px;
   height:100%;
   min-height:0;
-  padding:10px 14px 9px;
+  padding:6px 14px;
 }
 
 .gt-emergency-head {
   display:grid;
-  grid-template-columns:48px minmax(0,1fr) 58px;
+  grid-template-columns:44px minmax(0,1fr);
   gap:10px;
   align-items:center;
-  min-height:72px;
-  padding:8px 2px;
+  min-height:60px;
+  padding:4px 2px;
 }
 
 .gt-emergency-sos {
   display:grid;
   place-items:center;
-  width:48px;
-  height:48px;
+  width:44px;
+  height:44px;
   border-radius:11px;
   color:#fff;
   background:linear-gradient(145deg,#ef5a4f,#df3e38);
@@ -4323,27 +4323,10 @@ button.gt-service-card {
   line-height:1.2;
 }
 
-.gt-emergency-head > button {
-  display:grid;
-  place-items:center;
-  gap:1px;
-  min-width:58px;
-  min-height:55px;
-  padding:6px 7px;
-  border:1px solid rgba(230,236,232,.92);
-  border-radius:12px;
-  color:#15975a;
-  background:rgba(255,255,255,.94);
-  box-shadow:0 4px 12px rgba(27,50,36,.06);
-  cursor:pointer;
-  font-size:11px !important;
-  font-weight:800;
-}
-
 .gt-emergency .gt-help-hero {
   gap:11px;
-  min-height:96px;
-  padding:13px 15px;
+  min-height:88px;
+  padding:11px 15px;
   border-radius:15px;
 }
 
@@ -4364,8 +4347,8 @@ button.gt-service-card {
 }
 
 .gt-emergency .gt-location-button {
-  min-height:57px;
-  padding:9px 13px;
+  min-height:50px;
+  padding:7px 13px;
   border-radius:13px;
 }
 
@@ -4378,19 +4361,19 @@ button.gt-service-card {
 }
 
 .gt-emergency .gt-section-title {
-  min-height:27px;
+  min-height:23px;
   margin-top:0;
 }
 
 .gt-emergency .gt-section-title h2 {
-  font-size:21px;
+  font-size:20px;
 }
 
 .gt-emergency .gt-contact-list a {
   grid-template-columns:38px minmax(0,1fr) auto 30px;
   gap:8px;
-  min-height:48px;
-  padding:5px 9px;
+  min-height:45px;
+  padding:4px 9px;
 }
 
 .gt-emergency .gt-contact-list a > span {
@@ -4413,6 +4396,10 @@ button.gt-service-card {
   font-size:13.5px;
 }
 
+.gt-emergency .gt-contact-list a.is-long-number b {
+  font-size:10.5px;
+}
+
 .gt-emergency .gt-contact-list i {
   width:29px;
   height:29px;
@@ -4425,26 +4412,32 @@ button.gt-service-card {
 
 .gt-emergency .gt-service-mini-grid button {
   gap:3px;
-  min-height:77px;
-  padding:7px 6px;
+  min-height:86px;
+  padding:6px 7px;
+}
+
+.gt-emergency .gt-service-mini-grid button > span {
+  width:36px;
+  height:36px;
+  border-radius:10px;
 }
 
 .gt-emergency .gt-service-mini-grid strong {
   overflow:visible;
-  font-size:10px;
+  font-size:11px;
   line-height:1.1;
   text-overflow:clip;
   white-space:normal;
 }
 
 .gt-emergency .gt-service-mini-grid small {
-  font-size:8.5px;
+  font-size:9.5px;
   line-height:1.15;
 }
 
 .gt-emergency .gt-expiry {
-  min-height:25px;
-  padding:5px 7px;
+  min-height:23px;
+  padding:4px 7px;
   font-size:9.5px;
   line-height:1.2;
 }
