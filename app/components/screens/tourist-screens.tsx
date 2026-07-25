@@ -255,7 +255,7 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
     <div className="tourist-screen gt-screen gt-home-screen">
       <section className="gt-home-hero">
         <div className="gt-home-hero__copy">
-          <span className="gt-hero-pin"><MapPin size={34} fill="currentColor" /></span>
+          <span className="gt-hero-pin"><MapPin size={43} fill="currentColor" /></span>
           <p>Вітаємо в</p>
           <h1>Татарові</h1>
           <span>Раді, що ви з нами!</span>
@@ -759,10 +759,20 @@ const emergencyContacts = [
 
 function EmergencyScreen() {
   return (
-    <div className="tourist-screen gt-screen gt-emergency gt-large-type">
+    <div className="tourist-screen gt-screen gt-emergency">
       <div className="gt-emergency-mountains" aria-hidden="true" />
       <main className="gt-content">
-        <CategoryHeader icon={LifeBuoy} title="Халепа?" subtitle="Швидка допомога та корисні контакти" tone="red" />
+        <header className="gt-emergency-head">
+          <span className="gt-emergency-sos">SOS</span>
+          <div>
+            <h1>Халепа?</h1>
+            <p>Швидка допомога та корисні контакти</p>
+          </div>
+          <button type="button">
+            <Map size={21} />
+            <span>На мапі</span>
+          </button>
+        </header>
         <section className="gt-help-hero">
           <LifeBuoy size={41} />
           <div><small>НЕ ХВИЛЮЙТЕСЯ</small><h2>Знайдемо допомогу</h2><p>Екстрені та перевірені контакти для вашої безпеки.</p></div>

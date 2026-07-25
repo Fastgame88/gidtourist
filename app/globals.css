@@ -3886,28 +3886,28 @@ button.gt-service-card {
   min-height:0;
   height:100%;
   margin:0;
-  padding:20px 18px 72px;
+  padding:17px 18px 66px;
+}
+
+.gt-home-screen .gt-home-hero__copy {
+  transform:translateY(-12px);
 }
 
 .gt-hero-pin {
   display:grid;
   place-items:center;
-  width:58px;
-  height:58px;
-  border:2px solid rgba(255,255,255,.82);
-  border-radius:19px;
-  color:#e8473f;
-  background:rgba(255,255,255,.94);
-  box-shadow:0 7px 22px rgba(13,32,20,.22);
-  text-shadow:none;
+  width:43px;
+  height:43px;
+  color:#fff;
+  filter:drop-shadow(0 3px 8px rgba(7,35,20,.36));
 }
 
 .gt-hero-pin svg {
-  filter:drop-shadow(0 2px 3px rgba(143,29,24,.15));
+  display:block;
 }
 
 .gt-home-screen .gt-home-hero__copy p {
-  margin-top:5px;
+  margin-top:3px;
   font-size:21px;
 }
 
@@ -3955,13 +3955,13 @@ button.gt-service-card {
 }
 
 .gt-home-screen .gt-category-card--featured {
-  grid-template-columns:39px minmax(0,1fr) 17px;
-  gap:8px;
+  grid-template-columns:36px minmax(0,1fr) 14px;
+  gap:6px;
 }
 
 .gt-home-screen .gt-category-card--featured .gt-category-card__icon {
-  width:39px;
-  height:39px;
+  width:36px;
+  height:36px;
 }
 
 .gt-home-screen .gt-category-card--featured > span:nth-child(2) {
@@ -3970,9 +3970,19 @@ button.gt-service-card {
 
 .gt-home-screen .gt-category-card--featured strong,
 .gt-home-screen .gt-category-card--featured small {
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
+  overflow:visible;
+  text-overflow:clip;
+  white-space:normal;
+}
+
+.gt-home-screen .gt-category-card--featured strong {
+  font-size:12px;
+  line-height:1.12;
+}
+
+.gt-home-screen .gt-category-card--featured small {
+  font-size:9px;
+  line-height:1.18;
 }
 
 /* Requested +35% typography on catalog-like tourist screens */
@@ -4245,7 +4255,10 @@ button.gt-service-card {
 /* Emergency */
 .gt-emergency {
   position:relative;
-  background:linear-gradient(180deg,#fff1ef,#f8f9f8 430px) !important;
+  height:100%;
+  min-height:0 !important;
+  overflow:hidden !important;
+  background:linear-gradient(180deg,#fff2ef,#f8f9f8 330px) !important;
 }
 
 .gt-emergency-mountains {
@@ -4254,104 +4267,186 @@ button.gt-service-card {
   top:0;
   right:0;
   left:0;
-  height:160px;
-  opacity:.52;
+  height:126px;
+  opacity:.62;
   background:
-    linear-gradient(180deg,rgba(255,235,232,.35),#fff1ef),
-    url("/images/carpathian-river.webp") center 40%/cover;
+    linear-gradient(180deg,rgba(255,238,235,.46),#fff2ef),
+    url("/images/carpathian-river.webp") center 36%/cover;
+  filter:saturate(.72);
 }
 
 .gt-emergency .gt-content {
   position:relative;
   z-index:1;
+  gap:7px;
+  height:100%;
+  min-height:0;
+  padding:10px 14px 9px;
 }
 
-.gt-emergency .gt-category-head {
-  min-height:104px;
-  padding:12px;
-  border:1px solid rgba(255,255,255,.8);
-  border-radius:16px;
-  background:rgba(255,249,248,.78);
-  backdrop-filter:blur(6px);
+.gt-emergency-head {
+  display:grid;
+  grid-template-columns:48px minmax(0,1fr) 58px;
+  gap:10px;
+  align-items:center;
+  min-height:72px;
+  padding:8px 2px;
+}
+
+.gt-emergency-sos {
+  display:grid;
+  place-items:center;
+  width:48px;
+  height:48px;
+  border-radius:11px;
+  color:#fff;
+  background:linear-gradient(145deg,#ef5a4f,#df3e38);
+  box-shadow:0 5px 13px rgba(202,54,48,.2);
+  font-size:16px;
+  font-weight:900;
+}
+
+.gt-emergency-head > div {
+  min-width:0;
+}
+
+.gt-emergency-head h1 {
+  margin:0;
+  font-size:29px;
+  line-height:1.04;
+}
+
+.gt-emergency-head p {
+  margin:3px 0 0;
+  color:#6f7872;
+  font-size:13px;
+  line-height:1.2;
+}
+
+.gt-emergency-head > button {
+  display:grid;
+  place-items:center;
+  gap:1px;
+  min-width:58px;
+  min-height:55px;
+  padding:6px 7px;
+  border:1px solid rgba(230,236,232,.92);
+  border-radius:12px;
+  color:#15975a;
+  background:rgba(255,255,255,.94);
+  box-shadow:0 4px 12px rgba(27,50,36,.06);
+  cursor:pointer;
+  font-size:11px !important;
+  font-weight:800;
 }
 
 .gt-emergency .gt-help-hero {
-  min-height:126px;
-  padding:20px;
+  gap:11px;
+  min-height:96px;
+  padding:13px 15px;
+  border-radius:15px;
 }
 
 .gt-emergency .gt-help-hero small {
-  font-size:13.5px;
+  font-size:10.5px;
+  letter-spacing:.14em;
 }
 
 .gt-emergency .gt-help-hero h2 {
-  font-size:31px;
+  margin:2px 0;
+  font-size:24px;
+  line-height:1.08;
 }
 
 .gt-emergency .gt-help-hero p {
-  font-size:13.5px;
+  font-size:11.5px;
+  line-height:1.3;
 }
 
 .gt-emergency .gt-location-button {
-  min-height:80px;
-  padding:15px;
+  min-height:57px;
+  padding:9px 13px;
+  border-radius:13px;
 }
 
 .gt-emergency .gt-location-button strong {
-  font-size:17.55px;
+  font-size:14px;
 }
 
 .gt-emergency .gt-location-button small {
-  font-size:12.15px;
+  font-size:10.5px;
+}
+
+.gt-emergency .gt-section-title {
+  min-height:27px;
+  margin-top:0;
+}
+
+.gt-emergency .gt-section-title h2 {
+  font-size:21px;
 }
 
 .gt-emergency .gt-contact-list a {
-  grid-template-columns:44px minmax(0,1fr) auto 36px;
-  gap:10px;
-  min-height:76px;
-  padding:10px 12px;
+  grid-template-columns:38px minmax(0,1fr) auto 30px;
+  gap:8px;
+  min-height:48px;
+  padding:5px 9px;
 }
 
 .gt-emergency .gt-contact-list a > span {
-  width:44px;
-  height:44px;
+  width:38px;
+  height:38px;
+  border-radius:9px;
 }
 
 .gt-emergency .gt-contact-list strong {
-  font-size:14.85px;
+  font-size:12.5px;
+  line-height:1.15;
 }
 
 .gt-emergency .gt-contact-list small {
-  font-size:10.8px;
+  font-size:9.5px;
+  line-height:1.15;
 }
 
 .gt-emergency .gt-contact-list b {
-  font-size:16.2px;
+  font-size:13.5px;
 }
 
 .gt-emergency .gt-contact-list i {
-  width:34px;
-  height:34px;
+  width:29px;
+  height:29px;
+}
+
+.gt-emergency .gt-service-mini-grid {
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:6px;
 }
 
 .gt-emergency .gt-service-mini-grid button {
-  min-height:130px;
-  padding:12px 9px;
+  gap:3px;
+  min-height:77px;
+  padding:7px 6px;
 }
 
 .gt-emergency .gt-service-mini-grid strong {
   overflow:visible;
-  font-size:12.15px;
+  font-size:10px;
+  line-height:1.1;
   text-overflow:clip;
   white-space:normal;
 }
 
 .gt-emergency .gt-service-mini-grid small {
-  font-size:10.8px;
+  font-size:8.5px;
+  line-height:1.15;
 }
 
 .gt-emergency .gt-expiry {
-  font-size:13.5px;
+  min-height:25px;
+  padding:5px 7px;
+  font-size:9.5px;
+  line-height:1.2;
 }
 
 /* Bonuses and profile */
@@ -4522,16 +4617,16 @@ button.gt-service-card {
   }
 
   .gt-emergency .gt-contact-list a {
-    grid-template-columns:42px minmax(0,1fr) 34px;
+    grid-template-columns:38px minmax(0,1fr) auto 30px;
   }
 
   .gt-emergency .gt-contact-list b {
-    grid-column:2;
+    grid-column:auto;
   }
 
   .gt-emergency .gt-contact-list i {
-    grid-column:3;
-    grid-row:1/3;
+    grid-column:auto;
+    grid-row:auto;
   }
 }
 
@@ -4585,5 +4680,46 @@ button.gt-service-card {
   .gt-home-screen .gt-category-card {
     padding-top:4px;
     padding-bottom:4px;
+  }
+
+  .gt-emergency .gt-content {
+    gap:5px;
+    padding-top:7px;
+    padding-bottom:6px;
+  }
+
+  .gt-emergency-head {
+    min-height:62px;
+    padding-top:3px;
+    padding-bottom:3px;
+  }
+
+  .gt-emergency-sos {
+    width:44px;
+    height:44px;
+  }
+
+  .gt-emergency .gt-help-hero {
+    min-height:79px;
+    padding-top:9px;
+    padding-bottom:9px;
+  }
+
+  .gt-emergency .gt-location-button {
+    min-height:50px;
+    padding-top:6px;
+    padding-bottom:6px;
+  }
+
+  .gt-emergency .gt-contact-list a {
+    min-height:43px;
+    padding-top:3px;
+    padding-bottom:3px;
+  }
+
+  .gt-emergency .gt-service-mini-grid button {
+    min-height:68px;
+    padding-top:5px;
+    padding-bottom:5px;
   }
 }
