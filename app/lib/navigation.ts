@@ -338,6 +338,14 @@ export const screens: ScreenDefinition[] = [
     role: "admin",
   },
   {
+    id: "AD08",
+    slug: "emergency-services",
+    title: "Корисні сервіси",
+    shortTitle: "Корисні сервіси",
+    description: "Склад і видимість сервісів на екрані «Халепа?»",
+    role: "admin",
+  },
+  {
     id: "AD04",
     slug: "qr-analytics",
     title: "QR-аналітика",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AlertTriangle,
   ArrowRight,
@@ -20,6 +20,7 @@ import {
   Download,
   Edit3,
   Eye,
+  EyeOff,
   FileCheck2,
   FileClock,
   FileText,
@@ -54,6 +55,12 @@ import {
   WalletCards,
   XCircle,
 } from "lucide-react";
+import {
+  DEFAULT_EMERGENCY_SERVICES,
+  readEmergencyServices,
+  writeEmergencyServices,
+  type EmergencyService,
+} from "../../lib/emergency-services";
 import type { RoleKey } from "../../lib/navigation";
 import {
   ActivityRow,
@@ -289,7 +296,137 @@ function AdminDashboard({ navigate }: { navigate: Navigate }) {
         <button type="button" onClick={() => navigate("admin", "partner-moderation")}><span><FileCheck2 size={24} /></span><div><strong>Модерація партнерів</strong><small>31 у черзі</small></div><ArrowRight size={20} /></button>
         <button type="button" onClick={() => navigate("admin", "qr-analytics")}><span><QrCode size={24} /></span><div><strong>QR-аналітика</strong><small>486 активних точок</small></div><ArrowRight size={20} /></button>
         <button type="button" onClick={() => navigate("admin", "ledger")}><span><Database size={24} /></span><div><strong>Фінансовий ledger</strong><small>Незмінний журнал</small></div><ArrowRight size={20} /></button>
+        <button type="button" onClick={() => navigate("admin", "emergency-services")}><span><Info size={24} /></span><div><strong>Корисні сервіси</strong><small>Екран «Халепа?»</small></div><ArrowRight size={20} /></button>
       </div>
+    </div>
+  );
+}
+
+function EmergencyServicesSettings() {
+  const [services, setServices] = useState<EmergencyService[]>(DEFAULT_EMERGENCY_SERVICES);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setServices(readEmergencyServices());
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  const updateService = (
+    id: string,
+    patch: Partial<Pick<EmergencyService, "title" | "note" | "active">>,
+  ) => {
+    setSaved(false);
+    setServices((current) => current.map((service) => (
+      service.id === id ? { ...service, ...patch } : service
+    )));
+  };
+
+  const addService = () => {
+    setSaved(false);
+    setServices((current) => [
+      ...current,
+      {
+        id: `custom-${Date.now()}`,
+        title: "Новий сервіс",
+        note: "Короткий опис",
+        tone: "green",
+        icon: "custom",
+        active: true,
+      },
+    ]);
+  };
+
+  const removeService = (id: string) => {
+    setSaved(false);
+    setServices((current) => current.filter((service) => service.id !== id));
+  };
+
+  const saveServices = () => {
+    writeEmergencyServices(services);
+    setSaved(true);
+  };
+
+  const activeCount = services.filter((service) => service.active).length;
+
+  return (
+    <div className="screen-stack emergency-services-settings">
+      <PageHeading
+        eyebrow="Контент / екстрена допомога"
+        title="Корисні сервіси"
+        description="Керуйте складом і видимістю карток на екрані «Халепа?»"
+        action={(
+          <div className="heading-actions">
+            {saved ? <StatusBadge tone="green" dot>Збережено</StatusBadge> : null}
+            <PrimaryButton icon={<Check size={20} />} onClick={saveServices}>Зберегти</PrimaryButton>
+          </div>
+        )}
+      />
+
+      <div className="metric-grid metric-grid--four">
+        <MetricCard label="Усього сервісів" value={String(services.length)} delta="Склад списку" icon={<Layers3 size={24} />} />
+        <MetricCard label="Відображаються" value={String(activeCount)} delta="Доступні туристу" icon={<Eye size={24} />} tone="lime" />
+        <MetricCard label="Приховані" value={String(services.length - activeCount)} delta="Не показуються" icon={<EyeOff size={24} />} tone="neutral" />
+        <MetricCard label="Регіон" value="Татарів" delta="Івано-Франківська область" icon={<MapPin size={24} />} tone="blue" />
+      </div>
+
+      <Card className="emergency-services-card">
+        <CardHeader
+          title="Список сервісів"
+          subtitle="Додавайте нові картки або приховуйте непотрібні"
+          action={<SecondaryButton icon={<Plus size={19} />} onClick={addService}>Додати сервіс</SecondaryButton>}
+        />
+        <div className="emergency-service-admin-list">
+          {services.map((service, index) => (
+            <article key={service.id}>
+              <span className="emergency-service-admin-list__order">{index + 1}</span>
+              <div className="emergency-service-admin-list__fields">
+                <label>
+                  <span>Назва</span>
+                  <input
+                    aria-label={`Назва сервісу ${index + 1}`}
+                    value={service.title}
+                    onChange={(event) => updateService(service.id, { title: event.target.value })}
+                  />
+                </label>
+                <label>
+                  <span>Підпис</span>
+                  <input
+                    aria-label={`Підпис сервісу ${index + 1}`}
+                    value={service.note}
+                    onChange={(event) => updateService(service.id, { note: event.target.value })}
+                  />
+                </label>
+              </div>
+              <button
+                type="button"
+                className={`emergency-service-visibility ${service.active ? "is-active" : ""}`}
+                onClick={() => updateService(service.id, { active: !service.active })}
+              >
+                {service.active ? <Eye size={18} /> : <EyeOff size={18} />}
+                {service.active ? "Показувати" : "Приховано"}
+              </button>
+              <button
+                type="button"
+                className="emergency-service-remove"
+                aria-label={`Видалити ${service.title}`}
+                onClick={() => removeService(service.id)}
+              >
+                <XCircle size={20} />
+              </button>
+            </article>
+          ))}
+        </div>
+      </Card>
+
+      <Card tone="soft" className="taxonomy-note">
+        <Info size={25} />
+        <div>
+          <strong>Список можна розширювати або звужувати</strong>
+          <p>Порядок карток зберігається, а приховані сервіси не відображаються туристу.</p>
+        </div>
+      </Card>
     </div>
   );
 }
@@ -498,6 +635,7 @@ export function AdminScreen({ slug, navigate }: { slug: string; navigate: Naviga
   switch (slug) {
     case "partner-moderation": return <PartnerModeration />;
     case "location-editor": return <LocationEditor />;
+    case "emergency-services": return <EmergencyServicesSettings />;
     case "qr-analytics": return <QrAnalytics />;
     case "ledger": return <LedgerScreen />;
     case "review-moderation": return <ReviewModeration />;

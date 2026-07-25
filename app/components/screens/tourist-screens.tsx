@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Ambulance,
   BadgeCheck,
@@ -32,6 +32,7 @@ import {
   MessageCircle,
   MountainSnow,
   Navigation,
+  PawPrint,
   Pencil,
   Phone,
   Pill,
@@ -57,6 +58,11 @@ import {
   Wrench,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import {
+  DEFAULT_EMERGENCY_SERVICES,
+  readEmergencyServices,
+  type EmergencyService,
+} from "../../lib/emergency-services";
 import type { RoleKey } from "../../lib/navigation";
 
 type Navigate = (role: RoleKey, slug: string) => void;
@@ -340,7 +346,7 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
 
 function AboutScreen() {
   return (
-    <div className="tourist-screen gt-screen">
+    <div className="tourist-screen gt-screen gt-about-screen">
       <section className="gt-about-hero">
         <div className="gt-about-logo">
           <MountainSnow size={43} />
@@ -414,23 +420,44 @@ function CatalogScreen({ navigate }: { navigate: Navigate }) {
 
 function NearbyScreen({ navigate }: { navigate: Navigate }) {
   return (
-    <div className="tourist-screen gt-screen gt-large-type">
+    <div className="tourist-screen gt-screen gt-nearby-screen">
       <main className="gt-content">
         <CategoryHeader icon={MapPin} title="Що поруч" subtitle="Корисні місця в радіусі 500 м" tone="green" />
         <Chips items={["Усі", "Їжа", "Проживання", "Сервіси", "Розваги"]} />
         <div className="gt-large-map">
+          <i className="gt-large-map__land gt-large-map__land--one" />
+          <i className="gt-large-map__land gt-large-map__land--two" />
           <i className="gt-large-map__river" />
-          <i className="gt-large-map__road" />
-          {["one", "two", "three", "four"].map((pin) => <span className={`gt-large-map__pin gt-large-map__pin--${pin}`} key={pin}><MapPin size={17} /></span>)}
+          <i className="gt-large-map__road gt-large-map__road--one" />
+          <i className="gt-large-map__road gt-large-map__road--two" />
+          <i className="gt-large-map__road gt-large-map__road--three" />
+          {[
+            { position: "one", partner: false },
+            { position: "two", partner: true },
+            { position: "three", partner: false },
+            { position: "four", partner: true },
+            { position: "five", partner: false },
+          ].map(({ position, partner }) => (
+            <span
+              className={`gt-large-map__pin gt-large-map__pin--${position} ${partner ? "is-partner" : ""}`}
+              key={position}
+            >
+              <MapPin size={17} />
+            </span>
+          ))}
           <b><LocateFixed size={22} /></b>
           <small>500 м</small>
         </div>
+        <div className="gt-map-partner-legend">
+          <span><MapPin size={14} /></span>
+          <strong>Заклади-партнери</strong>
+        </div>
         <div className="gt-place-list">
-          <PlaceRow photo="restaurant" title="Ресторан «Гуцульщина»" subtitle="Ресторан" rating="4.8 (125)" distance="120 м" walk="2 хв" onClick={() => navigate("tourist", "place")} />
-          <PlaceRow photo="coffee" title="Кавʼярня «Кедр»" subtitle="Кавʼярня" rating="4.6 (89)" distance="180 м" walk="3 хв" />
-          <PlaceRow photo="store" title="Продукти «Близенько»" subtitle="Магазин" rating="4.5 (47)" distance="220 м" walk="4 хв" />
-          <PlaceRow photo="pharmacy" title="Аптека" subtitle="Аптека" rating="4.7 (23)" distance="260 м" walk="4 хв" />
-          <PlaceRow photo="hotel" title="Готель «Татарів»" subtitle="Готель" rating="4.9 (71)" distance="320 м" walk="5 хв" />
+          <PlaceRow photo="restaurant" title="Ресторан «Гуцульщина»" subtitle="Ресторан" rating="4.8 (125)" distance="120 м" walk="2 хв" walking onClick={() => navigate("tourist", "place")} />
+          <PlaceRow photo="coffee" title="Кавʼярня «Кедр»" subtitle="Кавʼярня" rating="4.6 (89)" distance="180 м" walk="3 хв" walking />
+          <PlaceRow photo="store" title="Продукти «Близенько»" subtitle="Магазин" rating="4.5 (47)" distance="220 м" walk="4 хв" walking />
+          <PlaceRow photo="pharmacy" title="Аптека" subtitle="Аптека" rating="4.7 (23)" distance="260 м" walk="4 хв" walking />
+          <PlaceRow photo="hotel" title="Готель «Татарів»" subtitle="Готель" rating="4.9 (71)" distance="320 м" walk="5 хв" walking />
         </div>
       </main>
     </div>
@@ -781,7 +808,25 @@ const emergencyContacts = [
   { icon: MountainSnow, title: "Гірські рятувальники", note: "Яремче, найближчий пост", phone: "+380 67 342 18 68", tone: "orange" },
 ];
 
+const emergencyServiceIcons: Record<EmergencyService["icon"], LucideIcon> = {
+  doctor: Stethoscope,
+  pharmacy: Pill,
+  repair: Wrench,
+  tow: CarFront,
+  vet: PawPrint,
+  custom: CircleHelp,
+};
+
 function EmergencyScreen() {
+  const [services, setServices] = useState(DEFAULT_EMERGENCY_SERVICES);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setServices(readEmergencyServices());
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
   return (
     <div className="tourist-screen gt-screen gt-emergency">
       <div className="gt-emergency-mountains" aria-hidden="true" />
@@ -814,10 +859,16 @@ function EmergencyScreen() {
         </div>
         <SectionTitle title="Корисні сервіси" />
         <div className="gt-service-mini-grid">
-          <button type="button"><span className="gt-tone--green"><Stethoscope size={21} /></span><strong>Приватний лікар</strong><small>Консультація</small></button>
-          <button type="button"><span className="gt-tone--green"><Pill size={21} /></span><strong>Аптека</strong><small>Пошук аптек</small></button>
-          <button type="button"><span className="gt-tone--purple"><Wrench size={21} /></span><strong>СТО</strong><small>Автосервіси</small></button>
-          <button type="button"><span className="gt-tone--orange"><CarFront size={21} /></span><strong>Евакуатор</strong><small>Допомога</small></button>
+          {services.filter((service) => service.active).map((service) => {
+            const ServiceIcon = emergencyServiceIcons[service.icon] ?? CircleHelp;
+            return (
+              <button type="button" key={service.id}>
+                <span className={`gt-tone--${service.tone}`}><ServiceIcon size={21} /></span>
+                <strong>{service.title}</strong>
+                <small>{service.note}</small>
+              </button>
+            );
+          })}
         </div>
         <p className="gt-expiry"><Info size={16} /> Контакти перевірено регіональним адміністратором 14 липня 2026.</p>
       </main>
