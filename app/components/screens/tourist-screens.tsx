@@ -491,7 +491,7 @@ function ShopScreen({ navigate }: { navigate: Navigate }) {
 
 function EntertainmentScreen({ navigate }: { navigate: Navigate }) {
   return (
-    <div className="tourist-screen gt-screen gt-large-type">
+    <div className="tourist-screen gt-screen gt-entertainment-screen">
       <main className="gt-content">
         <CategoryHeader icon={Bike} title="Розваги" subtitle="Активності та яскраві враження" tone="red" />
         <SearchBar placeholder="Пошук розваг" />
