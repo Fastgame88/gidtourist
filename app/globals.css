@@ -4717,115 +4717,364 @@ button.gt-service-card {
   }
 }
 
-/* Entertainment screen scale from the approved mobile reference */
-.gt-entertainment-screen .gt-content {
+/* Attached catalog screens: approved mobile scale */
+.gt-reference-list-screen .gt-content {
   gap:9px;
   padding:14px 16px 18px;
 }
 
-.gt-entertainment-screen .gt-category-head {
+.gt-reference-list-screen .gt-category-head {
   grid-template-columns:40px minmax(0,1fr) 56px;
   gap:9px;
 }
 
-.gt-entertainment-screen .gt-category-head__icon {
+.gt-reference-list-screen .gt-category-head__icon {
   width:38px;
   height:38px;
 }
 
-.gt-entertainment-screen .gt-category-head h1 {
+.gt-reference-list-screen .gt-category-head h1 {
   font-size:22px;
 }
 
-.gt-entertainment-screen .gt-category-head p {
+.gt-reference-list-screen .gt-category-head p {
   font-size:10px;
 }
 
-.gt-entertainment-screen .gt-category-head > button {
+.gt-reference-list-screen .gt-category-head > button {
   min-width:56px;
   padding:6px 7px;
   font-size:9px !important;
 }
 
-.gt-entertainment-screen .gt-search {
+.gt-reference-list-screen .gt-search {
   min-height:42px;
 }
 
-.gt-entertainment-screen .gt-search input {
+.gt-reference-list-screen .gt-search input {
   font-size:12px !important;
 }
 
-.gt-entertainment-screen .gt-chips {
-  flex-wrap:wrap;
+.gt-reference-list-screen .gt-chips {
+  flex-wrap:nowrap;
   gap:5px;
-  overflow:visible;
-  padding-bottom:1px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding-bottom:2px;
+  scroll-snap-type:x proximity;
+  -webkit-overflow-scrolling:touch;
 }
 
-.gt-entertainment-screen .gt-chips button {
+.gt-reference-list-screen .gt-chips button {
   min-height:28px;
   padding:5px 10px;
   font-size:9.5px !important;
+  scroll-snap-align:start;
 }
 
-.gt-entertainment-screen .gt-map-strip {
-  min-height:66px;
+.gt-reference-list-screen .gt-map-strip {
+  min-height:58px;
 }
 
-.gt-entertainment-screen .gt-map-strip > div {
-  top:13px;
+.gt-reference-list-screen .gt-map-strip > div {
+  top:10px;
 }
 
-.gt-entertainment-screen .gt-map-strip > div small,
-.gt-entertainment-screen .gt-map-strip > div strong {
+.gt-reference-list-screen .gt-map-strip > div small,
+.gt-reference-list-screen .gt-map-strip > div strong {
   font-size:8.5px;
 }
 
-.gt-entertainment-screen .gt-section-title h2 {
+.gt-reference-list-screen .gt-section-title h2 {
   font-size:16px;
 }
 
-.gt-entertainment-screen .gt-section-title button {
+.gt-reference-list-screen .gt-section-title button {
   font-size:10.5px !important;
 }
 
-.gt-entertainment-screen .gt-place-list {
+.gt-reference-list-screen .gt-place-list {
   gap:7px;
 }
 
-.gt-entertainment-screen .gt-place-row {
+.gt-reference-list-screen .gt-place-row {
   grid-template-columns:82px minmax(0,1fr);
   gap:9px;
   min-height:90px;
   padding:6px;
 }
 
-.gt-entertainment-screen .gt-place-row .gt-photo {
+.gt-reference-list-screen .gt-place-row .gt-photo {
   width:82px;
   height:78px;
 }
 
-.gt-entertainment-screen .gt-place-row__body {
+.gt-reference-list-screen .gt-place-row__body {
   gap:2px;
   padding:1px 0;
 }
 
-.gt-entertainment-screen .gt-place-row__title strong {
+.gt-reference-list-screen .gt-place-row__title strong {
   font-size:12.5px;
 }
 
-.gt-entertainment-screen .gt-place-row__title b,
-.gt-entertainment-screen .gt-place-row__body > small,
-.gt-entertainment-screen .gt-place-row__meta {
+.gt-reference-list-screen .gt-place-row__title b,
+.gt-reference-list-screen .gt-place-row__body > small,
+.gt-reference-list-screen .gt-place-row__meta {
   font-size:9px;
 }
 
-.gt-entertainment-screen .gt-place-row__tags {
+.gt-reference-list-screen .gt-place-row__tags {
   gap:3px;
   margin-top:1px;
 }
 
-.gt-entertainment-screen .gt-place-row__tags i {
+.gt-reference-list-screen .gt-place-row__tags i {
   padding:2px 5px;
   font-size:7.5px;
+}
+
+.gt-reference-list-screen .gt-walking-icon {
+  flex:0 0 auto;
+  color:#657269;
+}
+
+/* Transfer screen: approved mobile scale */
+.gt-transfer-screen .gt-transfer-hero {
+  min-height:270px;
+  padding:24px 16px 0;
+}
+
+.gt-transfer-screen .gt-transfer-hero > span {
+  width:52px;
+  height:52px;
+}
+
+.gt-transfer-screen .gt-transfer-hero > h1 {
+  margin:7px 0 1px;
+  font-size:34px;
+}
+
+.gt-transfer-screen .gt-transfer-hero > p {
+  margin:0 0 16px;
+  font-size:14px;
+}
+
+.gt-transfer-screen .gt-transfer-kinds {
+  gap:6px;
+  padding:9px;
+}
+
+.gt-transfer-screen .gt-transfer-kinds button {
+  min-height:84px;
+  padding:8px 5px;
+}
+
+.gt-transfer-screen .gt-transfer-kinds strong {
+  font-size:12px;
+}
+
+.gt-transfer-screen .gt-transfer-kinds small {
+  font-size:9.5px;
+}
+
+.gt-transfer-screen .gt-transfer-content {
+  gap:9px;
+  padding:14px 16px 18px;
+}
+
+.gt-transfer-screen .gt-section-title h2 {
+  font-size:18px;
+}
+
+.gt-transfer-screen .gt-transfer-list {
+  gap:8px;
+}
+
+.gt-transfer-screen .gt-transfer-list article {
+  grid-template-columns:82px minmax(0,1fr) auto;
+  gap:9px;
+  min-height:94px;
+  padding:7px;
+}
+
+.gt-transfer-screen .gt-transfer-list .gt-photo {
+  width:82px;
+  height:80px;
+}
+
+.gt-transfer-screen .gt-transfer-list article > div {
+  gap:3px;
+}
+
+.gt-transfer-screen .gt-transfer-list article > div strong {
+  font-size:14px;
+}
+
+.gt-transfer-screen .gt-transfer-list article > div p {
+  font-size:11px;
+  line-height:1.28;
+}
+
+.gt-transfer-screen .gt-transfer-list article > div small {
+  font-size:10px;
+}
+
+.gt-transfer-screen .gt-transfer-list article > span {
+  grid-column:auto;
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+  width:auto;
+}
+
+.gt-transfer-screen .gt-transfer-list article > span button {
+  min-height:31px;
+  padding:5px 8px;
+  font-size:10px !important;
+}
+
+.gt-transfer-screen .gt-transfer-list article > span small {
+  font-size:9.5px;
+}
+
+/* Bonuses screen: approved mobile scale */
+.gt-wallet-screen .gt-content {
+  gap:9px;
+  padding:14px 16px 18px;
+}
+
+.gt-wallet-screen .gt-simple-title {
+  font-size:24px;
+}
+
+.gt-wallet-screen .gt-bonus-card {
+  min-height:100px;
+  padding:14px;
+}
+
+.gt-wallet-screen .gt-bonus-card small {
+  font-size:11px;
+}
+
+.gt-wallet-screen .gt-bonus-card strong {
+  font-size:34px;
+}
+
+.gt-wallet-screen .gt-bonus-card span {
+  font-size:10px;
+}
+
+.gt-wallet-screen .gt-detail-card {
+  min-height:58px;
+  padding:9px;
+}
+
+.gt-wallet-screen .gt-detail-card strong {
+  font-size:12px;
+}
+
+.gt-wallet-screen .gt-detail-card small {
+  font-size:9.5px;
+}
+
+.gt-wallet-screen .gt-section-title h2 {
+  font-size:16px;
+}
+
+.gt-wallet-screen .gt-reward-list {
+  gap:7px;
+}
+
+.gt-wallet-screen .gt-reward-list > div {
+  grid-template-columns:68px minmax(0,1fr) auto;
+  gap:8px;
+  min-height:78px;
+  padding:6px;
+}
+
+.gt-wallet-screen .gt-reward-list .gt-photo {
+  width:68px;
+  height:68px;
+}
+
+.gt-wallet-screen .gt-reward-list strong {
+  font-size:11.5px;
+}
+
+.gt-wallet-screen .gt-reward-list small {
+  font-size:8.5px !important;
+}
+
+.gt-wallet-screen .gt-reward-list b,
+.gt-wallet-screen .gt-reward-list button {
+  font-size:9px !important;
+}
+
+.gt-wallet-screen .gt-reward-list button {
+  grid-column:auto;
+  justify-self:auto;
+}
+
+.gt-wallet-screen .gt-expiry {
+  font-size:9px;
+}
+
+/* Profile screen: approved mobile scale */
+.gt-profile-screen .gt-content {
+  gap:9px;
+  padding:14px 16px 18px;
+}
+
+.gt-profile-screen .gt-simple-title {
+  font-size:26px;
+}
+
+.gt-profile-screen .gt-profile-card {
+  grid-template-columns:58px minmax(0,1fr) auto;
+  padding:13px;
+}
+
+.gt-profile-screen .gt-avatar {
+  width:58px;
+  height:58px;
+}
+
+.gt-profile-screen .gt-profile-card > div strong {
+  font-size:14px;
+}
+
+.gt-profile-screen .gt-profile-card > div small {
+  font-size:10px;
+}
+
+.gt-profile-screen .gt-profile-card > div span {
+  font-size:9px;
+}
+
+.gt-profile-screen .gt-profile-card > p small {
+  font-size:9px;
+}
+
+.gt-profile-screen .gt-profile-card > p strong {
+  font-size:11px;
+}
+
+.gt-profile-screen .gt-profile-list button {
+  min-height:48px;
+  padding:8px 11px;
+}
+
+.gt-profile-screen .gt-profile-list span {
+  font-size:12px;
+}
+
+.gt-profile-screen .gt-profile-list small {
+  font-size:9px;
+}
+
+.gt-profile-screen .gt-logout,
+.gt-profile-screen .gt-outline-button {
+  min-height:46px;
+  font-size:12px !important;
 }
