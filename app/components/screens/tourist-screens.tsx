@@ -19,6 +19,8 @@ import {
   Cross,
   ExternalLink,
   Flame,
+  FlameKindling,
+  Flower2,
   Gift,
   Heart,
   Hotel,
@@ -271,13 +273,13 @@ const categories: Array<{
   tone: string;
   icon: LucideIcon;
 }> = [
-  { title: "Що поруч", note: "Памʼятки, сервіси та корисні місця", slug: "nearby", tone: "green", icon: MapPin },
-  { title: "Де поїсти", note: "Кафе, ресторани та колиби", slug: "catalog", tone: "orange", icon: Utensils },
-  { title: "Де відпочити", note: "Готелі, садиби й апартаменти", slug: "available", tone: "blue", icon: BedDouble },
-  { title: "Розваги", note: "Активності та цікаві враження", slug: "entertainment", tone: "purple", icon: Bike },
-  { title: "Трансфер", note: "Таксі, трансфери та оренда авто", slug: "transfer", tone: "teal", icon: CarFront },
-  { title: "Халепа?", note: "Допомога, аптеки, поліція, лікарі", slug: "emergency", tone: "red", icon: LifeBuoy },
-  { title: "Де купити", note: "Магазини, сувеніри та місцеві товари", slug: "shop", tone: "yellow", icon: ShoppingBag },
+  { title: "Де купити", note: "Продуктові, промтовари та сувеніри", slug: "shop", tone: "shop", icon: ShoppingBag },
+  { title: "Де поїсти", note: "Кафе, ресторани та колиби", slug: "catalog", tone: "food", icon: Utensils },
+  { title: "Де відпочити", note: "Чани, сауни, басейни та масаж", slug: "available", tone: "rest", icon: Flower2 },
+  { title: "Розваги", note: "Активності, екстрим та враження", slug: "entertainment", tone: "fun", icon: Bike },
+  { title: "Що поруч", note: "Усі місця поруч за вашою локацією", slug: "nearby", tone: "nearby", icon: MapPin },
+  { title: "Трансфер", note: "Таксі, трансфери та оренда авто", slug: "transfer", tone: "transfer", icon: CarFront },
+  { title: "Халепа?", note: "Допомога, аптеки, поліція, лікарі", slug: "emergency", tone: "emergency", icon: LifeBuoy },
 ];
 
 function HomeScreen({ navigate }: { navigate: Navigate }) {
@@ -285,10 +287,10 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
     <div className="tourist-screen gt-screen gt-home-screen">
       <section className="gt-home-hero">
         <div className="gt-home-hero__copy">
-          <span className="gt-hero-pin"><MapPin size={43} strokeWidth={3} /></span>
+          <span className="gt-hero-pin" aria-hidden="true"><MapPin size={42} fill="currentColor" /></span>
           <p>Вітаємо в</p>
           <h1>Татарові</h1>
-          <span>Раді, що ви з нами!</span>
+          <span className="gt-home-welcome-note">Раді, що ви з нами!</span>
         </div>
         <div className="gt-weather">
           <SunMedium size={23} />
@@ -332,9 +334,9 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
           className="gt-category-card gt-category-card--featured"
           onClick={() => navigate("tourist", "place")}
         >
-          <span className="gt-category-card__icon"><BadgeCheck size={24} /></span>
+          <span className="gt-category-card__icon"><FlameKindling size={24} /></span>
           <span>
-            <strong>Ми рекомендуємо</strong>
+            <strong>Гаряча пропозиція</strong>
             <small>Перевірені місця від місцевих</small>
           </span>
           <ChevronRight size={20} />
