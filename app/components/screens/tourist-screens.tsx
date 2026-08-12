@@ -524,7 +524,7 @@ function AvailableScreen({ navigate }: { navigate: Navigate }) {
 
 function ShopScreen({ navigate }: { navigate: Navigate }) {
   return (
-    <div className="tourist-screen gt-screen gt-reference-list-screen">
+    <div className="tourist-screen gt-screen gt-reference-list-screen gt-shop-screen">
       <main className="gt-content">
         <CategoryHeader icon={ShoppingBag} title="Де купити" subtitle="Магазини та корисні покупки" tone="blue" />
         <SearchBar placeholder="Пошук магазину або товарів" />
