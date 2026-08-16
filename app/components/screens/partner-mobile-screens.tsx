@@ -10,14 +10,19 @@ import {
   ChevronRight,
   ClipboardList,
   Clock3,
+  CigaretteOff,
   Edit3,
   Eye,
   Home,
   Hotel,
   Image as ImageIcon,
   Info,
+  LogIn,
+  LogOut,
   MapPin,
+  Moon,
   MoreVertical,
+  PawPrint,
   Phone,
   QrCode,
   RefreshCcw,
@@ -518,20 +523,22 @@ function PaymentLogos() {
   return (
     <div className="gt-payment-logos" aria-label="Підтримувані способи оплати">
       <span className="gt-payment-logo gt-payment-logo--visa" aria-label="Visa">
-        <svg viewBox="0 0 68 24" role="img" aria-hidden="true">
-          <text x="4" y="18" fontSize="18" fontWeight="900" fontStyle="italic" fontFamily="Arial, sans-serif">VISA</text>
+        <svg viewBox="0 0 76 26" role="img" aria-hidden="true">
+          <text x="5" y="20" fontSize="20" fontWeight="900" fontStyle="italic" fontFamily="Arial Black, Arial, sans-serif">VISA</text>
         </svg>
       </span>
       <span className="gt-payment-logo gt-payment-logo--mastercard" aria-label="Mastercard">
-        <svg viewBox="0 0 72 28" role="img" aria-hidden="true">
-          <circle cx="29" cy="14" r="10" fill="#eb001b" />
-          <circle cx="42" cy="14" r="10" fill="#f79e1b" />
-          <path d="M35.5 6.5a10 10 0 0 1 0 15A10 10 0 0 1 35.5 6.5Z" fill="#ff5f00" />
+        <svg viewBox="0 0 78 28" role="img" aria-hidden="true">
+          <circle cx="31" cy="14" r="10.5" fill="#EB001B" />
+          <circle cx="45" cy="14" r="10.5" fill="#F79E1B" />
+          <path d="M38 5.8a10.5 10.5 0 0 1 0 16.4 10.5 10.5 0 0 1 0-16.4Z" fill="#FF5F00" />
         </svg>
       </span>
       <span className="gt-payment-logo gt-payment-logo--gpay" aria-label="Google Pay">
         <svg viewBox="0 0 82 28" role="img" aria-hidden="true">
-          <text x="4" y="19" fontSize="17" fontWeight="700" fontFamily="Arial, sans-serif">G Pay</text>
+          <text x="5" y="20" fontSize="18" fontWeight="800" fontFamily="Arial, sans-serif">
+            <tspan fill="#4285F4">G</tspan><tspan fill="#3C4043"> Pay</tspan>
+          </text>
         </svg>
       </span>
     </div>
@@ -555,27 +562,27 @@ function RulesScreen({ navigate, activated }: PartnerProps) {
         <h3 className="gt-partner-section-title">Загальні правила</h3>
         <FormCard>
           <RuleLine
-            icon={Clock3}
+            icon={LogIn}
             value={profile.checkIn}
             onChange={(checkIn) => setProfile((prev) => ({ ...prev, checkIn }))}
           />
           <RuleLine
-            icon={Clock3}
+            icon={LogOut}
             value={profile.checkOut}
             onChange={(checkOut) => setProfile((prev) => ({ ...prev, checkOut }))}
           />
           <RuleLine
-            icon={ShieldCheck}
+            icon={CigaretteOff}
             value="Куріння заборонено в приміщеннях готелю"
             onChange={() => undefined}
           />
           <RuleLine
-            icon={Clock3}
+            icon={Moon}
             value={profile.quietHours}
             onChange={(quietHours) => setProfile((prev) => ({ ...prev, quietHours }))}
           />
           <RuleLine
-            icon={Home}
+            icon={PawPrint}
             value={profile.petPolicy}
             onChange={(petPolicy) => setProfile((prev) => ({ ...prev, petPolicy }))}
           />
@@ -590,12 +597,12 @@ function RulesScreen({ navigate, activated }: PartnerProps) {
           />
         </section>
 
-        <section className="gt-partner-text-section">
+        <section className="gt-partner-text-section gt-payment-section">
           <strong>Оплата</strong>
           <textarea
             value={profile.payment}
             onChange={(event) => setProfile((prev) => ({ ...prev, payment: event.target.value }))}
-            rows={3}
+            rows={2}
           />
           <PaymentLogos />
         </section>
@@ -619,7 +626,7 @@ function WifiScreen({ navigate, activated }: PartnerProps) {
   const [showPassword, setShowPassword] = useState(true);
 
   return (
-    <div className="gt-partner-mobile-screen has-bottom-nav">
+    <div className="gt-partner-mobile-screen has-bottom-nav is-wifi-screen">
       <PartnerHeader
         title="Wi‑Fi"
         navigate={navigate}

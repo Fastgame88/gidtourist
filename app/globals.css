@@ -10905,3 +10905,102 @@ button.gt-service-card {
     margin-left: 10px;
   }
 }
+
+/* ===== Partner detail polish: rules, payment, Wi-Fi ===== */
+.gt-partner-header__text-action {
+  min-height: 39px;
+  padding-right: 2px;
+  padding-left: 6px;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.gt-partner-rule-line {
+  grid-template-columns: 22px minmax(0, 1fr) 18px;
+  column-gap: 10px;
+}
+
+.gt-partner-rule-line > svg:first-child {
+  width: 19px;
+  height: 19px;
+  stroke-width: 1.9;
+  color: #3f4a44;
+}
+
+.gt-partner-rule-line > svg:last-child {
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.8;
+  color: #5a655f;
+}
+
+.gt-payment-section textarea {
+  min-height: 0;
+  height: 40px;
+  margin: 0;
+}
+
+.gt-payment-logos {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 3px;
+}
+
+.gt-payment-logo {
+  display: grid;
+  width: 58px;
+  height: 26px;
+  place-items: center;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.gt-payment-logo svg {
+  display: block;
+  width: 100%;
+  height: 24px;
+}
+
+.gt-payment-logo--visa {
+  width: 52px;
+}
+
+.gt-payment-logo--visa svg {
+  color: #1a1f71;
+  fill: #1a1f71;
+}
+
+.gt-payment-logo--mastercard {
+  width: 56px;
+}
+
+.gt-payment-logo--mastercard svg {
+  width: 56px;
+  height: 25px;
+}
+
+.gt-payment-logo--gpay {
+  width: 62px;
+}
+
+.gt-payment-logo--gpay svg {
+  width: 62px;
+  height: 24px;
+}
+
+.is-wifi-screen,
+.is-wifi-screen .gt-partner-header,
+.is-wifi-screen .gt-partner-mobile-content {
+  background: #fff;
+}
+
+.is-wifi-screen .gt-wifi-hero > span {
+  background: #f1f5f2;
+}
+
+.is-wifi-screen .gt-partner-tip-box {
+  background: #f3f7f4;
+}
