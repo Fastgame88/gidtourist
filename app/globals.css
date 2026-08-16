@@ -8962,3 +8962,23 @@ button.gt-service-card {
     gap:4px;
   }
 }
+
+/* Entertainment thumbnails only: 15% narrower */
+
+.gt-entertainment-screen .gt-place-row {
+  grid-template-columns:102px minmax(0,1fr);
+}
+
+.gt-entertainment-screen .gt-place-row .gt-photo {
+  width:102px;
+}
+
+@media (max-width:390px) {
+  .gt-entertainment-screen .gt-place-row {
+    grid-template-columns:90px minmax(0,1fr);
+  }
+
+  .gt-entertainment-screen .gt-place-row .gt-photo {
+    width:90px;
+  }
+}
