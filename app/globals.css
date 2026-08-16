@@ -9151,7 +9151,7 @@ button.gt-service-card {
 .gt-hotel-services-card > span {
   position:absolute;
   z-index:1;
-  right:54px;
+  right:62px;
   bottom:16px;
   left:15px;
   display:grid;
@@ -9159,7 +9159,7 @@ button.gt-service-card {
 }
 
 .gt-hotel-services-card > span strong {
-  font-size:16px;
+  font-size:12px;
   line-height:1.15;
 }
 
@@ -9204,8 +9204,10 @@ button.gt-service-card {
 
 .gt-hotel-service-detail {
   display:grid;
+  grid-template-rows:auto auto auto auto auto auto minmax(25px,1fr);
   align-content:start;
   gap:10px;
+  min-height:calc(100dvh - 92px - env(safe-area-inset-bottom));
   padding:10px 17px 16px !important;
 }
 
@@ -9220,7 +9222,7 @@ button.gt-service-card {
 
 .gt-hotel-service-photo {
   position:relative;
-  min-height:clamp(198px,27vh,232px);
+  min-height:clamp(238px,32.4vh,278px);
   overflow:hidden;
   border-radius:14px;
   background-position:center;
@@ -9331,6 +9333,7 @@ button.gt-service-card {
   align-items:center;
   gap:8px;
   padding:3px 4px;
+  align-self:end;
   color:#6e7972;
   font-size:11px;
 }
@@ -9392,13 +9395,13 @@ button.gt-service-card {
   }
 
   .gt-hotel-services-card > span {
-    right:43px;
+    right:48px;
     bottom:11px;
     left:11px;
   }
 
   .gt-hotel-services-card > span strong {
-    font-size:13px;
+    font-size:9px;
   }
 
   .gt-hotel-services-card > span small {
@@ -9419,7 +9422,7 @@ button.gt-service-card {
   }
 
   .gt-hotel-service-photo {
-    min-height:190px;
+    min-height:228px;
   }
 
   .gt-hotel-service-copy h2 {
