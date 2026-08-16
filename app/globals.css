@@ -6385,3 +6385,677 @@ button.gt-service-card {
     min-height:84px;
   }
 }
+
+/* Transfer screen: final approved composition */
+.gt-transfer-screen {
+  height:auto;
+  min-height:100%;
+  overflow:visible !important;
+  background:#f6f7f7 !important;
+}
+
+.gt-transfer-screen .gt-transfer-hero {
+  align-content:end;
+  min-height:356px;
+  padding:34px 16px 14px;
+  background:
+    linear-gradient(180deg,rgba(5,32,25,.06),rgba(5,32,24,.52)),
+    url("/images/carpathian-river.webp") center 42%/cover no-repeat;
+}
+
+.gt-transfer-screen .gt-transfer-hero > span {
+  width:58px;
+  height:58px;
+  background:linear-gradient(145deg,#21a9ad,#087e87);
+}
+
+.gt-transfer-screen .gt-transfer-hero > span svg {
+  width:32px;
+  height:32px;
+}
+
+.gt-transfer-screen .gt-transfer-hero > h1 {
+  margin:9px 0 2px;
+  font-size:40px;
+  line-height:1.05;
+}
+
+.gt-transfer-screen .gt-transfer-hero > p {
+  margin:0 0 24px;
+  font-size:15.5px;
+}
+
+.gt-transfer-screen .gt-transfer-kinds {
+  gap:9px;
+  width:100%;
+  padding:12px;
+  border-radius:18px;
+  background:rgba(255,255,255,.97);
+  box-shadow:0 8px 24px rgba(15,42,28,.16);
+}
+
+.gt-transfer-screen .gt-transfer-kinds button {
+  align-content:center;
+  gap:5px;
+  min-height:105px;
+  padding:10px 7px;
+  border-radius:14px;
+}
+
+.gt-transfer-screen .gt-transfer-kinds button svg {
+  width:30px;
+  height:30px;
+}
+
+.gt-transfer-screen .gt-transfer-kinds strong {
+  font-size:14px;
+}
+
+.gt-transfer-screen .gt-transfer-kinds small {
+  font-size:11px;
+  line-height:1.3;
+}
+
+.gt-transfer-screen .gt-transfer-content {
+  gap:11px;
+  padding:20px 16px 22px;
+}
+
+.gt-transfer-screen .gt-section-title h2 {
+  font-size:21px;
+}
+
+.gt-transfer-screen .gt-transfer-list {
+  gap:10px;
+}
+
+.gt-transfer-screen .gt-transfer-list article {
+  grid-template-columns:104px minmax(0,1fr) 94px;
+  gap:12px;
+  min-height:118px;
+  padding:9px;
+  border:0;
+  border-radius:17px;
+  box-shadow:0 4px 16px rgba(24,48,34,.08);
+}
+
+.gt-transfer-screen .gt-transfer-list .gt-photo {
+  width:104px;
+  height:98px;
+  border-radius:13px;
+}
+
+.gt-transfer-screen .gt-transfer-list article > div {
+  gap:5px;
+}
+
+.gt-transfer-screen .gt-transfer-list article > div strong {
+  font-size:16px;
+  line-height:1.15;
+}
+
+.gt-transfer-screen .gt-transfer-list article > div p {
+  font-size:12px;
+  line-height:1.32;
+}
+
+.gt-transfer-screen .gt-transfer-list article > div small {
+  font-size:11px;
+}
+
+.gt-transfer-screen .gt-transfer-list article > span {
+  gap:16px;
+}
+
+.gt-transfer-screen .gt-transfer-list article > span button {
+  min-height:36px;
+  padding:7px 10px;
+  border-radius:10px;
+  font-size:12px !important;
+}
+
+.gt-transfer-screen .gt-transfer-list article > span small {
+  padding:6px 9px;
+  border-radius:999px;
+  background:#f5f6f5;
+  font-size:10.5px;
+  white-space:nowrap;
+}
+
+/* Nearby screen: attached reference adapted to the shared app viewport */
+.gt-nearby-screen {
+  height:auto;
+  min-height:100%;
+  overflow:visible !important;
+  background:#f6f7f8 !important;
+}
+
+.gt-nearby-content {
+  display:grid;
+  min-height:100%;
+  padding:0 0 24px;
+  background:#f6f7f8;
+}
+
+.gt-nearby-toolbar {
+  display:grid;
+  grid-template-columns:48px minmax(0,1fr) 100px;
+  align-items:center;
+  min-height:68px;
+  padding:8px 16px;
+  border-bottom:1px solid #eef1ef;
+  background:#fff;
+}
+
+.gt-nearby-toolbar > button,
+.gt-nearby-toolbar > span button {
+  display:grid;
+  place-items:center;
+  width:42px;
+  height:42px;
+  padding:0;
+  border:1px solid #e4e9e6;
+  border-radius:12px;
+  color:#1d2721;
+  background:#fff;
+  box-shadow:0 3px 11px rgba(26,47,34,.05);
+}
+
+.gt-nearby-toolbar > button {
+  justify-self:start;
+  border-color:transparent;
+  box-shadow:none;
+}
+
+.gt-nearby-toolbar h1 {
+  justify-self:start;
+  font-size:28px;
+  line-height:1.1;
+}
+
+.gt-nearby-toolbar > span {
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+}
+
+.gt-nearby-search {
+  padding:14px 16px 4px;
+  background:#fff;
+}
+
+.gt-nearby-search .gt-search {
+  min-height:48px;
+  padding:0 14px;
+  border-color:#e0e5e2;
+  border-radius:13px;
+  background:#f8f9f9;
+}
+
+.gt-nearby-search .gt-search input {
+  font-size:13px !important;
+}
+
+.gt-nearby-categories {
+  display:flex;
+  gap:14px;
+  min-width:0;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:14px 16px 17px;
+  background:#fff;
+  scrollbar-width:none;
+  scroll-snap-type:x proximity;
+  -webkit-overflow-scrolling:touch;
+}
+
+.gt-nearby-categories::-webkit-scrollbar {
+  display:none;
+}
+
+.gt-nearby-categories > button {
+  display:grid;
+  flex:0 0 67px;
+  justify-items:center;
+  gap:7px;
+  padding:0;
+  background:transparent;
+  scroll-snap-align:start;
+}
+
+.gt-nearby-category-icon {
+  display:grid;
+  place-items:center;
+  width:52px;
+  height:52px;
+  border-radius:17px;
+  color:#fff;
+  background:#68747d;
+  box-shadow:0 5px 13px rgba(20,48,32,.12);
+}
+
+.gt-nearby-categories > button strong {
+  color:#38433d;
+  font-size:10.5px;
+  line-height:1.12;
+  white-space:nowrap;
+}
+
+.gt-nearby-categories > button.is-active strong {
+  color:#07975a;
+}
+
+.gt-nearby-category-icon--all { background:linear-gradient(145deg,#20ba70,#069a56); }
+.gt-nearby-category-icon--food { background:linear-gradient(145deg,#ffad26,#f07b13); }
+.gt-nearby-category-icon--shop { background:linear-gradient(145deg,#408df1,#1c68d5); }
+.gt-nearby-category-icon--rest { background:linear-gradient(145deg,#55be76,#2c9b57); }
+.gt-nearby-category-icon--fun { background:linear-gradient(145deg,#9b63e5,#7140c6); }
+.gt-nearby-category-icon--transfer { background:linear-gradient(145deg,#67758a,#3f4e64); }
+
+.gt-nearby-map {
+  position:relative;
+  height:255px;
+  overflow:hidden;
+  background:
+    linear-gradient(rgba(255,255,255,.12),rgba(255,255,255,.12)),
+    url("/images/tatariv-map-strip.webp") center/cover no-repeat;
+  box-shadow:inset 0 0 30px rgba(72,109,83,.08);
+}
+
+.gt-nearby-map-pin {
+  position:absolute;
+  z-index:2;
+  display:grid;
+  place-items:center;
+  width:43px;
+  height:43px;
+  border:3px solid #fff;
+  border-radius:50% 50% 50% 7px;
+  color:#fff;
+  background:#138d59;
+  box-shadow:0 5px 13px rgba(18,78,49,.24);
+  transform:rotate(-45deg);
+}
+
+.gt-nearby-map-pin > * {
+  transform:rotate(45deg);
+}
+
+.gt-nearby-map-pin b {
+  font-size:14px;
+}
+
+.gt-nearby-map-pin--food { top:86px; left:8%; background:#f08a19; }
+.gt-nearby-map-pin--shop { top:31px; left:28%; background:#2e79db; }
+.gt-nearby-map-pin--hotel { top:26px; right:11%; background:#50637d; }
+.gt-nearby-map-pin--fun { top:104px; right:26%; background:#7946ca; }
+.gt-nearby-map-pin--partner { top:55px; left:55%; background:#f08a19; }
+.gt-nearby-map-pin--service { bottom:32px; left:29%; background:#2b9c54; }
+
+.gt-nearby-map-user {
+  position:absolute;
+  z-index:3;
+  top:56%;
+  left:51%;
+  width:22px;
+  height:22px;
+  border:4px solid #fff;
+  border-radius:50%;
+  background:#258fe3;
+  box-shadow:0 0 0 28px rgba(42,145,226,.13),0 4px 10px rgba(29,91,142,.2);
+}
+
+.gt-nearby-locate {
+  position:absolute;
+  z-index:4;
+  right:17px;
+  bottom:18px;
+  display:grid;
+  place-items:center;
+  width:48px;
+  height:48px;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  color:#17231c;
+  background:#fff;
+  box-shadow:0 5px 16px rgba(23,48,33,.16);
+}
+
+.gt-nearby-results {
+  position:relative;
+  z-index:5;
+  display:grid;
+  gap:12px;
+  margin-top:-1px;
+  padding:15px 16px 22px;
+  border-radius:22px 22px 0 0;
+  background:#fff;
+}
+
+.gt-nearby-radius {
+  display:grid;
+  gap:9px;
+}
+
+.gt-nearby-radius > strong {
+  color:#68736c;
+  font-size:12px;
+}
+
+.gt-nearby-radius > div {
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:8px;
+}
+
+.gt-nearby-radius button {
+  min-height:41px;
+  padding:6px 4px;
+  border:1px solid #e2e7e4;
+  border-radius:12px;
+  color:#525e57;
+  background:#fff;
+  font-size:11px !important;
+  font-weight:700;
+  box-shadow:0 2px 7px rgba(26,48,34,.04);
+}
+
+.gt-nearby-radius button.is-active {
+  border-color:#0ba45f;
+  color:#fff;
+  background:linear-gradient(145deg,#19b96d,#079657);
+}
+
+.gt-nearby-screen .gt-map-partner-legend {
+  width:max-content;
+  max-width:100%;
+  min-height:29px;
+  padding:3px 8px;
+  border:0;
+  background:#fff7e8;
+}
+
+.gt-nearby-screen .gt-map-partner-legend > span {
+  width:20px;
+  height:20px;
+  background:#f08a19;
+}
+
+.gt-nearby-screen .gt-map-partner-legend strong {
+  color:#80591c;
+  font-size:10px;
+}
+
+.gt-nearby-list-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.gt-nearby-list-head h2 {
+  font-size:20px;
+  line-height:1.1;
+}
+
+.gt-nearby-list-head button {
+  padding:5px 0;
+  color:#7b857f;
+  background:transparent;
+  font-size:10.5px !important;
+}
+
+.gt-nearby-list-head button strong {
+  color:#435049;
+}
+
+.gt-nearby-list {
+  display:grid;
+  gap:8px;
+}
+
+.gt-nearby-place {
+  display:grid;
+  grid-template-columns:68px minmax(0,1fr) 62px;
+  align-items:center;
+  gap:11px;
+  min-height:88px;
+  padding:9px;
+  border:1px solid #edf0ee;
+  border-radius:15px;
+  background:#fff;
+  box-shadow:0 4px 14px rgba(25,48,34,.055);
+  text-align:left;
+}
+
+.gt-nearby-place .gt-photo {
+  width:68px;
+  height:68px;
+  border-radius:12px;
+}
+
+.gt-nearby-place .gt-nearby-place__mountain {
+  background-image:url("/images/carpathian-river.webp");
+  background-position:center;
+  background-size:cover;
+}
+
+.gt-nearby-place > span:nth-child(2) {
+  display:grid;
+  gap:6px;
+  min-width:0;
+}
+
+.gt-nearby-place > span:nth-child(2) strong {
+  overflow:hidden;
+  font-size:14px;
+  line-height:1.18;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.gt-nearby-place > span:nth-child(2) small {
+  overflow:hidden;
+  color:#7a847e;
+  font-size:10.5px;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.gt-nearby-place > span:last-child {
+  display:grid;
+  justify-items:end;
+  gap:14px;
+}
+
+.gt-nearby-place > span:last-child b {
+  color:#354139;
+  font-size:11px;
+}
+
+.gt-nearby-place > span:last-child small {
+  display:flex;
+  align-items:center;
+  gap:3px;
+  color:#606c65;
+  font-size:10px;
+}
+
+.gt-nearby-place > span:last-child svg {
+  color:#efb31c;
+}
+
+@media (max-width:390px) {
+  .gt-transfer-screen .gt-transfer-hero {
+    min-height:322px;
+    padding:24px 12px 12px;
+  }
+
+  .gt-transfer-screen .gt-transfer-hero > span {
+    width:50px;
+    height:50px;
+  }
+
+  .gt-transfer-screen .gt-transfer-hero > h1 {
+    font-size:34px;
+  }
+
+  .gt-transfer-screen .gt-transfer-hero > p {
+    margin-bottom:18px;
+    font-size:13px;
+  }
+
+  .gt-transfer-screen .gt-transfer-kinds {
+    gap:6px;
+    padding:8px;
+  }
+
+  .gt-transfer-screen .gt-transfer-kinds button {
+    min-height:88px;
+    padding:7px 4px;
+  }
+
+  .gt-transfer-screen .gt-transfer-kinds button svg {
+    width:25px;
+    height:25px;
+  }
+
+  .gt-transfer-screen .gt-transfer-kinds strong {
+    font-size:11.5px;
+  }
+
+  .gt-transfer-screen .gt-transfer-kinds small {
+    font-size:9px;
+  }
+
+  .gt-transfer-screen .gt-transfer-content {
+    padding:15px 12px 18px;
+  }
+
+  .gt-transfer-screen .gt-transfer-list article {
+    grid-template-columns:82px minmax(0,1fr) auto;
+    gap:8px;
+    min-height:101px;
+    padding:7px;
+  }
+
+  .gt-transfer-screen .gt-transfer-list .gt-photo {
+    width:82px;
+    height:86px;
+  }
+
+  .gt-transfer-screen .gt-transfer-list article > div strong {
+    font-size:13px;
+  }
+
+  .gt-transfer-screen .gt-transfer-list article > div p {
+    font-size:9.5px;
+  }
+
+  .gt-transfer-screen .gt-transfer-list article > div small,
+  .gt-transfer-screen .gt-transfer-list article > span small {
+    font-size:9px;
+  }
+
+  .gt-transfer-screen .gt-transfer-list article > span button {
+    min-height:31px;
+    padding:5px 7px;
+    font-size:9.5px !important;
+  }
+
+  .gt-nearby-toolbar {
+    grid-template-columns:42px minmax(0,1fr) 88px;
+    min-height:60px;
+    padding:7px 12px;
+  }
+
+  .gt-nearby-toolbar h1 {
+    font-size:24px;
+  }
+
+  .gt-nearby-toolbar > button,
+  .gt-nearby-toolbar > span button {
+    width:38px;
+    height:38px;
+  }
+
+  .gt-nearby-search {
+    padding:10px 12px 3px;
+  }
+
+  .gt-nearby-search .gt-search {
+    min-height:44px;
+  }
+
+  .gt-nearby-categories {
+    gap:10px;
+    padding:12px 12px 14px;
+  }
+
+  .gt-nearby-categories > button {
+    flex-basis:59px;
+  }
+
+  .gt-nearby-category-icon {
+    width:47px;
+    height:47px;
+    border-radius:15px;
+  }
+
+  .gt-nearby-categories > button strong {
+    font-size:9.5px;
+  }
+
+  .gt-nearby-map {
+    height:220px;
+  }
+
+  .gt-nearby-map-pin {
+    width:38px;
+    height:38px;
+  }
+
+  .gt-nearby-results {
+    gap:10px;
+    padding:13px 12px 18px;
+  }
+
+  .gt-nearby-radius > div {
+    gap:5px;
+  }
+
+  .gt-nearby-radius button {
+    min-height:37px;
+    font-size:9.5px !important;
+  }
+
+  .gt-nearby-list-head h2 {
+    font-size:18px;
+  }
+
+  .gt-nearby-place {
+    grid-template-columns:60px minmax(0,1fr) 52px;
+    gap:8px;
+    min-height:80px;
+    padding:7px;
+  }
+
+  .gt-nearby-place .gt-photo {
+    width:60px;
+    height:60px;
+  }
+
+  .gt-nearby-place > span:nth-child(2) strong {
+    font-size:12px;
+  }
+
+  .gt-nearby-place > span:nth-child(2) small,
+  .gt-nearby-place > span:last-child small {
+    font-size:9px;
+  }
+
+  .gt-nearby-place > span:last-child b {
+    font-size:10px;
+  }
+}

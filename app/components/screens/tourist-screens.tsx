@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   Ambulance,
+  ArrowLeft,
   BadgeCheck,
   BedDouble,
   Bike,
@@ -22,6 +23,7 @@ import {
   FlameKindling,
   Flower2,
   Gift,
+  Grid2X2,
   Heart,
   Hotel,
   Info,
@@ -45,6 +47,7 @@ import {
   Send,
   ShieldCheck,
   ShoppingBag,
+  SlidersHorizontal,
   Sparkles,
   Star,
   Stethoscope,
@@ -421,46 +424,100 @@ function CatalogScreen({ navigate }: { navigate: Navigate }) {
 }
 
 function NearbyScreen({ navigate }: { navigate: Navigate }) {
+  const categories: Array<{ label: string; icon: LucideIcon; tone: string }> = [
+    { label: "Усі", icon: Grid2X2, tone: "all" },
+    { label: "Де поїсти", icon: Utensils, tone: "food" },
+    { label: "Де купити", icon: ShoppingBag, tone: "shop" },
+    { label: "Де відпочити", icon: BedDouble, tone: "rest" },
+    { label: "Розваги", icon: Bike, tone: "fun" },
+    { label: "Трансфер", icon: CarFront, tone: "transfer" },
+  ];
+
+  const nearbyPlaces: Array<{
+    photo: PhotoName;
+    title: string;
+    subtitle: string;
+    distance: string;
+    rating: string;
+    mountain?: boolean;
+    onClick?: () => void;
+  }> = [
+    { photo: "pizza", title: "Піцерія «Татаріно»", subtitle: "Де поїсти · Піца, італійська кухня", distance: "250 м", rating: "4.7", onClick: () => navigate("tourist", "place") },
+    { photo: "store", title: "Супермаркет «Гірський»", subtitle: "Де купити · Продукти", distance: "300 м", rating: "4.5" },
+    { photo: "hotel", title: "Готель «Карпатський»", subtitle: "Де відпочити · Готель", distance: "450 м", rating: "4.8" },
+    { photo: "jeep", title: "Говерла", subtitle: "Гірські вершини · Природа", distance: "1,2 км", rating: "4.9", mountain: true },
+  ];
+
   return (
     <div className="tourist-screen gt-screen gt-nearby-screen">
-      <main className="gt-content">
-        <CategoryHeader icon={MapPin} title="Що поруч" subtitle="Корисні місця в радіусі 500 м" tone="green" />
-        <Chips items={["Усі", "Їжа", "Проживання", "Сервіси", "Розваги"]} />
-        <div className="gt-large-map">
-          <i className="gt-large-map__land gt-large-map__land--one" />
-          <i className="gt-large-map__land gt-large-map__land--two" />
-          <i className="gt-large-map__river" />
-          <i className="gt-large-map__road gt-large-map__road--one" />
-          <i className="gt-large-map__road gt-large-map__road--two" />
-          <i className="gt-large-map__road gt-large-map__road--three" />
-          {[
-            { position: "one", partner: false },
-            { position: "two", partner: true },
-            { position: "three", partner: false },
-            { position: "four", partner: true },
-            { position: "five", partner: false },
-          ].map(({ position, partner }) => (
-            <span
-              className={`gt-large-map__pin gt-large-map__pin--${position} ${partner ? "is-partner" : ""}`}
-              key={position}
-            >
-              <MapPin size={17} />
-            </span>
+      <main className="gt-nearby-content">
+        <header className="gt-nearby-toolbar">
+          <button type="button" aria-label="Назад" onClick={() => navigate("tourist", "home")}><ArrowLeft size={25} /></button>
+          <h1>Що поруч</h1>
+          <span>
+            <button type="button" aria-label="Фільтри"><SlidersHorizontal size={21} /></button>
+            <button type="button" aria-label="Карта"><Map size={22} /></button>
+          </span>
+        </header>
+
+        <div className="gt-nearby-search"><SearchBar placeholder="Пошук поруч..." /></div>
+
+        <div className="gt-nearby-categories" aria-label="Категорії місць">
+          {categories.map(({ label, icon: Icon, tone }, index) => (
+            <button type="button" className={index === 0 ? "is-active" : ""} key={label}>
+              <span className={`gt-nearby-category-icon gt-nearby-category-icon--${tone}`}><Icon size={23} /></span>
+              <strong>{label}</strong>
+            </button>
           ))}
-          <b><LocateFixed size={22} /></b>
-          <small>500 м</small>
         </div>
-        <div className="gt-map-partner-legend">
-          <span><MapPin size={14} /></span>
-          <strong>Заклади-партнери</strong>
+
+        <div className="gt-nearby-map">
+          <span className="gt-nearby-map-pin gt-nearby-map-pin--food"><b>12</b></span>
+          <span className="gt-nearby-map-pin gt-nearby-map-pin--shop"><ShoppingBag size={17} /></span>
+          <span className="gt-nearby-map-pin gt-nearby-map-pin--hotel"><BedDouble size={17} /></span>
+          <span className="gt-nearby-map-pin gt-nearby-map-pin--fun"><Bike size={17} /></span>
+          <span className="gt-nearby-map-pin gt-nearby-map-pin--partner"><b>15</b></span>
+          <span className="gt-nearby-map-pin gt-nearby-map-pin--service"><UsersRound size={17} /></span>
+          <i className="gt-nearby-map-user" />
+          <button type="button" className="gt-nearby-locate" aria-label="Моє місцезнаходження"><LocateFixed size={23} /></button>
         </div>
-        <div className="gt-place-list">
-          <PlaceRow photo="restaurant" title="Ресторан «Гуцульщина»" subtitle="Ресторан" rating="4.8 (125)" distance="120 м" walk="2 хв" walking onClick={() => navigate("tourist", "place")} />
-          <PlaceRow photo="coffee" title="Кавʼярня «Кедр»" subtitle="Кавʼярня" rating="4.6 (89)" distance="180 м" walk="3 хв" walking />
-          <PlaceRow photo="store" title="Продукти «Близенько»" subtitle="Магазин" rating="4.5 (47)" distance="220 м" walk="4 хв" walking />
-          <PlaceRow photo="pharmacy" title="Аптека" subtitle="Аптека" rating="4.7 (23)" distance="260 м" walk="4 хв" walking />
-          <PlaceRow photo="hotel" title="Готель «Татарів»" subtitle="Готель" rating="4.9 (71)" distance="320 м" walk="5 хв" walking />
-        </div>
+
+        <section className="gt-nearby-results">
+          <div className="gt-nearby-radius">
+            <strong>Радіус пошуку</strong>
+            <div>
+              {["300 м", "500 м", "1 км", "2 км", "5 км"].map((radius, index) => (
+                <button type="button" className={index === 0 ? "is-active" : ""} key={radius}>{radius}</button>
+              ))}
+            </div>
+          </div>
+
+          <div className="gt-map-partner-legend">
+            <span><MapPin size={14} /></span>
+            <strong>Помаранчеві мітки — заклади-партнери</strong>
+          </div>
+
+          <div className="gt-nearby-list-head">
+            <h2>Найближчі місця</h2>
+            <button type="button">Сортувати: <strong>Відстань</strong></button>
+          </div>
+
+          <div className="gt-nearby-list">
+            {nearbyPlaces.map((place) => (
+              <button type="button" className="gt-nearby-place" key={place.title} onClick={place.onClick}>
+                <Thumb name={place.photo} className={place.mountain ? "gt-nearby-place__mountain" : ""} />
+                <span>
+                  <strong>{place.title}</strong>
+                  <small>{place.subtitle}</small>
+                </span>
+                <span>
+                  <b>{place.distance}</b>
+                  <small><Star size={13} fill="currentColor" /> {place.rating}</small>
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
       </main>
     </div>
   );
