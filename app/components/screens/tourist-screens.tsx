@@ -771,16 +771,25 @@ function PlanSurveyHeader({
   onBack: () => void;
 }) {
   const hasProgress = step !== undefined && total !== undefined;
-  const progress = hasProgress ? Math.min(100, (step / total) * 100) : 0;
+  const progress = hasProgress ? Math.max(0, Math.min(100, ((step - 1) / Math.max(1, total - 1)) * 100)) : 0;
   return (
     <header className="gt-plan-survey-header">
       <button type="button" aria-label="Назад" onClick={onBack}><ArrowLeft size={22} /></button>
-      <div>
+      <div className="gt-plan-survey-title">
         <strong>{title}</strong>
         {hasProgress ? <small>Крок {step} із {total}</small> : <small>Створення персонального маршруту</small>}
       </div>
       <span className="gt-plan-survey-info"><Info size={19} /></span>
-      {hasProgress ? <i><span style={{ width: `${progress}%` }} /></i> : null}
+      {hasProgress ? (
+        <div className="gt-plan-progress-steps" aria-label={`Крок ${step} із ${total}`}>
+          <i style={{ width: `${progress}%` }} />
+          {Array.from({ length: total }).map((_, index) => (
+            <span className={index + 1 < step ? "is-complete" : index + 1 === step ? "is-current" : ""} key={index}>
+              {index + 1 < step ? <Check size={11} /> : null}
+            </span>
+          ))}
+        </div>
+      ) : null}
     </header>
   );
 }
@@ -809,13 +818,15 @@ function PlanChipGroup({
   items,
   selected,
   onSelect,
+  className = "",
 }: {
   items: string[];
   selected: string;
   onSelect: (value: string) => void;
+  className?: string;
 }) {
   return (
-    <div className="gt-plan-chip-group">
+    <div className={`gt-plan-chip-group ${className}`.trim()}>
       {items.map((item) => (
         <button type="button" className={selected === item ? "is-selected" : ""} key={item} onClick={() => onSelect(item)}>{item}</button>
       ))}
@@ -857,29 +868,38 @@ function PlanFooter({
 
 function PlanResult({ navigate, extended = false }: { navigate: Navigate; extended?: boolean }) {
   const days = [
-    { day: "День 1", photo: "hotel" as PhotoName, title: "Заселення та вечір у Татарові", note: "Готель · вечеря · легка прогулянка" },
-    { day: "День 2", photo: "jeep" as PhotoName, title: "Гори та карпатські враження", note: "Маршрут · обід · відпочинок у чані" },
-    { day: "День 3", photo: "tub" as PhotoName, title: "Відновлення і місцеві смаки", note: "SPA · сувеніри · кава" },
+    { day: "День 1", photo: "hotel" as PhotoName, title: "Заселення та вечір у Татарові", items: ["Поселення в готелі", "Вечеря з місцевою кухнею", "Легка вечірня прогулянка"] },
+    { day: "День 2", photo: "jeep" as PhotoName, title: "Гори та карпатські враження", items: ["Маршрут до оглядового місця", "Обід у гірській колибі", "Відпочинок у чані"] },
+    { day: "День 3", photo: "tub" as PhotoName, title: "Відновлення і місцеві смаки", items: ["Ранковий SPA", "Купівля сувенірів", "Кава перед виїздом"] },
   ];
   return (
     <section className="gt-plan-result">
       <div className="gt-plan-result-title"><span><Sparkles size={24} /></span><div><h1>{extended ? "Ваші варіанти готові" : "Ваш план готовий 🎉"}</h1><p>{extended ? "Ми підібрали три сценарії під ваші побажання" : "Персональний план на 3 дні"}</p></div></div>
       {extended ? (
-        <div className="gt-plan-variant-row">
-          {["Збалансований", "Більше активності", "Спокійний сімейний"].map((item, index) => (
-            <article className={index === 0 ? "is-selected" : ""} key={item}>
-              <Thumb name={(index === 0 ? "jeep" : index === 1 ? "tub" : "hotel") as PhotoName} />
-              <strong>{item}</strong><small>{index === 0 ? "3 дні · рекомендовано" : "3 дні · альтернативний"}</small>
-              <button type="button">{index === 0 ? "Обрано" : "Обрати"}</button>
-            </article>
-          ))}
-        </div>
+        <>
+          <div className="gt-plan-extended-summary">
+            <span><UsersRound size={17} /> 2 дорослих · 1 дитина</span>
+            <span><CalendarDays size={17} /> 3 дні</span>
+            <span><TentTree size={17} /> Сімейний · природа · SPA</span>
+            <span><CarFront size={17} /> Власне авто</span>
+          </div>
+          <h2 className="gt-plan-variant-title">Ми підібрали 3 варіанти</h2>
+          <div className="gt-plan-variant-row">
+            {["Збалансований", "Більше активності", "Спокійний сімейний"].map((item, index) => (
+              <article className={index === 0 ? "is-selected" : ""} key={item}>
+                <Thumb name={(index === 0 ? "jeep" : index === 1 ? "tub" : "hotel") as PhotoName} />
+                <strong>{item}</strong><small>{index === 0 ? "3 дні · рекомендовано" : "3 дні · альтернативний"}</small>
+                <button type="button">{index === 0 ? "Обрано" : "Обрати"}</button>
+              </article>
+            ))}
+          </div>
+        </>
       ) : null}
       <div className="gt-plan-days">
         {days.map((item) => (
           <article key={item.day}>
             <Thumb name={item.photo} />
-            <div><small>{item.day}</small><strong>{item.title}</strong><span>{item.note}</span></div>
+            <div><small>{item.day}</small><strong>{item.title}</strong><ul>{item.items.map((entry) => <li key={entry}>{entry}</li>)}</ul></div>
             <ChevronRight size={18} />
           </article>
         ))}
@@ -908,7 +928,7 @@ function PlanScreen({ navigate }: { navigate: Navigate }) {
   const [load, setLoad] = useState("Помірне");
   const [budget, setBudget] = useState("Середній");
 
-  const startSurvey = () => { setMode(selectedMode); setStep(0); };
+  const startSurvey = () => { setMode(selectedMode); setStep(1); };
   const goHome = () => { setMode("home"); setStep(0); };
   const goBack = () => step > 0 ? setStep((value) => value - 1) : goHome();
 
@@ -944,16 +964,8 @@ function PlanScreen({ navigate }: { navigate: Navigate }) {
     return (
       <div className="tourist-screen gt-screen gt-plan-screen">
         <main className="gt-plan-survey">
-          <PlanSurveyHeader title="Експрес-опитування" step={step > 0 && step < 5 ? step : undefined} total={step > 0 && step < 5 ? 4 : undefined} onBack={goBack} />
-          {step === 0 ? (
-            <section className="gt-plan-intro">
-              <div className="gt-plan-intro-visual"><PlanArtIcon /><MountainSnow size={46} /></div>
-              <h1>Створимо ваш<br />план відпочинку</h1>
-              <p>Відповідайте на кілька коротких запитань, і за мить ми підберемо саме для вас.</p>
-              <div className="gt-plan-intro-note"><Timer size={19} /><span><strong>Лише 1–2 хвилини</strong><small>6 коротких запитань</small></span></div>
-              <PlanFooter label="Створити план" onNext={() => setStep(1)} />
-            </section>
-          ) : step === 1 ? (
+          <PlanSurveyHeader title="Експрес-опитування" step={step} total={5} onBack={goBack} />
+          {step === 1 ? (
             <section className="gt-plan-question">
               <h1>Хто подорожує?</h1><p>Оберіть склад вашої компанії</p>
               <PlanChoiceList items={expressTravelers} selected={traveler} onSelect={setTraveler} />
@@ -963,7 +975,7 @@ function PlanScreen({ navigate }: { navigate: Navigate }) {
           ) : step === 2 ? (
             <section className="gt-plan-question">
               <h1>На скільки днів?</h1><p>Тривалість вашої подорожі</p>
-              <PlanChipGroup items={["1 день", "2 дні", "3 дні", "4–5 днів", "Вказати дати"]} selected={days} onSelect={setDays} />
+              <PlanChipGroup className="gt-plan-chip-group--choice-list" items={["1 день", "2 дні", "3 дні", "4–5 днів", "Вказати дати"]} selected={days} onSelect={setDays} />
               <h2>Де ви зупинились?</h2>
               <article className="gt-plan-hotel-card"><Thumb name="hotel" /><div><strong>Гірський затишок</strong><small>вул. Незалежності, 15Б, Татарів</small><button type="button">Змінити</button></div><BadgeCheck size={22} /></article>
               <PlanFooter onNext={() => setStep(3)} />
@@ -988,6 +1000,7 @@ function PlanScreen({ navigate }: { navigate: Navigate }) {
               </div>
               <button type="button" className="gt-plan-change"><Pencil size={17} /> Змінити відповіді</button>
               <PlanFooter label="Підібрати план" onNext={() => setStep(5)} />
+              <button type="button" className="gt-plan-cancel" onClick={goHome}>Скасувати</button>
             </section>
           ) : <PlanResult navigate={navigate} />}
         </main>
@@ -998,16 +1011,8 @@ function PlanScreen({ navigate }: { navigate: Navigate }) {
   return (
     <div className="tourist-screen gt-screen gt-plan-screen">
       <main className="gt-plan-survey">
-        <PlanSurveyHeader title="Розширене опитування" step={step} total={8} onBack={goBack} />
-        {step === 0 ? (
-          <section className="gt-plan-intro gt-plan-intro--extended">
-            <div className="gt-plan-intro-visual"><PlanArtIcon /><MountainSnow size={46} /></div>
-            <h1>Створимо ваш<br />ідеальний план відпочинку</h1>
-            <p>Відповідайте на кілька простих запитань, а ми підберемо найкращі варіанти саме для вас.</p>
-            <div className="gt-plan-privacy"><ShieldCheck size={22} /><span><strong>Ваші відповіді конфіденційні</strong><small>Вони потрібні лише для персонального плану</small></span></div>
-            <PlanFooter label="Почати" onNext={() => setStep(1)} />
-          </section>
-        ) : step === 1 ? (
+        <PlanSurveyHeader title="Розширене опитування" step={step} total={7} onBack={goBack} />
+        {step === 1 ? (
           <section className="gt-plan-question">
             <h1>Хто подорожує?</h1><p>Розкажіть про вашу компанію</p>
             <PlanChoiceList items={expressTravelers} selected={traveler} onSelect={setTraveler} />
@@ -1018,7 +1023,7 @@ function PlanScreen({ navigate }: { navigate: Navigate }) {
         ) : step === 2 ? (
           <section className="gt-plan-question">
             <h1>На який період створити план?</h1><p>Оберіть тривалість та зручний час</p>
-            <PlanChipGroup items={["1 день", "2 дні", "3 дні", "4–5 днів", "Інші дати"]} selected={days} onSelect={setDays} />
+            <PlanChipGroup className="gt-plan-chip-group--choice-list" items={["1 день", "2 дні", "3 дні", "4–5 днів", "Інші дати"]} selected={days} onSelect={setDays} />
             <div className="gt-plan-date-cards"><div><span>Початок</span><strong>24 травня 2026</strong><CalendarRange /></div><div><span>Завершення</span><strong>26 травня 2026</strong><CalendarRange /></div></div>
             <h2>Час доби, який вам зручний</h2><PlanChipGroup items={["Ранок", "День", "Вечір"]} selected="День" onSelect={() => undefined} />
             <PlanFooter onNext={() => setStep(3)} />
