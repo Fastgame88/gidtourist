@@ -6396,64 +6396,66 @@ button.gt-service-card {
 
 .gt-transfer-screen .gt-transfer-hero {
   align-content:end;
-  min-height:356px;
-  padding:34px 16px 14px;
+  min-height:214px;
+  padding:12px 0 7px;
   background:
     linear-gradient(180deg,rgba(5,32,25,.06),rgba(5,32,24,.52)),
     url("/images/carpathian-river.webp") center 42%/cover no-repeat;
 }
 
 .gt-transfer-screen .gt-transfer-hero > span {
-  width:58px;
-  height:58px;
+  width:42px;
+  height:42px;
   background:linear-gradient(145deg,#21a9ad,#087e87);
 }
 
 .gt-transfer-screen .gt-transfer-hero > span svg {
-  width:32px;
-  height:32px;
+  width:24px;
+  height:24px;
 }
 
 .gt-transfer-screen .gt-transfer-hero > h1 {
-  margin:9px 0 2px;
-  font-size:40px;
+  margin:5px 0 1px;
+  font-size:28px;
   line-height:1.05;
 }
 
 .gt-transfer-screen .gt-transfer-hero > p {
-  margin:0 0 24px;
-  font-size:15.5px;
+  margin:0 0 10px;
+  font-size:12px;
 }
 
 .gt-transfer-screen .gt-transfer-kinds {
-  gap:9px;
-  width:100%;
-  padding:12px;
-  border-radius:18px;
+  gap:4px;
+  width:calc(100% + 24px);
+  max-width:none;
+  margin-left:-12px;
+  padding:6px;
+  border-radius:14px;
   background:rgba(255,255,255,.97);
   box-shadow:0 8px 24px rgba(15,42,28,.16);
 }
 
 .gt-transfer-screen .gt-transfer-kinds button {
   align-content:center;
-  gap:5px;
-  min-height:105px;
-  padding:10px 7px;
-  border-radius:14px;
+  gap:3px;
+  min-height:72px;
+  padding:6px 4px;
+  border-radius:12px;
 }
 
 .gt-transfer-screen .gt-transfer-kinds button svg {
-  width:30px;
-  height:30px;
+  width:24px;
+  height:24px;
 }
 
 .gt-transfer-screen .gt-transfer-kinds strong {
-  font-size:14px;
+  font-size:12.5px;
 }
 
 .gt-transfer-screen .gt-transfer-kinds small {
-  font-size:11px;
-  line-height:1.3;
+  font-size:9.5px;
+  line-height:1.2;
 }
 
 .gt-transfer-screen .gt-transfer-content {
@@ -6470,23 +6472,23 @@ button.gt-service-card {
 }
 
 .gt-transfer-screen .gt-transfer-list article {
-  grid-template-columns:104px minmax(0,1fr) 94px;
-  gap:12px;
-  min-height:118px;
-  padding:9px;
+  grid-template-columns:83px minmax(0,1fr) 94px;
+  gap:9px;
+  min-height:94px;
+  padding:6px;
   border:0;
   border-radius:17px;
   box-shadow:0 4px 16px rgba(24,48,34,.08);
 }
 
 .gt-transfer-screen .gt-transfer-list .gt-photo {
-  width:104px;
-  height:98px;
-  border-radius:13px;
+  width:83px;
+  height:78px;
+  border-radius:11px;
 }
 
 .gt-transfer-screen .gt-transfer-list article > div {
-  gap:5px;
+  gap:3px;
 }
 
 .gt-transfer-screen .gt-transfer-list article > div strong {
@@ -6504,7 +6506,7 @@ button.gt-service-card {
 }
 
 .gt-transfer-screen .gt-transfer-list article > span {
-  gap:16px;
+  gap:10px;
 }
 
 .gt-transfer-screen .gt-transfer-list article > span button {
@@ -6539,10 +6541,10 @@ button.gt-service-card {
 
 .gt-nearby-toolbar {
   display:grid;
-  grid-template-columns:48px minmax(0,1fr) 100px;
+  grid-template-columns:44px minmax(0,1fr) 92px;
   align-items:center;
-  min-height:68px;
-  padding:8px 16px;
+  min-height:58px;
+  padding:6px 16px;
   border-bottom:1px solid #eef1ef;
   background:#fff;
 }
@@ -6551,8 +6553,8 @@ button.gt-service-card {
 .gt-nearby-toolbar > span button {
   display:grid;
   place-items:center;
-  width:42px;
-  height:42px;
+  width:38px;
+  height:38px;
   padding:0;
   border:1px solid #e4e9e6;
   border-radius:12px;
@@ -6569,7 +6571,7 @@ button.gt-service-card {
 
 .gt-nearby-toolbar h1 {
   justify-self:start;
-  font-size:28px;
+  font-size:22px;
   line-height:1.1;
 }
 
@@ -6580,29 +6582,29 @@ button.gt-service-card {
 }
 
 .gt-nearby-search {
-  padding:14px 16px 4px;
+  padding:9px 16px 3px;
   background:#fff;
 }
 
 .gt-nearby-search .gt-search {
-  min-height:48px;
-  padding:0 14px;
+  min-height:38px;
+  padding:0 11px;
   border-color:#e0e5e2;
   border-radius:13px;
   background:#f8f9f9;
 }
 
 .gt-nearby-search .gt-search input {
-  font-size:13px !important;
+  font-size:11px !important;
 }
 
 .gt-nearby-categories {
   display:flex;
-  gap:14px;
+  gap:11px;
   min-width:0;
   overflow-x:auto;
   overflow-y:hidden;
-  padding:14px 16px 17px;
+  padding:11px 16px 13px;
   background:#fff;
   scrollbar-width:none;
   scroll-snap-type:x proximity;
@@ -6615,9 +6617,9 @@ button.gt-service-card {
 
 .gt-nearby-categories > button {
   display:grid;
-  flex:0 0 67px;
+  flex:0 0 54px;
   justify-items:center;
-  gap:7px;
+  gap:5px;
   padding:0;
   background:transparent;
   scroll-snap-align:start;
@@ -6626,9 +6628,9 @@ button.gt-service-card {
 .gt-nearby-category-icon {
   display:grid;
   place-items:center;
-  width:52px;
-  height:52px;
-  border-radius:17px;
+  width:42px;
+  height:42px;
+  border-radius:14px;
   color:#fff;
   background:#68747d;
   box-shadow:0 5px 13px rgba(20,48,32,.12);
@@ -6636,7 +6638,7 @@ button.gt-service-card {
 
 .gt-nearby-categories > button strong {
   color:#38433d;
-  font-size:10.5px;
+  font-size:8.5px;
   line-height:1.12;
   white-space:nowrap;
 }
@@ -6654,7 +6656,7 @@ button.gt-service-card {
 
 .gt-nearby-map {
   position:relative;
-  height:255px;
+  height:179px;
   overflow:hidden;
   background:
     linear-gradient(rgba(255,255,255,.12),rgba(255,255,255,.12)),
@@ -6667,8 +6669,8 @@ button.gt-service-card {
   z-index:2;
   display:grid;
   place-items:center;
-  width:43px;
-  height:43px;
+  width:35px;
+  height:35px;
   border:3px solid #fff;
   border-radius:50% 50% 50% 7px;
   color:#fff;
@@ -6682,38 +6684,38 @@ button.gt-service-card {
 }
 
 .gt-nearby-map-pin b {
-  font-size:14px;
+  font-size:11px;
 }
 
-.gt-nearby-map-pin--food { top:86px; left:8%; background:#f08a19; }
-.gt-nearby-map-pin--shop { top:31px; left:28%; background:#2e79db; }
-.gt-nearby-map-pin--hotel { top:26px; right:11%; background:#50637d; }
-.gt-nearby-map-pin--fun { top:104px; right:26%; background:#7946ca; }
-.gt-nearby-map-pin--partner { top:55px; left:55%; background:#f08a19; }
-.gt-nearby-map-pin--service { bottom:32px; left:29%; background:#2b9c54; }
+.gt-nearby-map-pin--food { top:60px; left:8%; background:#f08a19; }
+.gt-nearby-map-pin--shop { top:22px; left:28%; background:#2e79db; }
+.gt-nearby-map-pin--hotel { top:18px; right:11%; background:#50637d; }
+.gt-nearby-map-pin--fun { top:72px; right:26%; background:#7946ca; }
+.gt-nearby-map-pin--partner { top:38px; left:55%; background:#f08a19; }
+.gt-nearby-map-pin--service { bottom:22px; left:29%; background:#2b9c54; }
 
 .gt-nearby-map-user {
   position:absolute;
   z-index:3;
   top:56%;
   left:51%;
-  width:22px;
-  height:22px;
+  width:18px;
+  height:18px;
   border:4px solid #fff;
   border-radius:50%;
   background:#258fe3;
-  box-shadow:0 0 0 28px rgba(42,145,226,.13),0 4px 10px rgba(29,91,142,.2);
+  box-shadow:0 0 0 20px rgba(42,145,226,.13),0 4px 10px rgba(29,91,142,.2);
 }
 
 .gt-nearby-locate {
   position:absolute;
   z-index:4;
-  right:17px;
-  bottom:18px;
+  right:14px;
+  bottom:13px;
   display:grid;
   place-items:center;
-  width:48px;
-  height:48px;
+  width:40px;
+  height:40px;
   padding:0;
   border:0;
   border-radius:50%;
@@ -6888,37 +6890,37 @@ button.gt-service-card {
 
 @media (max-width:390px) {
   .gt-transfer-screen .gt-transfer-hero {
-    min-height:322px;
-    padding:24px 12px 12px;
+    min-height:193px;
+    padding:10px 0 6px;
   }
 
   .gt-transfer-screen .gt-transfer-hero > span {
-    width:50px;
-    height:50px;
+    width:38px;
+    height:38px;
   }
 
   .gt-transfer-screen .gt-transfer-hero > h1 {
-    font-size:34px;
+    font-size:26px;
   }
 
   .gt-transfer-screen .gt-transfer-hero > p {
-    margin-bottom:18px;
-    font-size:13px;
+    margin-bottom:8px;
+    font-size:11px;
   }
 
   .gt-transfer-screen .gt-transfer-kinds {
-    gap:6px;
-    padding:8px;
+    gap:4px;
+    padding:6px;
   }
 
   .gt-transfer-screen .gt-transfer-kinds button {
-    min-height:88px;
-    padding:7px 4px;
+    min-height:64px;
+    padding:5px 3px;
   }
 
   .gt-transfer-screen .gt-transfer-kinds button svg {
-    width:25px;
-    height:25px;
+    width:21px;
+    height:21px;
   }
 
   .gt-transfer-screen .gt-transfer-kinds strong {
@@ -6934,15 +6936,15 @@ button.gt-service-card {
   }
 
   .gt-transfer-screen .gt-transfer-list article {
-    grid-template-columns:82px minmax(0,1fr) auto;
+    grid-template-columns:66px minmax(0,1fr) auto;
     gap:8px;
-    min-height:101px;
-    padding:7px;
+    min-height:84px;
+    padding:5px;
   }
 
   .gt-transfer-screen .gt-transfer-list .gt-photo {
-    width:82px;
-    height:86px;
+    width:66px;
+    height:69px;
   }
 
   .gt-transfer-screen .gt-transfer-list article > div strong {
@@ -6965,55 +6967,55 @@ button.gt-service-card {
   }
 
   .gt-nearby-toolbar {
-    grid-template-columns:42px minmax(0,1fr) 88px;
-    min-height:60px;
-    padding:7px 12px;
+    grid-template-columns:38px minmax(0,1fr) 80px;
+    min-height:52px;
+    padding:5px 12px;
   }
 
   .gt-nearby-toolbar h1 {
-    font-size:24px;
+    font-size:20px;
   }
 
   .gt-nearby-toolbar > button,
   .gt-nearby-toolbar > span button {
-    width:38px;
-    height:38px;
+    width:34px;
+    height:34px;
   }
 
   .gt-nearby-search {
-    padding:10px 12px 3px;
+    padding:7px 12px 2px;
   }
 
   .gt-nearby-search .gt-search {
-    min-height:44px;
+    min-height:36px;
   }
 
   .gt-nearby-categories {
-    gap:10px;
-    padding:12px 12px 14px;
+    gap:8px;
+    padding:9px 12px 11px;
   }
 
   .gt-nearby-categories > button {
-    flex-basis:59px;
+    flex-basis:49px;
   }
 
   .gt-nearby-category-icon {
-    width:47px;
-    height:47px;
-    border-radius:15px;
+    width:38px;
+    height:38px;
+    border-radius:13px;
   }
 
   .gt-nearby-categories > button strong {
-    font-size:9.5px;
+    font-size:8px;
   }
 
   .gt-nearby-map {
-    height:220px;
+    height:154px;
   }
 
   .gt-nearby-map-pin {
-    width:38px;
-    height:38px;
+    width:31px;
+    height:31px;
   }
 
   .gt-nearby-results {
