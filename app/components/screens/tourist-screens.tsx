@@ -35,6 +35,7 @@ import {
   Map,
   MapPin,
   MessageCircle,
+  MessageSquareMore,
   Minus,
   MountainSnow,
   Navigation,
@@ -965,7 +966,7 @@ function ProfileScreen({ navigate }: { navigate: Navigate }) {
           <div><strong>Олена Ковальчук</strong><small><MapPin size={17} /> Львів, Україна</small></div>
         </section>
         <div className="gt-profile-list gt-profile-list--reference">
-          <button type="button" className="gt-profile-row--reviews" onClick={() => navigate("tourist", "review")}><MessageCircle size={25} /><span>Мої відгуки</span><ChevronRight size={20} /></button>
+          <button type="button" className="gt-profile-row--reviews" onClick={() => navigate("tourist", "review")}><MessageSquareMore size={27} /><span>Мої відгуки</span><ChevronRight size={20} /></button>
           <button type="button" className="gt-profile-row--favorites"><Heart size={27} /><span>Улюблені</span><ChevronRight size={20} /></button>
         </div>
         <div className="gt-profile-list gt-profile-list--reference">

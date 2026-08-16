@@ -7558,18 +7558,18 @@ button.gt-service-card {
 }
 
 .gt-profile-screen .gt-profile-card--reference {
-  grid-template-columns:82px minmax(0,1fr);
-  gap:18px;
-  min-height:116px;
-  padding:17px 18px;
+  grid-template-columns:107px minmax(0,1fr);
+  gap:20px;
+  min-height:151px;
+  padding:20px;
   border:1px solid #eef0ef;
   border-radius:16px;
   box-shadow:0 5px 18px rgba(24,48,34,.06);
 }
 
 .gt-profile-screen .gt-avatar--photo {
-  width:82px;
-  height:82px;
+  width:107px;
+  height:107px;
   border:0;
   background:url("/images/profile-olena.webp") center/cover no-repeat;
   box-shadow:none;
@@ -7594,7 +7594,19 @@ button.gt-service-card {
 
 .gt-profile-screen .gt-profile-card--reference > div small svg {
   color:#0aa15a;
+  fill:none;
+  stroke:#0aa15a;
+  stroke-width:2.2;
+}
+
+.gt-profile-screen .gt-profile-card--reference > div small svg path {
   fill:#0aa15a;
+  stroke:#0aa15a;
+}
+
+.gt-profile-screen .gt-profile-card--reference > div small svg circle {
+  fill:#fff;
+  stroke:#fff;
 }
 
 .gt-profile-screen .gt-profile-list--reference {
@@ -7623,6 +7635,11 @@ button.gt-service-card {
 
 .gt-profile-screen .gt-profile-list--reference button > svg:last-child {
   color:#969d99;
+}
+
+.gt-profile-screen .gt-profile-list--reference button > svg:first-child {
+  fill:none;
+  stroke-width:2.15;
 }
 
 .gt-profile-screen .gt-profile-list--reference .gt-profile-row--reviews > svg:first-child {
@@ -7680,15 +7697,15 @@ button.gt-service-card {
   }
 
   .gt-profile-screen .gt-profile-card--reference {
-    grid-template-columns:72px minmax(0,1fr);
-    gap:14px;
-    min-height:106px;
-    padding:15px;
+    grid-template-columns:94px minmax(0,1fr);
+    gap:16px;
+    min-height:138px;
+    padding:18px;
   }
 
   .gt-profile-screen .gt-avatar--photo {
-    width:72px;
-    height:72px;
+    width:94px;
+    height:94px;
   }
 
   .gt-profile-screen .gt-profile-card--reference > div strong {
