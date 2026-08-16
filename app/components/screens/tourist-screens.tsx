@@ -394,7 +394,7 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
   );
 }
 
-function AboutScreen() {
+function AboutScreen({ navigate }: { navigate: Navigate }) {
   return (
     <div className="tourist-screen gt-screen gt-about-screen">
       <section className="gt-about-hero">
@@ -415,7 +415,11 @@ function AboutScreen() {
         </div>
       </section>
       <div className="gt-about-content">
-        <button type="button" className="gt-service-card gt-service-card--wide">
+        <button
+          type="button"
+          className="gt-service-card gt-service-card--wide"
+          onClick={() => navigate("tourist", "hotel-services")}
+        >
           <span><Hotel size={25} /></span>
           <div><strong>Послуги закладу</strong><small>Доступні зручності та сервіси для гостей</small></div>
           <i>Деталі <ChevronRight size={18} /></i>
@@ -443,6 +447,196 @@ function AboutScreen() {
           <ChevronRight size={19} />
         </button>
       </div>
+    </div>
+  );
+}
+
+type HotelServiceKey = "pool" | "tub" | "sauna" | "bikes" | "massage";
+
+type HotelService = {
+  key: HotelServiceKey;
+  title: string;
+  subtitle: string;
+  description: string;
+  photo: string;
+  galleryCount: string;
+  price: string;
+  priceNote: string;
+  facts: Array<{ icon: LucideIcon; label: string }>;
+};
+
+const hotelServices: HotelService[] = [
+  {
+    key: "pool",
+    title: "Відкритий басейн",
+    subtitle: "Підігрітий, з видом на гори",
+    description: "Теплий критий басейн із панорамним видом на Карпати. Комфортна температура води та спокійна зона відпочинку для гостей готелю.",
+    photo: "/images/service-pool.webp",
+    galleryCount: "1/5",
+    price: "500 грн / 2 год",
+    priceNote: "Для гостей готелю — 350 грн",
+    facts: [
+      { icon: UsersRound, label: "До 12 осіб" },
+      { icon: Clock3, label: "Щодня" },
+      { icon: MountainSnow, label: "Вид на гори" },
+      { icon: ShieldCheck, label: "Рушники" },
+    ],
+  },
+  {
+    key: "tub",
+    title: "Чан на дровах",
+    subtitle: "Релакс у гарячій воді",
+    description: "Гарячий чан просто неба з неймовірним видом на гори. Ідеальний відпочинок у будь-яку пору року.",
+    photo: "/images/service-tub.webp",
+    galleryCount: "1/5",
+    price: "2 000 грн / 2 год",
+    priceNote: "Кожна наступна година — 800 грн",
+    facts: [
+      { icon: UsersRound, label: "До 6 осіб" },
+      { icon: FlameKindling, label: "На дровах" },
+      { icon: MountainSnow, label: "Вид на гори" },
+      { icon: ShieldCheck, label: "Рушники" },
+    ],
+  },
+  {
+    key: "sauna",
+    title: "Сауна",
+    subtitle: "Тепло та здоров’я",
+    description: "Фінська сауна для глибокого розслаблення тіла та відновлення сил. Тепло, комфорт і аромат дерева.",
+    photo: "/images/service-sauna.webp",
+    galleryCount: "1/4",
+    price: "1 500 грн / 2 год",
+    priceNote: "Кожна наступна година — 800 грн",
+    facts: [
+      { icon: UsersRound, label: "До 8 осіб" },
+      { icon: Flame, label: "Фінська парна" },
+      { icon: Leaf, label: "Аромат дерева" },
+      { icon: Gift, label: "Чай включено" },
+    ],
+  },
+  {
+    key: "bikes",
+    title: "Прокат велосипедів",
+    subtitle: "Досліджуйте Карпати",
+    description: "Досліджуйте Карпати активно та комфортно. Якісні велосипеди для дорослих і дітей.",
+    photo: "/images/service-bikes.webp",
+    galleryCount: "1/6",
+    price: "від 300 грн / 1 год",
+    priceNote: "День (до 12 год) — 1 000 грн",
+    facts: [
+      { icon: Bike, label: "Гірські велосипеди" },
+      { icon: ShieldCheck, label: "Шолом включено" },
+      { icon: Bike, label: "Дитячі велосипеди" },
+      { icon: MapPin, label: "Маршрути на вибір" },
+    ],
+  },
+  {
+    key: "massage",
+    title: "Масаж",
+    subtitle: "Професійний релакс",
+    description: "Професійний масаж для тіла і душі. Знімає втому, напруження та дарує відчуття легкості.",
+    photo: "/images/rest-massage.webp",
+    galleryCount: "1/4",
+    price: "800 грн / 60 хв",
+    priceNote: "Тривалість: від 30 до 90 хв",
+    facts: [
+      { icon: UserRound, label: "Професійний масажист" },
+      { icon: Leaf, label: "Арома олії" },
+      { icon: Sparkles, label: "Релакс та відновлення" },
+      { icon: UsersRound, label: "Індивідуальний підхід" },
+    ],
+  },
+];
+
+function HotelServiceDetail({ service, onBack }: { service: HotelService; onBack: () => void }) {
+  return (
+    <main className="tourist-screen gt-screen gt-hotel-service-detail">
+      <header className="gt-hotel-services-header">
+        <button type="button" aria-label="Назад до послуг" onClick={onBack}><ArrowLeft size={27} /></button>
+        <h1>Послуги закладу</h1>
+        <div className="gt-hotel-service-actions">
+          <button type="button" aria-label="Поділитися"><Share2 size={23} /></button>
+          <button type="button" aria-label="Додати в улюблені"><Heart size={24} /></button>
+        </div>
+      </header>
+
+      <section className="gt-hotel-service-photo" style={{ backgroundImage: `url(${service.photo})` }}>
+        <span>{service.galleryCount}</span>
+      </section>
+
+      <section className="gt-hotel-service-copy">
+        <h2>{service.title}</h2>
+        <p>{service.description}</p>
+      </section>
+
+      <div className="gt-hotel-service-facts">
+        {service.facts.map(({ icon: Icon, label }) => (
+          <div key={label}><Icon size={25} /><span>{label}</span></div>
+        ))}
+      </div>
+
+      <section className="gt-hotel-service-price">
+        <strong>{service.price}</strong>
+        <small>{service.priceNote}</small>
+      </section>
+
+      <a className="gt-hotel-service-call" href="tel:+380673421868"><Phone size={19} /> Зателефонувати</a>
+      <footer className="gt-hotel-service-provider"><MountainSnow size={23} /> Послуга від: Гірський затишок</footer>
+    </main>
+  );
+}
+
+function HotelServicesScreen({ navigate }: { navigate: Navigate }) {
+  const [selectedService, setSelectedService] = useState<HotelServiceKey | null>(null);
+  const selected = hotelServices.find((service) => service.key === selectedService);
+
+  if (selected) {
+    return <HotelServiceDetail service={selected} onBack={() => setSelectedService(null)} />;
+  }
+
+  const featured = hotelServices[0];
+  const visibleServices = hotelServices.slice(1);
+
+  return (
+    <div className="tourist-screen gt-screen gt-hotel-services-screen">
+      <main className="gt-hotel-services">
+        <header className="gt-hotel-services-header">
+          <button type="button" aria-label="Назад до закладу" onClick={() => navigate("tourist", "about")}><ArrowLeft size={27} /></button>
+          <h1>Послуги закладу</h1>
+          <span aria-hidden="true" />
+        </header>
+
+        <button
+          type="button"
+          className="gt-hotel-services-feature"
+          style={{ backgroundImage: `url(${featured.photo})` }}
+          onClick={() => setSelectedService(featured.key)}
+        >
+          <span className="gt-hotel-services-feature__copy">
+            <strong>{featured.title}</strong>
+            <small>{featured.subtitle}</small>
+            <i>Детальніше <ChevronRight size={21} /></i>
+          </span>
+          <span className="gt-hotel-services-dots" aria-hidden="true"><i /><i /><i /><i /></span>
+        </button>
+
+        <h2 className="gt-hotel-services-title">Наші послуги</h2>
+        <div className="gt-hotel-services-grid">
+          {visibleServices.map((service) => (
+            <button
+              type="button"
+              key={service.key}
+              className="gt-hotel-services-card"
+              style={{ backgroundImage: `url(${service.photo})` }}
+              onClick={() => setSelectedService(service.key)}
+            >
+              <span><strong>{service.title}</strong><small>{service.subtitle}</small></span>
+              <i><ChevronRight size={23} /></i>
+            </button>
+          ))}
+        </div>
+        <button type="button" className="gt-hotel-services-all">Показати всі послуги <ChevronRight size={21} /></button>
+      </main>
     </div>
   );
 }
@@ -1484,7 +1678,9 @@ export function TouristScreen({
     case "home":
       return <HomeScreen navigate={navigate} />;
     case "about":
-      return <AboutScreen />;
+      return <AboutScreen navigate={navigate} />;
+    case "hotel-services":
+      return <HotelServicesScreen navigate={navigate} />;
     case "catalog":
       return <CatalogScreen navigate={navigate} />;
     case "shop":

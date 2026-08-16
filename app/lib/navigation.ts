@@ -78,6 +78,14 @@ export const screens: ScreenDefinition[] = [
     role: "tourist",
   },
   {
+    id: "C03A",
+    slug: "hotel-services",
+    title: "Послуги закладу",
+    shortTitle: "Послуги",
+    description: "Перелік і детальні картки послуг закладу",
+    role: "tourist",
+  },
+  {
     id: "C04",
     slug: "catalog",
     title: "Категорія / пошук",
