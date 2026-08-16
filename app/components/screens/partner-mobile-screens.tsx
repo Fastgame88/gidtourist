@@ -19,9 +19,6 @@ import {
   Info,
   Globe2,
   Mail,
-  Instagram,
-  Facebook,
-  MessageCircleMore,
   LogIn,
   LogOut,
   MapPin,
@@ -687,21 +684,31 @@ function WifiScreen({ navigate, activated }: PartnerProps) {
 
 function ContactRow({
   icon: Icon,
+  brandIcons,
   label,
   value,
   onChange,
   iconClassName,
 }: {
-  icon: typeof Phone;
+  icon?: typeof Phone;
+  brandIcons?: Array<{ src: string; alt: string }>;
   label: string;
   value: string;
   onChange: (next: string) => void;
-  iconClassName: string;
+  iconClassName?: string;
 }) {
   return (
     <label className="gt-contact-edit-row">
-      <span className={`gt-contact-edit-row__icon ${iconClassName}`}>
-        <Icon size={18} />
+      <span className={`gt-contact-edit-row__icon ${iconClassName ?? ""}`}>
+        {brandIcons ? (
+          <span className="gt-contact-brand-icons">
+            {brandIcons.map(({ src, alt }) => (
+              <img key={src} src={src} alt={alt} />
+            ))}
+          </span>
+        ) : Icon ? (
+          <Icon size={18} />
+        ) : null}
       </span>
       <span className="gt-contact-edit-row__copy">
         <small>{label}</small>
@@ -739,11 +746,13 @@ function ContactsScreen({ navigate, activated, onActivate }: PartnerProps & { on
             iconClassName="is-green"
           />
           <ContactRow
-            icon={MessageCircleMore}
+            brandIcons={[
+              { src: "/icons/viber.svg", alt: "Viber" },
+              { src: "/icons/telegram.svg", alt: "Telegram" },
+            ]}
             label="Viber / Telegram"
             value={profile.messenger}
             onChange={(messenger) => setProfile((prev) => ({ ...prev, messenger }))}
-            iconClassName="is-violet"
           />
           <ContactRow
             icon={Mail}
@@ -760,18 +769,16 @@ function ContactsScreen({ navigate, activated, onActivate }: PartnerProps & { on
             iconClassName="is-green"
           />
           <ContactRow
-            icon={Instagram}
+            brandIcons={[{ src: "/icons/instagram.svg", alt: "Instagram" }]}
             label="Instagram"
             value={profile.instagram}
             onChange={(instagram) => setProfile((prev) => ({ ...prev, instagram }))}
-            iconClassName="is-instagram"
           />
           <ContactRow
-            icon={Facebook}
+            brandIcons={[{ src: "/icons/facebook.svg", alt: "Facebook" }]}
             label="Facebook"
             value={profile.facebook}
             onChange={(facebook) => setProfile((prev) => ({ ...prev, facebook }))}
-            iconClassName="is-facebook"
           />
           <ContactRow
             icon={MapPin}

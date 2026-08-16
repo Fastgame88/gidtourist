@@ -11124,3 +11124,24 @@ button.gt-service-card {
 .gt-contact-hours-panel__body label:last-child input {
   text-align: right;
 }
+
+.gt-contact-brand-icons {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 30px;
+}
+
+.gt-contact-brand-icons img {
+  display: block;
+  width: 17px;
+  height: 17px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.gt-contact-brand-icons img:only-child {
+  width: 19px;
+  height: 19px;
+}
