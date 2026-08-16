@@ -196,17 +196,11 @@ export default function ProductApplication({ role, slug }: { role: RoleKey; slug
   };
 
   if (role === "partner") {
-    const newPartnerSlugs = new Set([
-      "partner-dashboard", "partner-onboarding", "partner-info", "partner-rules", "partner-wifi",
-      "partner-contacts", "partner-statistics", "partner-update", "partner-cabinet", "partner-services", "partner-checkin",
-    ]);
-    if (newPartnerSlugs.has(activeScreen.slug)) {
-      return (
-        <main className="gt-partner-app-shell">
-          <PartnerMobileScreen slug={activeScreen.slug} navigate={navigate} />
-        </main>
-      );
-    }
+    return (
+      <main className="gt-partner-app-shell">
+        <PartnerMobileScreen slug={activeScreen.slug} navigate={navigate} />
+      </main>
+    );
   }
 
   if (role === "tourist") {
