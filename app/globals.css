@@ -10749,3 +10749,159 @@ button.gt-service-card {
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== Partner layout polish from mobile reference ===== */
+.is-cabinet-screen .gt-partner-cabinet-content {
+  padding: 0 0 18px;
+}
+
+.is-cabinet-screen .gt-partner-hero.is-cabinet {
+  width: 100%;
+  height: 258px;
+  border-radius: 0;
+}
+
+.is-cabinet-screen .gt-partner-hero.is-cabinet .gt-partner-logo-card {
+  top: 18px;
+  left: 18px;
+}
+
+.is-cabinet-screen .gt-partner-cabinet-list {
+  position: relative;
+  z-index: 3;
+  margin: -44px 14px 0;
+  overflow: hidden;
+  border-radius: 26px 26px 18px 18px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(18, 45, 31, 0.10);
+  transform: none;
+}
+
+.is-cabinet-screen .gt-partner-cabinet-list > button {
+  min-height: 82px;
+  padding: 11px 16px;
+}
+
+.gt-partner-input-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.gt-partner-input-row__content {
+  display: block;
+  min-width: 0;
+  width: 100%;
+}
+
+.gt-partner-input-row__content > small {
+  display: block;
+  margin-bottom: 5px;
+  color: #77837b;
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.gt-partner-input-row__content > input,
+.gt-partner-input-row__content > textarea {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+}
+
+.gt-partner-input-row > i,
+.gt-partner-input-row > .gt-inline-actions {
+  align-self: center;
+  justify-self: end;
+  flex: 0 0 auto;
+}
+
+.gt-partner-input-row.is-multiline {
+  align-items: flex-start;
+}
+
+.gt-partner-input-row.is-multiline > i {
+  margin-top: 20px;
+}
+
+.gt-partner-rule-line {
+  grid-template-columns: 18px minmax(0, 1fr) 16px;
+  align-items: center;
+}
+
+.gt-partner-rule-line textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 24px;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: #18221b;
+  font-family: inherit;
+  font-size: 12.5px;
+  line-height: 1.35;
+  resize: none;
+  overflow: hidden;
+  outline: none;
+  overflow-wrap: anywhere;
+}
+
+.gt-partner-text-section textarea {
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.gt-payment-logos {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 10px;
+}
+
+.gt-payment-logo {
+  display: grid;
+  width: 62px;
+  height: 34px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #e0e7e2;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.gt-payment-logo svg {
+  display: block;
+  width: 54px;
+  height: 24px;
+}
+
+.gt-payment-logo--visa svg {
+  color: #1434cb;
+  fill: #1434cb;
+}
+
+.gt-payment-logo--mastercard svg {
+  width: 58px;
+  height: 25px;
+}
+
+.gt-payment-logo--gpay svg {
+  color: #3c4043;
+  fill: #3c4043;
+}
+
+@media (max-width: 390px) {
+  .is-cabinet-screen .gt-partner-hero.is-cabinet {
+    height: 244px;
+  }
+
+  .is-cabinet-screen .gt-partner-cabinet-list {
+    margin-top: -42px;
+    margin-right: 10px;
+    margin-left: 10px;
+  }
+}

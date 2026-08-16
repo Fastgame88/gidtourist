@@ -376,16 +376,18 @@ function InputRow({
   value: string;
   onChange: (next: string) => void;
   multiline?: boolean;
-  rightIcon?: React.ReactNode;
+  rightIcon?: ReactNode;
 }) {
   return (
     <label className={`gt-partner-input-row ${multiline ? "is-multiline" : ""}`}>
-      <span>{label}</span>
-      {multiline ? (
-        <textarea value={value} onChange={(event) => onChange(event.target.value)} rows={4} />
-      ) : (
-        <input value={value} onChange={(event) => onChange(event.target.value)} />
-      )}
+      <span className="gt-partner-input-row__content">
+        <small>{label}</small>
+        {multiline ? (
+          <textarea value={value} onChange={(event) => onChange(event.target.value)} rows={4} />
+        ) : (
+          <input value={value} onChange={(event) => onChange(event.target.value)} />
+        )}
+      </span>
       <i>{rightIcon ?? <Edit3 size={16} />}</i>
     </label>
   );
@@ -502,9 +504,37 @@ function RuleLine({
   return (
     <label className="gt-partner-rule-line">
       <Icon size={17} />
-      <input value={value} onChange={(event) => onChange(event.target.value)} />
+      <textarea
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        rows={value.length > 45 ? 2 : 1}
+      />
       <Edit3 size={16} />
     </label>
+  );
+}
+
+function PaymentLogos() {
+  return (
+    <div className="gt-payment-logos" aria-label="Підтримувані способи оплати">
+      <span className="gt-payment-logo gt-payment-logo--visa" aria-label="Visa">
+        <svg viewBox="0 0 68 24" role="img" aria-hidden="true">
+          <text x="4" y="18" fontSize="18" fontWeight="900" fontStyle="italic" fontFamily="Arial, sans-serif">VISA</text>
+        </svg>
+      </span>
+      <span className="gt-payment-logo gt-payment-logo--mastercard" aria-label="Mastercard">
+        <svg viewBox="0 0 72 28" role="img" aria-hidden="true">
+          <circle cx="29" cy="14" r="10" fill="#eb001b" />
+          <circle cx="42" cy="14" r="10" fill="#f79e1b" />
+          <path d="M35.5 6.5a10 10 0 0 1 0 15A10 10 0 0 1 35.5 6.5Z" fill="#ff5f00" />
+        </svg>
+      </span>
+      <span className="gt-payment-logo gt-payment-logo--gpay" aria-label="Google Pay">
+        <svg viewBox="0 0 82 28" role="img" aria-hidden="true">
+          <text x="4" y="19" fontSize="17" fontWeight="700" fontFamily="Arial, sans-serif">G Pay</text>
+        </svg>
+      </span>
+    </div>
   );
 }
 
@@ -567,11 +597,7 @@ function RulesScreen({ navigate, activated }: PartnerProps) {
             onChange={(event) => setProfile((prev) => ({ ...prev, payment: event.target.value }))}
             rows={3}
           />
-          <div className="gt-payment-badges">
-            <b>VISA</b>
-            <b>Mastercard</b>
-            <b>G Pay</b>
-          </div>
+          <PaymentLogos />
         </section>
 
         <section className="gt-partner-text-section is-last">
@@ -616,12 +642,14 @@ function WifiScreen({ navigate, activated }: PartnerProps) {
             onChange={(wifiSsid) => setProfile((prev) => ({ ...prev, wifiSsid }))}
           />
           <label className="gt-partner-input-row">
-            <span>Пароль</span>
-            <input
-              type={showPassword ? "text" : "password"}
-              value={profile.wifiPassword}
-              onChange={(event) => setProfile((prev) => ({ ...prev, wifiPassword: event.target.value }))}
-            />
+            <span className="gt-partner-input-row__content">
+              <small>Пароль</small>
+              <input
+                type={showPassword ? "text" : "password"}
+                value={profile.wifiPassword}
+                onChange={(event) => setProfile((prev) => ({ ...prev, wifiPassword: event.target.value }))}
+              />
+            </span>
             <div className="gt-inline-actions">
               <button type="button" onClick={() => setShowPassword((prev) => !prev)}>
                 <Eye size={16} />
@@ -887,8 +915,7 @@ function CabinetScreen({ navigate }: { navigate: Navigate }) {
 
   return (
     <div className="gt-partner-mobile-screen has-bottom-nav is-cabinet-screen">
-      <PartnerHeader title="Кабінет партнера" navigate={navigate} showMenu />
-      <main className="gt-partner-mobile-content">
+      <main className="gt-partner-mobile-content gt-partner-cabinet-content">
         <Hero showCopy={false} cabinet />
         <div className="gt-partner-cabinet-list">
           {items.map(({ slug, icon: Icon, title, note }) => (
