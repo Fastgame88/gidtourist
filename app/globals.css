@@ -6119,7 +6119,8 @@ button.gt-service-card {
   min-height:78px;
   border-radius:13px;
   background:
-    linear-gradient(110deg,rgba(225,247,235,.97) 0 48%,rgba(239,243,229,.86) 48% 71%,rgba(218,236,244,.92) 71%);
+    linear-gradient(90deg,rgba(225,248,236,.98) 0%,rgba(225,248,236,.94) 35%,rgba(255,255,255,.04) 63%),
+    url("/images/tatariv-map-strip.webp") center/cover no-repeat;
 }
 
 .gt-shop-screen .gt-map-strip > div {
@@ -6143,15 +6144,11 @@ button.gt-service-card {
 }
 
 .gt-shop-screen .gt-map-strip__road {
-  right:49px;
-  width:5px;
-  height:142px;
+  display:none;
 }
 
 .gt-shop-screen .gt-map-strip__river {
-  right:78px;
-  width:14px;
-  height:142px;
+  display:none;
 }
 
 .gt-shop-screen .gt-map-strip__dot {
@@ -6182,7 +6179,7 @@ button.gt-service-card {
 }
 
 .gt-shop-screen .gt-place-row {
-  grid-template-columns:96px minmax(0,1fr);
+  grid-template-columns:112px minmax(0,1fr);
   gap:11px;
   height:100%;
   min-height:0;
@@ -6193,10 +6190,14 @@ button.gt-service-card {
 }
 
 .gt-shop-screen .gt-place-row .gt-photo {
-  width:96px;
+  width:112px;
   height:100%;
   min-height:82px;
   border-radius:12px;
+}
+
+.gt-shop-screen .gt-place-row:nth-child(2) .gt-photo {
+  background-position:66.666% 0;
 }
 
 .gt-shop-screen .gt-place-row__body {
@@ -6239,9 +6240,10 @@ button.gt-service-card {
 }
 
 .gt-shop-screen .gt-place-row__tags i {
-  padding:3px 6px;
+  padding:4px 7px;
   border-radius:5px;
-  font-size:8px;
+  font-size:9px;
+  line-height:1.05;
 }
 
 @media (max-width:390px) {
@@ -6298,13 +6300,13 @@ button.gt-service-card {
   }
 
   .gt-shop-screen .gt-place-row {
-    grid-template-columns:82px minmax(0,1fr);
+    grid-template-columns:96px minmax(0,1fr);
     gap:8px;
     padding:6px;
   }
 
   .gt-shop-screen .gt-place-row .gt-photo {
-    width:82px;
+    width:96px;
     min-height:72px;
   }
 
@@ -6319,8 +6321,8 @@ button.gt-service-card {
   }
 
   .gt-shop-screen .gt-place-row__tags i {
-    padding:2px 5px;
-    font-size:7px;
+    padding:3px 6px;
+    font-size:8px;
   }
 }
 
