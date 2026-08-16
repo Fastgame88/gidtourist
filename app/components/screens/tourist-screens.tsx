@@ -8,10 +8,8 @@ import {
   BedDouble,
   Bike,
   BookOpenCheck,
-  BusFront,
   CalendarDays,
   CarFront,
-  CarTaxiFront,
   Check,
   ChevronRight,
   CircleHelp,
@@ -634,6 +632,57 @@ const transferPartners: Array<{
   { photo: "jeep", title: "Carpathian Drive", note: "Оренда авто без застави та прихованих платежів", rating: "4.8", trips: "15 хв", price: "Від 900 ₴/доба", action: "Деталі" },
 ];
 
+function TransferKindIcon({ kind }: { kind: "taxi" | "transfer" | "rental" }) {
+  if (kind === "taxi") {
+    return (
+      <span className="gt-transfer-kind-icon" aria-hidden="true">
+        <svg viewBox="0 0 48 48" fill="none">
+          <rect x="18" y="5" width="12" height="6" rx="2" fill="currentColor" />
+          <path d="M14 23.5 17.5 13h13L34 23.5" fill="currentColor" />
+          <path d="M11 24.5c0-2.2 1.8-4 4-4h18c2.2 0 4 1.8 4 4V36H11V24.5Z" fill="currentColor" />
+          <path d="m18.2 15.5-2 6h15.6l-2-6H18.2Z" fill="#fff" fillOpacity=".88" />
+          <rect x="13" y="27" width="5" height="3" rx="1.5" fill="#fff" fillOpacity=".92" />
+          <rect x="30" y="27" width="5" height="3" rx="1.5" fill="#fff" fillOpacity=".92" />
+          <rect x="14" y="35" width="6" height="7" rx="2" fill="currentColor" />
+          <rect x="28" y="35" width="6" height="7" rx="2" fill="currentColor" />
+        </svg>
+      </span>
+    );
+  }
+
+  if (kind === "transfer") {
+    return (
+      <span className="gt-transfer-kind-icon" aria-hidden="true">
+        <svg viewBox="0 0 48 48" fill="none">
+          <path d="M12 12.5A4.5 4.5 0 0 1 16.5 8h15a4.5 4.5 0 0 1 4.5 4.5V36H12V12.5Z" fill="currentColor" />
+          <path d="M16 13h16v10H16V13Z" fill="#fff" fillOpacity=".9" />
+          <path d="M18.5 13v10M29.5 13v10" stroke="currentColor" strokeWidth="1.5" />
+          <rect x="14.5" y="27" width="5" height="3.5" rx="1.75" fill="#fff" fillOpacity=".94" />
+          <rect x="28.5" y="27" width="5" height="3.5" rx="1.75" fill="#fff" fillOpacity=".94" />
+          <rect x="14" y="35" width="6" height="7" rx="2" fill="currentColor" />
+          <rect x="28" y="35" width="6" height="7" rx="2" fill="currentColor" />
+        </svg>
+      </span>
+    );
+  }
+
+  return (
+    <span className="gt-transfer-kind-icon" aria-hidden="true">
+      <svg viewBox="0 0 48 48" fill="none">
+        <path d="M24 4.5a7 7 0 0 0-7 7c0 5.2 7 11.5 7 11.5s7-6.3 7-11.5a7 7 0 0 0-7-7Z" fill="currentColor" />
+        <circle cx="24" cy="11.5" r="2.6" fill="#fff" />
+        <path d="m12.5 29 3.4-8.5h16.2l3.4 8.5" fill="currentColor" />
+        <path d="M10 30.5a4 4 0 0 1 4-4h20a4 4 0 0 1 4 4V39H10v-8.5Z" fill="currentColor" />
+        <path d="m18 22.5-2 5h16l-2-5H18Z" fill="#fff" fillOpacity=".88" />
+        <rect x="12.5" y="32" width="5" height="3" rx="1.5" fill="#fff" fillOpacity=".94" />
+        <rect x="30.5" y="32" width="5" height="3" rx="1.5" fill="#fff" fillOpacity=".94" />
+        <rect x="13" y="38" width="6" height="6" rx="2" fill="currentColor" />
+        <rect x="29" y="38" width="6" height="6" rx="2" fill="currentColor" />
+      </svg>
+    </span>
+  );
+}
+
 function TransferScreen() {
   return (
     <div className="tourist-screen gt-screen gt-transfer-screen">
@@ -642,9 +691,9 @@ function TransferScreen() {
         <h1>Трансфер</h1>
         <p>Таксі, трансфери та оренда авто</p>
         <div className="gt-transfer-kinds">
-          <button type="button"><span className="gt-transfer-kind-icon"><CarTaxiFront size={27} /></span><strong>Таксі</strong><small>Швидко<br />та зручно</small></button>
-          <button type="button"><span className="gt-transfer-kind-icon"><BusFront size={27} /></span><strong>Трансфер</strong><small>По місту та<br />між містами</small></button>
-          <button type="button"><span className="gt-transfer-kind-icon gt-transfer-kind-icon--rental"><MapPin size={16} /><CarFront size={25} /></span><strong>Оренда авто</strong><small>Обирай авто<br />та вирушай</small></button>
+          <button type="button"><TransferKindIcon kind="taxi" /><span className="gt-transfer-kind-copy"><strong>Таксі</strong><small>Швидко<br />та зручно</small></span></button>
+          <button type="button"><TransferKindIcon kind="transfer" /><span className="gt-transfer-kind-copy"><strong>Трансфер</strong><small>По місту та<br />між містами</small></span></button>
+          <button type="button"><TransferKindIcon kind="rental" /><span className="gt-transfer-kind-copy"><strong>Оренда авто</strong><small>Обирай авто<br />та вирушай</small></span></button>
         </div>
       </section>
       <main className="gt-content gt-transfer-content">

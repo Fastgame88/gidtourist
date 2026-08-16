@@ -6437,16 +6437,17 @@ button.gt-service-card {
 }
 
 .gt-transfer-screen .gt-transfer-kinds button {
-  grid-template-columns:36px minmax(0,1fr);
-  grid-template-rows:auto auto;
+  grid-template-columns:36px minmax(0,100px);
+  grid-template-rows:auto;
   align-content:center;
   align-items:center;
+  justify-content:center;
   justify-items:start;
   column-gap:8px;
-  row-gap:3px;
   min-height:94px;
   padding:10px 8px;
   border-radius:14px;
+  overflow:hidden;
   text-align:left;
 }
 
@@ -6470,21 +6471,30 @@ button.gt-service-card {
 
 .gt-transfer-kind-icon {
   position:relative;
-  grid-row:1 / 3;
   display:grid;
   place-items:center;
   width:36px;
-  height:42px;
+  height:44px;
 }
 
 .gt-transfer-screen .gt-transfer-kind-icon > svg {
-  width:31px;
-  height:31px;
+  width:36px;
+  height:44px;
+}
+
+.gt-transfer-kind-copy {
+  display:grid;
+  align-content:center;
+  justify-self:stretch;
+  gap:4px;
+  min-width:0;
+  overflow:hidden;
+  text-align:left;
 }
 
 .gt-transfer-screen .gt-transfer-kinds strong {
-  grid-column:2;
-  align-self:end;
+  grid-column:auto;
+  align-self:auto;
   color:#27312b;
   font-size:13px;
   line-height:1.08;
@@ -6496,30 +6506,11 @@ button.gt-service-card {
 }
 
 .gt-transfer-screen .gt-transfer-kinds small {
-  grid-column:2;
-  align-self:start;
+  grid-column:auto;
+  align-self:auto;
   color:#606b65;
   font-size:10.5px;
   line-height:1.28;
-}
-
-.gt-transfer-kind-icon--rental > svg:first-child {
-  position:absolute;
-  top:1px;
-  left:11px;
-  z-index:2;
-  width:14px;
-  height:14px;
-  fill:currentColor;
-  stroke-width:2.6;
-}
-
-.gt-transfer-kind-icon--rental > svg:last-child {
-  position:absolute;
-  right:3px;
-  bottom:1px;
-  width:29px;
-  height:29px;
 }
 
 .gt-transfer-screen .gt-transfer-content {
@@ -6978,7 +6969,7 @@ button.gt-service-card {
   }
 
   .gt-transfer-screen .gt-transfer-kinds button {
-    grid-template-columns:29px minmax(0,1fr);
+    grid-template-columns:29px minmax(0,72px);
     column-gap:5px;
     min-height:82px;
     padding:8px 5px;
@@ -6986,31 +6977,20 @@ button.gt-service-card {
 
   .gt-transfer-kind-icon {
     width:29px;
-    height:36px;
+    height:38px;
   }
 
   .gt-transfer-screen .gt-transfer-kind-icon > svg {
-    width:25px;
-    height:25px;
+    width:29px;
+    height:38px;
   }
 
   .gt-transfer-screen .gt-transfer-kinds strong {
-    font-size:11px;
+    font-size:10.5px;
   }
 
   .gt-transfer-screen .gt-transfer-kinds small {
-    font-size:8.5px;
-  }
-
-  .gt-transfer-kind-icon--rental > svg:first-child {
-    left:8px;
-    width:12px;
-    height:12px;
-  }
-
-  .gt-transfer-kind-icon--rental > svg:last-child {
-    width:24px;
-    height:24px;
+    font-size:8px;
   }
 
   .gt-transfer-screen .gt-transfer-content {
