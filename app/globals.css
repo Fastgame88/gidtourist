@@ -11004,3 +11004,123 @@ button.gt-service-card {
 .is-wifi-screen .gt-partner-tip-box {
   background: #f3f7f4;
 }
+
+/* Contacts screen exact-style adjustment */
+.is-contact-page,
+.is-contact-page .gt-partner-header,
+.gt-contact-page-content {
+  background: #ffffff;
+}
+
+.gt-contact-page-content {
+  padding-bottom: 20px;
+}
+
+.gt-contact-edit-card {
+  overflow: hidden;
+  border-top: 1px solid #eff2ef;
+  border-bottom: 1px solid #eff2ef;
+  background: #fff;
+}
+
+.gt-contact-edit-row {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 18px;
+  gap: 12px;
+  align-items: center;
+  min-height: 66px;
+  padding: 10px 4px;
+  border-bottom: 1px solid #eff2ef;
+}
+
+.gt-contact-edit-row:last-child {
+  border-bottom: 0;
+}
+
+.gt-contact-edit-row__icon {
+  display: grid;
+  place-items: center;
+}
+
+.gt-contact-edit-row__icon.is-green { color: #5aa172; }
+.gt-contact-edit-row__icon.is-violet { color: #8d6cc9; }
+.gt-contact-edit-row__icon.is-instagram { color: #d05b86; }
+.gt-contact-edit-row__icon.is-facebook { color: #3d7fdb; }
+
+.gt-contact-edit-row__copy {
+  min-width: 0;
+}
+
+.gt-contact-edit-row__copy small {
+  display: block;
+  margin-bottom: 4px;
+  color: #848b87;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.gt-contact-edit-row__copy input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #3a423d;
+  font-size: 12px;
+  line-height: 1.35;
+  outline: none;
+  font-family: inherit;
+}
+
+.gt-contact-edit-row > i {
+  display: grid;
+  place-items: center;
+  color: #717874;
+}
+
+.gt-contact-hours-panel {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f3f6f3;
+}
+
+.gt-contact-hours-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  color: #4a9b62;
+}
+
+.gt-contact-hours-panel__head > span {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.gt-contact-hours-panel__body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.gt-contact-hours-panel__body label {
+  min-width: 0;
+}
+
+.gt-contact-hours-panel__body input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #3a423d;
+  font-size: 12px;
+  line-height: 1.25;
+  outline: none;
+  font-family: inherit;
+}
+
+.gt-contact-hours-panel__body label:last-child input {
+  text-align: right;
+}

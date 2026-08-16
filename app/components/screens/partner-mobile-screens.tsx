@@ -17,6 +17,11 @@ import {
   Hotel,
   Image as ImageIcon,
   Info,
+  Globe2,
+  Mail,
+  Instagram,
+  Facebook,
+  MessageCircleMore,
   LogIn,
   LogOut,
   MapPin,
@@ -680,66 +685,116 @@ function WifiScreen({ navigate, activated }: PartnerProps) {
   );
 }
 
+function ContactRow({
+  icon: Icon,
+  label,
+  value,
+  onChange,
+  iconClassName,
+}: {
+  icon: typeof Phone;
+  label: string;
+  value: string;
+  onChange: (next: string) => void;
+  iconClassName: string;
+}) {
+  return (
+    <label className="gt-contact-edit-row">
+      <span className={`gt-contact-edit-row__icon ${iconClassName}`}>
+        <Icon size={18} />
+      </span>
+      <span className="gt-contact-edit-row__copy">
+        <small>{label}</small>
+        <input value={value} onChange={(event) => onChange(event.target.value)} />
+      </span>
+      <i>
+        <Edit3 size={15} />
+      </i>
+    </label>
+  );
+}
+
 function ContactsScreen({ navigate, activated, onActivate }: PartnerProps & { onActivate: () => void }) {
   const { profile, setProfile } = usePartnerProfile();
 
   return (
-    <div className="gt-partner-mobile-screen has-bottom-nav">
+    <div className="gt-partner-mobile-screen has-bottom-nav is-contact-page">
       <PartnerHeader
         title="Контакти"
         navigate={navigate}
         back="partner-wifi"
-        nextLabel="Далі"
+        nextLabel="Зберегти"
         onNext={() => {
           onActivate();
           navigate("partner", "partner-dashboard");
         }}
       />
-      <main className="gt-partner-mobile-content gt-partner-form-page">
-        <FormCard>
-          <InputRow label="Телефон" value={profile.phone} onChange={(phone) => setProfile((prev) => ({ ...prev, phone }))} />
-          <InputRow
+      <main className="gt-partner-mobile-content gt-partner-form-page gt-contact-page-content">
+        <section className="gt-contact-edit-card">
+          <ContactRow
+            icon={Phone}
+            label="Телефон"
+            value={profile.phone}
+            onChange={(phone) => setProfile((prev) => ({ ...prev, phone }))}
+            iconClassName="is-green"
+          />
+          <ContactRow
+            icon={MessageCircleMore}
             label="Viber / Telegram"
             value={profile.messenger}
             onChange={(messenger) => setProfile((prev) => ({ ...prev, messenger }))}
+            iconClassName="is-violet"
           />
-          <InputRow label="Email" value={profile.email} onChange={(email) => setProfile((prev) => ({ ...prev, email }))} />
-          <InputRow label="Сайт" value={profile.website} onChange={(website) => setProfile((prev) => ({ ...prev, website }))} />
-          <InputRow
+          <ContactRow
+            icon={Mail}
+            label="Email"
+            value={profile.email}
+            onChange={(email) => setProfile((prev) => ({ ...prev, email }))}
+            iconClassName="is-green"
+          />
+          <ContactRow
+            icon={Globe2}
+            label="Сайт"
+            value={profile.website}
+            onChange={(website) => setProfile((prev) => ({ ...prev, website }))}
+            iconClassName="is-green"
+          />
+          <ContactRow
+            icon={Instagram}
             label="Instagram"
             value={profile.instagram}
             onChange={(instagram) => setProfile((prev) => ({ ...prev, instagram }))}
+            iconClassName="is-instagram"
           />
-          <InputRow
+          <ContactRow
+            icon={Facebook}
             label="Facebook"
             value={profile.facebook}
             onChange={(facebook) => setProfile((prev) => ({ ...prev, facebook }))}
+            iconClassName="is-facebook"
           />
-          <InputRow
+          <ContactRow
+            icon={MapPin}
             label="Адреса"
             value={profile.address}
             onChange={(address) => setProfile((prev) => ({ ...prev, address }))}
+            iconClassName="is-green"
           />
-        </FormCard>
+        </section>
 
-        <section className="gt-partner-hours-card">
-          <div className="gt-partner-hours-card__head">
-            <span>
-              <Clock3 size={18} />
-              Режим роботи
-            </span>
-            <Edit3 size={16} />
+        <section className="gt-contact-hours-panel">
+          <div className="gt-contact-hours-panel__head">
+            <span>Режим роботи</span>
+            <Edit3 size={15} />
           </div>
-          <div className="gt-hours-grid">
+          <div className="gt-contact-hours-panel__body">
             <label>
-              <span>Дні</span>
               <input
                 value={profile.workMode}
                 onChange={(event) => setProfile((prev) => ({ ...prev, workMode: event.target.value }))}
               />
             </label>
             <label>
-              <span>Години</span>
               <input
                 value={profile.workHours}
                 onChange={(event) => setProfile((prev) => ({ ...prev, workHours: event.target.value }))}
