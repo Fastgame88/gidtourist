@@ -177,6 +177,14 @@ function PartnerHeader({
   );
 }
 
+type PartnerBottomNavKey = "home" | "info" | "stats" | "qr" | "settlements" | "profile";
+type PartnerBottomNavItem = readonly [
+  key: PartnerBottomNavKey,
+  label: string,
+  icon: typeof Home,
+  slug: string,
+];
+
 function PartnerBottomNav({
   active,
   activated,
@@ -186,7 +194,7 @@ function PartnerBottomNav({
   activated: boolean;
   navigate: Navigate;
 }) {
-  const items = activated
+  const items: readonly PartnerBottomNavItem[] = activated
     ? [
         ["home", "Головна", Home, "partner-dashboard"],
         ["stats", "Статистика", BarChart3, "partner-statistics"],
@@ -210,7 +218,7 @@ function PartnerBottomNav({
             key={key}
             type="button"
             className={`${active === key ? "is-active" : ""} ${isQr ? "is-qr" : ""}`}
-            onClick={() => navigate("partner", slug as string)}
+            onClick={() => navigate("partner", slug)}
           >
             <Icon size={22} />
             <span>{label}</span>
