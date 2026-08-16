@@ -6482,6 +6482,14 @@ button.gt-service-card {
   border-color:#43aa70;
   color:#139b58;
   background:#f3fbf4;
+  grid-template-columns:30px minmax(0,1fr);
+  column-gap:4px;
+  padding-right:4px;
+  padding-left:5px;
+}
+
+.gt-transfer-screen .gt-transfer-kinds button:last-child .gt-transfer-kind-icon {
+  width:30px;
 }
 
 .gt-transfer-kind-icon {
@@ -7016,6 +7024,17 @@ button.gt-service-card {
     column-gap:4px;
     min-height:86px;
     padding:8px 4px;
+  }
+
+  .gt-transfer-screen .gt-transfer-kinds button:last-child {
+    grid-template-columns:25px minmax(0,1fr);
+    column-gap:2px;
+    padding-right:2px;
+    padding-left:3px;
+  }
+
+  .gt-transfer-screen .gt-transfer-kinds button:last-child .gt-transfer-kind-icon {
+    width:25px;
   }
 
   .gt-transfer-kind-icon {
