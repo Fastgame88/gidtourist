@@ -23,9 +23,9 @@ import {
   FlameKindling,
   Flower2,
   Gift,
-  Globe2,
+  Globe,
   Grid2X2,
-  Headphones,
+  Headset,
   Heart,
   Hotel,
   Info,
@@ -970,9 +970,9 @@ function ProfileScreen({ navigate }: { navigate: Navigate }) {
           <button type="button" className="gt-profile-row--favorites"><Heart size={27} /><span>Улюблені</span><ChevronRight size={20} /></button>
         </div>
         <div className="gt-profile-list gt-profile-list--reference">
-          <button type="button" className="gt-profile-row--language"><Globe2 size={27} /><span>Мова</span><small>Українська</small><ChevronRight size={20} /></button>
+          <button type="button" className="gt-profile-row--language"><Globe size={27} /><span>Мова</span><small>Українська</small><ChevronRight size={20} /></button>
           <button type="button" className="gt-profile-row--notifications"><Bell size={26} /><span>Сповіщення</span><ChevronRight size={20} /></button>
-          <button type="button" className="gt-profile-row--support"><Headphones size={26} /><span>Підтримка</span><ChevronRight size={20} /></button>
+          <button type="button" className="gt-profile-row--support"><Headset size={27} /><span>Підтримка</span><ChevronRight size={20} /></button>
         </div>
         <button type="button" className="gt-logout gt-profile-logout"><LogOut size={25} /> Вийти</button>
         <button type="button" className="gt-outline-button gt-profile-edit"><Pencil size={20} /> Редагувати профіль</button>
