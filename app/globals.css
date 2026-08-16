@@ -8516,3 +8516,394 @@ button.gt-service-card {
     font-size:13px !important;
   }
 }
+
+/* Food, rest and entertainment screens matched to the approved references */
+
+.gt-photo--massage,
+.gt-photo--excursion,
+.gt-photo--quad,
+.gt-photo--rafting,
+.gt-photo--zipline {
+  background-position:center;
+  background-size:cover;
+}
+
+.gt-photo--massage { background-image:url("/images/rest-massage.webp"); }
+.gt-photo--excursion { background-image:url("/images/rest-excursion.webp"); }
+.gt-photo--quad { background-image:url("/images/fun-quad.webp"); }
+.gt-photo--rafting { background-image:url("/images/fun-rafting.webp"); }
+.gt-photo--zipline { background-image:url("/images/fun-zipline.webp"); }
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) {
+  background:#f8f9f9 !important;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-content {
+  display:grid;
+  gap:11px;
+  padding:16px 18px 24px;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-category-head {
+  grid-template-columns:46px minmax(0,1fr) 64px;
+  gap:11px;
+  min-height:55px;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-category-head__icon {
+  width:46px;
+  height:46px;
+  border-radius:50%;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-category-head__icon svg {
+  width:25px;
+  height:25px;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-category-head h1 {
+  font-size:23px;
+  line-height:1.08;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-category-head p {
+  margin-top:4px;
+  font-size:12px;
+  line-height:1.2;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-category-head > button {
+  min-width:64px;
+  min-height:55px;
+  padding:7px 8px;
+  border-radius:13px;
+  font-size:10px !important;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-category-head > button svg {
+  width:24px;
+  height:24px;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-search {
+  min-height:48px;
+  padding:0 14px;
+  border-color:#dfe4e1;
+  border-radius:12px;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-search input {
+  font-size:13px !important;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-chips {
+  flex-wrap:nowrap;
+  gap:7px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:1px 0 3px;
+  scroll-snap-type:x proximity;
+  -webkit-overflow-scrolling:touch;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-chips button {
+  min-height:31px;
+  padding:6px 13px;
+  border-radius:99px;
+  font-size:10.5px !important;
+  scroll-snap-align:start;
+}
+
+.gt-food-map {
+  position:relative;
+  min-height:138px;
+  overflow:hidden;
+  border:1px solid #edf0ea;
+  border-radius:13px;
+  background:#edf4ea url("/images/tatariv-map-strip.webp") center/cover no-repeat;
+}
+
+.gt-food-map::after {
+  position:absolute;
+  inset:0;
+  background:rgba(255,255,255,.08);
+  content:"";
+  pointer-events:none;
+}
+
+.gt-food-map__river,
+.gt-food-map__road {
+  display:none;
+}
+
+.gt-food-map__marker {
+  position:absolute;
+  z-index:2;
+  display:flex;
+  width:29px;
+  height:29px;
+  align-items:center;
+  justify-content:center;
+  border:2px solid #fff;
+  border-radius:50% 50% 50% 8px;
+  color:#fff;
+  background:#ff9518;
+  box-shadow:0 3px 9px rgba(204,103,0,.23);
+  transform:translate(-50%,-50%) rotate(-45deg);
+}
+
+.gt-food-map__marker svg {
+  width:14px;
+  height:14px;
+  transform:rotate(45deg);
+  stroke-width:2.6;
+}
+
+.gt-food-map__user {
+  position:absolute;
+  z-index:3;
+  top:52%;
+  left:51%;
+  width:18px;
+  height:18px;
+  border:4px solid #fff;
+  border-radius:50%;
+  background:#168cdb;
+  box-shadow:0 0 0 12px rgba(37,143,211,.16),0 2px 7px rgba(18,93,142,.3);
+  transform:translate(-50%,-50%);
+}
+
+.gt-food-map > button {
+  position:absolute;
+  z-index:4;
+  right:10px;
+  bottom:10px;
+  display:flex;
+  width:38px;
+  height:38px;
+  align-items:center;
+  justify-content:center;
+  border:1px solid #e6ebe7;
+  border-radius:50%;
+  color:#2388ce;
+  background:#fff;
+  box-shadow:0 3px 10px rgba(26,54,36,.12);
+}
+
+:is(.gt-rest-screen,.gt-entertainment-screen) .gt-map-strip {
+  min-height:70px;
+  border:1px solid #edf0ea;
+  border-radius:13px;
+  background:#edf5ea url("/images/tatariv-map-strip.webp") center/cover no-repeat;
+}
+
+:is(.gt-rest-screen,.gt-entertainment-screen) .gt-map-strip > div {
+  top:14px;
+  left:14px;
+  gap:9px;
+}
+
+:is(.gt-rest-screen,.gt-entertainment-screen) .gt-map-strip > div > svg {
+  width:24px;
+  height:24px;
+}
+
+:is(.gt-rest-screen,.gt-entertainment-screen) .gt-map-strip > div small {
+  font-size:10px;
+}
+
+:is(.gt-rest-screen,.gt-entertainment-screen) .gt-map-strip > div strong {
+  font-size:10px;
+}
+
+:is(.gt-rest-screen,.gt-entertainment-screen) .gt-map-strip__road,
+:is(.gt-rest-screen,.gt-entertainment-screen) .gt-map-strip__river {
+  display:none;
+}
+
+:is(.gt-rest-screen,.gt-entertainment-screen) .gt-map-strip__dot {
+  top:25px;
+  right:41px;
+  width:20px;
+  height:20px;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-section-title {
+  min-width:0;
+  gap:8px;
+  margin-top:2px;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-section-title h2 {
+  min-width:0;
+  margin:0;
+  color:#171d19;
+  font-size:17px;
+  line-height:1.16;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-section-title button {
+  flex:0 0 auto;
+  border:0;
+  color:#2a84bc;
+  background:transparent;
+  font-size:10.5px !important;
+  white-space:nowrap;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-list {
+  gap:7px;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row {
+  grid-template-columns:104px minmax(0,1fr);
+  gap:11px;
+  min-height:108px;
+  padding:7px;
+  border-color:#edf0ee;
+  border-radius:14px;
+  box-shadow:0 4px 13px rgba(20,46,31,.055);
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row .gt-photo {
+  width:104px;
+  height:94px;
+  border-radius:12px;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__body {
+  align-content:space-between;
+  gap:3px;
+  padding:2px 1px;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__title {
+  align-items:flex-start;
+  gap:6px;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__title strong {
+  display:flex;
+  min-width:0;
+  align-items:center;
+  gap:4px;
+  overflow:visible;
+  color:#161c18;
+  font-size:14px;
+  line-height:1.15;
+  text-overflow:clip;
+  white-space:normal;
+}
+
+.gt-place-row__verified {
+  flex:0 0 auto;
+  color:#0eaa62;
+  fill:#0eaa62;
+  stroke:#fff;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__title b {
+  padding-top:2px;
+  font-size:10.5px;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__body > small {
+  font-size:10.5px;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__meta {
+  font-size:10px;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__meta .gt-walking-icon {
+  width:13px;
+  height:13px;
+  color:#68726c;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__tags {
+  gap:4px;
+  margin-top:2px;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__tags i {
+  padding:3px 7px;
+  border-radius:5px;
+  font-size:8.5px;
+}
+
+@media (max-width:390px) {
+  :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-content {
+    gap:9px;
+    padding:13px 13px 20px;
+  }
+
+  :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-category-head {
+    grid-template-columns:42px minmax(0,1fr) 58px;
+    gap:9px;
+    min-height:50px;
+  }
+
+  :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-category-head__icon {
+    width:42px;
+    height:42px;
+  }
+
+  :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-category-head h1 {
+    font-size:20px;
+  }
+
+  :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-category-head > button {
+    min-width:58px;
+    min-height:50px;
+  }
+
+  :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-search {
+    min-height:43px;
+  }
+
+  :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-chips button {
+    min-height:29px;
+    padding:5px 11px;
+    font-size:9.5px !important;
+  }
+
+  .gt-food-map {
+    min-height:124px;
+  }
+
+  :is(.gt-rest-screen,.gt-entertainment-screen) .gt-map-strip {
+    min-height:64px;
+  }
+
+  :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-section-title h2 {
+    font-size:15px;
+  }
+
+  :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row {
+    grid-template-columns:92px minmax(0,1fr);
+    gap:9px;
+    min-height:98px;
+    padding:6px;
+  }
+
+  :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row .gt-photo {
+    width:92px;
+    height:86px;
+  }
+
+  :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__title strong {
+    font-size:12.5px;
+  }
+
+  :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__title b,
+  :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__body > small,
+  :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__meta {
+    font-size:9px;
+  }
+
+  :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__tags i {
+    padding:2px 5px;
+    font-size:7.5px;
+  }
+}

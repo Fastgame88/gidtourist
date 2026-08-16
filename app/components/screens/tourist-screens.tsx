@@ -98,7 +98,12 @@ type PhotoName =
   | "tub"
   | "sauna"
   | "pool"
+  | "massage"
+  | "excursion"
   | "jeep"
+  | "quad"
+  | "rafting"
+  | "zipline"
   | "van";
 
 const qrPattern = [
@@ -157,6 +162,29 @@ function MapStrip() {
   );
 }
 
+function FoodMap() {
+  const markers = [
+    { left: "10%", top: "23%" },
+    { left: "35%", top: "59%" },
+    { left: "66%", top: "12%" },
+    { left: "78%", top: "53%" },
+    { left: "93%", top: "31%" },
+  ];
+
+  return (
+    <div className="gt-food-map" aria-label="Карта рекомендованих закладів">
+      <i className="gt-food-map__river" />
+      <i className="gt-food-map__road gt-food-map__road--one" />
+      <i className="gt-food-map__road gt-food-map__road--two" />
+      {markers.map((marker, index) => (
+        <span className="gt-food-map__marker" style={marker} key={index}><Utensils size={15} /></span>
+      ))}
+      <span className="gt-food-map__user" />
+      <button type="button" aria-label="Показати моє місцезнаходження"><LocateFixed size={21} /></button>
+    </div>
+  );
+}
+
 function SectionTitle({
   title,
   action,
@@ -202,6 +230,7 @@ function PlaceRow({
   distance,
   walk,
   walking = false,
+  verified = false,
   tags = [],
   onClick,
 }: {
@@ -212,6 +241,7 @@ function PlaceRow({
   distance: string;
   walk: string;
   walking?: boolean;
+  verified?: boolean;
   tags?: string[];
   onClick?: () => void;
 }) {
@@ -220,7 +250,7 @@ function PlaceRow({
       <Thumb name={photo} />
       <span className="gt-place-row__body">
         <span className="gt-place-row__title">
-          <strong>{title}</strong>
+          <strong>{title}{verified ? <BadgeCheck className="gt-place-row__verified" size={15} /> : null}</strong>
           <b>{distance}</b>
         </span>
         <small>{subtitle}</small>
@@ -419,15 +449,15 @@ function AboutScreen() {
 
 function CatalogScreen({ navigate }: { navigate: Navigate }) {
   return (
-    <div className="tourist-screen gt-screen gt-reference-list-screen">
+    <div className="tourist-screen gt-screen gt-reference-list-screen gt-food-screen">
       <main className="gt-content">
         <CategoryHeader icon={Utensils} title="Де поїсти" subtitle="Кафе, ресторани та заклади" tone="orange" />
         <SearchBar placeholder="Пошук закладу, кухні або страви" />
         <Chips items={["Усі", "Українська кухня", "Неукраїнська кухня", "Фаст фуд"]} />
-        <MapStrip />
+        <FoodMap />
         <SectionTitle title="Рекомендовані заклади" action="Переглянути всі" />
         <div className="gt-place-list">
-          <PlaceRow photo="restaurant" title="Ресторан «Гуцульщина»" subtitle="Українська кухня" rating="4.8 (125)" distance="120 м" walk="2 хв" walking tags={["Банош", "Бограч", "Грибна юшка"]} onClick={() => navigate("tourist", "place")} />
+          <PlaceRow photo="restaurant" title="Ресторан «Гуцульщина»" subtitle="Українська кухня" rating="4.8 (125)" distance="120 м" walk="2 хв" walking verified tags={["Банош", "Бограч", "Грибна юшка", "Деруни"]} onClick={() => navigate("tourist", "place")} />
           <PlaceRow photo="coffee" title="Кавʼярня «Кедр»" subtitle="Кавʼярня · Десерти" rating="4.6 (89)" distance="180 м" walk="3 хв" walking tags={["Кава", "Десерти", "Сніданки", "Wi‑Fi"]} />
           <PlaceRow photo="pizza" title="Піцерія «Карпатська піца»" subtitle="Італійська кухня" rating="4.7 (63)" distance="250 м" walk="4 хв" walking tags={["Піца", "Паста", "Салати"]} />
           <PlaceRow photo="burger" title="Бургерна «Вершина»" subtitle="Фаст фуд" rating="4.5 (47)" distance="300 м" walk="5 хв" walking tags={["Бургери", "Картопля фрі", "Напої"]} />
@@ -575,18 +605,19 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
 
 function AvailableScreen({ navigate }: { navigate: Navigate }) {
   return (
-    <div className="tourist-screen gt-screen gt-reference-list-screen">
+    <div className="tourist-screen gt-screen gt-reference-list-screen gt-rest-screen">
       <main className="gt-content">
         <CategoryHeader icon={BedDouble} title="Де відпочити" subtitle="Місця для релаксу та відпочинку" tone="purple" />
         <SearchBar placeholder="Пошук відпочинку та розваг" />
-        <Chips items={["Усі", "Чани", "Сауни", "Басейни", "Масаж", "Походи"]} />
+        <Chips items={["Усі", "Чани", "Сауни", "Басейни", "Масаж", "Походи", "Екскурсії"]} />
         <MapStrip />
-        <SectionTitle title="Доступно зараз" action="Переглянути всі" />
+        <SectionTitle title="Рекомендовані місця для відпочинку" action="Переглянути всі" />
         <div className="gt-place-list">
           <PlaceRow photo="tub" title="Чан «Гірське відновлення»" subtitle="Комплекс відпочинку" rating="4.8 (128)" distance="250 м" walk="3 хв" walking tags={["Чани", "Вид на гори", "Парковка"]} onClick={() => navigate("tourist", "booking")} />
           <PlaceRow photo="sauna" title="Сауна в «Карпатському затишку»" subtitle="Сауна" rating="4.7 (86)" distance="350 м" walk="4 хв" walking tags={["Сауна", "Віники", "Душ"]} />
           <PlaceRow photo="pool" title="Басейн «Aqua Relax»" subtitle="Басейн" rating="4.6 (93)" distance="450 м" walk="6 хв" walking tags={["Басейн", "Шезлонги", "Бар"]} />
-          <PlaceRow photo="jeep" title="Екскурсія «Озеро Несамовите»" subtitle="Екскурсія по горах" rating="4.8 (74)" distance="1,2 км" walk="15 хв" walking tags={["Екскурсії", "Похід", "Гід"]} />
+          <PlaceRow photo="massage" title="Масажний салон «Harmony»" subtitle="Масаж та SPA" rating="4.9 (112)" distance="600 м" walk="7 хв" walking tags={["Масаж", "SPA", "Ароматерапія"]} />
+          <PlaceRow photo="excursion" title="Екскурсія «Озеро Несамовите»" subtitle="Екскурсія та походи" rating="4.8 (74)" distance="1,2 км" walk="15 хв" walking tags={["Екскурсії", "Похід", "Гід"]} />
         </div>
       </main>
     </div>
@@ -624,9 +655,9 @@ function EntertainmentScreen({ navigate }: { navigate: Navigate }) {
         <SectionTitle title="Активні розваги поруч" action="Переглянути всі" />
         <div className="gt-place-list">
           <PlaceRow photo="jeep" title="Джип-тур Гірськими стежками" subtitle="Маршрут на полонини та водоспади" rating="4.9 (128)" distance="2,3 км" walk="5 хв" walking tags={["Джипи", "Природа", "Екстрим"]} onClick={() => navigate("tourist", "booking")} />
-          <PlaceRow photo="jeep" title="Квадроцикли в Карпатах" subtitle="Лісові маршрути та драйв" rating="4.8 (96)" distance="3,1 км" walk="6 хв" walking tags={["Квадроцикли", "Екстрим", "Група"]} />
-          <PlaceRow photo="pool" title="Рафтинг на Пруті" subtitle="Сплави різної складності" rating="4.7 (74)" distance="4,0 км" walk="8 хв" walking tags={["Рафтинг", "Вода", "Пригоди"]} />
-          <PlaceRow photo="van" title="Зіплайн над карпатським лісом" subtitle="Політ, що захоплює дух" rating="4.9 (58)" distance="4,6 км" walk="9 хв" walking tags={["Зіплайн", "Екстрим", "Панорами"]} />
+          <PlaceRow photo="quad" title="Квадроцикли в Карпатах" subtitle="Лісові маршрути та драйв" rating="4.8 (96)" distance="3,1 км" walk="6 хв" walking tags={["Квадроцикли", "Екстрим", "Група"]} />
+          <PlaceRow photo="rafting" title="Рафтинг на Пруті" subtitle="Сплави різної складності" rating="4.7 (74)" distance="4,0 км" walk="8 хв" walking tags={["Рафтинг", "Вода", "Пригоди"]} />
+          <PlaceRow photo="zipline" title="Зіплайн над карпатським лісом" subtitle="Політ, що захоплює дух" rating="4.9 (58)" distance="4,6 км" walk="9 хв" walking tags={["Зіплайн", "Екстрим", "Панорами"]} />
         </div>
       </main>
     </div>
