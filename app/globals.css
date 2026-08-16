@@ -3868,6 +3868,421 @@ button.gt-service-card {
   .tourist-bottom-nav { padding-right:4px; padding-left:4px; }
 }
 
+/* Saved itinerary: read-only and editing states */
+
+.gt-saved-plan-screen {
+  background:#fff !important;
+}
+
+.gt-saved-plan {
+  display:grid;
+  gap:18px;
+  width:100%;
+  max-width:560px;
+  margin:0 auto;
+  padding:18px 20px 28px;
+  background:#fff;
+}
+
+.gt-saved-plan-header {
+  position:relative;
+  display:flex;
+  min-height:40px;
+  align-items:center;
+  justify-content:center;
+}
+
+.gt-saved-plan-header h1 {
+  margin:0;
+  color:#111713;
+  font-size:25px;
+  font-weight:800;
+  line-height:1.1;
+}
+
+.gt-saved-plan-header > div {
+  position:absolute;
+  right:0;
+  display:flex;
+  align-items:center;
+  gap:5px;
+}
+
+.gt-saved-plan-header button {
+  display:inline-flex;
+  width:38px;
+  height:38px;
+  align-items:center;
+  justify-content:center;
+  border:0;
+  border-radius:12px;
+  background:transparent;
+  color:#109c5b;
+}
+
+.gt-saved-plan-days {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr)) 46px;
+  gap:9px;
+}
+
+.gt-saved-plan-days button {
+  display:flex;
+  min-width:0;
+  min-height:70px;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:9px 8px;
+  border:1px solid #edf1ef;
+  border-radius:13px;
+  background:#fff;
+  color:#159a5c;
+  box-shadow:0 4px 13px rgba(25,57,39,.07);
+}
+
+.gt-saved-plan-days button.is-active {
+  border-color:#179d5d;
+  background:#f7fffa;
+  box-shadow:0 4px 13px rgba(20,146,84,.1);
+}
+
+.gt-saved-plan-days button span {
+  display:grid;
+  min-width:0;
+  gap:2px;
+  text-align:left;
+}
+
+.gt-saved-plan-days button strong {
+  overflow:hidden;
+  color:#18211c;
+  font-size:14px;
+  line-height:1.15;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.gt-saved-plan-days button.is-active strong {
+  color:#118b51;
+}
+
+.gt-saved-plan-days button small {
+  color:#707a74;
+  font-size:11px;
+  white-space:nowrap;
+}
+
+.gt-saved-plan-days .gt-saved-plan-calendar {
+  padding:0;
+}
+
+.gt-saved-plan-timeline {
+  display:grid;
+  gap:7px;
+}
+
+.gt-saved-plan-timeline section {
+  display:grid;
+  gap:9px;
+}
+
+.gt-saved-plan-timeline section + section {
+  margin-top:1px;
+}
+
+.gt-saved-plan-timeline h2 {
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin:0;
+  color:#178c55;
+  font-size:15px;
+  font-weight:700;
+}
+
+.gt-saved-plan-period {
+  display:grid;
+  gap:12px;
+}
+
+.gt-saved-plan-stop {
+  position:relative;
+  display:grid;
+  grid-template-columns:47px minmax(0,1fr);
+  align-items:start;
+  gap:0;
+}
+
+.gt-saved-plan-stop time {
+  display:block;
+  padding-top:7px;
+  color:#17965a;
+  font-size:12px;
+  font-weight:800;
+}
+
+.gt-saved-plan-stop > i {
+  position:absolute;
+  top:31px;
+  bottom:-15px;
+  left:16px;
+  width:1px;
+  background:#8bc9a9;
+  content:"";
+}
+
+.gt-saved-plan-period .gt-saved-plan-stop:last-child > i {
+  bottom:-4px;
+}
+
+.gt-saved-plan-stop article {
+  grid-column:2;
+  display:grid;
+  grid-template-columns:120px minmax(0,1fr) 30px;
+  min-width:0;
+  min-height:106px;
+  align-items:center;
+  gap:14px;
+  padding:10px;
+  border:1px solid #edf1ef;
+  border-radius:15px;
+  background:#fff;
+  box-shadow:0 5px 16px rgba(28,55,39,.07);
+}
+
+.gt-saved-plan-stop.is-editing article {
+  grid-template-columns:24px 112px minmax(0,1fr) 34px;
+  gap:10px;
+}
+
+.gt-saved-plan-photo {
+  display:block;
+  width:120px;
+  height:86px;
+  border-radius:12px;
+  background-position:center;
+  background-size:cover;
+  box-shadow:inset 0 0 0 1px rgba(14,54,32,.05);
+}
+
+.gt-saved-plan-stop.is-editing .gt-saved-plan-photo {
+  width:112px;
+}
+
+.gt-saved-plan-photo--lake { background-image:url("/images/plan-lake.webp"); }
+.gt-saved-plan-photo--waterfall { background-image:url("/images/plan-waterfall.webp"); }
+.gt-saved-plan-photo--meadow { background-image:url("/images/plan-meadow.webp"); }
+.gt-saved-plan-photo--rocks { background-image:url("/images/plan-rocks.webp"); }
+
+.gt-saved-plan-stop article > div {
+  display:flex;
+  min-width:0;
+  height:100%;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:9px;
+  padding:7px 0;
+}
+
+.gt-saved-plan-stop article strong {
+  color:#141a16;
+  font-size:16px;
+  font-weight:800;
+  line-height:1.2;
+}
+
+.gt-saved-plan-stop article input {
+  width:100%;
+  min-width:0;
+  padding:6px 7px;
+  border:1px solid #74c89d;
+  border-radius:8px;
+  outline:0;
+  color:#151b17;
+  background:#fff;
+  font-size:15px;
+  font-weight:700;
+}
+
+.gt-saved-plan-stop article small {
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:5px 8px;
+  border-radius:7px;
+  background:#effaf4;
+  color:#15965a;
+  font-size:12px;
+  font-weight:700;
+}
+
+.gt-saved-plan-stop article small svg {
+  flex:0 0 auto;
+  border-radius:50%;
+  background:#18a260;
+  color:#fff;
+  stroke-width:3;
+}
+
+.gt-saved-plan-more-button,
+.gt-saved-plan-edit-actions button {
+  display:inline-flex;
+  width:30px;
+  height:34px;
+  align-items:center;
+  justify-content:center;
+  border:0;
+  border-radius:9px;
+  background:transparent;
+  color:#344039;
+}
+
+.gt-saved-plan-drag {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  color:#7f8983;
+}
+
+.gt-saved-plan-edit-actions {
+  display:flex;
+  height:88px;
+  flex-direction:column;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.gt-saved-plan-edit-actions button:last-child {
+  color:#e9474f;
+}
+
+.gt-saved-plan-tip {
+  display:grid;
+  grid-template-columns:38px minmax(0,1fr) 22px;
+  min-height:66px;
+  align-items:center;
+  gap:10px;
+  padding:11px 13px;
+  border:0;
+  border-radius:14px;
+  background:#f2fbf6;
+  color:#152019;
+  text-align:left;
+}
+
+.gt-saved-plan-tip > span {
+  display:inline-flex;
+  width:38px;
+  height:38px;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  background:#dff5e8;
+  color:#0b9d59;
+}
+
+.gt-saved-plan-tip div {
+  display:grid;
+  gap:2px;
+}
+
+.gt-saved-plan-tip strong {
+  font-size:14px;
+}
+
+.gt-saved-plan-tip small {
+  color:#68746d;
+  font-size:12px;
+}
+
+.gt-saved-plan-tip > svg {
+  color:#16975a;
+}
+
+.gt-saved-plan-edit-button {
+  display:flex;
+  min-height:50px;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  border:1px solid #65be8e;
+  border-radius:13px;
+  background:#fff;
+  color:#15945a;
+  font-size:15px;
+  font-weight:800;
+}
+
+@media (max-width:430px) {
+  .gt-saved-plan {
+    gap:15px;
+    padding:15px 13px 24px;
+  }
+
+  .gt-saved-plan-header h1 {
+    font-size:22px;
+  }
+
+  .gt-saved-plan-days {
+    grid-template-columns:repeat(3,minmax(0,1fr)) 42px;
+    gap:6px;
+  }
+
+  .gt-saved-plan-days button {
+    min-height:64px;
+    gap:5px;
+    padding:7px 5px;
+  }
+
+  .gt-saved-plan-days button svg {
+    width:20px;
+  }
+
+  .gt-saved-plan-days button strong {
+    font-size:12px;
+  }
+
+  .gt-saved-plan-days button small {
+    font-size:9px;
+  }
+
+  .gt-saved-plan-stop {
+    grid-template-columns:42px minmax(0,1fr);
+  }
+
+  .gt-saved-plan-stop article {
+    grid-template-columns:104px minmax(0,1fr) 25px;
+    gap:9px;
+    min-height:98px;
+    padding:8px;
+  }
+
+  .gt-saved-plan-stop.is-editing article {
+    grid-template-columns:18px 92px minmax(0,1fr) 30px;
+    gap:7px;
+  }
+
+  .gt-saved-plan-photo {
+    width:104px;
+    height:80px;
+  }
+
+  .gt-saved-plan-stop.is-editing .gt-saved-plan-photo {
+    width:92px;
+  }
+
+  .gt-saved-plan-stop article strong {
+    font-size:14px;
+  }
+
+  .gt-saved-plan-stop article small {
+    padding:4px 6px;
+    font-size:10px;
+  }
+}
+
 /* My plan: survey selection and guided questionnaire */
 .gt-plan-screen {
   --plan-green:#13995a;

@@ -28,12 +28,14 @@ import {
   Gift,
   Globe,
   Grid2X2,
+  GripVertical,
   Gauge,
   Headset,
   Heart,
   Hotel,
   Info,
   LifeBuoy,
+  Leaf,
   ListChecks,
   LocateFixed,
   LogOut,
@@ -42,6 +44,8 @@ import {
   MessageCircle,
   MessageSquareMore,
   Minus,
+  Moon,
+  MoreVertical,
   MountainSnow,
   Navigation,
   PawPrint,
@@ -65,6 +69,7 @@ import {
   SunMedium,
   TentTree,
   Timer,
+  Trash2,
   UserRound,
   UsersRound,
   Utensils,
@@ -871,7 +876,7 @@ function PlanFooter({
   );
 }
 
-function PlanResult({ navigate, extended = false }: { navigate: Navigate; extended?: boolean }) {
+function PlanResult({ onOpenPlan, extended = false }: { onOpenPlan: () => void; extended?: boolean }) {
   const days = [
     { day: "День 1", photo: "hotel" as PhotoName, title: "Заселення та вечір у Татарові", items: ["Поселення в готелі", "Вечеря з місцевою кухнею", "Легка вечірня прогулянка"] },
     { day: "День 2", photo: "jeep" as PhotoName, title: "Гори та карпатські враження", items: ["Маршрут до оглядового місця", "Обід у гірській колибі", "Відпочинок у чані"] },
@@ -912,14 +917,110 @@ function PlanResult({ navigate, extended = false }: { navigate: Navigate; extend
       <button type="button" className="gt-plan-more"><Route size={19} /> Ще 2 варіанти плану <ChevronRight size={18} /></button>
       <div className="gt-plan-result-actions">
         <button type="button"><Share2 size={18} /> Поділитися</button>
-        <button type="button" onClick={() => navigate("tourist", "catalog")}><Save size={18} /> Зберегти план</button>
+        <button type="button" onClick={onOpenPlan}><Save size={18} /> Зберегти план</button>
       </div>
     </section>
   );
 }
 
+type SavedPlanStop = {
+  id: number;
+  period: "morning" | "day" | "evening";
+  time: string;
+  title: string;
+  photo: "lake" | "waterfall" | "meadow" | "rocks";
+};
+
+const savedPlanPeriods = [
+  { key: "morning" as const, label: "Ранок", icon: SunMedium },
+  { key: "day" as const, label: "День", icon: SunMedium },
+  { key: "evening" as const, label: "Вечір", icon: Moon },
+];
+
+function SavedPlanScreen({ navigate }: { navigate: Navigate }) {
+  const [editing, setEditing] = useState(false);
+  const [activeDay, setActiveDay] = useState(2);
+  const [editingTitleId, setEditingTitleId] = useState<number | null>(null);
+  const [stops, setStops] = useState<SavedPlanStop[]>([
+    { id: 1, period: "morning", time: "09:00", title: "Озеро Несамовите", photo: "lake" },
+    { id: 2, period: "morning", time: "11:00", title: "Водоспад Гук", photo: "waterfall" },
+    { id: 3, period: "day", time: "13:00", title: "Полонина Кукул", photo: "meadow" },
+    { id: 4, period: "evening", time: "17:00", title: "Скелі Довбуша", photo: "rocks" },
+  ]);
+
+  const updateTitle = (id: number, title: string) => setStops((items) => items.map((item) => item.id === id ? { ...item, title } : item));
+  const removeStop = (id: number) => setStops((items) => items.filter((item) => item.id !== id));
+  const finishEditing = () => { setEditing(false); setEditingTitleId(null); };
+
+  return (
+    <div className="tourist-screen gt-screen gt-saved-plan-screen">
+      <main className="gt-saved-plan">
+        <header className="gt-saved-plan-header">
+          <h1>Мій план</h1>
+          <div>
+            {!editing ? <button type="button" aria-label="Редагувати план" onClick={() => setEditing(true)}><Pencil size={19} /></button> : null}
+            <button type="button" aria-label="Інформація"><Info size={21} /></button>
+          </div>
+        </header>
+
+        <div className="gt-saved-plan-days">
+          {[{ day: 1, date: "24 травня" }, { day: 2, date: "25 травня" }, { day: 3, date: "26 травня" }].map((item) => (
+            <button type="button" className={activeDay === item.day ? "is-active" : ""} key={item.day} onClick={() => setActiveDay(item.day)}>
+              <MountainSnow size={24} /><span><strong>День {item.day}</strong><small>{item.date}</small></span>
+            </button>
+          ))}
+          <button type="button" className="gt-saved-plan-calendar" aria-label="Вибрати дату"><CalendarDays size={24} /></button>
+        </div>
+
+        <div className="gt-saved-plan-timeline">
+          {savedPlanPeriods.map(({ key, label, icon: PeriodIcon }) => {
+            const periodStops = stops.filter((stop) => stop.period === key);
+            if (!periodStops.length) return null;
+            return (
+              <section key={key}>
+                <h2><PeriodIcon size={20} /> {label}</h2>
+                <div className="gt-saved-plan-period">
+                  {periodStops.map((stop) => (
+                    <div className={`gt-saved-plan-stop${editing ? " is-editing" : ""}`} key={stop.id}>
+                      <time>{stop.time}</time>
+                      <i />
+                      <article>
+                        {editing ? <span className="gt-saved-plan-drag"><GripVertical size={20} /></span> : null}
+                        <span className={`gt-saved-plan-photo gt-saved-plan-photo--${stop.photo}`} />
+                        <div>
+                          {editingTitleId === stop.id ? (
+                            <input value={stop.title} autoFocus onChange={(event) => updateTitle(stop.id, event.target.value)} onBlur={() => setEditingTitleId(null)} />
+                          ) : <strong>{stop.title}</strong>}
+                          <small><Check size={14} /> Відвідано</small>
+                        </div>
+                        {editing ? (
+                          <span className="gt-saved-plan-edit-actions">
+                            <button type="button" aria-label="Змінити назву" onClick={() => setEditingTitleId(stop.id)}><Pencil size={18} /></button>
+                            <button type="button" aria-label="Видалити локацію" onClick={() => removeStop(stop.id)}><Trash2 size={18} /></button>
+                          </span>
+                        ) : <button type="button" className="gt-saved-plan-more-button" aria-label="Дії"><MoreVertical size={21} /></button>}
+                      </article>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+
+        <button type="button" className="gt-saved-plan-tip" onClick={() => navigate("tourist", "nearby")}>
+          <span><Leaf size={21} /></span><div><strong>Порада дня</strong><small>Візьміть дощовик — у горах погода мінлива.</small></div><ChevronRight size={19} />
+        </button>
+        <button type="button" className="gt-saved-plan-edit-button" onClick={() => editing ? finishEditing() : setEditing(true)}>
+          {editing ? <Check size={19} /> : <Pencil size={19} />}{editing ? "Готово" : "Редагувати"}
+        </button>
+      </main>
+    </div>
+  );
+}
+
 function PlanScreen({ navigate }: { navigate: Navigate }) {
-  const [mode, setMode] = useState<"home" | PlanSurveyMode>("home");
+  const [mode, setMode] = useState<"home" | PlanSurveyMode | "view">("home");
   const [selectedMode, setSelectedMode] = useState<PlanSurveyMode>("express");
   const [step, setStep] = useState(0);
   const [traveler, setTraveler] = useState("Сім’я з дітьми");
@@ -965,6 +1066,8 @@ function PlanScreen({ navigate }: { navigate: Navigate }) {
     );
   }
 
+  if (mode === "view") return <SavedPlanScreen navigate={navigate} />;
+
   if (mode === "express") {
     return (
       <div className="tourist-screen gt-screen gt-plan-screen">
@@ -1008,7 +1111,7 @@ function PlanScreen({ navigate }: { navigate: Navigate }) {
               <PlanFooter label="Підібрати план" onNext={() => setStep(5)} />
               <button type="button" className="gt-plan-cancel" onClick={goHome}>Скасувати</button>
             </section>
-          ) : <PlanResult navigate={navigate} />}
+          ) : <PlanResult onOpenPlan={() => setMode("view")} />}
         </main>
       </div>
     );
@@ -1071,7 +1174,7 @@ function PlanScreen({ navigate }: { navigate: Navigate }) {
             <h2>Харчування</h2><div className="gt-plan-tag-cloud gt-plan-tag-cloud--single-row"><button type="button" className="is-selected">Місцева кухня</button><button type="button">Вегетаріанське</button><button type="button">Без обмежень</button></div>
             <PlanFooter label="Показати варіанти" onNext={() => setStep(7)} />
           </section>
-        ) : <PlanResult navigate={navigate} extended />}
+        ) : <PlanResult onOpenPlan={() => setMode("view")} extended />}
       </main>
     </div>
   );
