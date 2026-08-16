@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Ambulance,
   ArrowDownToLine,
@@ -588,14 +588,20 @@ function HotelServiceDetail({ service, onBack }: { service: HotelService; onBack
 
 function HotelServicesScreen({ navigate }: { navigate: Navigate }) {
   const [selectedService, setSelectedService] = useState<HotelServiceKey | null>(null);
+  const [activeFeature, setActiveFeature] = useState(0);
+  const featureTouchStart = useRef<number | null>(null);
   const selected = hotelServices.find((service) => service.key === selectedService);
 
   if (selected) {
     return <HotelServiceDetail service={selected} onBack={() => setSelectedService(null)} />;
   }
 
-  const featured = hotelServices[0];
+  const featured = hotelServices[activeFeature];
   const visibleServices = hotelServices.slice(1);
+
+  const changeFeature = (direction: 1 | -1) => {
+    setActiveFeature((current) => (current + direction + hotelServices.length) % hotelServices.length);
+  };
 
   return (
     <div className="tourist-screen gt-screen gt-hotel-services-screen">
@@ -606,19 +612,35 @@ function HotelServicesScreen({ navigate }: { navigate: Navigate }) {
           <span aria-hidden="true" />
         </header>
 
-        <button
-          type="button"
+        <section
           className="gt-hotel-services-feature"
           style={{ backgroundImage: `url(${featured.photo})` }}
-          onClick={() => setSelectedService(featured.key)}
+          onTouchStart={(event) => { featureTouchStart.current = event.touches[0]?.clientX ?? null; }}
+          onTouchEnd={(event) => {
+            const startX = featureTouchStart.current;
+            const endX = event.changedTouches[0]?.clientX;
+            featureTouchStart.current = null;
+            if (startX === null || endX === undefined || Math.abs(startX - endX) < 35) return;
+            changeFeature(startX > endX ? 1 : -1);
+          }}
         >
           <span className="gt-hotel-services-feature__copy">
             <strong>{featured.title}</strong>
             <small>{featured.subtitle}</small>
-            <i>Детальніше <ChevronRight size={21} /></i>
+            <button type="button" onClick={() => setSelectedService(featured.key)}>Детальніше <ChevronRight size={21} /></button>
           </span>
-          <span className="gt-hotel-services-dots" aria-hidden="true"><i /><i /><i /><i /></span>
-        </button>
+          <span className="gt-hotel-services-dots" aria-label="Перемикання послуг">
+            {hotelServices.map((service, index) => (
+              <button
+                type="button"
+                key={service.key}
+                className={index === activeFeature ? "is-active" : ""}
+                aria-label={`Показати: ${service.title}`}
+                onClick={() => setActiveFeature(index)}
+              />
+            ))}
+          </span>
+        </section>
 
         <h2 className="gt-hotel-services-title">Наші послуги</h2>
         <div className="gt-hotel-services-grid">
