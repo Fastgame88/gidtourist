@@ -642,9 +642,9 @@ function TransferScreen() {
         <h1>Трансфер</h1>
         <p>Таксі, трансфери та оренда авто</p>
         <div className="gt-transfer-kinds">
-          <button type="button"><CarTaxiFront size={27} /><strong>Таксі</strong><small>Швидко та зручно</small></button>
-          <button type="button"><BusFront size={27} /><strong>Трансфер</strong><small>По місту та між містами</small></button>
-          <button type="button"><CarFront size={27} /><strong>Оренда авто</strong><small>Обирай авто та вирушай</small></button>
+          <button type="button"><span className="gt-transfer-kind-icon"><CarTaxiFront size={27} /></span><strong>Таксі</strong><small>Швидко<br />та зручно</small></button>
+          <button type="button"><span className="gt-transfer-kind-icon"><BusFront size={27} /></span><strong>Трансфер</strong><small>По місту та<br />між містами</small></button>
+          <button type="button"><span className="gt-transfer-kind-icon gt-transfer-kind-icon--rental"><MapPin size={16} /><CarFront size={25} /></span><strong>Оренда авто</strong><small>Обирай авто<br />та вирушай</small></button>
         </div>
       </section>
       <main className="gt-content gt-transfer-content">
