@@ -35,6 +35,7 @@ import {
 } from "../lib/navigation";
 import { AdminScreen, AmbassadorScreen, RegionalScreen } from "./screens/admin-screens";
 import { PartnerScreen } from "./screens/partner-screens";
+import { PartnerMobileScreen } from "./screens/partner-mobile-screens";
 import { TouristScreen } from "./screens/tourist-screens";
 import { Avatar, IconButton } from "./ui";
 
@@ -193,6 +194,20 @@ export default function ProductApplication({ role, slug }: { role: RoleKey; slug
     setMenuOpen(false);
     router.push(`/${nextRole}/${screen.slug}`);
   };
+
+  if (role === "partner") {
+    const newPartnerSlugs = new Set([
+      "partner-dashboard", "partner-onboarding", "partner-info", "partner-rules", "partner-wifi",
+      "partner-contacts", "partner-statistics", "partner-update", "partner-cabinet", "partner-services", "partner-checkin",
+    ]);
+    if (newPartnerSlugs.has(activeScreen.slug)) {
+      return (
+        <main className="gt-partner-app-shell">
+          <PartnerMobileScreen slug={activeScreen.slug} navigate={navigate} />
+        </main>
+      );
+    }
+  }
 
   if (role === "tourist") {
     const isHomeScreen = slug === "home" || slug === "welcome";
