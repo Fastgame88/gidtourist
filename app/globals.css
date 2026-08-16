@@ -7186,3 +7186,324 @@ button.gt-service-card {
     font-size:10px;
   }
 }
+
+/* Venue check-in times over the hero photo */
+.gt-about-screen .gt-checkin-card--hero {
+  position:absolute;
+  right:18px;
+  bottom:20px;
+  z-index:2;
+  display:block;
+  width:194px;
+  min-height:0;
+  padding:8px 9px;
+  border:1px solid rgba(255,255,255,.82);
+  border-radius:14px;
+  color:#fff;
+  background:rgba(11,54,39,.44);
+  box-shadow:0 5px 16px rgba(0,23,14,.2);
+  backdrop-filter:blur(5px);
+}
+
+.gt-about-screen .gt-about-hero__copy {
+  width:100%;
+}
+
+.gt-about-screen .gt-about-hero__copy > p {
+  padding-right:204px;
+}
+
+.gt-about-screen .gt-checkin-card--hero > p {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  width:100%;
+  margin:0;
+}
+
+.gt-about-screen .gt-checkin-card--hero > p > span {
+  display:flex;
+  grid-template-columns:none;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+  padding:0 7px;
+  color:#fff;
+  font-size:9px;
+}
+
+.gt-about-screen .gt-checkin-card--hero > p > span + span {
+  border-left:1px solid rgba(255,255,255,.55);
+}
+
+.gt-about-screen .gt-checkin-card--hero svg {
+  flex:0 0 auto;
+}
+
+.gt-about-screen .gt-checkin-card--hero i {
+  display:grid;
+  gap:1px;
+  color:rgba(255,255,255,.84);
+  font-style:normal;
+  line-height:1.05;
+}
+
+.gt-about-screen .gt-checkin-card--hero b {
+  color:#fff;
+  font-size:13px;
+  line-height:1.1;
+}
+
+/* Bonuses: balance and operation history from the approved reference */
+.gt-wallet-screen {
+  height:auto;
+  min-height:100%;
+  overflow:visible !important;
+  background:#fff !important;
+}
+
+.gt-wallet-ledger {
+  display:grid;
+  gap:27px;
+  padding:28px 16px 30px;
+}
+
+.gt-wallet-balance {
+  display:grid;
+  place-items:center;
+  align-content:center;
+  width:190px;
+  height:190px;
+  margin:0 auto;
+  border:1px solid #e5f1eb;
+  border-radius:50%;
+  color:#07964f;
+  background:#eff8f3;
+  text-align:center;
+}
+
+.gt-wallet-balance > svg {
+  margin-bottom:8px;
+  fill:currentColor;
+  stroke-width:1.7;
+}
+
+.gt-wallet-balance > small {
+  color:#59655f;
+  font-size:15px;
+}
+
+.gt-wallet-balance > strong {
+  margin-top:2px;
+  font-size:48px;
+  line-height:1.05;
+  font-weight:700;
+}
+
+.gt-wallet-balance > span {
+  margin-top:4px;
+  font-size:19px;
+}
+
+.gt-wallet-actions {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.gt-wallet-actions > button {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  min-height:68px;
+  padding:10px;
+  border:1px solid #eef1ef;
+  border-radius:14px;
+  color:#109656;
+  background:#fff;
+  box-shadow:0 5px 17px rgba(24,48,34,.07);
+  cursor:pointer;
+}
+
+.gt-wallet-actions > button span {
+  font-size:15px;
+  font-weight:700;
+}
+
+.gt-wallet-history {
+  display:grid;
+  gap:12px;
+}
+
+.gt-wallet-history > h1 {
+  margin:0;
+  color:#101713;
+  font-size:22px;
+  line-height:1.15;
+}
+
+.gt-wallet-transactions {
+  overflow:hidden;
+  border:1px solid #edf0ee;
+  border-radius:17px;
+  background:#fff;
+  box-shadow:0 5px 18px rgba(24,48,34,.05);
+}
+
+.gt-wallet-transactions > article {
+  display:grid;
+  grid-template-columns:48px minmax(0,1fr) auto;
+  gap:10px;
+  align-items:center;
+  min-height:84px;
+  padding:11px 13px;
+  border-bottom:1px solid #edf0ee;
+}
+
+.gt-wallet-transactions > article:last-child {
+  border-bottom:0;
+}
+
+.gt-wallet-transaction-icon {
+  display:grid;
+  place-items:center;
+  width:44px;
+  height:44px;
+  border-radius:50%;
+}
+
+.gt-wallet-transactions .is-earned .gt-wallet-transaction-icon {
+  color:#079a52;
+  background:#ecf8f1;
+}
+
+.gt-wallet-transactions .is-earned .gt-wallet-transaction-icon svg {
+  fill:currentColor;
+}
+
+.gt-wallet-transactions .is-spent .gt-wallet-transaction-icon {
+  color:#ef4b4b;
+  background:#fff0f0;
+}
+
+.gt-wallet-transactions > article > div {
+  display:grid;
+  gap:4px;
+  min-width:0;
+}
+
+.gt-wallet-transactions > article > div strong {
+  color:#151b17;
+  font-size:14px;
+  line-height:1.2;
+}
+
+.gt-wallet-transactions > article > div small {
+  overflow:hidden;
+  color:#6e7872;
+  font-size:11px;
+  line-height:1.25;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.gt-wallet-transaction-value {
+  display:grid;
+  justify-items:end;
+  gap:5px;
+  white-space:nowrap;
+}
+
+.gt-wallet-transaction-value b {
+  color:#07964f;
+  font-size:20px;
+  line-height:1;
+}
+
+.is-spent .gt-wallet-transaction-value b {
+  color:#e94242;
+}
+
+.gt-wallet-transaction-value small {
+  color:#717a75;
+  font-size:9.5px;
+}
+
+@media (max-width:390px) {
+  .gt-about-screen .gt-checkin-card--hero {
+    right:14px;
+    bottom:17px;
+    width:172px;
+    padding:7px 5px;
+  }
+
+  .gt-about-screen .gt-about-hero__copy > p {
+    padding-right:177px;
+    font-size:10px;
+  }
+
+  .gt-about-screen .gt-checkin-card--hero > p > span {
+    gap:4px;
+    padding:0 5px;
+    font-size:8px;
+  }
+
+  .gt-about-screen .gt-checkin-card--hero b {
+    font-size:11.5px;
+  }
+
+  .gt-wallet-ledger {
+    gap:22px;
+    padding:22px 12px 26px;
+  }
+
+  .gt-wallet-balance {
+    width:170px;
+    height:170px;
+  }
+
+  .gt-wallet-balance > strong {
+    font-size:43px;
+  }
+
+  .gt-wallet-actions > button {
+    gap:8px;
+    min-height:60px;
+  }
+
+  .gt-wallet-actions > button span {
+    font-size:13px;
+  }
+
+  .gt-wallet-history > h1 {
+    font-size:20px;
+  }
+
+  .gt-wallet-transactions > article {
+    grid-template-columns:42px minmax(0,1fr) auto;
+    gap:8px;
+    min-height:76px;
+    padding:9px 10px;
+  }
+
+  .gt-wallet-transaction-icon {
+    width:39px;
+    height:39px;
+  }
+
+  .gt-wallet-transactions > article > div strong {
+    font-size:12px;
+  }
+
+  .gt-wallet-transactions > article > div small {
+    font-size:9.5px;
+  }
+
+  .gt-wallet-transaction-value b {
+    font-size:17px;
+  }
+
+  .gt-wallet-transaction-value small {
+    font-size:8px;
+  }
+}

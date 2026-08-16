@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import {
   Ambulance,
+  ArrowDownToLine,
   ArrowLeft,
+  ArrowUpFromLine,
   BadgeCheck,
   BedDouble,
   Bike,
@@ -32,6 +34,7 @@ import {
   Map,
   MapPin,
   MessageCircle,
+  Minus,
   MountainSnow,
   Navigation,
   PawPrint,
@@ -40,7 +43,6 @@ import {
   Pill,
   QrCode,
   ReceiptText,
-  RefreshCcw,
   Search,
   Send,
   ShieldCheck,
@@ -51,7 +53,6 @@ import {
   Stethoscope,
   SunMedium,
   TentTree,
-  UserPlus,
   UserRound,
   UsersRound,
   Utensils,
@@ -360,6 +361,12 @@ function AboutScreen() {
           <h1>Готель<br />«Гірський затишок»</h1>
           <p><MapPin size={18} /> Татарів, вул. Незалежності, 15Б</p>
         </div>
+        <div className="gt-checkin-card gt-checkin-card--hero">
+          <p>
+            <span><Clock3 size={20} /><i>Заїзд<b>14:00</b></i></span>
+            <span><Clock3 size={20} /><i>Виїзд<b>11:00</b></i></span>
+          </p>
+        </div>
       </section>
       <div className="gt-about-content">
         <button type="button" className="gt-service-card gt-service-card--wide">
@@ -389,13 +396,6 @@ function AboutScreen() {
           <div><strong>Оперативні контакти</strong><small>Важливі номери телефонів для вашої зручності</small></div>
           <ChevronRight size={19} />
         </button>
-        <div className="gt-checkin-card">
-          <span><Clock3 size={26} /></span>
-          <div>
-            <strong>Час заїзду / виїзду</strong>
-            <p><span>Заїзд з <b>14:00</b></span><span>Виїзд до <b>11:00</b></span></p>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -744,30 +744,49 @@ function PlanScreen({ navigate }: { navigate: Navigate }) {
   );
 }
 
-function WalletScreen({ navigate }: { navigate: Navigate }) {
+function WalletScreen() {
+  const transactions = [
+    { type: "earned", title: "Нараховано бонусів", note: "Кава у подарунок · Яремче", amount: "+30", date: "12.05.2024 · 10:15" },
+    { type: "earned", title: "Нараховано бонусів", note: "Знижка на проживання · Буковель", amount: "+100", date: "11.05.2024 · 18:42" },
+    { type: "spent", title: "Списано бонусів", note: "Оплата товарів · Смак Карпат", amount: "-50", date: "10.05.2024 · 14:20" },
+    { type: "earned", title: "Нараховано бонусів", note: "Рафтинг · Черемош", amount: "+50", date: "09.05.2024 · 16:30" },
+    { type: "spent", title: "Списано бонусів", note: "Оплата товарів · Еко-продукти", amount: "-30", date: "08.05.2024 · 11:05" },
+    { type: "earned", title: "Нараховано бонусів", note: "Кава у подарунок · Яремче", amount: "+30", date: "07.05.2024 · 09:50" },
+  ] as const;
+
   return (
     <div className="tourist-screen gt-screen gt-wallet-screen">
-      <main className="gt-content">
-        <h1 className="gt-simple-title">Бонуси</h1>
-        <section className="gt-bonus-card">
+      <main className="gt-wallet-ledger">
+        <section className="gt-wallet-balance">
+          <Gift size={34} />
           <small>Ваші бонуси</small>
-          <strong>320 <Gift size={25} /></strong>
-          <span>1 бал = 1 грн знижки</span>
+          <strong>320</strong>
+          <span>балів</span>
         </section>
-        <div className="gt-detail-card">
-          <span><UserPlus size={22} /></span><div><strong>Запросити друга</strong><small>Запросіть друзів і отримуйте +50 бонусів</small></div><ChevronRight size={19} />
+        <div className="gt-wallet-actions">
+          <button type="button"><ArrowDownToLine size={24} /><span>Нарахування</span></button>
+          <button type="button"><ArrowUpFromLine size={24} /><span>Списання</span></button>
         </div>
-        <div className="gt-detail-card">
-          <span className="gt-tone--blue"><RefreshCcw size={22} /></span><div><strong>Історія бонусів</strong><small>Перегляньте нарахування та використання</small></div><ChevronRight size={19} />
-        </div>
-        <SectionTitle title="На що можна обміняти" />
-        <div className="gt-reward-list">
-          <div><Thumb name="hotel" /><span><strong>Знижка на проживання</strong><small>Знижка 100 грн на бронювання житла від 1000 грн</small><b><Gift size={14} /> 100 балів</b></span><button type="button">Обміняти</button></div>
-          <div><Thumb name="jeep" /><span><strong>Знижка на активності</strong><small>Знижка 50 грн на будь-яку активність</small><b><Gift size={14} /> 50 балів</b></span><button type="button">Обміняти</button></div>
-          <div><Thumb name="coffee" /><span><strong>Кава у подарунок</strong><small>Безкоштовна кава в партнерських закладах</small><b><Gift size={14} /> 30 балів</b></span><button type="button">Обміняти</button></div>
-        </div>
-        <p className="gt-expiry"><ShieldCheck size={16} /> Бонуси не згорають та діють 365 днів</p>
-        <button type="button" className="gt-text-button" onClick={() => navigate("tourist", "qr")}>Показати мій QR</button>
+        <section className="gt-wallet-history">
+          <h1>Історія операцій</h1>
+          <div className="gt-wallet-transactions">
+            {transactions.map((transaction, index) => (
+              <article className={transaction.type === "spent" ? "is-spent" : "is-earned"} key={`${transaction.date}-${index}`}>
+                <span className="gt-wallet-transaction-icon">
+                  {transaction.type === "spent" ? <Minus size={23} /> : <Gift size={22} />}
+                </span>
+                <div>
+                  <strong>{transaction.title}</strong>
+                  <small>{transaction.note}</small>
+                </div>
+                <span className="gt-wallet-transaction-value">
+                  <b>{transaction.amount}</b>
+                  <small>{transaction.date}</small>
+                </span>
+              </article>
+            ))}
+          </div>
+        </section>
       </main>
     </div>
   );
@@ -1023,7 +1042,7 @@ export function TouristScreen({
     case "plan":
       return <PlanScreen navigate={navigate} />;
     case "wallet":
-      return <WalletScreen navigate={navigate} />;
+      return <WalletScreen />;
     case "qr":
       return <QrScreen navigate={navigate} />;
     case "purchase-confirmation":
