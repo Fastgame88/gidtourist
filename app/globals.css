@@ -8907,3 +8907,58 @@ button.gt-service-card {
     font-size:7.5px;
   }
 }
+
+/* Card spacing and image width refinement for category lists */
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-chips button,
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-chips button.is-active {
+  color:#111 !important;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row {
+  grid-template-columns:120px minmax(0,1fr);
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row .gt-photo {
+  width:120px;
+  height:94px;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__body {
+  display:flex;
+  min-height:94px;
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:flex-start;
+  gap:5px;
+  padding:2px 1px 0;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__meta {
+  margin-top:2px;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__tags {
+  margin-top:auto;
+  padding-top:3px;
+}
+
+:is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__tags i {
+  color:#111;
+}
+
+@media (max-width:390px) {
+  :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row {
+    grid-template-columns:106px minmax(0,1fr);
+  }
+
+  :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row .gt-photo {
+    width:106px;
+    height:86px;
+  }
+
+  :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__body {
+    min-height:86px;
+    gap:4px;
+  }
+}
