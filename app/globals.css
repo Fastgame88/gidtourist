@@ -7536,3 +7536,191 @@ button.gt-service-card {
     font-size:8px;
   }
 }
+
+/* Profile: approved reference layout */
+.gt-profile-screen {
+  height:auto;
+  min-height:100%;
+  overflow:visible !important;
+  background:#fafbfa !important;
+}
+
+.gt-profile-screen .gt-profile-content {
+  gap:14px;
+  padding:23px 16px 26px;
+}
+
+.gt-profile-screen .gt-profile-content > .gt-simple-title {
+  margin:0;
+  color:#0f1411;
+  font-size:31px;
+  line-height:1.1;
+}
+
+.gt-profile-screen .gt-profile-card--reference {
+  grid-template-columns:82px minmax(0,1fr);
+  gap:18px;
+  min-height:116px;
+  padding:17px 18px;
+  border:1px solid #eef0ef;
+  border-radius:16px;
+  box-shadow:0 5px 18px rgba(24,48,34,.06);
+}
+
+.gt-profile-screen .gt-avatar--photo {
+  width:82px;
+  height:82px;
+  border:0;
+  background:url("/images/profile-olena.webp") center/cover no-repeat;
+  box-shadow:none;
+}
+
+.gt-profile-screen .gt-profile-card--reference > div:nth-child(2) {
+  align-content:center;
+  gap:8px;
+}
+
+.gt-profile-screen .gt-profile-card--reference > div strong {
+  color:#101512;
+  font-size:19px;
+  line-height:1.15;
+}
+
+.gt-profile-screen .gt-profile-card--reference > div small {
+  gap:7px;
+  color:#7a837e;
+  font-size:14px;
+}
+
+.gt-profile-screen .gt-profile-card--reference > div small svg {
+  color:#0aa15a;
+  fill:#0aa15a;
+}
+
+.gt-profile-screen .gt-profile-list--reference {
+  border:1px solid #eef0ef;
+  border-radius:16px;
+  box-shadow:0 5px 18px rgba(24,48,34,.055);
+}
+
+.gt-profile-screen .gt-profile-list--reference button {
+  grid-template-columns:32px minmax(0,1fr) auto auto;
+  gap:12px;
+  min-height:58px;
+  padding:10px 18px;
+}
+
+.gt-profile-screen .gt-profile-list--reference span {
+  color:#171c19;
+  font-size:16px;
+  font-weight:500;
+}
+
+.gt-profile-screen .gt-profile-list--reference small {
+  color:#8a918d;
+  font-size:13px;
+}
+
+.gt-profile-screen .gt-profile-list--reference button > svg:last-child {
+  color:#969d99;
+}
+
+.gt-profile-screen .gt-profile-list--reference .gt-profile-row--reviews > svg:first-child {
+  color:#2486db;
+}
+
+.gt-profile-screen .gt-profile-list--reference .gt-profile-row--favorites > svg:first-child {
+  color:#ef4a50;
+}
+
+.gt-profile-screen .gt-profile-list--reference .gt-profile-row--language > svg:first-child {
+  color:#8549dd;
+}
+
+.gt-profile-screen .gt-profile-list--reference .gt-profile-row--notifications > svg:first-child {
+  color:#12a15d;
+}
+
+.gt-profile-screen .gt-profile-list--reference .gt-profile-row--support > svg:first-child {
+  color:#238bd9;
+}
+
+.gt-profile-screen .gt-profile-logout {
+  min-height:52px;
+  padding:10px 18px;
+  border-color:#f0e8e7;
+  border-radius:14px;
+  font-size:15px !important;
+  font-weight:500;
+  box-shadow:0 4px 14px rgba(24,48,34,.045);
+}
+
+.gt-profile-screen .gt-profile-edit {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  min-height:48px;
+  border:1px solid #83cfa9;
+  border-radius:11px;
+  color:#0b9854 !important;
+  background:#fff;
+  font-size:14px !important;
+  font-weight:600;
+}
+
+@media (max-width:390px) {
+  .gt-profile-screen .gt-profile-content {
+    gap:11px;
+    padding:18px 12px 22px;
+  }
+
+  .gt-profile-screen .gt-profile-content > .gt-simple-title {
+    font-size:27px;
+  }
+
+  .gt-profile-screen .gt-profile-card--reference {
+    grid-template-columns:72px minmax(0,1fr);
+    gap:14px;
+    min-height:106px;
+    padding:15px;
+  }
+
+  .gt-profile-screen .gt-avatar--photo {
+    width:72px;
+    height:72px;
+  }
+
+  .gt-profile-screen .gt-profile-card--reference > div strong {
+    font-size:17px;
+  }
+
+  .gt-profile-screen .gt-profile-card--reference > div small {
+    font-size:12px;
+  }
+
+  .gt-profile-screen .gt-profile-list--reference button {
+    grid-template-columns:29px minmax(0,1fr) auto auto;
+    gap:9px;
+    min-height:54px;
+    padding:9px 14px;
+  }
+
+  .gt-profile-screen .gt-profile-list--reference span {
+    font-size:14px;
+  }
+
+  .gt-profile-screen .gt-profile-list--reference small {
+    font-size:11px;
+  }
+
+  .gt-profile-screen .gt-profile-logout {
+    min-height:48px;
+    font-size:14px !important;
+  }
+
+  .gt-profile-screen .gt-profile-edit {
+    min-height:44px;
+    font-size:13px !important;
+  }
+}

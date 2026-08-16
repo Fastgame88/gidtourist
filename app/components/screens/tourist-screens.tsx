@@ -8,6 +8,7 @@ import {
   ArrowUpFromLine,
   BadgeCheck,
   BedDouble,
+  Bell,
   Bike,
   BookOpenCheck,
   CalendarDays,
@@ -16,18 +17,18 @@ import {
   ChevronRight,
   CircleHelp,
   Clock3,
-  Copy,
   Cross,
   ExternalLink,
   Flame,
   FlameKindling,
   Flower2,
   Gift,
+  Globe2,
   Grid2X2,
+  Headphones,
   Heart,
   Hotel,
   Info,
-  Languages,
   LifeBuoy,
   LocateFixed,
   LogOut,
@@ -48,12 +49,10 @@ import {
   ShieldCheck,
   ShoppingBag,
   SlidersHorizontal,
-  Sparkles,
   Star,
   Stethoscope,
   SunMedium,
   TentTree,
-  UserRound,
   UsersRound,
   Utensils,
   WalletCards,
@@ -959,28 +958,23 @@ function EmergencyScreen() {
 function ProfileScreen({ navigate }: { navigate: Navigate }) {
   return (
     <div className="tourist-screen gt-screen gt-profile-screen">
-      <main className="gt-content">
+      <main className="gt-content gt-profile-content">
         <h1 className="gt-simple-title">Профіль</h1>
-        <section className="gt-profile-card">
-          <div className="gt-avatar"><UserRound size={36} /></div>
-          <div><strong>Олена Ковальчук</strong><small><MapPin size={14} /> Львів, Україна</small><span><BadgeCheck size={14} /> Бронзовий мандрівник</span></div>
-          <button type="button" aria-label="Редагувати"><Pencil size={18} /></button>
-          <p><small>Ваш реферальний код</small><strong>TATAROVI-8765</strong><button type="button" aria-label="Копіювати"><Copy size={17} /></button></p>
+        <section className="gt-profile-card gt-profile-card--reference">
+          <div className="gt-avatar gt-avatar--photo" role="img" aria-label="Олена Ковальчук" />
+          <div><strong>Олена Ковальчук</strong><small><MapPin size={17} /> Львів, Україна</small></div>
         </section>
-        <div className="gt-profile-list">
-          <button type="button"><CalendarDays size={20} /><span>Мої бронювання</span><ChevronRight size={18} /></button>
-          <button type="button" onClick={() => navigate("tourist", "review")}><MessageCircle size={20} /><span>Мої відгуки</span><ChevronRight size={18} /></button>
-          <button type="button"><Heart size={20} /><span>Улюблені</span><ChevronRight size={18} /></button>
-          <button type="button" onClick={() => navigate("tourist", "wallet")}><WalletCards size={20} /><span>Історія бонусів</span><ChevronRight size={18} /></button>
+        <div className="gt-profile-list gt-profile-list--reference">
+          <button type="button" className="gt-profile-row--reviews" onClick={() => navigate("tourist", "review")}><MessageCircle size={25} /><span>Мої відгуки</span><ChevronRight size={20} /></button>
+          <button type="button" className="gt-profile-row--favorites"><Heart size={27} /><span>Улюблені</span><ChevronRight size={20} /></button>
         </div>
-        <div className="gt-profile-list">
-          <button type="button"><Languages size={20} /><span>Мова</span><small>Українська</small><ChevronRight size={18} /></button>
-          <button type="button"><Sparkles size={20} /><span>Сповіщення</span><ChevronRight size={18} /></button>
-          <button type="button" onClick={() => navigate("tourist", "community")}><UsersRound size={20} /><span>Спільнота</span><ChevronRight size={18} /></button>
-          <button type="button"><CircleHelp size={20} /><span>Підтримка</span><ChevronRight size={18} /></button>
+        <div className="gt-profile-list gt-profile-list--reference">
+          <button type="button" className="gt-profile-row--language"><Globe2 size={27} /><span>Мова</span><small>Українська</small><ChevronRight size={20} /></button>
+          <button type="button" className="gt-profile-row--notifications"><Bell size={26} /><span>Сповіщення</span><ChevronRight size={20} /></button>
+          <button type="button" className="gt-profile-row--support"><Headphones size={26} /><span>Підтримка</span><ChevronRight size={20} /></button>
         </div>
-        <button type="button" className="gt-logout"><LogOut size={19} /> Вийти</button>
-        <button type="button" className="gt-outline-button"><Pencil size={18} /> Редагувати профіль</button>
+        <button type="button" className="gt-logout gt-profile-logout"><LogOut size={25} /> Вийти</button>
+        <button type="button" className="gt-outline-button gt-profile-edit"><Pencil size={20} /> Редагувати профіль</button>
       </main>
     </div>
   );
