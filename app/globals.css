@@ -7295,10 +7295,10 @@ button.gt-service-card {
   width:190px;
   height:190px;
   margin:0 auto;
-  border:1px solid #414844;
+  border:1px solid #e5f1eb;
   border-radius:50%;
   color:#07964f;
-  background:#303532;
+  background:#eff8f3;
   text-align:center;
 }
 
@@ -7310,7 +7310,7 @@ button.gt-service-card {
 }
 
 .gt-wallet-balance > small {
-  color:#d7ded9;
+  color:#59655f;
   font-size:15px;
 }
 
@@ -7405,7 +7405,9 @@ button.gt-service-card {
 }
 
 .gt-wallet-transactions .is-earned .gt-wallet-transaction-icon svg {
-  fill:currentColor;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2.1;
 }
 
 .gt-wallet-transactions .is-spent .gt-wallet-transaction-icon {
