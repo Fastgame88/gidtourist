@@ -2266,8 +2266,8 @@ function PartnerProfileScreen({ navigate }: { navigate: Navigate }) {
       <main className="gt-partner-mobile-content gt-partner-form-page gt-profile-page-content">
         <section className="gt-profile-user-card">
           <div className="gt-profile-user-card__avatar">
-            <span>ІП</span>
-            <i><UserRound size={9} /></i>
+            <img src="/images/partner-profile-avatar.png" alt="Іван Петренко" />
+            <i><UserRound size={10} /></i>
           </div>
           <div className="gt-profile-user-card__copy">
             <strong>Іван Петренко</strong>

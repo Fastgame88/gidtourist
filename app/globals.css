@@ -13708,3 +13708,324 @@ button.gt-service-card {
     width: min(72vw, 270px);
   }
 }
+
+/* ===== Final reference polish: check-in/out, full-screen scanner, partner profile ===== */
+.gt-stay-time-screen {
+  background: #fff;
+}
+
+.gt-stay-time-screen .gt-partner-header {
+  min-height: 62px;
+  padding: 8px 14px 6px;
+  border-bottom: 0;
+  background: #fff;
+}
+
+.gt-stay-time-screen .gt-partner-header > strong {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.gt-stay-time-screen .gt-partner-header__text-action {
+  font-size: 14px;
+  font-weight: 800;
+  color: #169353;
+}
+
+.gt-stay-time-content {
+  padding: 2px 16px 20px;
+}
+
+.gt-stay-time-card {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: #fff;
+}
+
+.gt-stay-time-row {
+  display: block;
+  width: 100%;
+  min-height: 71px;
+  padding: 7px 0 9px;
+  border: 0;
+  background: #fff;
+  text-align: left;
+}
+
+.gt-stay-time-row > span {
+  display: block;
+  margin: 0 0 7px;
+  color: #2e3732;
+  font-size: 12px;
+  line-height: 1.18;
+  font-weight: 700;
+}
+
+.gt-stay-time-row > div {
+  display: grid;
+  grid-template-columns: 1fr 18px;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 11px 0 12px;
+  border: 1px solid #e5e9e6;
+  border-radius: 7px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(23, 49, 35, 0.025);
+}
+
+.gt-stay-time-row > div > b {
+  color: #323a35;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.gt-stay-time-row > div > svg {
+  transform: rotate(90deg);
+  color: #707873;
+}
+
+.gt-stay-time-toggle-row {
+  display: flex;
+  min-height: 59px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 8px 0 4px;
+  border: 0;
+  background: #fff;
+}
+
+.gt-stay-time-toggle-row > span {
+  color: #303833;
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 800;
+  white-space: pre-line;
+}
+
+.gt-stay-time-screen .gt-switch {
+  width: 44px;
+  height: 25px;
+}
+
+.gt-stay-time-screen .gt-switch i {
+  width: 19px;
+  height: 19px;
+}
+
+.gt-stay-time-screen .gt-switch.is-on i {
+  transform: translateX(19px);
+}
+
+.gt-stay-time-note {
+  margin-top: 9px;
+  padding: 13px 12px 14px;
+  border-radius: 6px;
+  background: #eef5f0;
+}
+
+.gt-stay-time-note strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #2d9b5d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.gt-stay-time-note p {
+  margin: 0;
+  color: #404943;
+  font-size: 11px;
+  line-height: 1.38;
+}
+
+/* Force the scanner to cover the entire viewport, outside the centered partner shell. */
+.gt-qr-scanner-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  width: 100vw;
+  max-width: none;
+  min-height: 100dvh;
+  margin: 0;
+  overflow: hidden;
+  background: #111513;
+  color: #fff;
+}
+
+.gt-qr-scanner-video,
+.gt-qr-scanner-shade {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.gt-qr-scanner-video {
+  object-fit: cover;
+}
+
+.gt-qr-scanner-screen__header {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 62px;
+  padding: 8px 14px 4px;
+}
+
+.gt-qr-scanner-screen__content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 430px;
+  min-height: calc(100dvh - 62px);
+  margin: 0 auto;
+  padding: clamp(58px, 13vh, 102px) 22px 30px;
+}
+
+/* Profile closer to reference */
+.gt-partner-profile-screen,
+.gt-partner-profile-screen .gt-profile-page-content {
+  background: #fff;
+}
+
+.gt-profile-page-content {
+  padding: 16px 16px 22px;
+}
+
+.gt-profile-user-card {
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  align-items: center;
+  gap: 16px;
+  min-height: 112px;
+  padding: 16px 14px;
+  border: 1px solid #eef1ef;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 6px 22px rgba(19, 44, 31, 0.04);
+}
+
+.gt-profile-user-card__avatar {
+  position: relative;
+  display: grid;
+  width: 70px;
+  height: 70px;
+  place-items: center;
+  overflow: visible;
+  border-radius: 50%;
+  background: #dce6e8;
+}
+
+.gt-profile-user-card__avatar img {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: 50% 42%;
+}
+
+.gt-profile-user-card__avatar > i {
+  position: absolute;
+  right: -3px;
+  bottom: 1px;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #111816;
+  color: #fff;
+}
+
+.gt-profile-user-card__copy strong {
+  display: block;
+  color: #1f2722;
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.gt-profile-user-card__copy small {
+  display: block;
+  margin-top: 5px;
+  color: #7e8781;
+  font-size: 12px;
+}
+
+.gt-partner-profile-screen .gt-profile-section:first-of-type {
+  margin-top: 28px;
+}
+
+.gt-partner-profile-screen .gt-profile-section {
+  margin-top: 22px;
+}
+
+.gt-profile-section h3 {
+  margin: 0 0 11px;
+  color: #202823;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.gt-profile-section__card {
+  overflow: hidden;
+  border: 0;
+  background: #fff;
+}
+
+.gt-profile-info-row {
+  min-height: 72px;
+  padding: 12px 0;
+  border-bottom: 1px solid #edf0ee;
+}
+
+.gt-profile-info-row span small {
+  color: #303833;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.gt-profile-info-row span strong {
+  margin-top: 5px;
+  color: #242c27;
+  font-size: 13px;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.gt-profile-info-row > svg {
+  width: 18px;
+  height: 18px;
+  color: #5e6661;
+}
+
+.gt-profile-security-section {
+  margin-top: 24px !important;
+}
+
+.gt-profile-security-row {
+  min-height: 54px;
+  padding: 0;
+  border-bottom: 1px solid #edf0ee;
+}
+
+.gt-profile-security-row span {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.gt-profile-logout {
+  min-height: 48px;
+  margin-top: 28px;
+  border: 1px solid #f3d3d0;
+  border-radius: 12px;
+  background: #fff3f2;
+  color: #d44d47;
+  font-size: 13px;
+  font-weight: 800;
+}
