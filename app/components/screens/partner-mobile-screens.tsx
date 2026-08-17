@@ -707,7 +707,7 @@ function ContactRow({
             ))}
           </span>
         ) : Icon ? (
-          <Icon size={18} />
+          <Icon size={27} />
         ) : null}
       </span>
       <span className="gt-contact-edit-row__copy">
@@ -715,7 +715,7 @@ function ContactRow({
         <input value={value} onChange={(event) => onChange(event.target.value)} />
       </span>
       <i>
-        <Edit3 size={15} />
+        <Edit3 size={20} />
       </i>
     </label>
   );
@@ -746,10 +746,7 @@ function ContactsScreen({ navigate, activated, onActivate }: PartnerProps & { on
             iconClassName="is-green"
           />
           <ContactRow
-            brandIcons={[
-              { src: "/icons/viber.svg", alt: "Viber" },
-              { src: "/icons/telegram.svg", alt: "Telegram" },
-            ]}
+            brandIcons={[{ src: "/icons/viber.svg", alt: "Viber" }]}
             label="Viber / Telegram"
             value={profile.messenger}
             onChange={(messenger) => setProfile((prev) => ({ ...prev, messenger }))}
@@ -792,7 +789,7 @@ function ContactsScreen({ navigate, activated, onActivate }: PartnerProps & { on
         <section className="gt-contact-hours-panel">
           <div className="gt-contact-hours-panel__head">
             <span>Режим роботи</span>
-            <Edit3 size={15} />
+            <Edit3 size={20} />
           </div>
           <div className="gt-contact-hours-panel__body">
             <label>
