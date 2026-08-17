@@ -34,6 +34,10 @@ import {
   Phone,
   QrCode,
   RefreshCcw,
+  ReceiptText,
+  Search,
+  SlidersHorizontal,
+  Users,
   ShieldCheck,
   Sparkles,
   Trash2,
@@ -1136,84 +1140,232 @@ function ContactsScreen({ navigate, activated, onActivate }: PartnerProps & { on
   );
 }
 
-function StatisticsScreen({ navigate, activated }: PartnerProps) {
+type PartnerStatisticsTab = "general" | "clients" | "services";
+
+const statisticsClients = [
+  { initials: "ІП", name: "Іван Петренко", operations: 5, total: "2 450 ₴", commission: "123 ₴" },
+  { initials: "МК", name: "Марія Коваль", operations: 3, total: "1 800 ₴", commission: "90 ₴" },
+  { initials: "ОБ", name: "Олександр Бондар", operations: 2, total: "1 350 ₴", commission: "68 ₴" },
+  { initials: "АШ", name: "Анна Шевченко", operations: 2, total: "980 ₴", commission: "49 ₴" },
+  { initials: "ДР", name: "Дмитро Романюк", operations: 1, total: "750 ₴", commission: "38 ₴" },
+  { initials: "НМ", name: "Наталія Мельник", operations: 1, total: "620 ₴", commission: "31 ₴" },
+  { initials: "ЮГ", name: "Юрій Гнатюк", operations: 1, total: "540 ₴", commission: "27 ₴" },
+  { initials: "ІК", name: "Ірина Климчук", operations: 1, total: "510 ₴", commission: "26 ₴" },
+  { initials: "ВТ", name: "Василь Ткачук", operations: 1, total: "460 ₴", commission: "23 ₴" },
+];
+
+const statisticsServices = [
+  { name: "Чан", operations: 56, total: "9 450 ₴", commission: "473 ₴", image: "/images/service-tub.webp" },
+  { name: "Сауна", operations: 34, total: "6 120 ₴", commission: "306 ₴", image: "/images/service-sauna.webp" },
+  { name: "Ресторан", operations: 28, total: "5 680 ₴", commission: "284 ₴", image: "/images/rest-excursion.webp" },
+  { name: "SPA масаж", operations: 14, total: "2 650 ₴", commission: "133 ₴", image: "/images/rest-massage.webp" },
+  { name: "Прокат велосипедів", operations: 8, total: "2 080 ₴", commission: "104 ₴", image: "/images/service-bikes.webp" },
+  { name: "Пральня", operations: 6, total: "1 240 ₴", commission: "62 ₴", image: "/images/travel-thumbnails.webp" },
+  { name: "Басейн", operations: 5, total: "980 ₴", commission: "49 ₴", image: "/images/service-pool.webp" },
+];
+
+function StatisticsDateFilter() {
   return (
-    <div className="gt-partner-mobile-screen has-bottom-nav">
-      <PartnerHeader
-        title="Статистика переходів"
-        navigate={navigate}
-        back="partner-dashboard"
-      />
-      <main className="gt-partner-mobile-content gt-partner-form-page">
-        <div className="gt-stat-tabs">
-          <button className="is-active">Тиждень</button>
-          <button>Місяць</button>
-          <button>Рік</button>
-        </div>
+    <button type="button" className="gt-stat-date-filter">
+      <CalendarDays size={16} />
+      <span>6 – 12 травня 2024</span>
+      <ChevronRight size={14} className="gt-stat-date-filter__arrow" />
+    </button>
+  );
+}
 
-        <div className="gt-stat-total">
-          <small>Всього переходів</small>
-          <strong>1 248</strong>
-          <span>↑ 18% порівняно з попереднім тижнем</span>
-        </div>
+function StatisticMetricCard({
+  title,
+  value,
+  change,
+}: {
+  title: string;
+  value: string;
+  change?: string;
+}) {
+  return (
+    <article className="gt-stat-metric-card">
+      <small>{title}</small>
+      <strong>{value}</strong>
+      {change ? <span>↑ {change}</span> : null}
+    </article>
+  );
+}
 
-        <section className="gt-stat-chart">
-          <strong>Графік переходів</strong>
-          <div className="gt-stat-chart__area">
-            <svg viewBox="0 0 300 110" role="img" aria-label="Графік переходів">
-              <polyline
-                points="8,66 52,28 96,55 140,25 184,69 228,24 292,10"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <g>
-                {[
-                  [8, 66],
-                  [52, 28],
-                  [96, 55],
-                  [140, 25],
-                  [184, 69],
-                  [228, 24],
-                  [292, 10],
-                ].map(([cx, cy]) => (
-                  <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="5" fill="white" stroke="currentColor" strokeWidth="3" />
-                ))}
-              </g>
-            </svg>
-            <div>
-              <span>Пн</span>
-              <span>Вт</span>
-              <span>Ср</span>
-              <span>Чт</span>
-              <span>Пт</span>
-              <span>Сб</span>
-              <span>Нд</span>
-            </div>
+function StatisticsGeneralTab() {
+  return (
+    <>
+      <h3 className="gt-stat-section-heading">Ключові показники</h3>
+      <section className="gt-stat-metric-grid">
+        <StatisticMetricCard title="Переходи на сторінку" value="1 248" change="18% до попереднього тижня" />
+        <StatisticMetricCard title="Реальні клієнти" value="328" change="18% до попереднього тижня" />
+        <StatisticMetricCard title="Операції (сканування QR)" value="146" change="22% до попереднього тижня" />
+        <StatisticMetricCard title="Сума операцій" value="24 560 ₴" change="20% до попереднього тижня" />
+        <StatisticMetricCard title="Комісія Gid Tourist" value="1 228 ₴" change="5% від суми операцій" />
+      </section>
+
+      <section className="gt-stat-line-block">
+        <h3 className="gt-stat-section-heading">Динаміка переходів</h3>
+        <div className="gt-stat-line-chart">
+          <svg viewBox="0 0 340 142" role="img" aria-label="Динаміка переходів за тиждень">
+            <g className="gt-stat-chart-grid">
+              <line x1="38" y1="18" x2="332" y2="18" />
+              <line x1="38" y1="48" x2="332" y2="48" />
+              <line x1="38" y1="78" x2="332" y2="78" />
+              <line x1="38" y1="108" x2="332" y2="108" />
+            </g>
+            <g className="gt-stat-chart-ylabels">
+              <text x="1" y="22">1500</text>
+              <text x="1" y="52">1200</text>
+              <text x="10" y="82">600</text>
+              <text x="16" y="112">300</text>
+              <text x="24" y="134">0</text>
+            </g>
+            <polyline
+              className="gt-stat-chart-line"
+              points="50,108 94,100 138,63 182,92 226,62 270,81 324,28"
+              fill="none"
+            />
+            <g className="gt-stat-chart-points">
+              {[
+                [50, 108], [94, 100], [138, 63], [182, 92], [226, 62], [270, 81], [324, 28],
+              ].map(([cx, cy]) => <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="5" />)}
+            </g>
+          </svg>
+          <div className="gt-stat-chart-days">
+            <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Нд</span>
           </div>
-        </section>
+        </div>
+      </section>
 
-        <section className="gt-stat-sources">
-          <strong>Джерела переходів</strong>
-          {[
-            ["Пошук додатку", "713 (57%)", 57],
-            ["Карта", "312 (25%)", 25],
-            ["Категорії", "148 (12%)", 12],
-            ["Рекомендації", "75 (6%)", 6],
-          ].map(([name, value, width]) => (
-            <div key={name as string}>
-              <span>
-                <b>{name as string}</b>
-                <small>{value as string}</small>
-              </span>
-              <i>
-                <em style={{ width: `${width}%` }} />
-              </i>
+      <section className="gt-stat-summary-block">
+        <h3 className="gt-stat-section-heading">Підсумки за період</h3>
+        <div className="gt-stat-summary-list">
+          <div><Search size={16} /><span>Переходи на сторінку</span><strong>1 248</strong></div>
+          <div><Users size={16} /><span>Реальні клієнти</span><strong>328</strong></div>
+          <div><QrCode size={16} /><span>Операції (сканування QR)</span><strong>146</strong></div>
+          <div><WalletCards size={16} /><span>Загальна вартість операцій</span><strong>24 560 ₴</strong></div>
+          <div><ReceiptText size={16} /><span>Комісія Gid Tourist</span><strong>1 228 ₴</strong></div>
+        </div>
+      </section>
+    </>
+  );
+}
+
+function StatisticsClientsTab() {
+  const [showAll, setShowAll] = useState(false);
+  const visibleClients = showAll ? statisticsClients : statisticsClients.slice(0, 7);
+
+  return (
+    <>
+      <section className="gt-stat-client-metrics">
+        <StatisticMetricCard title="Реальні клієнти" value="328" change="18%" />
+        <StatisticMetricCard title="Нові клієнти" value="86" change="18%" />
+        <StatisticMetricCard title="Повернулися" value="242" change="14%" />
+      </section>
+
+      <section className="gt-stat-table-section gt-stat-clients-section">
+        <div className="gt-stat-section-title-row">
+          <h3 className="gt-stat-section-heading">Список клієнтів</h3>
+          <button type="button" className="gt-stat-filter-button"><SlidersHorizontal size={15} /> Фільтри</button>
+        </div>
+        <div className="gt-stat-client-table">
+          <div className="gt-stat-client-table__head">
+            <span>Клієнт</span><span>Операції</span><span>Сума операцій</span><span>Комісія</span>
+          </div>
+          {visibleClients.map((client) => (
+            <div className="gt-stat-client-table__row" key={client.name}>
+              <span className="gt-stat-client-name"><i>{client.initials}</i><b>{client.name}</b></span>
+              <span>{client.operations}</span>
+              <span>{client.total}</span>
+              <span>{client.commission}</span>
             </div>
           ))}
-        </section>
+        </div>
+        <button type="button" className="gt-stat-show-all" onClick={() => setShowAll((value) => !value)}>
+          {showAll ? "Показати основних клієнтів" : "Показати всіх клієнтів"}<ChevronRight size={17} />
+        </button>
+      </section>
+
+      <section className="gt-stat-segmentation">
+        <h3 className="gt-stat-section-heading">Сегментація клієнтів</h3>
+        <div className="gt-stat-donut-layout">
+          <div className="gt-stat-donut gt-stat-donut--clients"><span><strong>328</strong><small>клієнтів</small></span></div>
+          <div className="gt-stat-donut-legend">
+            <div><i className="is-blue" /><span>Нові</span><strong>86 (26%)</strong></div>
+            <div><i className="is-green" /><span>Повернулися</span><strong>242 (74%)</strong></div>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+
+function StatisticsServicesTab() {
+  const [showAll, setShowAll] = useState(false);
+  const visibleServices = showAll ? statisticsServices : statisticsServices.slice(0, 6);
+
+  return (
+    <>
+      <article className="gt-stat-top-service">
+        <div><small>Найпопулярніша послуга</small><strong>Чан</strong><span>56 операцій</span></div>
+        <img src="/images/service-tub.webp" alt="Чан" />
+      </article>
+
+      <section className="gt-stat-table-section gt-stat-services-section">
+        <h3 className="gt-stat-section-heading">Популярні послуги</h3>
+        <div className="gt-stat-services-table">
+          <div className="gt-stat-services-table__head">
+            <span>Послуга</span><span>Операції</span><span>Сума операцій</span><span>Комісія</span>
+          </div>
+          {visibleServices.map((service) => (
+            <div className="gt-stat-services-table__row" key={service.name}>
+              <span className="gt-stat-service-name"><img src={service.image} alt="" /><b>{service.name}</b></span>
+              <span>{service.operations}</span>
+              <span>{service.total}</span>
+              <span>{service.commission}</span>
+            </div>
+          ))}
+        </div>
+        <button type="button" className="gt-stat-show-all" onClick={() => setShowAll((value) => !value)}>
+          {showAll ? "Показати основні послуги" : "Показати всі послуги"}<ChevronRight size={17} />
+        </button>
+      </section>
+
+      <section className="gt-stat-categories">
+        <h3 className="gt-stat-section-heading">Категорії послуг</h3>
+        <div className="gt-stat-donut-layout">
+          <div className="gt-stat-donut gt-stat-donut--services"><span><strong>146</strong><small>операцій</small></span></div>
+          <div className="gt-stat-donut-legend gt-stat-donut-legend--categories">
+            <div><i className="is-dark-green" /><span>Де поїсти</span><strong>70 (48%)</strong></div>
+            <div><i className="is-green" /><span>Де купити</span><strong>28 (19%)</strong></div>
+            <div><i className="is-sky" /><span>Розваги</span><strong>22 (15%)</strong></div>
+            <div><i className="is-gray" /><span>Інше</span><strong>26 (18%)</strong></div>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+
+function StatisticsScreen({ navigate, activated }: PartnerProps) {
+  const [tab, setTab] = useState<PartnerStatisticsTab>("general");
+
+  return (
+    <div className="gt-partner-mobile-screen has-bottom-nav gt-partner-stats-screen">
+      <PartnerHeader title="Статистика" navigate={navigate} back="partner-dashboard" />
+      <main className="gt-partner-mobile-content gt-partner-form-page gt-statistics-page">
+        <div className="gt-stat-main-tabs">
+          <button type="button" className={tab === "general" ? "is-active" : ""} onClick={() => setTab("general")}>Загальна</button>
+          <button type="button" className={tab === "clients" ? "is-active" : ""} onClick={() => setTab("clients")}>Клієнти</button>
+          <button type="button" className={tab === "services" ? "is-active" : ""} onClick={() => setTab("services")}>Послуги</button>
+        </div>
+
+        <div className="gt-stat-date-wrap"><StatisticsDateFilter /></div>
+
+        {tab === "general" ? <StatisticsGeneralTab /> : null}
+        {tab === "clients" ? <StatisticsClientsTab /> : null}
+        {tab === "services" ? <StatisticsServicesTab /> : null}
       </main>
       <PartnerBottomNav active="stats" activated={activated} navigate={navigate} />
     </div>
