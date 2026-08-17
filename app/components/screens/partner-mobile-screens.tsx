@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ArrowLeft,
   BarChart3,
@@ -2100,8 +2100,10 @@ function TimeSelectRow({
   return (
     <button type="button" className="gt-stay-time-row" onClick={onToggle}>
       <span>{label}</span>
-      <b>{value}</b>
-      <ChevronRight size={16} />
+      <div>
+        <b>{value}</b>
+        <ChevronRight size={14} />
+      </div>
     </button>
   );
 }
@@ -2132,6 +2134,9 @@ function CheckInScreen({ navigate }: { navigate: Navigate }) {
   const [earlyTime, setEarlyTime] = useState("08:00");
   const [lateTime, setLateTime] = useState("18:00");
 
+  const checkIn = profile.checkIn.replace("Поселення з ", "") || "14:00";
+  const checkOut = profile.checkOut.replace("Виселення до ", "") || "11:00";
+
   return (
     <div className="gt-partner-mobile-screen has-bottom-nav gt-stay-time-screen">
       <PartnerHeader
@@ -2141,24 +2146,22 @@ function CheckInScreen({ navigate }: { navigate: Navigate }) {
         nextLabel="Зберегти"
         onNext={() => navigate("partner", "partner-dashboard")}
       />
-      <main className="gt-partner-mobile-content gt-partner-form-page">
+      <main className="gt-partner-mobile-content gt-partner-form-page gt-stay-time-content">
         <section className="gt-stay-time-card">
           <TimeSelectRow
             label="Час заїзду"
-            value={profile.checkIn.replace("Поселення з ", "") || "14:00"}
-            onToggle={() => setProfile((prev) => ({ ...prev, checkIn: prev.checkIn.includes('14:00') ? 'Поселення з 15:00' : 'Поселення з 14:00' }))}
+            value={checkIn}
+            onToggle={() => setProfile((prev) => ({ ...prev, checkIn: checkIn === "14:00" ? "Поселення з 15:00" : "Поселення з 14:00" }))}
           />
           <TimeSelectRow
             label="Час виїзду"
-            value={profile.checkOut.replace("Виселення до ", "") || "11:00"}
-            onToggle={() => setProfile((prev) => ({ ...prev, checkOut: prev.checkOut.includes('11:00') ? 'Виселення до 12:00' : 'Виселення до 11:00' }))}
+            value={checkOut}
+            onToggle={() => setProfile((prev) => ({ ...prev, checkOut: checkOut === "11:00" ? "Виселення до 12:00" : "Виселення до 11:00" }))}
           />
-          <ToggleRow label="Ранній заїзд
-(за можливості)" enabled={earlyEnabled} onToggle={() => setEarlyEnabled((prev) => !prev)} />
-          <TimeSelectRow label="Час" value={earlyTime} onToggle={() => setEarlyTime((prev) => prev === '08:00' ? '09:00' : '08:00')} />
-          <ToggleRow label="Пізній виїзд
-(за можливості)" enabled={lateEnabled} onToggle={() => setLateEnabled((prev) => !prev)} />
-          <TimeSelectRow label="Час" value={lateTime} onToggle={() => setLateTime((prev) => prev === '18:00' ? '19:00' : '18:00')} />
+          <ToggleRow label={"Ранній заїзд\n(за можливості)"} enabled={earlyEnabled} onToggle={() => setEarlyEnabled((prev) => !prev)} />
+          <TimeSelectRow label="Час" value={earlyTime} onToggle={() => setEarlyTime((prev) => prev === "08:00" ? "09:00" : "08:00")} />
+          <ToggleRow label={"Пізній виїзд\n(за можливості)"} enabled={lateEnabled} onToggle={() => setLateEnabled((prev) => !prev)} />
+          <TimeSelectRow label="Час" value={lateTime} onToggle={() => setLateTime((prev) => prev === "18:00" ? "19:00" : "18:00")} />
         </section>
 
         <div className="gt-stay-time-note">
@@ -2172,30 +2175,64 @@ function CheckInScreen({ navigate }: { navigate: Navigate }) {
 }
 
 function ScannerScreen({ navigate }: { navigate: Navigate }) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [cameraReady, setCameraReady] = useState(false);
+
+  useEffect(() => {
+    let stream: MediaStream | null = null;
+    let cancelled = false;
+
+    const startCamera = async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" } },
+          audio: false,
+        });
+        if (cancelled) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play().catch(() => undefined);
+          setCameraReady(true);
+        }
+      } catch {
+        setCameraReady(false);
+      }
+    };
+
+    if (typeof navigator !== "undefined" && navigator.mediaDevices?.getUserMedia) {
+      void startCamera();
+    }
+
+    return () => {
+      cancelled = true;
+      stream?.getTracks().forEach((track) => track.stop());
+    };
+  }, []);
+
   return (
     <div className="gt-qr-scanner-screen">
-      <div className="gt-qr-scanner-screen__status" />
+      <video ref={videoRef} className={`gt-qr-scanner-video ${cameraReady ? "is-ready" : ""}`} muted playsInline />
+      <div className="gt-qr-scanner-shade" />
       <header className="gt-qr-scanner-screen__header">
         <button type="button" onClick={() => navigate("partner", "partner-dashboard")} aria-label="Закрити">
-          <X size={20} />
+          <X size={22} />
         </button>
         <strong>Сканувати QR-код</strong>
         <button type="button" aria-label="Спалах">
-          <Zap size={18} />
+          <Zap size={19} />
         </button>
       </header>
+
       <main className="gt-qr-scanner-screen__content">
         <div className="gt-qr-viewfinder">
-          <div className="gt-qr-viewfinder__frame">
-            <span className="gt-qr-corner top-left" />
-            <span className="gt-qr-corner top-right" />
-            <span className="gt-qr-corner bottom-left" />
-            <span className="gt-qr-corner bottom-right" />
-            <div className="gt-qr-viewfinder__code">
-              <div className="gt-fake-qr" />
-            </div>
-            <div className="gt-qr-scan-line" />
-          </div>
+          <span className="gt-qr-corner top-left" />
+          <span className="gt-qr-corner top-right" />
+          <span className="gt-qr-corner bottom-left" />
+          <span className="gt-qr-corner bottom-right" />
+          <div className="gt-qr-scan-line" />
         </div>
         <p>Наведіть камеру на QR-код клієнта<br />для надання знижки/бонусу</p>
       </main>
@@ -2216,7 +2253,7 @@ function ProfileInfoRow({
         <small>{label}</small>
         <strong>{value}</strong>
       </span>
-      <Edit3 size={15} />
+      <Edit3 size={17} />
     </div>
   );
 }
@@ -2226,10 +2263,12 @@ function PartnerProfileScreen({ navigate }: { navigate: Navigate }) {
 
   return (
     <div className="gt-partner-mobile-screen has-bottom-nav gt-partner-profile-screen">
-      <PartnerHeader title="Профіль користувача" navigate={navigate} back="partner-dashboard" />
-      <main className="gt-partner-mobile-content gt-partner-form-page">
+      <main className="gt-partner-mobile-content gt-partner-form-page gt-profile-page-content">
         <section className="gt-profile-user-card">
-          <div className="gt-profile-user-card__avatar">ІП</div>
+          <div className="gt-profile-user-card__avatar">
+            <span>ІП</span>
+            <i><UserRound size={9} /></i>
+          </div>
           <div className="gt-profile-user-card__copy">
             <strong>Іван Петренко</strong>
             <small>Адміністратор</small>
@@ -2245,14 +2284,11 @@ function PartnerProfileScreen({ navigate }: { navigate: Navigate }) {
           </div>
         </section>
 
-        <section className="gt-profile-section">
+        <section className="gt-profile-section gt-profile-security-section">
           <h3>Безпека</h3>
           <button type="button" className="gt-profile-security-row">
-            <span>
-              <LockKeyhole size={16} />
-              Змінити пароль
-            </span>
-            <ChevronRight size={16} />
+            <span>Змінити пароль</span>
+            <ChevronRight size={17} />
           </button>
         </section>
 
