@@ -1168,7 +1168,7 @@ function StatisticsDateFilter() {
   return (
     <button type="button" className="gt-stat-date-filter">
       <CalendarDays size={16} />
-      <span>6 – 12 травня 2024</span>
+      <span>10 – 17 липня 2026</span>
       <ChevronRight size={14} className="gt-stat-date-filter__arrow" />
     </button>
   );
@@ -1257,7 +1257,7 @@ function StatisticsClientsTab() {
   const visibleClients = showAll ? statisticsClients : statisticsClients.slice(0, 7);
 
   return (
-    <>
+    <div className="gt-stat-clients-tab">
       <section className="gt-stat-client-metrics">
         <StatisticMetricCard title="Реальні клієнти" value="328" change="18%" />
         <StatisticMetricCard title="Нові клієнти" value="86" change="18%" />
@@ -1297,7 +1297,7 @@ function StatisticsClientsTab() {
           </div>
         </div>
       </section>
-    </>
+    </div>
   );
 }
 

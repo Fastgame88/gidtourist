@@ -12835,3 +12835,99 @@ button.gt-service-card {
   .gt-stat-donut { width: 128px; height: 128px; }
   .gt-stat-donut::after { inset: 26px; }
 }
+
+/* Statistics sizing adjustments */
+.gt-stat-summary-block > .gt-stat-section-heading {
+  font-size: 14.52px; /* +10% */
+}
+
+.gt-stat-clients-tab .gt-stat-section-heading {
+  font-size: 15.18px; /* +15% */
+}
+
+.gt-stat-clients-tab .gt-stat-client-metrics .gt-stat-metric-card small {
+  font-size: 10.81px; /* +15% */
+}
+
+.gt-stat-clients-tab .gt-stat-client-metrics .gt-stat-metric-card strong {
+  font-size: 25.3px; /* +15% */
+}
+
+.gt-stat-clients-tab .gt-stat-client-metrics .gt-stat-metric-card span {
+  font-size: 10.35px; /* +15% */
+}
+
+.gt-stat-clients-tab .gt-stat-filter-button {
+  font-size: 11.73px; /* +15% */
+}
+
+.gt-stat-clients-tab .gt-stat-client-table__head {
+  font-size: 10.01px; /* +15% */
+}
+
+.gt-stat-clients-tab .gt-stat-client-table__row {
+  font-size: 11.16px; /* +15% */
+}
+
+.gt-stat-clients-tab .gt-stat-client-name i {
+  font-size: 9.2px; /* +15% */
+}
+
+.gt-stat-clients-tab .gt-stat-show-all {
+  font-size: 12.42px; /* +15% */
+}
+
+.gt-stat-clients-tab .gt-stat-donut strong {
+  font-size: 27.6px; /* +15% */
+}
+
+.gt-stat-clients-tab .gt-stat-donut small {
+  font-size: 12.08px; /* +15% */
+}
+
+.gt-stat-clients-tab .gt-stat-donut-legend > div {
+  font-size: 11.5px; /* +15% */
+}
+
+.gt-stat-clients-tab .gt-stat-donut-legend strong {
+  font-size: 11.27px; /* +15% */
+}
+
+.gt-stat-top-service img {
+  width: 83px;
+  height: 83px; /* +20% */
+}
+
+.gt-stat-top-service {
+  grid-template-columns: minmax(0, 1fr) 83px;
+  min-height: 106px;
+}
+
+.gt-stat-services-section > .gt-stat-section-heading {
+  font-size: 15.18px; /* +15% */
+}
+
+.gt-stat-services-section .gt-stat-services-table__head {
+  font-size: 9.78px; /* +15% */
+}
+
+.gt-stat-services-section .gt-stat-services-table__row {
+  min-height: 49px;
+  font-size: 10.93px; /* +15% */
+}
+
+.gt-stat-services-section .gt-stat-service-name img {
+  width: 36px;
+  height: 36px;
+  min-width: 36px; /* +20% */
+}
+
+.gt-stat-services-section .gt-stat-show-all {
+  font-size: 12.42px; /* +15% */
+}
+
+@media (max-width: 390px) {
+  .gt-stat-clients-tab .gt-stat-client-metrics .gt-stat-metric-card strong { font-size: 21.85px; }
+  .gt-stat-clients-tab .gt-stat-client-table__row { font-size: 10.35px; }
+  .gt-stat-services-section .gt-stat-services-table__row { font-size: 10.24px; }
+}
