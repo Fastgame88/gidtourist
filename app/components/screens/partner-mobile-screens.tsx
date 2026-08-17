@@ -46,6 +46,9 @@ import {
   WalletCards,
   Wifi,
   Waves,
+  X,
+  Zap,
+  LockKeyhole,
 } from "lucide-react";
 import type { RoleKey } from "../../lib/navigation";
 
@@ -2085,30 +2088,181 @@ function ServiceBreakScreen({ navigate }: { navigate: Navigate }) {
   );
 }
 
+function TimeSelectRow({
+  label,
+  value,
+  onToggle,
+}: {
+  label: string;
+  value: string;
+  onToggle?: () => void;
+}) {
+  return (
+    <button type="button" className="gt-stay-time-row" onClick={onToggle}>
+      <span>{label}</span>
+      <b>{value}</b>
+      <ChevronRight size={16} />
+    </button>
+  );
+}
+
+function ToggleRow({
+  label,
+  enabled,
+  onToggle,
+}: {
+  label: string;
+  enabled: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="gt-stay-time-toggle-row">
+      <span>{label}</span>
+      <button type="button" className={`gt-switch ${enabled ? "is-on" : ""}`} onClick={onToggle} aria-label={label}>
+        <i />
+      </button>
+    </div>
+  );
+}
+
 function CheckInScreen({ navigate }: { navigate: Navigate }) {
   const { profile, setProfile } = usePartnerProfile();
+  const [earlyEnabled, setEarlyEnabled] = useState(true);
+  const [lateEnabled, setLateEnabled] = useState(true);
+  const [earlyTime, setEarlyTime] = useState("08:00");
+  const [lateTime, setLateTime] = useState("18:00");
 
   return (
-    <div className="gt-partner-mobile-screen has-bottom-nav">
-      <PartnerHeader title="Час заїзду-виїзду" navigate={navigate} back="partner-dashboard" />
+    <div className="gt-partner-mobile-screen has-bottom-nav gt-stay-time-screen">
+      <PartnerHeader
+        title="Час заїзду-виїзду"
+        navigate={navigate}
+        back="partner-dashboard"
+        nextLabel="Зберегти"
+        onNext={() => navigate("partner", "partner-dashboard")}
+      />
       <main className="gt-partner-mobile-content gt-partner-form-page">
-        <FormCard>
-          <InputRow
+        <section className="gt-stay-time-card">
+          <TimeSelectRow
             label="Час заїзду"
-            value={profile.checkIn}
-            onChange={(checkIn) => setProfile((prev) => ({ ...prev, checkIn }))}
+            value={profile.checkIn.replace("Поселення з ", "") || "14:00"}
+            onToggle={() => setProfile((prev) => ({ ...prev, checkIn: prev.checkIn.includes('14:00') ? 'Поселення з 15:00' : 'Поселення з 14:00' }))}
           />
-          <InputRow
+          <TimeSelectRow
             label="Час виїзду"
-            value={profile.checkOut}
-            onChange={(checkOut) => setProfile((prev) => ({ ...prev, checkOut }))}
+            value={profile.checkOut.replace("Виселення до ", "") || "11:00"}
+            onToggle={() => setProfile((prev) => ({ ...prev, checkOut: prev.checkOut.includes('11:00') ? 'Виселення до 12:00' : 'Виселення до 11:00' }))}
           />
-        </FormCard>
+          <ToggleRow label="Ранній заїзд
+(за можливості)" enabled={earlyEnabled} onToggle={() => setEarlyEnabled((prev) => !prev)} />
+          <TimeSelectRow label="Час" value={earlyTime} onToggle={() => setEarlyTime((prev) => prev === '08:00' ? '09:00' : '08:00')} />
+          <ToggleRow label="Пізній виїзд
+(за можливості)" enabled={lateEnabled} onToggle={() => setLateEnabled((prev) => !prev)} />
+          <TimeSelectRow label="Час" value={lateTime} onToggle={() => setLateTime((prev) => prev === '18:00' ? '19:00' : '18:00')} />
+        </section>
+
+        <div className="gt-stay-time-note">
+          <strong>Інформація для гостей</strong>
+          <p>Бронювання номера діє з часу заселення до часу виїзду, вказаного вище.</p>
+        </div>
       </main>
       <PartnerBottomNav active="home" activated navigate={navigate} />
     </div>
   );
 }
+
+function ScannerScreen({ navigate }: { navigate: Navigate }) {
+  return (
+    <div className="gt-qr-scanner-screen">
+      <div className="gt-qr-scanner-screen__status" />
+      <header className="gt-qr-scanner-screen__header">
+        <button type="button" onClick={() => navigate("partner", "partner-dashboard")} aria-label="Закрити">
+          <X size={20} />
+        </button>
+        <strong>Сканувати QR-код</strong>
+        <button type="button" aria-label="Спалах">
+          <Zap size={18} />
+        </button>
+      </header>
+      <main className="gt-qr-scanner-screen__content">
+        <div className="gt-qr-viewfinder">
+          <div className="gt-qr-viewfinder__frame">
+            <span className="gt-qr-corner top-left" />
+            <span className="gt-qr-corner top-right" />
+            <span className="gt-qr-corner bottom-left" />
+            <span className="gt-qr-corner bottom-right" />
+            <div className="gt-qr-viewfinder__code">
+              <div className="gt-fake-qr" />
+            </div>
+            <div className="gt-qr-scan-line" />
+          </div>
+        </div>
+        <p>Наведіть камеру на QR-код клієнта<br />для надання знижки/бонусу</p>
+      </main>
+    </div>
+  );
+}
+
+function ProfileInfoRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="gt-profile-info-row">
+      <span>
+        <small>{label}</small>
+        <strong>{value}</strong>
+      </span>
+      <Edit3 size={15} />
+    </div>
+  );
+}
+
+function PartnerProfileScreen({ navigate }: { navigate: Navigate }) {
+  const { profile } = usePartnerProfile();
+
+  return (
+    <div className="gt-partner-mobile-screen has-bottom-nav gt-partner-profile-screen">
+      <PartnerHeader title="Профіль користувача" navigate={navigate} back="partner-dashboard" />
+      <main className="gt-partner-mobile-content gt-partner-form-page">
+        <section className="gt-profile-user-card">
+          <div className="gt-profile-user-card__avatar">ІП</div>
+          <div className="gt-profile-user-card__copy">
+            <strong>Іван Петренко</strong>
+            <small>Адміністратор</small>
+          </div>
+        </section>
+
+        <section className="gt-profile-section">
+          <h3>Особиста інформація</h3>
+          <div className="gt-profile-section__card">
+            <ProfileInfoRow label="Ім'я" value="Іван Петренко" />
+            <ProfileInfoRow label="Телефон" value={profile.phone} />
+            <ProfileInfoRow label="Email" value="ivan.petrenko@girskiy-zatyshok.ua" />
+          </div>
+        </section>
+
+        <section className="gt-profile-section">
+          <h3>Безпека</h3>
+          <button type="button" className="gt-profile-security-row">
+            <span>
+              <LockKeyhole size={16} />
+              Змінити пароль
+            </span>
+            <ChevronRight size={16} />
+          </button>
+        </section>
+
+        <button type="button" className="gt-profile-logout">Вийти з акаунту</button>
+      </main>
+      <PartnerBottomNav active="profile" activated navigate={navigate} />
+    </div>
+  );
+}
+
 
 function PlaceholderScreen({
   navigate,
@@ -2203,14 +2357,7 @@ export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate
     case "partner-checkin":
       return <CheckInScreen navigate={navigate} />;
     case "scanner":
-      return (
-        <PlaceholderScreen
-          navigate={navigate}
-          title="QR"
-          icon={QrCode}
-          description="Тут буде логіка QR для монетизованого партнера."
-        />
-      );
+      return <ScannerScreen navigate={navigate} />;
     case "partner-finance":
       return (
         <PlaceholderScreen
@@ -2222,15 +2369,7 @@ export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate
         />
       );
     case "place-editor":
-      return (
-        <PlaceholderScreen
-          navigate={navigate}
-          title="Профіль"
-          icon={UserRound}
-          active="profile"
-          description="Тут буде логіка профілю партнера без видалення старих даних та функцій у проєкті."
-        />
-      );
+      return <PartnerProfileScreen navigate={navigate} />;
     default:
       return activated ? <CabinetScreen navigate={navigate} /> : <PartnerStartScreen navigate={navigate} />;
   }
