@@ -4,16 +4,21 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   ArrowLeft,
   BarChart3,
+  Bike,
   BedDouble,
   Building2,
   CalendarDays,
+  Camera,
   ChevronRight,
+  CircleParking,
   ClipboardList,
   Clock3,
   CigaretteOff,
   Edit3,
+  GripVertical,
   Eye,
   Home,
+  ImagePlus,
   Hotel,
   Image as ImageIcon,
   Info,
@@ -22,6 +27,7 @@ import {
   LogIn,
   LogOut,
   MapPin,
+  Plus,
   Moon,
   MoreVertical,
   PawPrint,
@@ -30,9 +36,12 @@ import {
   RefreshCcw,
   ShieldCheck,
   Sparkles,
+  Trash2,
   UserRound,
+  UtensilsCrossed,
   WalletCards,
   Wifi,
+  Waves,
 } from "lucide-react";
 import type { RoleKey } from "../../lib/navigation";
 
@@ -70,6 +79,309 @@ type PartnerProfile = {
 const heroImage = "/images/mountain-hotel.webp";
 const PROFILE_STORAGE_KEY = "gid-tourist-partner-profile";
 const ACTIVATED_STORAGE_KEY = "gid-tourist-partner-activated";
+
+const SERVICES_STORAGE_KEY = "gid-tourist-partner-services";
+const SERVICE_DRAFT_STORAGE_KEY = "gid-tourist-partner-service-draft";
+const SERVICE_SELECTED_STORAGE_KEY = "gid-tourist-partner-selected-service";
+
+type PartnerServiceAudience = "hotel" | "all";
+type PartnerServicePriceType = "" | "free" | "fixed" | "from" | "range" | "request";
+type PartnerServiceScheduleType = "daily" | "weekdays" | "custom";
+
+type PartnerService = {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  audience: PartnerServiceAudience;
+  active: boolean;
+  hidden: boolean;
+  priceType: PartnerServicePriceType;
+  price: string;
+  currency: string;
+  scheduleType: PartnerServiceScheduleType;
+  scheduleLabel: string;
+  timeFrom: string;
+  timeTo: string;
+  phone: string;
+  extraPhone: string;
+  email: string;
+  bookingNote: string;
+  additionalInfo: string;
+  amenities: string[];
+  promo: boolean;
+  image?: string;
+  breaks?: Array<{ from: string; to: string }>;
+};
+
+const defaultServices: PartnerService[] = [
+  {
+    id: "breakfast",
+    name: "Сніданок",
+    category: "Харчування",
+    description: "Сніданок для гостей готелю",
+    audience: "hotel",
+    active: true,
+    hidden: false,
+    priceType: "free",
+    price: "0",
+    currency: "UAH",
+    scheduleType: "daily",
+    scheduleLabel: "Щодня · з 08:00 до 10:00",
+    timeFrom: "08:00",
+    timeTo: "10:00",
+    phone: "+38 067 123 45 67",
+    extraPhone: "",
+    email: "info@girskyi-zatyshok.ua",
+    bookingNote: "Для гостей готелю",
+    additionalInfo: "Входить у вартість проживання.",
+    amenities: ["Шведський стіл"],
+    promo: false,
+  },
+  {
+    id: "parking",
+    name: "Паркінг",
+    category: "Паркінг",
+    description: "Безкоштовно для гостей",
+    audience: "hotel",
+    active: true,
+    hidden: false,
+    priceType: "free",
+    price: "0",
+    currency: "UAH",
+    scheduleType: "daily",
+    scheduleLabel: "Безкоштовно для гостей",
+    timeFrom: "00:00",
+    timeTo: "24:00",
+    phone: "+38 067 123 45 67",
+    extraPhone: "",
+    email: "info@girskyi-zatyshok.ua",
+    bookingNote: "Бронювання не потрібне",
+    additionalInfo: "Паркінг на території закладу.",
+    amenities: ["Відеонагляд"],
+    promo: false,
+  },
+  {
+    id: "sauna",
+    name: "Сауна",
+    category: "Сауна та SPA",
+    description: "Затишна сауна з панорамним видом на гори. Ідеальне місце для відпочинку та відновлення сил після активного дня.",
+    audience: "hotel",
+    active: true,
+    hidden: false,
+    priceType: "fixed",
+    price: "800",
+    currency: "UAH",
+    scheduleType: "daily",
+    scheduleLabel: "Щодня · з 16:00 до 22:00",
+    timeFrom: "16:00",
+    timeTo: "22:00",
+    phone: "+38 067 123 45 67",
+    extraPhone: "+38 050 987 65 43",
+    email: "info@girskyi-zatyshok.ua",
+    bookingNote: "Телефон адміністратора або через рецепцію готелю.",
+    additionalInfo: "Мінімальний час бронювання — 2 години. До 6 осіб одночасно.",
+    amenities: ["Панорамний вид", "Душ", "Рушники", "Чай / вода", "Музика"],
+    promo: true,
+    image: "/images/service-sauna.webp",
+  },
+  {
+    id: "transfer",
+    name: "Трансфер",
+    category: "Трансфер",
+    description: "За попереднім запитом",
+    audience: "hotel",
+    active: true,
+    hidden: false,
+    priceType: "request",
+    price: "",
+    currency: "UAH",
+    scheduleType: "daily",
+    scheduleLabel: "За попереднім запитом",
+    timeFrom: "00:00",
+    timeTo: "24:00",
+    phone: "+38 067 123 45 67",
+    extraPhone: "",
+    email: "info@girskyi-zatyshok.ua",
+    bookingNote: "За попереднім запитом",
+    additionalInfo: "Доступні трансфери по регіону.",
+    amenities: [],
+    promo: false,
+  },
+  {
+    id: "laundry",
+    name: "Пральня",
+    category: "Додаткові послуги",
+    description: "08:00 – 20:00 · від 150 грн",
+    audience: "hotel",
+    active: true,
+    hidden: false,
+    priceType: "from",
+    price: "150",
+    currency: "UAH",
+    scheduleType: "daily",
+    scheduleLabel: "08:00 – 20:00 · від 150 грн",
+    timeFrom: "08:00",
+    timeTo: "20:00",
+    phone: "+38 067 123 45 67",
+    extraPhone: "",
+    email: "info@girskyi-zatyshok.ua",
+    bookingNote: "Зверніться на рецепцію",
+    additionalInfo: "Прання та сушіння речей гостей.",
+    amenities: [],
+    promo: false,
+  },
+  {
+    id: "restaurant",
+    name: "Ресторан",
+    category: "Харчування",
+    description: "08:00 – 22:00 · Середній чек 300 грн",
+    audience: "all",
+    active: true,
+    hidden: false,
+    priceType: "from",
+    price: "300",
+    currency: "UAH",
+    scheduleType: "daily",
+    scheduleLabel: "08:00 – 22:00 · Середній чек 300 грн",
+    timeFrom: "08:00",
+    timeTo: "22:00",
+    phone: "+38 067 123 45 67",
+    extraPhone: "",
+    email: "restaurant@girskyi-zatyshok.ua",
+    bookingNote: "Бронювання столика телефоном",
+    additionalInfo: "Карпатська та європейська кухня.",
+    amenities: ["Тераса"],
+    promo: true,
+    image: "/images/rest-excursion.webp",
+  },
+  {
+    id: "tub",
+    name: "Чан",
+    category: "Сауна та SPA",
+    description: "10:00 – 22:00 · від 1500 грн",
+    audience: "all",
+    active: true,
+    hidden: false,
+    priceType: "from",
+    price: "1500",
+    currency: "UAH",
+    scheduleType: "daily",
+    scheduleLabel: "10:00 – 22:00 · від 1500 грн",
+    timeFrom: "10:00",
+    timeTo: "22:00",
+    phone: "+38 067 123 45 67",
+    extraPhone: "",
+    email: "spa@girskyi-zatyshok.ua",
+    bookingNote: "Попереднє бронювання",
+    additionalInfo: "Карпатський чан просто неба.",
+    amenities: ["Чай / вода"],
+    promo: true,
+    image: "/images/service-tub.webp",
+  },
+  {
+    id: "massage",
+    name: "SPA масаж",
+    category: "Сауна та SPA",
+    description: "09:00 – 20:00 · від 800 грн",
+    audience: "all",
+    active: true,
+    hidden: false,
+    priceType: "from",
+    price: "800",
+    currency: "UAH",
+    scheduleType: "daily",
+    scheduleLabel: "09:00 – 20:00 · від 800 грн",
+    timeFrom: "09:00",
+    timeTo: "20:00",
+    phone: "+38 067 123 45 67",
+    extraPhone: "",
+    email: "spa@girskyi-zatyshok.ua",
+    bookingNote: "За попереднім записом",
+    additionalInfo: "Класичний та релакс-масаж.",
+    amenities: ["Рушники", "Музика"],
+    promo: false,
+    image: "/images/rest-massage.webp",
+  },
+  {
+    id: "bike-rental",
+    name: "Прокат велосипедів",
+    category: "Активний відпочинок",
+    description: "09:00 – 18:00 · 200 грн/день",
+    audience: "all",
+    active: false,
+    hidden: true,
+    priceType: "fixed",
+    price: "200",
+    currency: "UAH",
+    scheduleType: "daily",
+    scheduleLabel: "09:00 – 18:00 · 200 грн/день",
+    timeFrom: "09:00",
+    timeTo: "18:00",
+    phone: "+38 067 123 45 67",
+    extraPhone: "",
+    email: "info@girskyi-zatyshok.ua",
+    bookingNote: "На рецепції",
+    additionalInfo: "Прокат гірських велосипедів.",
+    amenities: [],
+    promo: false,
+  },
+];
+
+const emptyServiceDraft: PartnerService = {
+  id: "",
+  name: "",
+  category: "",
+  description: "",
+  audience: "hotel",
+  active: true,
+  hidden: false,
+  priceType: "",
+  price: "",
+  currency: "UAH",
+  scheduleType: "daily",
+  scheduleLabel: "Щодня",
+  timeFrom: "09:00",
+  timeTo: "18:00",
+  phone: "+38 067 123 45 67",
+  extraPhone: "",
+  email: "info@girskyi-zatyshok.ua",
+  bookingNote: "",
+  additionalInfo: "",
+  amenities: [],
+  promo: false,
+};
+
+function readPartnerServices(): PartnerService[] {
+  if (typeof window === "undefined") return defaultServices;
+  try {
+    const raw = window.localStorage.getItem(SERVICES_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as PartnerService[]) : defaultServices;
+  } catch {
+    return defaultServices;
+  }
+}
+
+function savePartnerServices(services: PartnerService[]) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(SERVICES_STORAGE_KEY, JSON.stringify(services));
+}
+
+function readServiceDraft(): PartnerService {
+  if (typeof window === "undefined") return emptyServiceDraft;
+  try {
+    const raw = window.localStorage.getItem(SERVICE_DRAFT_STORAGE_KEY);
+    return raw ? { ...emptyServiceDraft, ...(JSON.parse(raw) as Partial<PartnerService>) } : emptyServiceDraft;
+  } catch {
+    return emptyServiceDraft;
+  }
+}
+
+function saveServiceDraft(service: PartnerService) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(SERVICE_DRAFT_STORAGE_KEY, JSON.stringify(service));
+}
+
 
 const defaultProfile: PartnerProfile = {
   placeName: "Гірський Затишок",
@@ -150,6 +462,7 @@ function PartnerHeader({
   nextLabel,
   onNext,
   showMenu = false,
+  backLabel,
 }: {
   title: string;
   navigate: Navigate;
@@ -157,17 +470,28 @@ function PartnerHeader({
   nextLabel?: string;
   onNext?: () => void;
   showMenu?: boolean;
+  backLabel?: string;
 }) {
   return (
     <header className="gt-partner-header">
-      <button
-        type="button"
-        className="gt-partner-header__button"
-        aria-label="Назад"
-        onClick={() => (back ? navigate("partner", back) : history.back())}
-      >
-        <ArrowLeft size={23} />
-      </button>
+      {backLabel ? (
+        <button
+          type="button"
+          className="gt-partner-header__back-text"
+          onClick={() => (back ? navigate("partner", back) : history.back())}
+        >
+          {backLabel}
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="gt-partner-header__button"
+          aria-label="Назад"
+          onClick={() => (back ? navigate("partner", back) : history.back())}
+        >
+          <ArrowLeft size={23} />
+        </button>
+      )}
       <strong>{title}</strong>
       {showMenu ? (
         <button type="button" className="gt-partner-header__button" aria-label="Меню">
@@ -1003,6 +1327,612 @@ function CabinetScreen({ navigate }: { navigate: Navigate }) {
   );
 }
 
+
+function usePartnerServices() {
+  const [services, setServices] = useState<PartnerService[]>(defaultServices);
+
+  useEffect(() => {
+    setServices(readPartnerServices());
+  }, []);
+
+  const updateServices = (next: PartnerService[] | ((current: PartnerService[]) => PartnerService[])) => {
+    setServices((current) => {
+      const value = typeof next === "function" ? next(current) : next;
+      savePartnerServices(value);
+      return value;
+    });
+  };
+
+  return { services, setServices: updateServices };
+}
+
+function ServiceSwitch({ checked, onChange, disabled = false }: { checked: boolean; onChange: (next: boolean) => void; disabled?: boolean }) {
+  return (
+    <button
+      type="button"
+      className={`gt-service-switch ${checked ? "is-on" : ""}`}
+      aria-pressed={checked}
+      disabled={disabled}
+      onClick={(event) => {
+        event.stopPropagation();
+        if (!disabled) onChange(!checked);
+      }}
+    >
+      <span />
+    </button>
+  );
+}
+
+function serviceIconFor(category: string) {
+  if (category.includes("Харч")) return UtensilsCrossed;
+  if (category.includes("SPA") || category.includes("Сауна")) return Waves;
+  if (category.includes("Паркінг")) return CircleParking;
+  if (category.includes("Трансфер")) return LogIn;
+  if (category.includes("Актив")) return Bike;
+  return Hotel;
+}
+
+function ServiceThumbnail({ service }: { service: PartnerService }) {
+  if (service.image) {
+    return <img className="gt-service-thumbnail" src={service.image} alt="" />;
+  }
+  const Icon = serviceIconFor(service.category);
+  return (
+    <span className="gt-service-thumbnail gt-service-thumbnail--icon">
+      <Icon size={21} />
+    </span>
+  );
+}
+
+function ServicesScreen({ navigate }: { navigate: Navigate }) {
+  const { services, setServices } = usePartnerServices();
+  const [audience, setAudience] = useState<PartnerServiceAudience>("hotel");
+  const visibleServices = services.filter((service) => !service.hidden && service.audience === audience);
+  const hiddenServices = services.filter((service) => service.hidden);
+
+  const openEdit = (service: PartnerService) => {
+    window.localStorage.setItem(SERVICE_SELECTED_STORAGE_KEY, service.id);
+    navigate("partner", "partner-service-edit");
+  };
+
+  const startAdd = () => {
+    saveServiceDraft({ ...emptyServiceDraft, audience });
+    navigate("partner", "partner-service-add");
+  };
+
+  return (
+    <div className="gt-partner-mobile-screen has-bottom-nav is-services-page">
+      <PartnerHeader title="Послуги закладу" navigate={navigate} back="partner-dashboard" />
+      <main className="gt-partner-mobile-content gt-partner-form-page gt-services-content">
+        <button type="button" className="gt-services-add-link" onClick={startAdd}>
+          <Plus size={17} /> Додати послугу
+        </button>
+
+        <div className="gt-services-tabs" role="tablist">
+          <button type="button" className={audience === "hotel" ? "is-active" : ""} onClick={() => setAudience("hotel")}>
+            Для гостей закладу
+          </button>
+          <button type="button" className={audience === "all" ? "is-active" : ""} onClick={() => setAudience("all")}>
+            Для всіх гостей
+          </button>
+        </div>
+
+        <section className="gt-services-list">
+          {visibleServices.map((service) => (
+            <div
+              className="gt-service-list-row"
+              key={service.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => openEdit(service)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") openEdit(service);
+              }}
+            >
+              <ServiceThumbnail service={service} />
+              <span className="gt-service-list-row__copy">
+                <strong>{service.name}</strong>
+                <small>{service.scheduleLabel || service.description}</small>
+              </span>
+              <ServiceSwitch
+                checked={service.active}
+                onChange={(active) => setServices((current) => current.map((item) => item.id === service.id ? { ...item, active } : item))}
+              />
+              <GripVertical className="gt-service-drag" size={17} />
+            </div>
+          ))}
+        </section>
+
+        <button type="button" className="gt-hidden-services-row" onClick={() => navigate("partner", "partner-services-hidden")}>
+          <span>Приховані послуги ({hiddenServices.length})</span>
+          <ChevronRight size={17} />
+        </button>
+      </main>
+      <PartnerBottomNav active="home" activated navigate={navigate} />
+    </div>
+  );
+}
+
+function HiddenServicesScreen({ navigate }: { navigate: Navigate }) {
+  const { services, setServices } = usePartnerServices();
+  const hiddenServices = services.filter((service) => service.hidden);
+
+  return (
+    <div className="gt-partner-mobile-screen has-bottom-nav is-services-page">
+      <PartnerHeader title="Сховані послуги" navigate={navigate} back="partner-services" />
+      <main className="gt-partner-mobile-content gt-partner-form-page gt-services-content">
+        <section className="gt-services-list gt-services-list--compact">
+          {hiddenServices.map((service) => (
+            <div className="gt-service-list-row" key={service.id}>
+              <ServiceThumbnail service={service} />
+              <span className="gt-service-list-row__copy">
+                <strong>{service.name}</strong>
+                <small>{service.scheduleLabel || service.description}</small>
+              </span>
+              <ServiceSwitch
+                checked={!service.hidden}
+                onChange={() => setServices((current) => current.map((item) => item.id === service.id ? { ...item, hidden: false, active: true } : item))}
+              />
+            </div>
+          ))}
+          {hiddenServices.length === 0 ? <div className="gt-services-empty">Немає схованих послуг</div> : null}
+        </section>
+      </main>
+      <PartnerBottomNav active="home" activated navigate={navigate} />
+    </div>
+  );
+}
+
+function ServiceRadioCard({
+  title,
+  description,
+  checked,
+  onClick,
+}: {
+  title: string;
+  description: string;
+  checked: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button type="button" className={`gt-service-radio-card ${checked ? "is-selected" : ""}`} onClick={onClick}>
+      <span className="gt-service-radio-dot">{checked ? <i /> : null}</span>
+      <span>
+        <strong>{title}</strong>
+        <small>{description}</small>
+      </span>
+    </button>
+  );
+}
+
+function ServiceField({
+  label,
+  value,
+  placeholder,
+  onChange,
+  multiline = false,
+  counter,
+}: {
+  label: string;
+  value: string;
+  placeholder?: string;
+  onChange: (value: string) => void;
+  multiline?: boolean;
+  counter?: number;
+}) {
+  return (
+    <label className={`gt-service-field ${multiline ? "is-multiline" : ""}`}>
+      <span>{label}</span>
+      {multiline ? (
+        <textarea value={value} placeholder={placeholder} maxLength={counter} onChange={(event) => onChange(event.target.value)} />
+      ) : (
+        <input value={value} placeholder={placeholder} maxLength={counter} onChange={(event) => onChange(event.target.value)} />
+      )}
+      {counter ? <small>{value.length}/{counter}</small> : null}
+    </label>
+  );
+}
+
+function ServiceSelectRow({ label, value, placeholder, onClick }: { label: string; value: string; placeholder: string; onClick: () => void }) {
+  return (
+    <button type="button" className="gt-service-select-row" onClick={onClick}>
+      <span>
+        <small>{label}</small>
+        <strong className={!value ? "is-placeholder" : ""}>{value || placeholder}</strong>
+      </span>
+      <ChevronRight size={17} />
+    </button>
+  );
+}
+
+function AddServiceScreen({ navigate }: { navigate: Navigate }) {
+  const [draft, setDraft] = useState<PartnerService>(emptyServiceDraft);
+  const [preview, setPreview] = useState<string>("");
+
+  useEffect(() => {
+    setDraft(readServiceDraft());
+  }, []);
+
+  useEffect(() => {
+    saveServiceDraft(draft);
+  }, [draft]);
+
+  const save = () => {
+    const services = readPartnerServices();
+    const id = `service-${Date.now()}`;
+    const next: PartnerService = {
+      ...draft,
+      id,
+      name: draft.name.trim() || "Нова послуга",
+      category: draft.category || "Додаткові послуги",
+      scheduleLabel: draft.scheduleLabel || "Щодня",
+      image: preview || draft.image,
+    };
+    savePartnerServices([...services, next]);
+    window.localStorage.removeItem(SERVICE_DRAFT_STORAGE_KEY);
+    window.localStorage.setItem(SERVICE_SELECTED_STORAGE_KEY, id);
+    navigate("partner", "partner-services");
+  };
+
+  return (
+    <div className="gt-partner-mobile-screen has-bottom-nav is-service-editor-page">
+      <PartnerHeader title="Додати послугу" navigate={navigate} back="partner-services" backLabel="Скасувати" nextLabel="Зберегти" onNext={save} />
+      <main className="gt-partner-mobile-content gt-partner-form-page gt-service-editor-content">
+        <h3 className="gt-service-section-title">Основна інформація</h3>
+
+        <label className="gt-service-photo-add">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (!file) return;
+              const reader = new FileReader();
+              reader.onload = () => setPreview(typeof reader.result === "string" ? reader.result : "");
+              reader.readAsDataURL(file);
+            }}
+          />
+          {preview ? <img src={preview} alt="Фото послуги" /> : <Camera size={24} />}
+          <span>
+            <strong>Додайте фото</strong>
+            <small>Додайте одне або більше фото послуги</small>
+          </span>
+        </label>
+
+        <ServiceField label="Назва послуги" value={draft.name} counter={100} onChange={(name) => setDraft((current) => ({ ...current, name }))} />
+        <ServiceSelectRow label="Категорія" value={draft.category} placeholder="Оберіть категорію" onClick={() => navigate("partner", "partner-service-category")} />
+        <ServiceField label="Опис послуги" value={draft.description} counter={500} multiline onChange={(description) => setDraft((current) => ({ ...current, description }))} />
+
+        <h3 className="gt-service-section-title">Тип послуги</h3>
+        <div className="gt-service-radio-stack">
+          <ServiceRadioCard
+            title="Для гостей закладу"
+            description="Доступна лише для тих, хто проживає у вашому закладі"
+            checked={draft.audience === "hotel"}
+            onClick={() => setDraft((current) => ({ ...current, audience: "hotel" }))}
+          />
+          <ServiceRadioCard
+            title="Для всіх гостей"
+            description="Послуга буде показана всім користувачам Gid Tourist"
+            checked={draft.audience === "all"}
+            onClick={() => setDraft((current) => ({ ...current, audience: "all" }))}
+          />
+        </div>
+
+        <h3 className="gt-service-section-title">Ціна послуги</h3>
+        <ServiceSelectRow
+          label="Тип ціни"
+          value={priceTypeLabel(draft.priceType)}
+          placeholder="Оберіть тип ціни"
+          onClick={() => navigate("partner", "partner-service-price-type")}
+        />
+      </main>
+      <PartnerBottomNav active="home" activated navigate={navigate} />
+    </div>
+  );
+}
+
+function priceTypeLabel(type: PartnerServicePriceType) {
+  const labels: Record<PartnerServicePriceType, string> = {
+    "": "",
+    free: "Безкоштовно",
+    fixed: "Фіксована ціна",
+    from: "Від",
+    range: "Діапазон цін",
+    request: "За запитом",
+  };
+  return labels[type];
+}
+
+const serviceCategories = [
+  ["Харчування", UtensilsCrossed],
+  ["Сауна та SPA", Waves],
+  ["Активний відпочинок", Bike],
+  ["Трансфер", LogIn],
+  ["Паркінг", CircleParking],
+  ["Додаткові послуги", Sparkles],
+] as const;
+
+function CategorySelectScreen({ navigate }: { navigate: Navigate }) {
+  const select = (category: string) => {
+    const draft = readServiceDraft();
+    saveServiceDraft({ ...draft, category });
+    navigate("partner", "partner-service-add");
+  };
+
+  return (
+    <div className="gt-partner-mobile-screen has-bottom-nav is-service-options-page">
+      <PartnerHeader title="Категорія послуги" navigate={navigate} back="partner-service-add" />
+      <main className="gt-partner-mobile-content gt-partner-form-page gt-service-options-content">
+        <section className="gt-service-option-list">
+          {serviceCategories.map(([category, Icon]) => (
+            <button type="button" key={category} onClick={() => select(category)}>
+              <Icon size={19} />
+              <span>{category}</span>
+              <ChevronRight size={16} />
+            </button>
+          ))}
+        </section>
+      </main>
+      <PartnerBottomNav active="home" activated navigate={navigate} />
+    </div>
+  );
+}
+
+const priceTypeOptions: Array<[PartnerServicePriceType, string, string]> = [
+  ["free", "Безкоштовно", "Послуга надається безкоштовно"],
+  ["fixed", "Фіксована ціна", "Одна ціна за всю послугу"],
+  ["from", "Від", "Вкажіть ціну від"],
+  ["range", "Діапазон цін", "Вкажіть мінімальну та максимальну ціну"],
+  ["request", "За запитом", "Ціна узгоджується при бронюванні"],
+];
+
+function PriceTypeScreen({ navigate }: { navigate: Navigate }) {
+  const [selected, setSelected] = useState<PartnerServicePriceType>(readServiceDraft().priceType);
+
+  const choose = (priceType: PartnerServicePriceType) => {
+    setSelected(priceType);
+    const draft = readServiceDraft();
+    saveServiceDraft({ ...draft, priceType });
+    navigate("partner", "partner-service-add");
+  };
+
+  return (
+    <div className="gt-partner-mobile-screen has-bottom-nav is-service-options-page">
+      <PartnerHeader title="Тип ціни" navigate={navigate} back="partner-service-add" />
+      <main className="gt-partner-mobile-content gt-partner-form-page gt-service-options-content">
+        <div className="gt-service-radio-stack gt-service-radio-stack--plain">
+          {priceTypeOptions.map(([value, title, description]) => (
+            <ServiceRadioCard key={value} title={title} description={description} checked={selected === value} onClick={() => choose(value)} />
+          ))}
+        </div>
+      </main>
+      <PartnerBottomNav active="home" activated navigate={navigate} />
+    </div>
+  );
+}
+
+function readSelectedService() {
+  const id = typeof window === "undefined" ? "sauna" : window.localStorage.getItem(SERVICE_SELECTED_STORAGE_KEY) || "sauna";
+  return readPartnerServices().find((service) => service.id === id) ?? defaultServices.find((service) => service.id === "sauna")!;
+}
+
+function EditServiceScreen({ navigate }: { navigate: Navigate }) {
+  const [service, setService] = useState<PartnerService>(() => defaultServices.find((item) => item.id === "sauna")!);
+
+  useEffect(() => {
+    setService(readSelectedService());
+  }, []);
+
+  const persist = (next: PartnerService) => {
+    setService(next);
+    savePartnerServices(readPartnerServices().map((item) => item.id === next.id ? next : item));
+  };
+
+  const save = () => {
+    persist(service);
+    navigate("partner", "partner-services");
+  };
+
+  const remove = () => {
+    savePartnerServices(readPartnerServices().filter((item) => item.id !== service.id));
+    navigate("partner", "partner-services");
+  };
+
+  const images = [service.image || "/images/service-sauna.webp", "/images/service-pool.webp", "/images/service-tub.webp"];
+
+  return (
+    <div className="gt-partner-mobile-screen has-bottom-nav is-service-editor-page">
+      <PartnerHeader title="Редагування послуги" navigate={navigate} back="partner-services" nextLabel="Зберегти" onNext={save} />
+      <main className="gt-partner-mobile-content gt-partner-form-page gt-service-editor-content">
+        <h3 className="gt-service-section-title">Фото послуги</h3>
+        <div className="gt-service-photo-grid">
+          {images.map((image, index) => <img src={image} key={`${image}-${index}`} alt="" />)}
+          <button type="button"><ImagePlus size={22} /><small>Додати<br />фото</small></button>
+        </div>
+        <p className="gt-service-photo-hint">Перетягніть фото, щоб змінити порядок</p>
+
+        <ServiceField label="Назва послуги" value={service.name} onChange={(name) => setService((current) => ({ ...current, name }))} />
+        <ServiceSelectRow label="Категорія" value={service.category} placeholder="Оберіть категорію" onClick={() => {
+          savePartnerServices(readPartnerServices().map((item) => item.id === service.id ? service : item));
+          navigate("partner", "partner-service-edit-category");
+        }} />
+        <ServiceField label="Опис послуги" value={service.description} multiline counter={500} onChange={(description) => setService((current) => ({ ...current, description }))} />
+
+        <h3 className="gt-service-section-title">Тип послуги</h3>
+        <div className="gt-service-radio-stack">
+          <ServiceRadioCard title="Для гостей закладу" description="Доступна лише для тих, хто проживає у вашому закладі" checked={service.audience === "hotel"} onClick={() => setService((current) => ({ ...current, audience: "hotel" }))} />
+          <ServiceRadioCard title="Для всіх гостей" description="Послуга буде показана всім користувачам Gid Tourist" checked={service.audience === "all"} onClick={() => setService((current) => ({ ...current, audience: "all" }))} />
+        </div>
+
+        <div className="gt-service-toggle-block">
+          <span><strong>Реклама послуги</strong><small>Показувати послугу всім користувачам Gid Tourist</small></span>
+          <ServiceSwitch checked={service.promo} onChange={(promo) => setService((current) => ({ ...current, promo }))} />
+        </div>
+
+        <h3 className="gt-service-section-title">Ціна послуги</h3>
+        <ServiceSelectRow label="Тип ціни" value={priceTypeLabel(service.priceType)} placeholder="Оберіть тип ціни" onClick={() => {
+          savePartnerServices(readPartnerServices().map((item) => item.id === service.id ? service : item));
+          saveServiceDraft(service);
+          navigate("partner", "partner-service-edit-price-type");
+        }} />
+        {service.priceType !== "free" && service.priceType !== "request" ? (
+          <div className="gt-service-inline-fields">
+            <ServiceField label="Ціна" value={service.price} onChange={(price) => setService((current) => ({ ...current, price }))} />
+            <ServiceField label="Валюта" value={service.currency} onChange={(currency) => setService((current) => ({ ...current, currency }))} />
+          </div>
+        ) : null}
+
+        <h3 className="gt-service-section-title">Графік роботи</h3>
+        <ServiceSelectRow label="Тип графіку" value={service.scheduleType === "daily" ? "Щодня" : service.scheduleType === "weekdays" ? "По днях тижня" : "Вибрані дні"} placeholder="Оберіть графік" onClick={() => {
+          savePartnerServices(readPartnerServices().map((item) => item.id === service.id ? service : item));
+          saveServiceDraft(service);
+          navigate("partner", "partner-service-schedule-type");
+        }} />
+        <div className="gt-service-inline-fields">
+          <ServiceField label="Час роботи" value={service.timeFrom} onChange={(timeFrom) => setService((current) => ({ ...current, timeFrom }))} />
+          <ServiceField label="До" value={service.timeTo} onChange={(timeTo) => setService((current) => ({ ...current, timeTo }))} />
+        </div>
+        {service.breaks?.map((item, index) => (
+          <div className="gt-service-break-row" key={`${item.from}-${item.to}-${index}`}>
+            <span>Перерва {item.from} – {item.to}</span>
+            <button type="button" onClick={() => setService((current) => ({ ...current, breaks: current.breaks?.filter((_, itemIndex) => itemIndex !== index) }))}><Trash2 size={14} /></button>
+          </div>
+        ))}
+        <button type="button" className="gt-service-add-subrow" onClick={() => {
+          savePartnerServices(readPartnerServices().map((item) => item.id === service.id ? service : item));
+          saveServiceDraft(service);
+          navigate("partner", "partner-service-break");
+        }}><Plus size={15} /> Додати перерву</button>
+
+        <h3 className="gt-service-section-title">Контакти для бронювання</h3>
+        <ServiceField label="Телефон" value={service.phone} onChange={(phone) => setService((current) => ({ ...current, phone }))} />
+        <ServiceField label="Додатковий телефон" value={service.extraPhone} onChange={(extraPhone) => setService((current) => ({ ...current, extraPhone }))} />
+        <ServiceField label="Email" value={service.email} onChange={(email) => setService((current) => ({ ...current, email }))} />
+        <ServiceField label="Як забронювати" value={service.bookingNote} multiline counter={200} onChange={(bookingNote) => setService((current) => ({ ...current, bookingNote }))} />
+        <ServiceField label="Додаткова інформація" value={service.additionalInfo} multiline counter={300} onChange={(additionalInfo) => setService((current) => ({ ...current, additionalInfo }))} />
+
+        <h3 className="gt-service-section-title">Зручності</h3>
+        <div className="gt-service-chips">
+          {service.amenities.map((amenity) => (
+            <button type="button" key={amenity} onClick={() => setService((current) => ({ ...current, amenities: current.amenities.filter((item) => item !== amenity) }))}>{amenity} ×</button>
+          ))}
+        </div>
+        <button type="button" className="gt-service-add-subrow" onClick={() => setService((current) => ({ ...current, amenities: current.amenities.includes("Wi‑Fi") ? current.amenities : [...current.amenities, "Wi‑Fi"] }))}><Plus size={15} /> Додати зручність</button>
+
+        <h3 className="gt-service-section-title">Статус послуги</h3>
+        <div className="gt-service-status-list">
+          <div><span><strong>Активна</strong></span><ServiceSwitch checked={service.active} onChange={(active) => setService((current) => ({ ...current, active }))} /></div>
+          <div><span><strong>Приховати послугу</strong><small>Послуга не буде відображатися гостям</small></span><ServiceSwitch checked={service.hidden} onChange={(hidden) => setService((current) => ({ ...current, hidden }))} /></div>
+        </div>
+
+        <button type="button" className="gt-service-delete" onClick={remove}><Trash2 size={16} /> Видалити послугу</button>
+      </main>
+      <PartnerBottomNav active="home" activated navigate={navigate} />
+    </div>
+  );
+}
+
+
+function EditCategorySelectScreen({ navigate }: { navigate: Navigate }) {
+  const selectedService = readSelectedService();
+  const select = (category: string) => {
+    const current = readSelectedService();
+    const next = { ...current, category };
+    savePartnerServices(readPartnerServices().map((item) => item.id === next.id ? next : item));
+    navigate("partner", "partner-service-edit");
+  };
+
+  return (
+    <div className="gt-partner-mobile-screen has-bottom-nav is-service-options-page">
+      <PartnerHeader title="Категорія послуги" navigate={navigate} back="partner-service-edit" />
+      <main className="gt-partner-mobile-content gt-partner-form-page gt-service-options-content">
+        <section className="gt-service-option-list">
+          {serviceCategories.map(([category, Icon]) => (
+            <button type="button" key={category} className={selectedService.category === category ? "is-selected" : ""} onClick={() => select(category)}>
+              <Icon size={19} />
+              <span>{category}</span>
+              {selectedService.category === category ? <span className="gt-service-option-check">✓</span> : <ChevronRight size={16} />}
+            </button>
+          ))}
+        </section>
+      </main>
+      <PartnerBottomNav active="home" activated navigate={navigate} />
+    </div>
+  );
+}
+
+function EditPriceTypeScreen({ navigate }: { navigate: Navigate }) {
+  const draft = readServiceDraft();
+  return (
+    <div className="gt-partner-mobile-screen has-bottom-nav is-service-options-page">
+      <PartnerHeader title="Тип ціни" navigate={navigate} back="partner-service-edit" />
+      <main className="gt-partner-mobile-content gt-partner-form-page gt-service-options-content">
+        <div className="gt-service-radio-stack gt-service-radio-stack--plain">
+          {priceTypeOptions.map(([value, title, description]) => (
+            <ServiceRadioCard key={value} title={title} description={description} checked={draft.priceType === value} onClick={() => {
+              const selected = readSelectedService();
+              const next = { ...selected, priceType: value };
+              savePartnerServices(readPartnerServices().map((item) => item.id === next.id ? next : item));
+              navigate("partner", "partner-service-edit");
+            }} />
+          ))}
+        </div>
+      </main>
+      <PartnerBottomNav active="home" activated navigate={navigate} />
+    </div>
+  );
+}
+
+const scheduleTypeOptions: Array<[PartnerServiceScheduleType, string, string]> = [
+  ["daily", "Щодня", "Один графік на кожен день"],
+  ["weekdays", "По днях тижня", "Графік окремо для буднів та вихідних"],
+  ["custom", "Вибрані дні", "Налаштувати індивідуально"],
+];
+
+function ScheduleTypeScreen({ navigate }: { navigate: Navigate }) {
+  const selectedService = readSelectedService();
+  return (
+    <div className="gt-partner-mobile-screen has-bottom-nav is-service-options-page">
+      <PartnerHeader title="Тип графіку" navigate={navigate} back="partner-service-edit" />
+      <main className="gt-partner-mobile-content gt-partner-form-page gt-service-options-content">
+        <div className="gt-service-radio-stack gt-service-radio-stack--plain">
+          {scheduleTypeOptions.map(([value, title, description]) => (
+            <ServiceRadioCard key={value} title={title} description={description} checked={selectedService.scheduleType === value} onClick={() => {
+              const current = readSelectedService();
+              const next = { ...current, scheduleType: value, scheduleLabel: value === "daily" ? `Щодня · з ${current.timeFrom} до ${current.timeTo}` : title };
+              savePartnerServices(readPartnerServices().map((item) => item.id === next.id ? next : item));
+              navigate("partner", "partner-service-edit");
+            }} />
+          ))}
+        </div>
+      </main>
+      <PartnerBottomNav active="home" activated navigate={navigate} />
+    </div>
+  );
+}
+
+function ServiceBreakScreen({ navigate }: { navigate: Navigate }) {
+  const [from, setFrom] = useState("14:00");
+  const [to, setTo] = useState("15:00");
+  return (
+    <div className="gt-partner-mobile-screen has-bottom-nav is-service-options-page">
+      <PartnerHeader title="Додати перерву" navigate={navigate} back="partner-service-edit" nextLabel="Зберегти" onNext={() => {
+        const current = readSelectedService();
+        const next = { ...current, breaks: [...(current.breaks ?? []), { from, to }] };
+        savePartnerServices(readPartnerServices().map((item) => item.id === next.id ? next : item));
+        navigate("partner", "partner-service-edit");
+      }} />
+      <main className="gt-partner-mobile-content gt-partner-form-page gt-service-options-content">
+        <ServiceSelectRow label="Час початку" value={from} placeholder="14:00" onClick={() => setFrom(from === "14:00" ? "13:00" : "14:00")} />
+        <ServiceSelectRow label="Час закінчення" value={to} placeholder="15:00" onClick={() => setTo(to === "15:00" ? "16:00" : "15:00")} />
+        <button type="button" className="gt-service-delete gt-service-delete--plain"><Trash2 size={15} /> Видалити перерву</button>
+      </main>
+      <PartnerBottomNav active="home" activated navigate={navigate} />
+    </div>
+  );
+}
+
 function CheckInScreen({ navigate }: { navigate: Navigate }) {
   const { profile, setProfile } = usePartnerProfile();
 
@@ -1099,14 +2029,25 @@ export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate
     case "partner-cabinet":
       return <CabinetScreen navigate={navigate} />;
     case "partner-services":
-      return (
-        <PlaceholderScreen
-          navigate={navigate}
-          title="Послуги закладу"
-          icon={Hotel}
-          description="Тут буде логіка керування послугами закладу в новому інтерфейсі партнера."
-        />
-      );
+      return <ServicesScreen navigate={navigate} />;
+    case "partner-services-hidden":
+      return <HiddenServicesScreen navigate={navigate} />;
+    case "partner-service-add":
+      return <AddServiceScreen navigate={navigate} />;
+    case "partner-service-category":
+      return <CategorySelectScreen navigate={navigate} />;
+    case "partner-service-price-type":
+      return <PriceTypeScreen navigate={navigate} />;
+    case "partner-service-edit":
+      return <EditServiceScreen navigate={navigate} />;
+    case "partner-service-edit-category":
+      return <EditCategorySelectScreen navigate={navigate} />;
+    case "partner-service-edit-price-type":
+      return <EditPriceTypeScreen navigate={navigate} />;
+    case "partner-service-schedule-type":
+      return <ScheduleTypeScreen navigate={navigate} />;
+    case "partner-service-break":
+      return <ServiceBreakScreen navigate={navigate} />;
     case "partner-checkin":
       return <CheckInScreen navigate={navigate} />;
     case "scanner":
