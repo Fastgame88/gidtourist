@@ -11886,3 +11886,390 @@ button.gt-service-card {
   font-size:10.5px;
 }
 .gt-service-break-row button { display:grid; place-items:center; border:0; background:transparent; color:#c44; }
+
+/* ===== Partner services scale +20% rows/images / +15% interface ===== */
+.is-services-page .gt-partner-header,
+.is-service-editor-page .gt-partner-header,
+.is-service-options-page .gt-partner-header {
+  min-height: 74px;
+}
+
+.is-services-page .gt-partner-header > strong,
+.is-service-editor-page .gt-partner-header > strong,
+.is-service-options-page .gt-partner-header > strong {
+  font-size: 17.25px;
+}
+
+.is-services-page .gt-partner-header__text-action,
+.is-service-editor-page .gt-partner-header__text-action,
+.is-service-options-page .gt-partner-header__text-action,
+.is-services-page .gt-partner-header__back-text,
+.is-service-editor-page .gt-partner-header__back-text,
+.is-service-options-page .gt-partner-header__back-text {
+  font-size: 13.8px;
+}
+
+.is-services-page .gt-partner-header svg,
+.is-service-editor-page .gt-partner-header svg,
+.is-service-options-page .gt-partner-header svg {
+  width: 26px;
+  height: 26px;
+}
+
+.gt-services-content,
+.gt-service-editor-content,
+.gt-service-options-content {
+  padding-top: 5px;
+}
+
+.gt-services-add-link {
+  gap: 6px;
+  margin-bottom: 10px;
+  padding: 4px 0;
+  font-size: 14.4px;
+}
+
+.gt-services-add-link svg {
+  width: 18px;
+  height: 18px;
+}
+
+.gt-services-tabs {
+  min-height: 52px;
+  margin-bottom: 7px;
+  border-radius: 12px;
+  padding: 3px;
+}
+
+.gt-services-tabs button {
+  font-size: 13.2px;
+}
+
+.gt-services-tabs button.is-active {
+  border-radius: 10px;
+}
+
+.gt-service-list-row {
+  grid-template-columns: 51px minmax(0, 1fr) 43px 20px;
+  gap: 11px;
+  min-height: 81px;
+  padding: 10px 4px;
+}
+
+.gt-services-list--compact .gt-service-list-row {
+  grid-template-columns: 51px minmax(0, 1fr) 43px;
+}
+
+.gt-service-thumbnail {
+  width: 51px;
+  height: 51px;
+  border-radius: 10px;
+}
+
+.gt-service-thumbnail--icon svg {
+  width: 23px;
+  height: 23px;
+}
+
+.gt-service-list-row__copy strong {
+  font-size: 14.4px;
+  line-height: 1.25;
+}
+
+.gt-service-list-row__copy small {
+  margin-top: 4px;
+  font-size: 12.1px;
+  line-height: 1.3;
+}
+
+.gt-service-drag {
+  width: 20px;
+  height: 20px;
+}
+
+.gt-service-switch {
+  width: 41px;
+  height: 23px;
+}
+
+.gt-service-switch span {
+  top: 2px;
+  left: 2px;
+  width: 19px;
+  height: 19px;
+}
+
+.gt-service-switch.is-on span {
+  transform: translateX(18px);
+}
+
+.gt-hidden-services-row {
+  min-height: 58px;
+  margin-top: 9px;
+  padding: 0 5px;
+  font-size: 13.2px;
+}
+
+.gt-hidden-services-row svg {
+  width: 19px;
+  height: 19px;
+}
+
+.gt-services-empty {
+  padding: 42px 14px;
+  font-size: 13.8px;
+}
+
+.gt-service-section-title {
+  margin: 16px 2px 9px;
+  font-size: 13.8px;
+}
+
+.gt-service-photo-add {
+  grid-template-columns: 51px 1fr;
+  gap: 14px;
+  min-height: 82px;
+  padding: 12px 14px;
+}
+
+.gt-service-photo-add > svg,
+.gt-service-photo-add > img {
+  width: 51px;
+  height: 51px;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.gt-service-photo-add > img {
+  padding: 0;
+}
+
+.gt-service-photo-add strong {
+  font-size: 14.4px;
+}
+
+.gt-service-photo-add small {
+  margin-top: 4px;
+  font-size: 11.5px;
+}
+
+.gt-service-field {
+  min-height: 74px;
+  padding: 12px 4px 11px;
+}
+
+.gt-service-field > span,
+.gt-service-select-row small {
+  margin-bottom: 7px;
+  font-size: 11.5px;
+}
+
+.gt-service-field input,
+.gt-service-field textarea {
+  padding-right: 41px;
+  font-size: 14.4px;
+  line-height: 1.4;
+}
+
+.gt-service-field textarea {
+  min-height: 74px;
+  padding-right: 0;
+}
+
+.gt-service-field > small {
+  right: 2px;
+  bottom: 9px;
+  font-size: 10.4px;
+}
+
+.gt-service-select-row {
+  grid-template-columns: minmax(0, 1fr) 21px;
+  min-height: 74px;
+  padding: 12px 4px;
+}
+
+.gt-service-select-row strong {
+  font-size: 14.4px;
+}
+
+.gt-service-select-row svg {
+  width: 20px;
+  height: 20px;
+}
+
+.gt-service-radio-stack {
+  gap: 9px;
+}
+
+.gt-service-radio-stack--plain {
+  gap: 5px;
+}
+
+.gt-service-radio-card {
+  grid-template-columns: 21px minmax(0, 1fr);
+  gap: 12px;
+  min-height: 77px;
+  padding: 13px 14px;
+  border-radius: 12px;
+}
+
+.gt-service-radio-dot {
+  width: 17px;
+  height: 17px;
+  margin-top: 2px;
+}
+
+.gt-service-radio-dot i {
+  width: 8px;
+  height: 8px;
+}
+
+.gt-service-radio-card strong {
+  font-size: 13.8px;
+}
+
+.gt-service-radio-card small {
+  margin-top: 5px;
+  font-size: 11.5px;
+}
+
+.gt-service-option-list button {
+  grid-template-columns: 32px minmax(0, 1fr) 19px;
+  gap: 12px;
+  min-height: 67px;
+  padding: 10px 5px;
+}
+
+.gt-service-option-list button > svg:first-child {
+  width: 21px;
+  height: 21px;
+}
+
+.gt-service-option-list button span {
+  font-size: 13.8px;
+}
+
+.gt-service-option-check {
+  font-size: 15px;
+}
+
+.gt-service-photo-grid {
+  gap: 8px;
+}
+
+.gt-service-photo-grid img,
+.gt-service-photo-grid button {
+  aspect-ratio: 1 / 1;
+  border-radius: 10px;
+}
+
+.gt-service-photo-grid button svg {
+  width: 21px;
+  height: 21px;
+}
+
+.gt-service-photo-grid button small {
+  font-size: 9.8px;
+}
+
+.gt-service-photo-hint {
+  margin: 7px 1px 12px;
+  font-size: 10.9px;
+}
+
+.gt-service-toggle-block {
+  grid-template-columns: minmax(0, 1fr) 44px;
+  gap: 12px;
+  min-height: 80px;
+  margin-top: 12px;
+  padding: 12px 5px;
+}
+
+.gt-service-toggle-block strong {
+  font-size: 13.2px;
+}
+
+.gt-service-toggle-block small {
+  margin-top: 4px;
+  font-size: 10.9px;
+}
+
+.gt-service-inline-fields {
+  gap: 12px;
+}
+
+.gt-service-add-subrow {
+  gap: 6px;
+  min-height: 46px;
+  padding: 0 3px;
+  font-size: 12.1px;
+}
+
+.gt-service-add-subrow svg {
+  width: 18px;
+  height: 18px;
+}
+
+.gt-service-chips {
+  gap: 8px;
+}
+
+.gt-service-chips button {
+  min-height: 34px;
+  padding: 0 11px;
+  font-size: 10.9px;
+}
+
+.gt-service-status-list > div {
+  grid-template-columns: minmax(0, 1fr) 44px;
+  gap: 12px;
+  min-height: 66px;
+  padding: 10px 4px;
+}
+
+.gt-service-status-list strong {
+  font-size: 13.2px;
+}
+
+.gt-service-status-list small {
+  margin-top: 4px;
+  font-size: 10.9px;
+}
+
+.gt-service-delete {
+  min-height: 50px;
+  gap: 8px;
+  margin: 16px 0 5px;
+  border-radius: 10px;
+  font-size: 12.7px;
+}
+
+.gt-service-delete svg {
+  width: 19px;
+  height: 19px;
+}
+
+.gt-service-break-row {
+  min-height: 46px;
+  padding: 0 4px;
+  font-size: 12.1px;
+}
+
+/* The long label must stay fully visible in the 5-item monetized navigation. */
+.gt-partner-bottom-nav.is-final {
+  grid-template-columns: .95fr .95fr .9fr 1.25fr .95fr;
+}
+
+.gt-partner-bottom-nav.is-final button span {
+  width: 100%;
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+  padding: 0 1px;
+  font-size: 8.8px;
+  line-height: 1.08;
+  text-align: center;
+}
