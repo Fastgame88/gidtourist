@@ -33,7 +33,8 @@ import {
   screensForRole,
   type RoleKey,
 } from "../lib/navigation";
-import { AdminScreen, AmbassadorScreen, RegionalScreen } from "./screens/admin-screens";
+import { AmbassadorScreen, RegionalScreen } from "./screens/admin-screens";
+import { AdminDesktopScreen } from "./screens/admin-desktop-screens";
 import { PartnerMobileScreen } from "./screens/partner-mobile-screens";
 import { TouristScreen } from "./screens/tourist-screens";
 import { Avatar, IconButton } from "./ui";
@@ -216,6 +217,10 @@ export default function ProductApplication({ role, slug }: { role: RoleKey; slug
     );
   }
 
+  if (role === "admin") {
+    return <AdminDesktopScreen slug={activeScreen.slug} navigate={navigate} />;
+  }
+
   const roleInfo = roles.find((item) => item.key === role) ?? roles[1];
   const account = portalAccounts[role];
   const RoleIcon = roleIcons[role];
@@ -223,9 +228,7 @@ export default function ProductApplication({ role, slug }: { role: RoleKey; slug
 
   const screenContent = role === "ambassador"
     ? <AmbassadorScreen slug={activeScreen.slug} />
-    : role === "regional"
-      ? <RegionalScreen slug={activeScreen.slug} navigate={navigate} />
-      : <AdminScreen slug={activeScreen.slug} navigate={navigate} />;
+    : <RegionalScreen slug={activeScreen.slug} navigate={navigate} />;
 
   return (
     <div className={`portal-shell portal-shell--${role}`}>
