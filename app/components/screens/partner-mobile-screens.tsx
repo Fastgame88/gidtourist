@@ -2298,6 +2298,262 @@ function PartnerProfileScreen({ navigate }: { navigate: Navigate }) {
 }
 
 
+
+type FinanceTab = "overview" | "operations" | "payments";
+
+type FinanceOperation = {
+  date: string;
+  time: string;
+  service: string;
+  amount: string;
+  commission: string;
+  icon: typeof UtensilsCrossed;
+  tone: string;
+};
+
+const financeOperations: FinanceOperation[] = [
+  { date: "17 липня 2026", time: "14:30", service: "Ресторан", amount: "1 250 ₴", commission: "50 ₴", icon: UtensilsCrossed, tone: "green" },
+  { date: "17 липня 2026", time: "13:15", service: "Сауна", amount: "2 000 ₴", commission: "80 ₴", icon: Waves, tone: "sand" },
+  { date: "16 липня 2026", time: "11:40", service: "Прокат велосипедів", amount: "350 ₴", commission: "14 ₴", icon: Bike, tone: "blue" },
+  { date: "15 липня 2026", time: "20:10", service: "SPA масаж", amount: "1 800 ₴", commission: "72 ₴", icon: Sparkles, tone: "mint" },
+  { date: "15 липня 2026", time: "18:05", service: "Ресторан", amount: "980 ₴", commission: "39,20 ₴", icon: UtensilsCrossed, tone: "sand" },
+  { date: "14 липня 2026", time: "16:30", service: "Парковка", amount: "200 ₴", commission: "8 ₴", icon: CircleParking, tone: "blue" },
+  { date: "14 липня 2026", time: "15:20", service: "Пральня", amount: "150 ₴", commission: "6 ₴", icon: RefreshCcw, tone: "green" },
+  { date: "13 липня 2026", time: "21:45", service: "Чан", amount: "2 500 ₴", commission: "100 ₴", icon: Waves, tone: "green" },
+];
+
+const financePayments = [
+  { date: "10 липня 2026", period: "3 – 9 липня 2026", amount: "4 523 ₴" },
+  { date: "3 липня 2026", period: "26 червня – 2 липня 2026", amount: "4 185 ₴" },
+  { date: "26 червня 2026", period: "19 – 25 червня 2026", amount: "3 964 ₴" },
+  { date: "19 червня 2026", period: "12 – 18 червня 2026", amount: "3 842 ₴" },
+];
+
+function FinanceHeader({ navigate, title = "Взаєморозрахунки" }: { navigate: Navigate; title?: string }) {
+  return (
+    <PartnerHeader title={title} navigate={navigate} back="partner-dashboard" />
+  );
+}
+
+function FinanceTabs({ tab, onChange }: { tab: FinanceTab; onChange: (tab: FinanceTab) => void }) {
+  return (
+    <div className="gt-finance-tabs">
+      <button type="button" className={tab === "overview" ? "is-active" : ""} onClick={() => onChange("overview")}>Огляд</button>
+      <button type="button" className={tab === "operations" ? "is-active" : ""} onClick={() => onChange("operations")}>Операції</button>
+      <button type="button" className={tab === "payments" ? "is-active" : ""} onClick={() => onChange("payments")}>Виплати</button>
+    </div>
+  );
+}
+
+function FinanceDateButton({ withFilter = false }: { withFilter?: boolean }) {
+  return (
+    <div className={`gt-finance-date-row ${withFilter ? "has-filter" : ""}`}>
+      <button type="button" className="gt-finance-date-button">
+        <CalendarDays size={17} />
+        <span>10 – 17 липня 2026</span>
+        <ChevronRight size={15} />
+      </button>
+      {withFilter ? (
+        <button type="button" className="gt-finance-filter-button"><SlidersHorizontal size={16} /> Фільтри</button>
+      ) : null}
+    </div>
+  );
+}
+
+function FinanceSparkline({ red = false }: { red?: boolean }) {
+  return (
+    <svg className={`gt-finance-sparkline ${red ? "is-red" : ""}`} viewBox="0 0 150 70" role="img" aria-label="Динаміка обороту">
+      <polyline points="6,56 27,47 47,22 67,43 89,24 111,34 142,7" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+      {[ [6,56], [27,47], [47,22], [67,43], [89,24], [111,34], [142,7] ].map(([cx,cy]) => (
+        <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="4" fill="white" stroke="currentColor" strokeWidth="3" />
+      ))}
+    </svg>
+  );
+}
+
+function FinanceMetricCard({ label, value, note, danger = false }: { label: string; value: string; note?: string; danger?: boolean }) {
+  return (
+    <div className={`gt-finance-metric-card ${danger ? "is-danger" : ""}`}>
+      <small>{label}</small>
+      <strong>{value}</strong>
+      {note ? <span>{note}</span> : null}
+    </div>
+  );
+}
+
+function FinanceOverview() {
+  return (
+    <>
+      <FinanceDateButton />
+      <section className="gt-finance-turnover-card">
+        <div>
+          <small>Загальний оборот (через додаток)</small>
+          <strong>124 560 ₴</strong>
+          <span>↑ 18% до попереднього тижня</span>
+        </div>
+        <FinanceSparkline />
+      </section>
+
+      <div className="gt-finance-metrics-grid gt-finance-metrics-grid--three">
+        <FinanceMetricCard label="Кількість операцій" value="146" />
+        <FinanceMetricCard label="Нарахована комісія" value="4 982 ₴" note="4% від обороту" />
+        <FinanceMetricCard label="Сплачено комісії" value="0 ₴" note="0% від нарахованої" />
+      </div>
+
+      <section className="gt-finance-period-card">
+        <h3>Комісія за період</h3>
+        <div><span>Загальна комісія</span><b>4 982 ₴</b></div>
+        <div><span>Сплачено</span><b>0 ₴</b></div>
+        <div className="is-due"><span>До сплати</span><b>4 982 ₴</b></div>
+      </section>
+
+      <section className="gt-finance-chart-card">
+        <h3>Динаміка обороту та комісії</h3>
+        <div className="gt-finance-chart-legend"><span><i className="is-turnover" />Оборот</span><span><i className="is-commission" />Комісія (4%)</span></div>
+        <svg viewBox="0 0 330 150" role="img" aria-label="Графік обороту та комісії">
+          <g className="grid">
+            <line x1="22" y1="20" x2="322" y2="20"/><line x1="22" y1="60" x2="322" y2="60"/><line x1="22" y1="100" x2="322" y2="100"/><line x1="22" y1="136" x2="322" y2="136"/>
+          </g>
+          <polyline className="turnover" points="28,105 74,94 120,67 166,82 212,55 258,62 314,28" />
+          <polyline className="commission" points="28,126 74,122 120,116 166,119 212,109 258,108 314,99" />
+          {[28,74,120,166,212,258,314].map((cx, idx) => <circle key={`g-${cx}`} className="turnover-dot" cx={cx} cy={[105,94,67,82,55,62,28][idx]} r="4" />)}
+          {[28,74,120,166,212,258,314].map((cx, idx) => <circle key={`b-${cx}`} className="commission-dot" cx={cx} cy={[126,122,116,119,109,108,99][idx]} r="4" />)}
+        </svg>
+        <div className="gt-finance-chart-days"><span>10 лип</span><span>11 лип</span><span>12 лип</span><span>13 лип</span><span>14 лип</span><span>15 лип</span><span>17 лип</span></div>
+      </section>
+
+      <div className="gt-finance-info-note"><Info size={18} /><p>Комісія нараховується автоматично за кожну підтверджену операцію через додаток.</p></div>
+    </>
+  );
+}
+
+function FinanceOperations() {
+  const [showAll, setShowAll] = useState(false);
+  const visible = showAll ? financeOperations : financeOperations.slice(0, 7);
+
+  return (
+    <>
+      <FinanceDateButton withFilter />
+      <div className="gt-finance-metrics-grid gt-finance-metrics-grid--three gt-finance-operation-metrics">
+        <FinanceMetricCard label="Кількість операцій" value="146" />
+        <FinanceMetricCard label="Оборот" value="124 560 ₴" />
+        <FinanceMetricCard label="Комісія (4%)" value="4 982 ₴" />
+      </div>
+
+      <section className="gt-finance-history">
+        <h3>Історія операцій</h3>
+        <div className="gt-finance-history-head"><span>Дата і час</span><span>Послуга</span><span>Сума операції</span><span>Комісія (4%)</span></div>
+        {visible.map(({ date, time, service, amount, commission, icon: Icon, tone }) => (
+          <div className="gt-finance-operation-row" key={`${date}-${time}-${service}`}>
+            <span className="date"><small>{date}</small><b>{time}</b></span>
+            <span className="service"><i className={`tone-${tone}`}><Icon size={17} /></i><b>{service}</b></span>
+            <strong>{amount}</strong>
+            <strong>{commission}</strong>
+          </div>
+        ))}
+        <button type="button" className="gt-finance-show-more" onClick={() => setShowAll((prev) => !prev)}>{showAll ? "Сховати" : "Показати ще"} <ChevronRight size={15} /></button>
+      </section>
+    </>
+  );
+}
+
+function FinancePayments({ onConfirm }: { onConfirm: () => void }) {
+  return (
+    <>
+      <FinanceDateButton />
+      <section className="gt-finance-due-card">
+        <div>
+          <small>До сплати комісії</small>
+          <strong>4 982 ₴</strong>
+          <span>за період 10 – 17 липня 2026</span>
+          <button type="button" onClick={onConfirm}>Підтвердити оплату</button>
+        </div>
+        <span className="gt-finance-wallet-icon"><WalletCards size={43} /></span>
+      </section>
+
+      <section className="gt-finance-payment-history">
+        <h3>Історія виплат</h3>
+        {financePayments.map(({ date, period, amount }) => (
+          <button type="button" key={`${date}-${amount}`}>
+            <span><small>{date}</small><b>Комісія за {period}</b><em>Платіжна картка **** 4242</em></span>
+            <strong>{amount}<small>Сплачено</small></strong>
+            <ChevronRight size={18} />
+          </button>
+        ))}
+      </section>
+
+      <div className="gt-finance-info-note"><Info size={18} /><p>Комісія виплачується на вашу картку автоматично щотижня після підтвердження оплати.</p></div>
+    </>
+  );
+}
+
+function FinanceConfirmPayment({ onBack }: { onBack: () => void }) {
+  const [receiptName, setReceiptName] = useState("");
+  const [sent, setSent] = useState(false);
+
+  return (
+    <div className="gt-partner-mobile-screen gt-finance-confirm-screen">
+      <header className="gt-finance-confirm-header">
+        <button type="button" onClick={onBack}><ArrowLeft size={22} /></button>
+        <strong>Підтвердити оплату</strong>
+        <span />
+      </header>
+      <main className="gt-finance-confirm-content">
+        <section className="gt-finance-confirm-summary">
+          <div><small>Сума до сплати</small><strong>4 982 ₴</strong><span>за період 10 – 17 липня 2026</span></div>
+          <i><WalletCards size={42} /></i>
+        </section>
+
+        <section className="gt-finance-confirm-section">
+          <h3>Деталі платежу</h3>
+          <div className="gt-finance-payment-detail"><span><small>Комісія за період</small><b>10 – 17 липня 2026</b></span><strong>4 982 ₴</strong></div>
+          <div className="gt-finance-payment-detail"><span><small>Картка для оплати</small><b>**** 4242</b></span></div>
+          <div className="gt-finance-payment-detail"><span><small>Отримувач</small><b>Gid Tourist</b></span></div>
+          <div className="gt-finance-payment-detail"><span><small>IBAN</small><b>UA12 3456 7890 1234 5678 9101 112</b></span></div>
+          <div className="gt-finance-payment-detail"><span><small>Призначення платежу</small><b>Комісія за 10 – 17 липня 2026</b></span></div>
+        </section>
+
+        <section className="gt-finance-confirm-section">
+          <h3>Сума платежу</h3>
+          <div className="gt-finance-amount-input"><strong>4 982</strong><span>₴</span></div>
+        </section>
+
+        <section className="gt-finance-confirm-section">
+          <h3>Квитанція про оплату</h3>
+          <label className="gt-finance-upload-box">
+            <input type="file" accept="image/png,image/jpeg,application/pdf" onChange={(event) => setReceiptName(event.target.files?.[0]?.name ?? "")} />
+            <ImagePlus size={27} />
+            <span><b>{receiptName || "Додайте файл або фото квитанції"}</b><small>{receiptName ? "Файл додано" : "PDF, JPG, PNG до 10 МБ"}</small></span>
+          </label>
+        </section>
+
+        <div className="gt-finance-confirm-warning"><Info size={18} /><p>Після відправлення оплати вона буде перевірена. Статус оновиться в історії виплат.</p></div>
+        <button type="button" className="gt-finance-confirm-submit" onClick={() => setSent(true)}>{sent ? "Відправлено на перевірку" : "Відправити на підтвердження"}</button>
+      </main>
+    </div>
+  );
+}
+
+function PartnerFinanceScreen({ navigate }: { navigate: Navigate }) {
+  const [tab, setTab] = useState<FinanceTab>("overview");
+  const [confirming, setConfirming] = useState(false);
+
+  if (confirming) return <FinanceConfirmPayment onBack={() => setConfirming(false)} />;
+
+  return (
+    <div className="gt-partner-mobile-screen has-bottom-nav gt-finance-screen">
+      <FinanceHeader navigate={navigate} />
+      <main className="gt-partner-mobile-content gt-partner-form-page gt-finance-content">
+        <FinanceTabs tab={tab} onChange={setTab} />
+        {tab === "overview" ? <FinanceOverview /> : null}
+        {tab === "operations" ? <FinanceOperations /> : null}
+        {tab === "payments" ? <FinancePayments onConfirm={() => setConfirming(true)} /> : null}
+      </main>
+      <PartnerBottomNav active="settlements" activated navigate={navigate} />
+    </div>
+  );
+}
+
 function PlaceholderScreen({
   navigate,
   title,
@@ -2393,15 +2649,7 @@ export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate
     case "scanner":
       return <ScannerScreen navigate={navigate} />;
     case "partner-finance":
-      return (
-        <PlaceholderScreen
-          navigate={navigate}
-          title="Взаєморозрахунки"
-          icon={WalletCards}
-          active="settlements"
-          description="Тут буде логіка взаєморозрахунків у кабінеті монетизованого партнера."
-        />
-      );
+      return <PartnerFinanceScreen navigate={navigate} />;
     case "place-editor":
       return <PartnerProfileScreen navigate={navigate} />;
     default:
