@@ -17905,3 +17905,30 @@ button.gt-service-card {
     margin-top: 7px;
   }
 }
+
+/* Exact hot-offer side spacing + detail header removal */
+.gt-hot-offers-screen {
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+}
+
+.gt-hot-offers-list {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.gt-hot-offer-row {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.gt-hot-offer-detail-screen {
+  padding-top: 10px;
+}
+
+@media (max-width: 390px) {
+  .gt-hot-offers-screen {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+}

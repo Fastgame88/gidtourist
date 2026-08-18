@@ -528,11 +528,6 @@ function HotOfferDetailScreen({ navigate }: { navigate: Navigate }) {
 
   return (
     <div className="tourist-screen gt-screen gt-hot-offer-detail-screen">
-      <header className="gt-hot-offer-detail-topbar">
-        <button type="button" onClick={() => navigate("tourist", "hot-offers")}><ArrowLeft size={23} /><span>Назад</span></button>
-        <button type="button" aria-label="Поділитися"><Share2 size={20} /></button>
-      </header>
-
       <section className="gt-hot-offer-detail-hero">
         <Thumb name={offer.photo} className="gt-hot-offer-detail-hero__photo" />
         <div className="gt-hot-offer-detail-hero__shade" />
