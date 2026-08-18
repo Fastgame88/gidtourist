@@ -2202,9 +2202,7 @@ function ScannerScreen({ navigate }: { navigate: Navigate }) {
       }
     };
 
-    if (typeof navigator !== "undefined" && navigator.mediaDevices?.getUserMedia) {
-      void startCamera();
-    }
+    void startCamera();
 
     return () => {
       cancelled = true;
