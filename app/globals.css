@@ -17212,3 +17212,110 @@ button.gt-service-card {
     min-height: 70px;
   }
 }
+
+/* Hot offer card redesign */
+.gt-home-screen .gt-category-card--featured {
+  grid-template-columns: 62px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 10px;
+  color: #1e2822 !important;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(28, 50, 36, 0.055);
+}
+
+.gt-home-screen .gt-hot-offer-visual {
+  position: relative;
+  display: block;
+  width: 62px;
+  height: 50px;
+}
+
+.gt-home-screen .gt-hot-offer-visual__main {
+  width: 50px;
+  height: 50px;
+  border-radius: 15px;
+  box-shadow: 0 6px 16px rgba(10, 34, 22, 0.14);
+}
+
+.gt-home-screen .gt-hot-offer-visual__mini {
+  position: absolute;
+  bottom: -3px;
+  width: 21px;
+  height: 21px;
+  border: 2px solid #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(10, 34, 22, 0.12);
+}
+
+.gt-home-screen .gt-hot-offer-visual__mini--left {
+  right: -1px;
+}
+
+.gt-home-screen .gt-hot-offer-visual__mini--right {
+  left: 31px;
+  top: -3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 7px;
+}
+
+.gt-home-screen .gt-hot-offer-visual__badge {
+  position: absolute;
+  left: -4px;
+  top: -4px;
+  display: grid;
+  width: 21px;
+  height: 21px;
+  place-items: center;
+  border-radius: 999px;
+  background: linear-gradient(145deg, #ff8f1f, #ff5414);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(255, 92, 22, 0.28);
+}
+
+.gt-home-screen .gt-category-card--featured .gt-category-card__icon {
+  display: none;
+}
+
+.gt-home-screen .gt-hot-offer-copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.gt-home-screen .gt-category-card--featured strong {
+  color: #17211b;
+  font-size: 13px;
+  line-height: 1.12;
+}
+
+.gt-home-screen .gt-category-card--featured small {
+  color: #6f7a73;
+  font-size: 10px;
+  line-height: 1.18;
+}
+
+.gt-home-screen .gt-category-card--featured > svg:last-child {
+  color: #7d8781;
+}
+
+@media (max-width: 390px) {
+  .gt-home-screen .gt-category-card--featured {
+    grid-template-columns: 58px minmax(0, 1fr) 16px;
+    gap: 8px;
+  }
+
+  .gt-home-screen .gt-hot-offer-visual {
+    width: 58px;
+    height: 46px;
+  }
+
+  .gt-home-screen .gt-hot-offer-visual__main {
+    width: 46px;
+    height: 46px;
+  }
+
+  .gt-home-screen .gt-hot-offer-visual__mini--right {
+    left: 29px;
+  }
+}

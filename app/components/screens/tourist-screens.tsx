@@ -382,10 +382,15 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
           className="gt-category-card gt-category-card--featured"
           onClick={() => navigate("tourist", "place")}
         >
-          <span className="gt-category-card__icon"><FlameKindling size={24} /></span>
-          <span>
+          <span className="gt-hot-offer-visual" aria-hidden="true">
+            <Thumb name="pool" className="gt-hot-offer-visual__main" />
+            <Thumb name="restaurant" className="gt-hot-offer-visual__mini gt-hot-offer-visual__mini--left" />
+            <Thumb name="store" className="gt-hot-offer-visual__mini gt-hot-offer-visual__mini--right" />
+            <i className="gt-hot-offer-visual__badge"><FlameKindling size={13} /></i>
+          </span>
+          <span className="gt-hot-offer-copy">
             <strong>Гаряча пропозиція</strong>
-            <small>Перевірені місця від місцевих</small>
+            <small>Актуальні знижки від партнерів</small>
           </span>
           <ChevronRight size={20} />
         </button>
