@@ -17799,3 +17799,73 @@ button.gt-service-card {
   .gt-hot-offer-row__badge { right:29px; }
   .gt-hot-offer-detail-hero { height:245px; }
 }
+
+/* Hot offers spacing refinement */
+.gt-hot-offers-screen {
+  padding-top: 10px;
+}
+
+.gt-hot-offer-detail-screen {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.gt-hot-offer-detail-hero {
+  height: 228px;
+}
+
+.gt-hot-offer-detail-content {
+  gap: 9px;
+  padding-top: 10px;
+}
+
+.gt-hot-offer-detail-status,
+.gt-hot-offer-detail-card,
+.gt-hot-offer-detail-actions {
+  margin-left: 2px;
+  margin-right: 2px;
+}
+
+.gt-hot-offer-detail-status > span {
+  min-height: 58px;
+  padding: 9px 10px;
+}
+
+.gt-hot-offer-detail-card {
+  padding: 12px;
+}
+
+.gt-hot-offer-detail-tags {
+  margin-top: 8px;
+}
+
+.gt-hot-offer-detail-actions {
+  gap: 7px;
+}
+
+.gt-hot-offer-detail-actions button {
+  min-height: 44px;
+  border-radius: 13px;
+}
+
+@media (max-width:390px) {
+  .gt-hot-offers-screen {
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 8px;
+  }
+
+  .gt-hot-offer-detail-screen {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .gt-hot-offer-detail-hero {
+    height: 208px;
+  }
+
+  .gt-hot-offer-detail-content {
+    gap: 8px;
+    padding-top: 9px;
+  }
+}

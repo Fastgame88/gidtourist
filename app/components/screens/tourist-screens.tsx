@@ -489,14 +489,6 @@ function readSelectedHotOffer() {
 function HotOffersScreen({ navigate }: { navigate: Navigate }) {
   return (
     <div className="tourist-screen gt-screen gt-hot-offers-screen">
-      <header className="gt-hot-offers-topbar">
-        <button type="button" onClick={() => navigate("tourist", "home")} aria-label="Назад">
-          <ArrowLeft size={23} />
-          <span>Назад</span>
-        </button>
-        <button type="button" aria-label="Меню"><MoreVertical size={22} /></button>
-      </header>
-
       <section className="gt-hot-offers-hero">
         <Thumb name="restaurant" className="gt-hot-offers-hero__photo" />
         <div className="gt-hot-offers-hero__shade" />
