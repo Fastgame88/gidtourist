@@ -45,6 +45,12 @@ import {
   UserRound,
   UsersRound,
   WalletCards,
+  UtensilsCrossed,
+  Waves,
+  Camera,
+  ShoppingBag,
+  Send,
+  Star,
 } from "lucide-react";
 import type { RoleKey } from "../../lib/navigation";
 
@@ -254,6 +260,17 @@ function Pagination({ label }: { label: string }) {
   );
 }
 
+function PartnerListIcon({ name }: { name: string }) {
+  const Icon = name.includes("Колиба") ? UtensilsCrossed
+    : name.includes("Чан") ? Waves
+    : name.includes("Jeep") || name.includes("Таксі") ? BriefcaseBusiness
+    : name.includes("Рафтинг") ? Waves
+    : name.includes("Фотограф") ? Camera
+    : name.includes("сувеніри") ? ShoppingBag
+    : Info;
+  return <span className="ad-partner-list-icon"><Icon size={22} /></span>;
+}
+
 const partnerRows = [
   ["🍴", "Колиба “Біля річки”", "Ресторан", "Де поїсти", "Яремче", "Преміум", "Активний"],
   ["♨", "Чан Карпати", "Чани", "Де відпочити", "Микуличин", "Преміум", "Активний"],
@@ -267,7 +284,7 @@ const partnerRows = [
 
 function PartnersScreen({ navigate }: AdminProps) {
   return (
-    <AdminShell active="partners" navigate={navigate}>
+    <AdminShell active="partners" navigate={navigate} contentClassName="ad-main--partners">
       <AdminPageHeader
         title="Партнери"
         action={<PrimaryButton onClick={() => navigate("admin", "admin-partner-create")}><Plus size={18} /> Новий партнер</PrimaryButton>}
@@ -279,7 +296,7 @@ function PartnersScreen({ navigate }: AdminProps) {
       ]}>
         {partnerRows.map((row) => (
           <TableRow key={row[1]} columns={["1.8fr", "1fr", ".9fr", "1.05fr", ".8fr", ".7fr"]}>
-            <div className="ad-entity-cell"><span>{row[0]}</span><div><strong>{row[1]}</strong><small>{row[2]}</small></div></div>
+            <div className="ad-entity-cell"><PartnerListIcon name={row[1]} /><div><strong>{row[1]}</strong><small>{row[2]}</small></div></div>
             <span>{row[3]}</span><span>{row[4]}</span><Status>{row[5]}</Status>
             <Status tone={row[6] === "Чернетка" ? "gray" : "green"}>{row[6]}</Status>
             <div className="ad-row-actions"><button onClick={() => navigate("admin", "admin-partner-details")}><Eye size={17} /></button><button onClick={() => navigate("admin", "admin-partner-details")}><Edit3 size={17} /></button><button><MoreVertical size={17} /></button></div>
@@ -391,7 +408,7 @@ function PartnerCreateScreen({ navigate }: AdminProps) {
           ["9", "Фото", <button key="photo" className="ad-upload-box"><ImagePlus size={23}/><span><strong>Завантажте 3 фото партнера</strong><small>Рівно 3 фото — обов'язково</small></span></button>],
           ["10", "Telegram ID", <input key="tg" placeholder="Введіть Telegram ID (числовий ідентифікатор)" />],
           ["11", "Структура кабінету партнера", <div key="modules" className="ad-module-grid"><div className="ad-module-preview"><strong>Каркас</strong><small>Базова структура кабінету партнера</small><span>7 модулів увімкнено</span></div>{["Час заїзду / виїзду","Рецепція","Wi‑Fi","Парковка","Правила проживання","Сніданок","Оперативні контакти","Інше"].map((m)=><label key={m}><i><Check size={13}/></i>{m}</label>)}</div>],
-        ].map(([num, label, control]) => <div className="ad-create-row" key={num as string}><div className="ad-create-row__label"><span>{num as string}</span><strong>{label as string}</strong></div><div className="ad-create-row__control">{control as ReactNode}</div></div>)}
+        ].map(([num, label, control]) => <div className={`ad-create-row ad-create-row--${num as string}`} key={num as string}><div className="ad-create-row__label"><span>{num as string}</span><strong>{label as string}</strong></div><div className="ad-create-row__control">{control as ReactNode}</div></div>)}
       </section>
     </AdminShell>
   );
@@ -399,9 +416,24 @@ function PartnerCreateScreen({ navigate }: AdminProps) {
 
 function ClientHeader({ navigate }: AdminProps) {
   return (
-    <div className="ad-detail-header">
-      <div className="ad-detail-person"><span>ІК</span><div><h1>Ірина Коваль</h1><small>ID клієнта: 00187 · Зареєстровано: 03.02.2024 · Оновлено: 20.05.2024</small></div><Status>Активний</Status></div>
+    <div className="ad-detail-header ad-client-detail-header">
+      <div className="ad-detail-person">
+        <span className="ad-client-header-avatar"><UserRound size={25} /></span>
+        <div>
+          <div className="ad-detail-title-line"><h1>Ірина Коваль</h1><Status>Активний</Status></div>
+          <small>ID клієнта: 00187 · Зареєстровано: 03.02.2024 · Оновлено: 20.05.2024</small>
+        </div>
+      </div>
       <div className="ad-page-actions"><OutlineButton><Edit3 size={16}/> Редагувати</OutlineButton><OutlineButton><ShieldCheck size={16}/> Заблокувати</OutlineButton><PrimaryButton onClick={() => navigate("admin", "admin-client-history")}>Інші дії <ChevronDown size={15}/></PrimaryButton></div>
+    </div>
+  );
+}
+
+function ClientInfoItem({ icon, label, children, className = "" }: { icon: ReactNode; label: string; children: ReactNode; className?: string }) {
+  return (
+    <div className={`ad-client-info-item ${className}`.trim()}>
+      <span className="ad-client-info-item__icon">{icon}</span>
+      <div><small>{label}</small>{children}</div>
     </div>
   );
 }
@@ -412,10 +444,21 @@ function ClientDetailsScreen({ navigate }: AdminProps) {
       <ClientHeader navigate={navigate}/>
       <section className="ad-detail-card ad-client-detail-card">
         <div className="ad-detail-card__title"><h2>Дані клієнта</h2><Status>Після погодження даних ви зможете редагувати клієнта</Status></div>
-        <div className="ad-client-info-grid">
-          <div><small>Тип клієнта</small><strong>Активний користувач</strong></div><div><small>Статус</small><strong>Підтверджений</strong></div><div className="is-wide"><small>Короткий профіль</small><strong>Любить сімейний відпочинок у Карпатах, активні маршрути та локальну кухню.</strong></div>
-          <div><small>Телефон</small><strong>+380 (98) 555-12-34</strong></div><div><small>Telegram ID</small><strong>@iryna_koval</strong></div><div className="is-wide"><small>Інтереси</small><span className="ad-tags"><i>Сімейний відпочинок</i><i>Релакс</i><i>Локальна кухня</i><i>Екскурсії</i></span></div>
-          <div><small>Місто / локація</small><strong>Івано-Франківськ</strong></div><div><small>Остання активність</small><strong>Сканування QR · 18.05.2024</strong></div>
+        <div className="ad-client-reference-grid">
+          <div className="ad-client-reference-col">
+            <ClientInfoItem icon={<UserRound size={17}/>} label="Тип клієнта"><strong>Активний користувач</strong></ClientInfoItem>
+            <ClientInfoItem icon={<Phone size={17}/>} label="Телефон"><strong>+380 (98) 555-12-34</strong></ClientInfoItem>
+            <ClientInfoItem icon={<MapPin size={17}/>} label="Місто / локація"><strong>Івано-Франківськ</strong></ClientInfoItem>
+            <ClientInfoItem icon={<Clock3 size={17}/>} label="Остання активність"><strong>Сканування QR · 18.05.2024</strong></ClientInfoItem>
+          </div>
+          <div className="ad-client-reference-col">
+            <ClientInfoItem icon={<ShieldCheck size={17}/>} label="Статус"><strong>Підтверджений</strong></ClientInfoItem>
+            <ClientInfoItem icon={<Send size={17}/>} label="Telegram ID"><strong>@iryna_koval</strong></ClientInfoItem>
+          </div>
+          <div className="ad-client-reference-col ad-client-reference-col--wide">
+            <ClientInfoItem icon={<FileText size={17}/>} label="Короткий профіль"><strong>Любить сімейний відпочинок у Карпатах, активні маршрути та локальну кухню.<br/>Часто користується рекомендаціями сервісу.</strong></ClientInfoItem>
+            <ClientInfoItem icon={<Star size={17}/>} label="Інтереси"><span className="ad-tags"><i>Сімейний відпочинок</i><i>Релакс</i><i>Локальна кухня</i><i>Екскурсії</i></span></ClientInfoItem>
+          </div>
         </div>
       </section>
       <section className="ad-detail-card"><div className="ad-section-title"><h2>Бонуси</h2><Info size={16}/></div><div className="ad-summary-grid ad-summary-grid--four"><SummaryCard label="Поточний бонусний баланс" value="1 280 балів" note="Доступно для використання"/><SummaryCard label="Нараховано" value="3 640 балів" note="За весь період" tone="neutral"/><SummaryCard label="Використано" value="2 360 балів" note="За весь період" tone="neutral"/><SummaryCard label="Запрошені друзі" value="7" note="Успішні реєстрації" tone="neutral"/></div></section>
@@ -441,19 +484,63 @@ function ClientHistoryScreen({ navigate }: AdminProps) {
 }
 
 function PartnerDetailHeader({ navigate }: AdminProps) {
-  return <div className="ad-detail-header"><div className="ad-detail-person"><span>🍴</span><div><h1>Ресторан «Гуцульщина»</h1><small>ID партнера: 00057 · Створено: 15.03.2024 · Оновлено: 20.05.2024</small></div><Status>Активний</Status></div><div className="ad-page-actions"><OutlineButton><Edit3 size={16}/> Редагувати</OutlineButton><OutlineButton>Призупинити</OutlineButton><PrimaryButton onClick={() => navigate("admin", "admin-partner-history")}>Інші дії <ChevronDown size={15}/></PrimaryButton></div></div>;
+  return (
+    <div className="ad-detail-header ad-partner-detail-header">
+      <div className="ad-detail-person">
+        <span className="ad-partner-header-icon"><UtensilsCrossed size={24}/></span>
+        <div>
+          <div className="ad-detail-title-line"><h1>Ресторан «Гуцульщина»</h1><Status>Активний</Status></div>
+          <small>ID партнера: 00057 · Створено: 15.03.2024 · Оновлено: 20.05.2024</small>
+        </div>
+      </div>
+      <div className="ad-page-actions"><OutlineButton><Edit3 size={16}/> Редагувати</OutlineButton><OutlineButton>Призупинити</OutlineButton><PrimaryButton onClick={() => navigate("admin", "admin-partner-history")}>Інші дії <ChevronDown size={15}/></PrimaryButton></div>
+    </div>
+  );
+}
+
+function PartnerInfoItem({ icon, label, children, className = "" }: { icon: ReactNode; label: string; children: ReactNode; className?: string }) {
+  return (
+    <div className={`ad-partner-info-item ${className}`.trim()}>
+      <span className="ad-partner-info-item__icon">{icon}</span>
+      <div><small>{label}</small>{children}</div>
+    </div>
+  );
 }
 
 function PartnerDetailsScreen({ navigate }: AdminProps) {
   return (
     <AdminShell active="partners" navigate={navigate} contentClassName="ad-main--partner-detail">
       <PartnerDetailHeader navigate={navigate}/>
-      <section className="ad-detail-card"><div className="ad-detail-card__title"><h2>Дані партнера</h2><Status>Після погодження даних ви зможете редагувати партнера</Status></div><div className="ad-partner-info-grid">
-        <div><small>Категорія</small><strong>Харчування</strong></div><div><small>Графік роботи</small><strong>Щоденно 11:00 – 22:00</strong></div><div><small>Telegram ID</small><strong>@Hutsulshchyna_rest</strong></div>
-        <div><small>Тип розміщення</small><strong>Преміум партнер 🏅 (монетизований)</strong></div><div className="is-wide"><small>Короткий опис</small><strong>Ресторан гуцульської кухні з автентичними стравами, затишною атмосферою та видом на Карпати.</strong></div><div className="is-wide"><small>Структура кабінету партнера</small><span className="ad-tags">{["Меню","Резерв столика","Графік роботи","Контакти","Галерея","Акції та новини","Відгуки","Wi‑Fi","Парковка","Локація"].map(t=><i key={t}>✓ {t}</i>)}</span></div>
-        <div><small>Ставка, %</small><strong>12%</strong></div><div><small>Фото</small><div className="ad-photo-strip"><span>🏠</span><span>🍽</span><span>🥘</span><span>+3</span></div></div>
-        <div><small>Адреса / геолокація</small><strong>м. Яремче, вул. Свободи, 247</strong></div><div><small>Телефон</small><strong>+380 (98) 765-43-21</strong></div>
-      </div></section>
+      <section className="ad-detail-card ad-partner-reference-card">
+        <div className="ad-detail-card__title"><h2>Дані партнера</h2><Status>Після погодження даних ви зможете редагувати партнера</Status></div>
+        <div className="ad-partner-reference-grid">
+          <div className="ad-partner-reference-col">
+            <PartnerInfoItem icon={<Store size={17}/>} label="Категорія"><strong>Харчування</strong></PartnerInfoItem>
+            <PartnerInfoItem icon={<Building2 size={17}/>} label="Тип розміщення"><strong>Преміум партнер 🏅 (монетизований)</strong></PartnerInfoItem>
+            <PartnerInfoItem icon={<Percent size={17}/>} label="Ставка, %"><strong>12%</strong></PartnerInfoItem>
+            <PartnerInfoItem icon={<MapPin size={17}/>} label="Адреса / геолокація"><strong>м. Яремче, вул. Свободи, 247</strong></PartnerInfoItem>
+            <PartnerInfoItem icon={<Phone size={17}/>} label="Телефон"><strong>+380 (98) 765-43-21</strong></PartnerInfoItem>
+          </div>
+          <div className="ad-partner-reference-col">
+            <PartnerInfoItem icon={<Clock3 size={17}/>} label="Графік роботи"><strong>Щоденно 11:00 – 22:00</strong></PartnerInfoItem>
+            <PartnerInfoItem icon={<FileText size={17}/>} label="Короткий опис"><strong>Ресторан гуцульської кухні з автентичними стравами, затишною атмосферою та видом на Карпати. Ідеальне місце для сімейного відпочинку та святкувань.</strong></PartnerInfoItem>
+            <PartnerInfoItem icon={<Camera size={17}/>} label="Фото">
+              <div className="ad-photo-strip ad-photo-strip--images">
+                <img src="/images/mountain-hotel.webp" alt="Фото партнера 1" />
+                <img src="/images/rest-excursion.webp" alt="Фото партнера 2" />
+                <img src="/images/rest-massage.webp" alt="Фото партнера 3" />
+                <span>+3</span>
+              </div>
+            </PartnerInfoItem>
+          </div>
+          <div className="ad-partner-reference-col ad-partner-reference-col--wide">
+            <PartnerInfoItem icon={<Send size={17}/>} label="Telegram ID"><strong>@Hutsulshchyna_rest</strong></PartnerInfoItem>
+            <PartnerInfoItem icon={<BriefcaseBusiness size={17}/>} label="Структура кабінету партнера">
+              <span className="ad-tags">{["Меню","Резерв столика","Графік роботи","Контакти","Галерея","Акції та новини","Відгуки","Wi‑Fi","Парковка","Локація"].map(t=><i key={t}>✓ {t}</i>)}</span>
+            </PartnerInfoItem>
+          </div>
+        </div>
+      </section>
       <section className="ad-detail-card"><div className="ad-section-title"><h2>Взаєморозрахунки</h2><Info size={16}/></div><div className="ad-settlement-equation"><SummaryCard label="Загальна сума продажів через додаток" value="247 360 ₴" note="За весь період"/><span>−</span><SummaryCard label="Нараховано комісії (платформою)" value="29 683 ₴" note="Комісія 12%" tone="neutral"/><span>−</span><SummaryCard label="Списано балів у партнера (клієнтами)" value="18 450 ₴" note="За весь період" tone="neutral"/><span>=</span><SummaryCard label="До сплати платформі" value="−59 087 ₴" note="Кредитний баланс" tone="green"/></div><button type="button" className="ad-link-button" onClick={() => navigate("admin", "admin-partner-history")}>Перейти до взаєморозрахунків →</button></section>
       <section className="ad-detail-card"><div className="ad-section-title"><h2>Статистика</h2><DateRange/></div><div className="ad-mini-stats">{[["Перегляди","4 125"],["QR-сканування","1 872"],["Бронювання столів","326"],["Кількість клієнтів","589"],["Відгуки","72"],["Продажі / операції","247 360 ₴"]].map(([l,v])=><div key={l}><small>{l}</small><strong>{v}</strong><span>↗ 13%</span><div className="ad-spark"/></div>)}</div></section>
     </AdminShell>
@@ -511,7 +598,7 @@ function Donut({ center, colors = "green" }: { center: string; colors?: string }
 }
 
 function StatisticsOverview({ navigate }: AdminProps) {
-  return <AdminShell active="statistics" navigate={navigate} contentClassName="ad-main--statistics"><StatTop slug="admin-statistics" navigate={navigate} title="Статистика"/><div className="ad-summary-grid ad-summary-grid--four"><SummaryCard label="Загальний оборот" value="1 245 820 грн" note="+12.5% порівняно з 01.04.2024 – 30.04.2024"/><SummaryCard label="Кількість клієнтів" value="8 732" note="+8.2% порівняно з попереднім періодом" tone="violet"/><SummaryCard label="Нараховано бонусів" value="124 582 грн" note="+9.7% порівняно з попереднім періодом" tone="orange"/><SummaryCard label="Кількість партнерів" value="186" note="+6 нових партнерів" tone="blue"/></div><FilterStrip type="stats"/><div className="ad-stats-dashboard"><section className="ad-chart-card ad-chart-card--wide"><div className="ad-section-title"><h2>Оборот за період</h2><SelectBox value="По днях"/></div><LineChart variant="mixed"/></section><section className="ad-chart-card"><h2>Оборот за категоріями</h2><div className="ad-donut-layout"><Donut center="1 245 820 грн" colors="multi"/><ul>{["Де купити 32%","Де поїсти 24%","Де відпочити 18%","Розваги 12%","Трансфер 9%","Халепа? 5%"].map(x=><li key={x}>{x}</li>)}</ul></div></section><section className="ad-chart-card"><h2>Розподіл по локаціях</h2>{["Яремче 28%","Татарів 24%","Микуличин 18%","Ворохта 16%","Поляниця 9%","Інше 5%"].map((x,i)=><div className="ad-progress-line" key={x}><span>{x}</span><i><b style={{width:`${92-i*12}%`}}/></i></div>)}</section><section className="ad-chart-card"><h2>Топ партнерів за оборотом</h2><div className="ad-simple-table">{["Колиба “Біля річки”","Готель “Карпатські зорі”","Магазин “Гірські товари”","Парк розваг “Драйв”","Таксі Карпати"].map((x,i)=><div key={x}><span>{i+1}</span><strong>{x}</strong><span>{["98 450 грн","82 600 грн","75 320 грн","62 180 грн","55 310 грн"][i]}</span></div>)}</div></section><section className="ad-chart-card"><h2>Активність клієнтів</h2><div className="ad-summary-grid ad-summary-grid--four"><SummaryCard label="Нові клієнти" value="1 245"/><SummaryCard label="Активні клієнти" value="5 672"/><SummaryCard label="Повернулися" value="2 815"/><SummaryCard label="Здійснено покупок" value="18 732"/></div><div className="ad-simple-table">{["QR код","Партнер","Рекомендації","Соціальні мережі","Інше"].map((x,i)=><div key={x}><strong>{x}</strong><span>{["3 245","2 876","1 254","856","501"][i]}</span><span>{["468 250 грн","389 420 грн","182 310 грн","128 450 грн","77 390 грн"][i]}</span></div>)}</div></section><section className="ad-chart-card"><h2>Фінансова картина</h2>{[["Виставлено рахунків","128 450 грн"],["Оплачено","92 350 грн"],["Очікує оплату","28 100 грн"],["Прострочено","7 850 грн"],["Загальна заборгованість","35 950 грн"]].map(([l,v])=><div className="ad-key-value" key={l}><span>{l}</span><strong>{v}</strong></div>)}<h2>Бонусна програма</h2>{[["Нараховано бонусів","124 582 грн"],["Використано бонусів","68 420 грн"],["Кількість операцій","2 856"],["Середній чек з бонусами","132 грн"]].map(([l,v])=><div className="ad-key-value" key={l}><span>{l}</span><strong>{v}</strong></div>)}</section></div></AdminShell>;
+  return <AdminShell active="statistics" navigate={navigate} contentClassName="ad-main--statistics"><StatTop slug="admin-statistics" navigate={navigate} title="Статистика"/><div className="ad-summary-grid ad-summary-grid--four"><SummaryCard label="Загальний оборот" value="1 245 820 грн" note="+12.5% порівняно з 01.04.2024 – 30.04.2024"/><SummaryCard label="Кількість клієнтів" value="8 732" note="+8.2% порівняно з попереднім періодом" tone="violet"/><SummaryCard label="Нараховано бонусів" value="124 582 грн" note="+9.7% порівняно з попереднім періодом" tone="orange"/><SummaryCard label="Кількість партнерів" value="186" note="+6 нових партнерів" tone="blue"/></div><FilterStrip type="stats"/><div className="ad-stats-dashboard"><section className="ad-chart-card ad-chart-card--wide"><div className="ad-section-title"><h2>Оборот за період</h2><SelectBox value="По днях"/></div><LineChart variant="mixed"/></section><section className="ad-chart-card ad-category-turnover-card"><h2>Оборот за категоріями</h2><div className="ad-donut-layout"><Donut center="1 245 820 грн" colors="multi"/><ul>{["Де купити 32%","Де поїсти 24%","Де відпочити 18%","Розваги 12%","Трансфер 9%","Халепа? 5%"].map(x=><li key={x}>{x}</li>)}</ul></div></section><section className="ad-chart-card"><h2>Розподіл по локаціях</h2>{["Яремче 28%","Татарів 24%","Микуличин 18%","Ворохта 16%","Поляниця 9%","Інше 5%"].map((x,i)=><div className="ad-progress-line" key={x}><span>{x}</span><i><b style={{width:`${92-i*12}%`}}/></i></div>)}</section><section className="ad-chart-card"><h2>Топ партнерів за оборотом</h2><div className="ad-simple-table">{["Колиба “Біля річки”","Готель “Карпатські зорі”","Магазин “Гірські товари”","Парк розваг “Драйв”","Таксі Карпати"].map((x,i)=><div key={x}><span>{i+1}</span><strong>{x}</strong><span>{["98 450 грн","82 600 грн","75 320 грн","62 180 грн","55 310 грн"][i]}</span></div>)}</div></section><section className="ad-chart-card ad-client-activity-card"><h2>Активність клієнтів</h2><div className="ad-summary-grid ad-summary-grid--four"><SummaryCard label="Нові клієнти" value="1 245"/><SummaryCard label="Активні клієнти" value="5 672"/><SummaryCard label="Повернулися" value="2 815"/><SummaryCard label="Здійснено покупок" value="18 732"/></div><div className="ad-simple-table">{["QR код","Партнер","Рекомендації","Соціальні мережі","Інше"].map((x,i)=><div key={x}><strong>{x}</strong><span>{["3 245","2 876","1 254","856","501"][i]}</span><span>{["468 250 грн","389 420 грн","182 310 грн","128 450 грн","77 390 грн"][i]}</span></div>)}</div></section><section className="ad-chart-card"><h2>Фінансова картина</h2>{[["Виставлено рахунків","128 450 грн"],["Оплачено","92 350 грн"],["Очікує оплату","28 100 грн"],["Прострочено","7 850 грн"],["Загальна заборгованість","35 950 грн"]].map(([l,v])=><div className="ad-key-value" key={l}><span>{l}</span><strong>{v}</strong></div>)}<h2>Бонусна програма</h2>{[["Нараховано бонусів","124 582 грн"],["Використано бонусів","68 420 грн"],["Кількість операцій","2 856"],["Середній чек з бонусами","132 грн"]].map(([l,v])=><div className="ad-key-value" key={l}><span>{l}</span><strong>{v}</strong></div>)}</section></div></AdminShell>;
 }
 
 function StatsMetricGrid({ kind }: { kind: "partners" | "clients" | "bonuses" | "settlements" }) {
@@ -642,7 +729,7 @@ function GeneralSettingsScreen({ navigate }: AdminProps) {
           <SettingToggle label="Показувати підказки в інтерфейсі" />
           <SettingToggle label="Режим технічного обслуговування" on={false} />
         </SettingsPanel>
-        <SettingsPanel title="Зберігання даних">
+        <SettingsPanel title="Зберігання даних" className="ad-settings-panel--storage">
           <div className="ad-setting-fields-grid"><SettingField label="Термін зберігання логів" value="12 місяців"/><SettingField label="Термін зберігання архівних даних" value="24 місяці"/></div>
           <div className="ad-info-banner"><Info size={17}/> Після завершення терміну дані будуть автоматично архівовані або видалені.</div>
         </SettingsPanel>
@@ -690,10 +777,10 @@ function PartnerCommissionSettingsScreen({ navigate }: AdminProps) {
     <AdminShell active="settings" navigate={navigate} contentClassName="ad-main--settings">
       <SettingsTop title="Партнери та комісії" active="admin-settings-partners" navigate={navigate}/>
       <div className="ad-settings-layout ad-settings-layout--two">
-        <SettingsPanel title="Умови комісії (за замовчуванням)"><div className="ad-setting-fields-grid"><SettingField label="Тип комісії" value="Відсоток від суми замовлення"/><SettingField label="Розмір комісії" value="10 %"/></div><div className="ad-info-banner"><Info size={17}/> Індивідуальні умови комісії для партнерів можна налаштувати на сторінці партнера.</div></SettingsPanel>
+        <SettingsPanel title="Умови комісії (за замовчуванням)" className="ad-settings-panel--commission-default"><div className="ad-setting-fields-grid"><SettingField label="Тип комісії" value="Відсоток від суми замовлення"/><SettingField label="Розмір комісії" value="10 %"/></div><div className="ad-info-banner"><Info size={17}/> Індивідуальні умови комісії для партнерів можна налаштувати на сторінці партнера.</div></SettingsPanel>
         <SettingsPanel title="Додаткові налаштування"><SettingToggle label="Потрібне підтвердження партнера адміністратором"/><SettingToggle label="Автоматично призначати стандартну комісію"/><SettingToggle label="Дозволяти партнерам бачити свою комісію"/><SettingToggle label="Показувати партнерам борг у кабінеті"/></SettingsPanel>
         <SettingsPanel title="Статуси партнерів"><div className="ad-status-settings-list">{statuses.map(([name,desc,count,tone])=><div key={name}><span className={`ad-status-dot is-${tone}`}/><strong>{name}</strong><small>{desc}</small><b>{count}</b><button><Edit3 size={14}/></button></div>)}</div><OutlineButton><Plus size={15}/> Додати статус</OutlineButton></SettingsPanel>
-        <SettingsPanel title="Типи партнерів"><div className="ad-settings-table"><div className="ad-settings-table__head"><span>Тип</span><span>Опис</span><span>Комісія</span><span>Дія</span></div>{[['Готелі','Проживання','10%'],['Ресторани','Харчування','8%'],['Екскурсії','Тури та екскурсії','12%'],['Транспорт','Трансфери, таксі','7%'],['Інші','Інші послуги','10%']].map(r=><div key={r[0]}><strong>{r[0]}</strong><span>{r[1]}</span><strong>{r[2]}</strong><span className="ad-mini-actions"><button><Edit3 size={14}/></button><button className="is-danger"><Trash2 size={14}/></button></span></div>)}</div><OutlineButton><Plus size={15}/> Додати тип</OutlineButton></SettingsPanel>
+        <SettingsPanel title="Типи партнерів"><div className="ad-settings-table ad-settings-table--partner-types"><div className="ad-settings-table__head"><span>Тип</span><span>Опис</span><span>Комісія</span><span>Дія</span></div>{[['Готелі','Проживання','10%'],['Ресторани','Харчування','8%'],['Екскурсії','Тури та екскурсії','12%'],['Транспорт','Трансфери, таксі','7%'],['Інші','Інші послуги','10%']].map(r=><div key={r[0]}><strong>{r[0]}</strong><span>{r[1]}</span><strong>{r[2]}</strong><span className="ad-mini-actions"><button><Edit3 size={14}/></button><button className="is-danger"><Trash2 size={14}/></button></span></div>)}</div><OutlineButton><Plus size={15}/> Додати тип</OutlineButton></SettingsPanel>
       </div>
       <SettingsPanel title="Додаткові умови комісії" className="ad-settings-panel--full"><div className="ad-commission-cards"><div><span>Мінімальна сума замовлення</span><strong>1 000 <small>грн</small></strong><p>Комісія нараховується тільки при перевищенні суми</p></div><div><span>Термін дії комісії</span><strong>365 <small>днів</small></strong><p>Комісія дійсна протягом зазначеного періоду</p></div><div><SettingToggle label="Бонус за активність"/><strong>2 <small>%</small></strong><p>Додатковий відсоток до комісії за активність</p></div><div><SettingToggle label="Комісія за передоплату"/><strong>1 <small>%</small></strong><p>Додатковий відсоток за оплату наперед</p></div></div></SettingsPanel>
     </AdminShell>
@@ -744,13 +831,42 @@ function SecuritySettingsScreen({ navigate }: AdminProps) {
   );
 }
 
+function IntegrationBrand({ type }: { type: "1c" | "vchasno" | "mailchimp" | "telegram" | "analytics" }) {
+  if (type === "1c") return <span className="ad-integration-brand is-1c"><b>1C</b></span>;
+  if (type === "vchasno") return <span className="ad-integration-brand is-vchasno"><i/><i/></span>;
+  if (type === "mailchimp") return <span className="ad-integration-brand is-mailchimp"><b>M</b></span>;
+  if (type === "telegram") return <span className="ad-integration-brand is-telegram"><Send size={16}/></span>;
+  return <span className="ad-integration-brand is-analytics"><i/><i/><i/></span>;
+}
+
 function IntegrationsSettingsScreen({ navigate }: AdminProps) {
-  const items = [['1C:Підприємство','Обмін даними з 1С','Підключено','31.05.2024 12:45'],['Вчасно.Каса','Фіскалізація чеків','Підключено','31.05.2024 12:40'],['Mailchimp','Email-розсилки','Підключено','31.05.2024 11:20'],['Telegram Bot','Telegram-бот для сповіщень','Підключено','31.05.2024 10:15'],['Google Analytics','Аналітика та статистика','Не підключено','—']];
+  const items = [
+    ['1C:Підприємство','Обмін даними з 1С','Підключено','31.05.2024 12:45','1c'],
+    ['Вчасно.Каса','Фіскалізація чеків','Підключено','31.05.2024 12:40','vchasno'],
+    ['Mailchimp','Email-розсилки','Підключено','31.05.2024 11:20','mailchimp'],
+    ['Telegram Bot','Telegram-бот для сповіщень','Підключено','31.05.2024 10:15','telegram'],
+    ['Google Analytics','Аналітика та статистика','Не підключено','—','analytics'],
+  ] as const;
   return (
-    <AdminShell active="settings" navigate={navigate} contentClassName="ad-main--settings">
+    <AdminShell active="settings" navigate={navigate} contentClassName="ad-main--settings ad-main--integrations">
       <SettingsTop title="Інтеграції" active="admin-settings-integrations" navigate={navigate}/>
-      <SettingsPanel title="Інтеграції" className="ad-settings-panel--full"><div className="ad-integrations-table"><div className="ad-integrations-table__head"><span>Сервіс</span><span>Опис</span><span>Статус</span><span>Остання синхронізація</span><span>Дії</span></div>{items.map(([service,desc,status,last],i)=><div key={service}><span className="ad-service-brand">{['1C','🟠','✉','➤','▥'][i]}</span><strong>{service}</strong><span>{desc}</span><Status tone={status==='Підключено'?'green':'gray'}>{status}</Status><span>{last}</span><span className="ad-mini-actions"><button><Settings size={14}/></button>{status==='Підключено'?<button className="is-danger"><Trash2 size={14}/></button>:null}</span></div>)}</div><OutlineButton><Plus size={15}/> Додати інтеграцію</OutlineButton></SettingsPanel>
-      <div className="ad-settings-layout ad-settings-layout--two"><SettingsPanel title="API ключі"><label className="ad-api-key"><span>Ваш API ключ</span><div>•••••••••••••••••••• <Eye size={15}/></div></label><OutlineButton><RefreshCcw size={15}/> Згенерувати новий</OutlineButton></SettingsPanel><SettingsPanel title="Документація API"><p className="ad-settings-help">Інтегруйте з системою через API</p><OutlineButton>Перейти до документації</OutlineButton></SettingsPanel></div>
+      <SettingsPanel title="Інтеграції" className="ad-settings-panel--full ad-integrations-reference-panel">
+        <div className="ad-integrations-table ad-integrations-table--reference">
+          <div className="ad-integrations-table__head"><span>Сервіс</span><span>Опис</span><span>Статус</span><span>Остання синхронізація</span><span>Дії</span></div>
+          {items.map(([service,desc,status,last,type])=><div key={service}>
+            <span className="ad-integration-service"><IntegrationBrand type={type}/><strong>{service}</strong></span>
+            <span>{desc}</span>
+            <Status tone={status==='Підключено'?'green':'gray'}>{status}</Status>
+            <span>{last}</span>
+            <span className="ad-mini-actions"><button><Settings size={16}/></button>{status==='Підключено'?<button className="is-danger"><Trash2 size={16}/></button>:null}</span>
+          </div>)}
+        </div>
+        <OutlineButton><Plus size={16}/> Додати інтеграцію</OutlineButton>
+      </SettingsPanel>
+      <div className="ad-settings-layout ad-settings-layout--two ad-integration-bottom-panels">
+        <SettingsPanel title="API ключі"><label className="ad-api-key"><span>Ваш API ключ</span><div>•••••••••••••••••••• <Eye size={17}/></div></label><OutlineButton><RefreshCcw size={16}/> Згенерувати новий</OutlineButton></SettingsPanel>
+        <SettingsPanel title="Документація API"><p className="ad-settings-help">Інтегруйте з системою через API</p><OutlineButton>Перейти до документації</OutlineButton></SettingsPanel>
+      </div>
     </AdminShell>
   );
 }

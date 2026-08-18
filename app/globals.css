@@ -15736,3 +15736,420 @@ button.gt-service-card {
   .ad-commission-cards { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .ad-main--settlements .ad-settlement-layout { grid-template-columns: 1fr; }
 }
+
+/* ===== Admin final alignment fixes from reference screens ===== */
+
+/* 1. Statistics overview: keep all values inside cards/donut and aligned */
+.ad-main--statistics .ad-category-turnover-card .ad-donut > span {
+  width: 82px;
+  max-width: 82px;
+  margin: auto;
+  font-size: 9.5px;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+}
+.ad-main--statistics .ad-category-turnover-card .ad-donut > span small {
+  margin-top: 4px;
+  font-size: 8px;
+  letter-spacing: 0;
+}
+.ad-main--statistics .ad-client-activity-card .ad-summary-grid {
+  gap: 10px;
+  margin: 12px 0 16px;
+}
+.ad-main--statistics .ad-client-activity-card .ad-summary-card {
+  min-height: 104px;
+  padding: 12px 10px;
+  align-items: stretch;
+}
+.ad-main--statistics .ad-client-activity-card .ad-summary-card > div {
+  display: flex;
+  min-width: 0;
+  height: 100%;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.ad-main--statistics .ad-client-activity-card .ad-summary-card small {
+  min-height: 30px;
+  font-size: 10.5px;
+  line-height: 1.2;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.ad-main--statistics .ad-client-activity-card .ad-summary-card strong {
+  margin-top: 10px;
+  font-size: 17px;
+  line-height: 1;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.ad-main--statistics .ad-client-activity-card .ad-simple-table > div {
+  grid-template-columns: minmax(108px, 1.25fr) 72px 112px;
+  gap: 12px;
+  min-height: 39px;
+  font-size: 10px;
+}
+.ad-main--statistics .ad-client-activity-card .ad-simple-table > div > strong,
+.ad-main--statistics .ad-client-activity-card .ad-simple-table > div > span {
+  min-width: 0;
+  line-height: 1.2;
+}
+.ad-main--statistics .ad-client-activity-card .ad-simple-table > div > span:last-child {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* 2-3. Settings info banners need breathing room from fields */
+.ad-settings-panel--storage .ad-info-banner,
+.ad-settings-panel--commission-default .ad-info-banner {
+  margin-top: 14px;
+}
+
+/* 4. Partner types table: four equal, aligned columns */
+.ad-settings-table--partner-types .ad-settings-table__head,
+.ad-settings-table--partner-types > div {
+  grid-template-columns: 1.05fr 1.55fr .55fr .72fr;
+  gap: 14px;
+  min-height: 49px;
+  padding: 0 10px;
+}
+.ad-settings-table--partner-types > div > * {
+  min-width: 0;
+  align-self: center;
+}
+.ad-settings-table--partner-types .ad-mini-actions {
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+}
+
+/* 5. Notification matrix headings sit exactly over their columns */
+.ad-notification-matrix__head,
+.ad-notification-matrix > div {
+  grid-template-columns: minmax(185px, 2.2fr) repeat(4, minmax(58px, .55fr));
+  column-gap: 10px;
+}
+.ad-notification-matrix__head {
+  font-size: 10.4px !important;
+  font-weight: 700;
+}
+.ad-notification-matrix__head > span:first-child {
+  justify-self: start;
+  text-align: left;
+}
+.ad-notification-matrix__head > span:not(:first-child) {
+  justify-self: center;
+  width: 100%;
+  text-align: center;
+}
+.ad-notification-matrix > div > .ad-checkbox {
+  justify-self: center;
+}
+
+/* 6. Security users: names smaller, access badge wider and text fitted */
+.ad-security-users > div {
+  grid-template-columns: 38px minmax(160px, 1fr) 108px 32px;
+  gap: 12px;
+  min-height: 64px;
+}
+.ad-security-users > div > span {
+  width: 35px;
+  height: 35px;
+  font-size: 10px;
+}
+.ad-security-users > div > div > strong {
+  font-size: 12px;
+  line-height: 1.2;
+}
+.ad-security-users > div > div > small {
+  font-size: 9px;
+}
+.ad-security-users .ad-status {
+  width: 100%;
+  min-height: 30px;
+  padding: 5px 7px;
+  border-radius: 15px;
+  font-size: 8.5px;
+  line-height: 1.05;
+  text-align: center;
+  white-space: normal;
+}
+
+/* 7. Integrations screen, reference proportions at +20% */
+.ad-main--integrations .ad-settings-panel {
+  padding: 20px 22px;
+}
+.ad-main--integrations .ad-settings-panel > h2 {
+  margin-bottom: 16px;
+  font-size: 15px;
+}
+.ad-integrations-table--reference {
+  margin-bottom: 16px;
+}
+.ad-integrations-table--reference .ad-integrations-table__head,
+.ad-integrations-table--reference > div {
+  display: grid;
+  grid-template-columns: 1.45fr 1.55fr .9fr 1.25fr .62fr;
+  gap: 14px;
+  align-items: center;
+  min-height: 62px;
+  padding: 0 6px;
+  font-size: 12px;
+}
+.ad-integrations-table--reference .ad-integrations-table__head {
+  min-height: 42px !important;
+  font-size: 11px !important;
+}
+.ad-integrations-table--reference .ad-integrations-table__head span:first-child {
+  grid-column: auto;
+}
+.ad-integration-service {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 11px;
+}
+.ad-integration-service strong {
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ad-integration-brand {
+  position: relative;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 900;
+}
+.ad-integration-brand.is-1c { background: #fff4dd; color: #f38a12; }
+.ad-integration-brand.is-1c b { letter-spacing: -1px; }
+.ad-integration-brand.is-vchasno { overflow: hidden; background: #f8f8f8; }
+.ad-integration-brand.is-vchasno i { position: absolute; width: 17px; height: 17px; border-radius: 50%; }
+.ad-integration-brand.is-vchasno i:first-child { left: 4px; background: #f59b25; }
+.ad-integration-brand.is-vchasno i:last-child { right: 3px; background: #4a90e2; opacity: .88; }
+.ad-integration-brand.is-mailchimp { border-radius: 50%; background: #111; color: #fff; }
+.ad-integration-brand.is-telegram { border-radius: 50%; background: #2aabee; color: #fff; }
+.ad-integration-brand.is-analytics {
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  gap: 2px;
+  background: #fff7e9;
+}
+.ad-integration-brand.is-analytics i { display: block; width: 5px; border-radius: 2px; background: #f2a51a; }
+.ad-integration-brand.is-analytics i:nth-child(1) { height: 9px; }
+.ad-integration-brand.is-analytics i:nth-child(2) { height: 17px; }
+.ad-integration-brand.is-analytics i:nth-child(3) { height: 24px; }
+.ad-main--integrations .ad-status { font-size: 10px; }
+.ad-main--integrations .ad-mini-actions button {
+  width: 32px;
+  height: 32px;
+}
+.ad-main--integrations .ad-btn {
+  min-height: 40px;
+  font-size: 11.5px;
+}
+.ad-integration-bottom-panels {
+  margin-top: 18px;
+}
+.ad-main--integrations .ad-api-key > span,
+.ad-main--integrations .ad-settings-help { font-size: 11px; }
+.ad-main--integrations .ad-api-key > div {
+  min-height: 48px;
+  font-size: 12px;
+}
+
+/* 8. New partner targeted reductions requested per section */
+.ad-create-row--3 .ad-placement-options label {
+  min-height: 54px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.ad-create-row--4 input::placeholder,
+.ad-create-row--5 input::placeholder { font-size: 85%; }
+.ad-create-row--6 input::placeholder { font-size: 80%; }
+.ad-create-row--7 .ad-placement-options label {
+  min-height: 54px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.ad-create-row--8 textarea {
+  min-height: 55px;
+}
+.ad-create-row--8 textarea::placeholder { font-size: 80%; }
+.ad-create-row--10 .ad-create-row__control > input {
+  min-height: 40px;
+}
+.ad-create-row--10 input::placeholder { font-size: 85%; }
+
+/* 9. Client card now follows the supplied three-column reference */
+.ad-client-detail-header .ad-client-header-avatar {
+  width: 50px !important;
+  height: 50px !important;
+  background: #eef9f2 !important;
+  color: #13984d !important;
+  font-size: 0 !important;
+}
+.ad-detail-title-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ad-detail-title-line h1 { margin: 0; }
+.ad-client-detail-header .ad-status,
+.ad-partner-detail-header .ad-status { font-size: 9.5px; }
+.ad-client-reference-grid {
+  display: grid;
+  grid-template-columns: 1fr .85fr 1.3fr;
+  gap: 26px 34px;
+}
+.ad-client-reference-col {
+  display: grid;
+  align-content: start;
+  gap: 17px;
+}
+.ad-client-info-item {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 10px;
+  min-width: 0;
+  align-items: start;
+}
+.ad-client-info-item__icon {
+  display: grid;
+  width: 20px;
+  height: 22px;
+  place-items: center;
+  color: #56645c;
+}
+.ad-client-info-item small {
+  display: block;
+  margin-bottom: 5px;
+  color: #7d8781;
+  font-size: 10.5px !important;
+}
+.ad-client-info-item strong {
+  display: block;
+  color: #303a34;
+  font-size: 12.5px !important;
+  line-height: 1.45;
+}
+.ad-client-reference-col--wide .ad-tags { margin-top: 4px; }
+.ad-client-reference-col--wide .ad-tags i {
+  font-size: 10px !important;
+  padding: 5px 8px;
+}
+.ad-main--client-detail .ad-detail-card {
+  padding: 18px 20px;
+}
+.ad-main--client-detail .ad-summary-card strong { font-size: 18px; }
+
+/* 10. Partner list/details: reference icons, real photos and slightly larger cards */
+.ad-main--partners .ad-table-row {
+  min-height: 72px;
+}
+.ad-partner-list-icon {
+  display: grid !important;
+  width: 44px !important;
+  height: 44px !important;
+  place-items: center;
+  border-radius: 9px !important;
+  background: #eaf8ef !important;
+  color: #16a052 !important;
+  font-size: 0 !important;
+}
+.ad-main--partners .ad-entity-cell strong { font-size: 12.5px; }
+.ad-main--partners .ad-entity-cell small { font-size: 10px; }
+.ad-main--partners .ad-status { font-size: 10px; padding: 6px 10px; }
+.ad-main--partners .ad-row-actions button { width: 31px; height: 31px; }
+.ad-partner-detail-header .ad-partner-header-icon {
+  width: 50px !important;
+  height: 50px !important;
+  background: #eaf8ef !important;
+  color: #159b50 !important;
+  font-size: 0 !important;
+}
+.ad-partner-reference-card { padding: 18px 20px; }
+.ad-partner-reference-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr 1.15fr;
+  gap: 28px 34px;
+}
+.ad-partner-reference-col {
+  display: grid;
+  align-content: start;
+  gap: 15px;
+}
+.ad-partner-info-item {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 10px;
+  min-width: 0;
+  align-items: start;
+}
+.ad-partner-info-item__icon {
+  display: grid;
+  width: 20px;
+  height: 22px;
+  place-items: center;
+  color: #536159;
+}
+.ad-partner-info-item small {
+  display: block;
+  margin-bottom: 5px;
+  color: #7d8781;
+  font-size: 10.5px !important;
+}
+.ad-partner-info-item strong {
+  display: block;
+  color: #303a34;
+  font-size: 12.5px !important;
+  line-height: 1.45;
+}
+.ad-partner-info-item .ad-tags i {
+  font-size: 9.8px !important;
+  padding: 5px 8px;
+}
+.ad-photo-strip--images {
+  gap: 7px;
+  margin-top: 3px;
+}
+.ad-photo-strip--images img,
+.ad-photo-strip--images > span {
+  width: 68px;
+  height: 50px;
+  border-radius: 7px;
+}
+.ad-photo-strip--images img {
+  display: block;
+  object-fit: cover;
+}
+.ad-photo-strip--images > span {
+  display: grid;
+  place-items: center;
+  background: #f0f3f1;
+  color: #6e7972;
+  font-size: 11px;
+}
+.ad-main--partner-detail .ad-settlement-equation .ad-summary-card {
+  min-height: 98px;
+  padding: 14px;
+}
+.ad-main--partner-detail .ad-settlement-equation .ad-summary-card strong { font-size: 18px; }
+.ad-main--partner-detail .ad-mini-stats > div { min-height: 86px; }
+.ad-main--partner-history .ad-table-head { font-size: 10.5px; }
+.ad-main--partner-history .ad-table-row { font-size: 13.5px; min-height: 76px; }
+.ad-main--partner-history .ad-detail-card { padding: 18px; }
+
+@media (max-width: 1180px) {
+  .ad-client-reference-grid,
+  .ad-partner-reference-grid { grid-template-columns: 1fr 1fr; }
+  .ad-client-reference-col--wide,
+  .ad-partner-reference-col--wide { grid-column: 1 / -1; }
+}
