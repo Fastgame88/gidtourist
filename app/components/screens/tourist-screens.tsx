@@ -1572,8 +1572,8 @@ const emergencyContacts = [
 ];
 
 const emergencyServiceIcons: Record<EmergencyService["icon"], LucideIcon> = {
-  doctor: Stethoscope,
-  pharmacy: Pill,
+  doctor: UserRound,
+  pharmacy: Cross,
   repair: Wrench,
   tow: CarFront,
   vet: PawPrint,
@@ -1582,6 +1582,8 @@ const emergencyServiceIcons: Record<EmergencyService["icon"], LucideIcon> = {
 
 function EmergencyScreen() {
   const [services, setServices] = useState(DEFAULT_EMERGENCY_SERVICES);
+  const [servicePage, setServicePage] = useState(0);
+  const serviceScrollerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -1589,6 +1591,17 @@ function EmergencyScreen() {
     });
     return () => window.cancelAnimationFrame(frame);
   }, []);
+
+  const handleServiceScroll = () => {
+    const element = serviceScrollerRef.current;
+    if (!element) return;
+    const maxScroll = element.scrollWidth - element.clientWidth;
+    if (maxScroll <= 1) {
+      setServicePage(0);
+      return;
+    }
+    setServicePage(Math.max(0, Math.min(2, Math.round((element.scrollLeft / maxScroll) * 2))));
+  };
 
   return (
     <div className="tourist-screen gt-screen gt-emergency">
@@ -1606,7 +1619,7 @@ function EmergencyScreen() {
           <div><small>Не хвилюйтеся</small><h2>Знайдемо допомогу</h2><p>Екстрені та перевірені контакти<br />для вашої безпеки.</p></div>
         </section>
         <button type="button" className="gt-location-button">
-          <span className="gt-location-button__icon"><LocateFixed size={29} /></span>
+          <span className="gt-location-button__icon"><MapPin size={28} /></span>
           <span><strong>Поділитися геолокацією</strong><small>Надішлемо ваші координати<br />вибраній службі.</small></span>
           <ChevronRight size={20} />
         </button>
@@ -1625,7 +1638,7 @@ function EmergencyScreen() {
           ))}
         </div>
         <SectionTitle title="Корисні сервіси" />
-        <div className="gt-service-mini-grid">
+        <div className="gt-service-mini-grid" ref={serviceScrollerRef} onScroll={handleServiceScroll}>
           {services.filter((service) => service.active).map((service) => {
             const ServiceIcon = emergencyServiceIcons[service.icon] ?? CircleHelp;
             return (
@@ -1637,12 +1650,14 @@ function EmergencyScreen() {
             );
           })}
           <button type="button" className="is-location">
-            <span><Map size={22} /></span>
+            <span><MapPin size={22} /></span>
             <strong>Локації</strong>
             <small>Пам’ятки<br />та місця</small>
           </button>
         </div>
-        <div className="gt-emergency-dots" aria-hidden="true"><i className="is-active" /><i /><i /></div>
+        <div className="gt-emergency-dots" aria-hidden="true">
+          {[0, 1, 2].map((page) => <i className={servicePage === page ? "is-active" : undefined} key={page} />)}
+        </div>
         <p className="gt-expiry"><span><Info size={16} /> Контакти перевірено регіональним адміністратором</span><b>14 липня 2026</b></p>
       </main>
     </div>
