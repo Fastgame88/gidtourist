@@ -189,6 +189,21 @@ function SelectBox({ label, value }: { label?: string; value: string }) {
   );
 }
 
+
+function MiniSparkline() {
+  return (
+    <svg className="ad-spark" viewBox="0 0 120 28" preserveAspectRatio="none" aria-hidden="true">
+      <polyline
+        points="2,23 18,20 31,14 47,16 63,10 78,13 94,7 118,4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 function DateRange({ value = "01.05.2024 – 31.05.2024" }: { value?: string }) {
   return (
     <button type="button" className="ad-date-range">
@@ -389,7 +404,7 @@ function BonusesScreen({ navigate }: AdminProps) {
 
 function PartnerCreateScreen({ navigate }: AdminProps) {
   return (
-    <AdminShell active="partners" navigate={navigate}>
+    <AdminShell active="partners" navigate={navigate} contentClassName="ad-main--create">
       <AdminPageHeader
         title="Створення партнера"
         subtitle="Заповніть інформацію про партнера"
@@ -462,7 +477,7 @@ function ClientDetailsScreen({ navigate }: AdminProps) {
         </div>
       </section>
       <section className="ad-detail-card"><div className="ad-section-title"><h2>Бонуси</h2><Info size={16}/></div><div className="ad-summary-grid ad-summary-grid--four"><SummaryCard label="Поточний бонусний баланс" value="1 280 балів" note="Доступно для використання"/><SummaryCard label="Нараховано" value="3 640 балів" note="За весь період" tone="neutral"/><SummaryCard label="Використано" value="2 360 балів" note="За весь період" tone="neutral"/><SummaryCard label="Запрошені друзі" value="7" note="Успішні реєстрації" tone="neutral"/></div></section>
-      <section className="ad-detail-card"><div className="ad-section-title"><h2>Статистика</h2><DateRange /></div><div className="ad-mini-stats">{[["Відкрито карток","86"],["QR-сканувань","24"],["Бронювань","5"],["Відвідано локацій","18"],["Відгуки","9"],["Використані пропозиції","12"]].map(([l,v])=><div key={l}><small>{l}</small><strong>{v}</strong><span>↗ 11%</span><div className="ad-spark"/></div>)}</div></section>
+      <section className="ad-detail-card"><div className="ad-section-title"><h2>Статистика</h2><DateRange /></div><div className="ad-mini-stats">{[["Відкрито карток","86"],["QR-сканувань","24"],["Бронювань","5"],["Відвідано локацій","18"],["Відгуки","9"],["Використані пропозиції","12"]].map(([l,v])=><div key={l}><small>{l}</small><strong>{v}</strong><span>↗ 11%</span><MiniSparkline/></div>)}</div></section>
     </AdminShell>
   );
 }
@@ -542,7 +557,7 @@ function PartnerDetailsScreen({ navigate }: AdminProps) {
         </div>
       </section>
       <section className="ad-detail-card"><div className="ad-section-title"><h2>Взаєморозрахунки</h2><Info size={16}/></div><div className="ad-settlement-equation"><SummaryCard label="Загальна сума продажів через додаток" value="247 360 ₴" note="За весь період"/><span>−</span><SummaryCard label="Нараховано комісії (платформою)" value="29 683 ₴" note="Комісія 12%" tone="neutral"/><span>−</span><SummaryCard label="Списано балів у партнера (клієнтами)" value="18 450 ₴" note="За весь період" tone="neutral"/><span>=</span><SummaryCard label="До сплати платформі" value="−59 087 ₴" note="Кредитний баланс" tone="green"/></div><button type="button" className="ad-link-button" onClick={() => navigate("admin", "admin-partner-history")}>Перейти до взаєморозрахунків →</button></section>
-      <section className="ad-detail-card"><div className="ad-section-title"><h2>Статистика</h2><DateRange/></div><div className="ad-mini-stats">{[["Перегляди","4 125"],["QR-сканування","1 872"],["Бронювання столів","326"],["Кількість клієнтів","589"],["Відгуки","72"],["Продажі / операції","247 360 ₴"]].map(([l,v])=><div key={l}><small>{l}</small><strong>{v}</strong><span>↗ 13%</span><div className="ad-spark"/></div>)}</div></section>
+      <section className="ad-detail-card"><div className="ad-section-title"><h2>Статистика</h2><DateRange/></div><div className="ad-mini-stats">{[["Перегляди","4 125"],["QR-сканування","1 872"],["Бронювання столів","326"],["Кількість клієнтів","589"],["Відгуки","72"],["Продажі / операції","247 360 ₴"]].map(([l,v])=><div key={l}><small>{l}</small><strong>{v}</strong><span>↗ 13%</span><MiniSparkline/></div>)}</div></section>
     </AdminShell>
   );
 }
