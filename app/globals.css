@@ -17153,3 +17153,62 @@ button.gt-service-card {
     min-height: 64px;
   }
 }
+
+/* Emergency final micro-adjustments */
+.gt-emergency-head p {
+  color: #111714 !important;
+}
+
+.gt-location-button__icon {
+  width: 52px !important;
+  height: 52px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  justify-self: center !important;
+  align-self: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.gt-location-button__icon svg {
+  width: 48px !important;
+  height: 48px !important;
+  flex: 0 0 48px !important;
+  display: block !important;
+  margin: 0 !important;
+}
+
+/* +10% from the previous square service-tile size */
+.gt-emergency .gt-service-mini-grid {
+  grid-auto-columns: 75px;
+  gap: 7px;
+}
+
+.gt-emergency .gt-service-mini-grid button {
+  width: 75px;
+  min-width: 75px;
+  height: 75px;
+  min-height: 75px;
+  padding: 6px 4px;
+}
+
+.gt-emergency .gt-service-mini-grid button > span {
+  width: 29px;
+  height: 29px;
+}
+
+.gt-emergency .gt-service-mini-grid button > span svg {
+  width: 19px;
+  height: 19px;
+}
+
+@media (max-width: 390px) {
+  .gt-emergency .gt-service-mini-grid { grid-auto-columns: 70px; }
+  .gt-emergency .gt-service-mini-grid button {
+    width: 70px;
+    min-width: 70px;
+    height: 70px;
+    min-height: 70px;
+  }
+}

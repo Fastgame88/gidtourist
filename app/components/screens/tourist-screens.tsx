@@ -1623,8 +1623,10 @@ function EmergencyScreen() {
             <svg viewBox="0 0 48 48" role="img">
               <circle cx="24" cy="24" r="18" fill="none" stroke="currentColor" strokeWidth="1.8" />
               <path d="M24 1.5v7M24 39.5v7M1.5 24h7M39.5 24h7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-              <path d="M24 14.2c-5.45 0-9.86 4.42-9.86 9.86 0 7.55 9.86 16.08 9.86 16.08s9.86-8.53 9.86-16.08c0-5.44-4.41-9.86-9.86-9.86Z" fill="currentColor" />
-              <circle cx="24" cy="24" r="3.5" fill="#ffffff" />
+              <g transform="translate(0 -2.2)">
+                <path d="M24 14.2c-5.45 0-9.86 4.42-9.86 9.86 0 7.55 9.86 16.08 9.86 16.08s9.86-8.53 9.86-16.08c0-5.44-4.41-9.86-9.86-9.86Z" fill="currentColor" />
+                <circle cx="24" cy="24" r="3.5" fill="#ffffff" />
+              </g>
             </svg>
           </span>
           <span><strong>Поділитися геолокацією</strong><small>Надішлемо ваші координати<br />вибраній службі.</small></span>
