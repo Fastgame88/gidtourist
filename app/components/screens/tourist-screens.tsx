@@ -1568,7 +1568,7 @@ const emergencyContacts = [
   { icon: Ambulance, title: "Швидка допомога", note: "Цілодобово", phone: "103", tone: "red" },
   { icon: ShieldCheck, title: "Поліція", note: "Допомога та правопорядок", phone: "102", tone: "blue" },
   { icon: Flame, title: "ДСНС / рятувальники", note: "Пожежі · аварії · надзвичайні ситуації", phone: "101", tone: "orange" },
-  { icon: MountainSnow, title: "Гірські рятувальники", note: "Яремче, найближчий пост", phone: "+380 67 342 18 68", tone: "orange" },
+  { icon: MountainSnow, title: "Гірські рятувальники", note: "Яремче, найближчий пост", phone: "+380 67 342 18 68", tone: "green" },
 ];
 
 const emergencyServiceIcons: Record<EmergencyService["icon"], LucideIcon> = {
@@ -1602,10 +1602,14 @@ function EmergencyScreen() {
           </div>
         </header>
         <section className="gt-help-hero">
-          <LifeBuoy size={41} />
-          <div><small>НЕ ХВИЛЮЙТЕСЯ</small><h2>Знайдемо допомогу</h2><p>Екстрені та перевірені контакти для вашої безпеки.</p></div>
+          <span className="gt-help-hero__icon"><LifeBuoy size={39} /></span>
+          <div><small>Не хвилюйтеся</small><h2>Знайдемо допомогу</h2><p>Екстрені та перевірені контакти<br />для вашої безпеки.</p></div>
         </section>
-        <button type="button" className="gt-location-button"><LocateFixed size={27} /><span><strong>Поділитися геолокацією</strong><small>Надішлемо ваші координати вибраній службі</small></span><ChevronRight size={20} /></button>
+        <button type="button" className="gt-location-button">
+          <span className="gt-location-button__icon"><LocateFixed size={29} /></span>
+          <span><strong>Поділитися геолокацією</strong><small>Надішлемо ваші координати<br />вибраній службі.</small></span>
+          <ChevronRight size={20} />
+        </button>
         <SectionTitle title="Екстрені контакти" />
         <div className="gt-contact-list">
           {emergencyContacts.map(({ icon: Icon, title, note, phone, tone }) => (
@@ -1625,15 +1629,21 @@ function EmergencyScreen() {
           {services.filter((service) => service.active).map((service) => {
             const ServiceIcon = emergencyServiceIcons[service.icon] ?? CircleHelp;
             return (
-              <button type="button" key={service.id}>
-                <span className={`gt-tone--${service.tone}`}><ServiceIcon size={21} /></span>
+              <button type="button" className={`is-${service.tone}`} key={service.id}>
+                <span className={`gt-tone--${service.tone}`}><ServiceIcon size={22} /></span>
                 <strong>{service.title}</strong>
                 <small>{service.note}</small>
               </button>
             );
           })}
+          <button type="button" className="is-location">
+            <span><Map size={22} /></span>
+            <strong>Локації</strong>
+            <small>Пам’ятки<br />та місця</small>
+          </button>
         </div>
-        <p className="gt-expiry"><Info size={16} /> Контакти перевірено регіональним адміністратором 14 липня 2026.</p>
+        <div className="gt-emergency-dots" aria-hidden="true"><i className="is-active" /><i /><i /></div>
+        <p className="gt-expiry"><span><Info size={16} /> Контакти перевірено регіональним адміністратором</span><b>14 липня 2026</b></p>
       </main>
     </div>
   );

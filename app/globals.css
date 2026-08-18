@@ -16189,3 +16189,421 @@ button.gt-service-card {
 .ad-main--create .ad-placement-options:not(.ad-placement-options--schedule) small {
   font-size: 10px;
 }
+
+/* Tourist emergency screen — reference layout, compact scale */
+.gt-emergency {
+  min-height:100% !important;
+  background:#fff !important;
+  overflow-y:visible !important;
+}
+
+.gt-emergency-mountains {
+  top:0;
+  height:112px;
+  opacity:.72;
+  background:
+    linear-gradient(90deg,rgba(255,255,255,.98) 0%,rgba(255,255,255,.9) 30%,rgba(255,255,255,.3) 72%,rgba(255,255,255,.2) 100%),
+    url("/images/carpathian-river.webp") center 43%/cover;
+  filter:saturate(.55) brightness(1.16);
+}
+
+.gt-emergency .gt-content {
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  min-height:calc(100dvh - 92px - env(safe-area-inset-bottom));
+  height:auto;
+  padding:14px 18px 12px;
+}
+
+.gt-emergency-head {
+  display:grid;
+  grid-template-columns:54px minmax(0,1fr);
+  gap:12px;
+  align-items:center;
+  min-height:70px;
+  padding:2px 0 0;
+}
+
+.gt-emergency-sos {
+  width:54px;
+  height:54px;
+  border-radius:13px;
+  background:linear-gradient(145deg,#f26a55,#e04336);
+  box-shadow:0 6px 15px rgba(213,70,55,.18);
+  font-size:19px;
+  font-weight:800;
+  letter-spacing:-.02em;
+}
+
+.gt-emergency-head h1 {
+  margin:0;
+  font-size:31px;
+  line-height:1;
+  font-weight:800;
+  letter-spacing:-.03em;
+}
+
+.gt-emergency-head p {
+  margin:5px 0 0;
+  color:#7b8580;
+  font-size:13px;
+  line-height:1.25;
+}
+
+.gt-emergency .gt-help-hero {
+  display:grid;
+  grid-template-columns:72px minmax(0,1fr);
+  gap:16px;
+  align-items:center;
+  min-height:132px;
+  padding:18px 20px;
+  border:1px solid #e7edf7;
+  border-radius:22px;
+  background:linear-gradient(135deg,#f3f7ff,#f7faff);
+  box-shadow:0 7px 18px rgba(32,78,137,.07);
+}
+
+.gt-help-hero__icon {
+  display:grid;
+  place-items:center;
+  width:70px;
+  height:70px;
+  border-radius:50%;
+  color:#1877df;
+  background:#eaf2ff;
+  box-shadow:inset 0 0 0 1px rgba(24,119,223,.04);
+}
+
+.gt-emergency .gt-help-hero small {
+  display:block;
+  margin:0 0 3px;
+  color:#2474d2;
+  font-size:13px;
+  line-height:1.15;
+  font-weight:700;
+  letter-spacing:0;
+  text-transform:none;
+}
+
+.gt-emergency .gt-help-hero h2 {
+  margin:0 0 6px;
+  font-size:25px;
+  line-height:1.03;
+  font-weight:800;
+  letter-spacing:-.02em;
+}
+
+.gt-emergency .gt-help-hero p {
+  margin:0;
+  color:#6d7772;
+  font-size:13px;
+  line-height:1.35;
+}
+
+.gt-emergency .gt-location-button {
+  display:grid;
+  grid-template-columns:58px minmax(0,1fr) 20px;
+  gap:14px;
+  align-items:center;
+  width:100%;
+  min-height:104px;
+  padding:14px 18px;
+  border:1px solid #dfeee5;
+  border-radius:20px;
+  background:linear-gradient(135deg,#f1faf4,#f4fbf6);
+  box-shadow:0 5px 14px rgba(25,111,67,.04);
+  text-align:left;
+}
+
+.gt-location-button__icon {
+  display:grid;
+  place-items:center;
+  width:56px;
+  height:56px;
+  border-radius:50%;
+  color:#109856;
+  background:#e8f7ee;
+}
+
+.gt-emergency .gt-location-button strong {
+  display:block;
+  color:#21965b;
+  font-size:15px;
+  line-height:1.2;
+  font-weight:800;
+}
+
+.gt-emergency .gt-location-button small {
+  display:block;
+  margin-top:5px;
+  color:#66736b;
+  font-size:12.5px;
+  line-height:1.35;
+}
+
+.gt-emergency .gt-location-button > svg {
+  color:#69746e;
+}
+
+.gt-emergency .gt-section-title {
+  min-height:auto;
+  margin:1px 0 -4px;
+}
+
+.gt-emergency .gt-section-title h2 {
+  margin:0;
+  font-size:19px;
+  line-height:1.15;
+  font-weight:800;
+}
+
+.gt-emergency .gt-contact-list {
+  overflow:hidden;
+  border:1px solid #edf0ee;
+  border-radius:18px;
+  background:#fff;
+  box-shadow:0 5px 18px rgba(22,44,32,.04);
+}
+
+.gt-emergency .gt-contact-list a {
+  grid-template-columns:40px minmax(0,1fr) auto 34px;
+  gap:10px;
+  align-items:center;
+  min-height:62px;
+  padding:8px 12px;
+  border-bottom:1px solid #edf0ee;
+}
+
+.gt-emergency .gt-contact-list a:last-child {
+  border-bottom:0;
+}
+
+.gt-emergency .gt-contact-list a > span {
+  width:38px;
+  height:38px;
+  border-radius:10px;
+}
+
+.gt-emergency .gt-contact-list a > span.gt-tone--red {
+  color:#ef4e57 !important;
+  background:#fff0f2 !important;
+}
+.gt-emergency .gt-contact-list a > span.gt-tone--blue {
+  color:#1976df !important;
+  background:#edf5ff !important;
+}
+.gt-emergency .gt-contact-list a > span.gt-tone--orange {
+  color:#ef7e31 !important;
+  background:#fff3ea !important;
+}
+.gt-emergency .gt-contact-list a > span.gt-tone--green {
+  color:#18985a !important;
+  background:#edf8f1 !important;
+}
+
+.gt-emergency .gt-contact-list strong {
+  display:block;
+  color:#26302a;
+  font-size:13px;
+  line-height:1.18;
+  font-weight:800;
+}
+
+.gt-emergency .gt-contact-list small {
+  display:block;
+  margin-top:2px;
+  color:#78827c;
+  font-size:10.5px;
+  line-height:1.2;
+}
+
+.gt-emergency .gt-contact-list b,
+.gt-emergency .gt-contact-list a.is-long-number b {
+  color:#161b18;
+  font-size:15px;
+  line-height:1;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+.gt-emergency .gt-contact-list i {
+  display:grid;
+  place-items:center;
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  color:#101713;
+  background:#f2f4f3;
+}
+
+.gt-emergency .gt-service-mini-grid {
+  display:grid;
+  grid-auto-flow:column;
+  grid-auto-columns:72px;
+  grid-template-columns:none;
+  gap:8px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  margin:0 -1px;
+  padding:1px 1px 3px;
+  scroll-snap-type:x proximity;
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
+
+.gt-emergency .gt-service-mini-grid::-webkit-scrollbar { display:none; }
+
+.gt-emergency .gt-service-mini-grid button {
+  display:flex;
+  min-width:72px;
+  min-height:118px;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  gap:5px;
+  padding:11px 5px 9px;
+  border:1px solid #e7ece9;
+  border-radius:14px;
+  background:#f6faf7;
+  box-shadow:none;
+  scroll-snap-align:start;
+  text-align:center;
+}
+
+.gt-emergency .gt-service-mini-grid button.is-green { background:#f0faf4; }
+.gt-emergency .gt-service-mini-grid button.is-purple { background:#f5f1ff; }
+.gt-emergency .gt-service-mini-grid button.is-orange { background:#fff5eb; }
+.gt-emergency .gt-service-mini-grid button.is-blue { background:#edf7ff; }
+.gt-emergency .gt-service-mini-grid button.is-location { background:#fbf4ec; }
+
+.gt-emergency .gt-service-mini-grid button > span {
+  display:grid;
+  place-items:center;
+  width:38px;
+  height:38px;
+  flex:0 0 auto;
+  border-radius:10px;
+  color:#8a7868;
+  background:#fff !important;
+}
+
+.gt-emergency .gt-service-mini-grid button > span.gt-tone--green { color:#10a15e !important; }
+.gt-emergency .gt-service-mini-grid button > span.gt-tone--purple { color:#8154df !important; }
+.gt-emergency .gt-service-mini-grid button > span.gt-tone--orange { color:#ef8628 !important; }
+.gt-emergency .gt-service-mini-grid button > span.gt-tone--blue { color:#368fde !important; }
+
+.gt-emergency .gt-service-mini-grid strong {
+  display:block;
+  overflow:visible;
+  color:#222a25;
+  font-size:10.8px;
+  line-height:1.08;
+  font-weight:800;
+  text-overflow:clip;
+  white-space:normal;
+}
+
+.gt-emergency .gt-service-mini-grid small {
+  display:block;
+  color:#7b8580;
+  font-size:8.8px;
+  line-height:1.15;
+}
+
+.gt-emergency-dots {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  min-height:10px;
+  margin-top:-6px;
+}
+
+.gt-emergency-dots i {
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#e3e6e4;
+}
+
+.gt-emergency-dots i.is-active {
+  width:16px;
+  border-radius:999px;
+  background:#1676df;
+}
+
+.gt-emergency .gt-expiry {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  min-height:38px;
+  margin:0;
+  padding:8px 10px;
+  border-radius:12px;
+  color:#6c7771;
+  background:#f2f7ff;
+  font-size:9.5px;
+  line-height:1.15;
+}
+
+.gt-emergency .gt-expiry > span {
+  display:flex;
+  min-width:0;
+  align-items:center;
+  gap:6px;
+}
+
+.gt-emergency .gt-expiry svg {
+  flex:0 0 auto;
+  color:#277ad8;
+}
+
+.gt-emergency .gt-expiry b {
+  flex:0 0 auto;
+  color:#69736e;
+  font-size:9px;
+  font-weight:600;
+  white-space:nowrap;
+}
+
+@media (max-width:390px) {
+  .gt-emergency .gt-content {
+    gap:10px;
+    padding:12px 16px 10px;
+  }
+  .gt-emergency-head {
+    grid-template-columns:50px minmax(0,1fr);
+    min-height:64px;
+  }
+  .gt-emergency-sos { width:50px; height:50px; font-size:18px; }
+  .gt-emergency-head h1 { font-size:29px; }
+  .gt-emergency .gt-help-hero {
+    grid-template-columns:64px minmax(0,1fr);
+    min-height:124px;
+    padding:16px 17px;
+  }
+  .gt-help-hero__icon { width:62px; height:62px; }
+  .gt-emergency .gt-help-hero h2 { font-size:23px; }
+  .gt-emergency .gt-location-button {
+    grid-template-columns:52px minmax(0,1fr) 18px;
+    min-height:96px;
+    padding:12px 15px;
+  }
+  .gt-location-button__icon { width:50px; height:50px; }
+  .gt-emergency .gt-contact-list a {
+    grid-template-columns:38px minmax(0,1fr) auto 31px;
+    gap:8px;
+    min-height:57px;
+    padding:7px 10px;
+  }
+  .gt-emergency .gt-contact-list strong { font-size:12px; }
+  .gt-emergency .gt-contact-list small { font-size:9.5px; }
+  .gt-emergency .gt-contact-list b,
+  .gt-emergency .gt-contact-list a.is-long-number b { font-size:13.5px; }
+  .gt-emergency .gt-service-mini-grid { grid-auto-columns:68px; gap:7px; }
+  .gt-emergency .gt-service-mini-grid button { min-width:68px; min-height:112px; }
+  .gt-emergency .gt-expiry { font-size:8.8px; }
+  .gt-emergency .gt-expiry b { font-size:8.5px; }
+}
