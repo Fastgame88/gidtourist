@@ -380,21 +380,205 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
         <button
           type="button"
           className="gt-category-card gt-category-card--featured"
-          onClick={() => navigate("tourist", "place")}
+          onClick={() => navigate("tourist", "hot-offers")}
         >
-          <span className="gt-hot-offer-visual" aria-hidden="true">
-            <Thumb name="pool" className="gt-hot-offer-visual__main" />
-            <Thumb name="restaurant" className="gt-hot-offer-visual__mini gt-hot-offer-visual__mini--left" />
-            <Thumb name="store" className="gt-hot-offer-visual__mini gt-hot-offer-visual__mini--right" />
-            <i className="gt-hot-offer-visual__badge"><FlameKindling size={13} /></i>
-          </span>
-          <span className="gt-hot-offer-copy">
+          <span className="gt-category-card__icon"><FlameKindling size={24} /></span>
+          <span>
             <strong>Гаряча пропозиція</strong>
             <small>Актуальні знижки від партнерів</small>
           </span>
           <ChevronRight size={20} />
         </button>
       </div>
+    </div>
+  );
+}
+
+
+type HotOffer = {
+  id: string;
+  photo: PhotoName;
+  category: string;
+  title: string;
+  discount: string;
+  description: string;
+  validity: string;
+  badge: string;
+  badgeTone: "gold" | "green" | "red";
+  detail: string;
+};
+
+const hotOffers: HotOffer[] = [
+  {
+    id: "hutsul-restaurant",
+    photo: "restaurant",
+    category: "РЕСТОРАН",
+    title: "Гуцульська колиба",
+    discount: "-20%",
+    description: "-20% на основне меню",
+    validity: "Сьогодні до 22:00",
+    badge: "Топ ★",
+    badgeTone: "gold",
+    detail: "Скуштуйте традиційні карпатські страви зі знижкою 20% на основне меню. Пропозиція діє для гостей Gid Tourist при показі QR-коду.",
+  },
+  {
+    id: "spa-karpaty",
+    photo: "sauna",
+    category: "СПА",
+    title: "Spa Карпати",
+    discount: "-25%",
+    description: "-25% на SPA-послуги",
+    validity: "Лише цього тижня",
+    badge: "Рекомендація 👍",
+    badgeTone: "green",
+    detail: "Знижка 25% на вибрані SPA-процедури, сауну та релакс-зону. Попереднє бронювання рекомендоване.",
+  },
+  {
+    id: "river-tub",
+    photo: "tub",
+    category: "ВІДПОЧИНОК",
+    title: "Чан біля річки",
+    discount: "2 за 1",
+    description: "2 години за ціною 1",
+    validity: "До 17 липня",
+    badge: "Обмежено 🔥",
+    badgeTone: "red",
+    detail: "Забронюйте дві години відпочинку в чані та сплатіть лише за одну. Пропозиція діє у визначені часові слоти.",
+  },
+  {
+    id: "bike-rental",
+    photo: "jeep",
+    category: "АКТИВНИЙ ВІДПОЧИНОК",
+    title: "Прокат велосипедів",
+    discount: "-15%",
+    description: "-15% на оренду",
+    validity: "Для гостей регіону",
+    badge: "Рекомендація 👍",
+    badgeTone: "green",
+    detail: "Знижка 15% на оренду велосипедів для прогулянок гірськими маршрутами. Шолом входить у вартість.",
+  },
+  {
+    id: "souvenirs",
+    photo: "store",
+    category: "СУВЕНІРИ",
+    title: "Сувеніри Карпат",
+    discount: "🎁",
+    description: "Подарунок при покупці",
+    validity: "Акція дня",
+    badge: "Топ ★",
+    badgeTone: "gold",
+    detail: "Отримайте невеликий карпатський подарунок при покупці від 500 грн у партнерському магазині сувенірів.",
+  },
+];
+
+const HOT_OFFER_STORAGE_KEY = "gid-tourist-selected-hot-offer";
+
+function selectHotOffer(offer: HotOffer, navigate: Navigate) {
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(HOT_OFFER_STORAGE_KEY, offer.id);
+  }
+  navigate("tourist", "hot-offer-detail");
+}
+
+function readSelectedHotOffer() {
+  if (typeof window === "undefined") return hotOffers[0];
+  const selectedId = window.localStorage.getItem(HOT_OFFER_STORAGE_KEY);
+  return hotOffers.find((offer) => offer.id === selectedId) ?? hotOffers[0];
+}
+
+function HotOffersScreen({ navigate }: { navigate: Navigate }) {
+  return (
+    <div className="tourist-screen gt-screen gt-hot-offers-screen">
+      <header className="gt-hot-offers-topbar">
+        <button type="button" onClick={() => navigate("tourist", "home")} aria-label="Назад">
+          <ArrowLeft size={23} />
+          <span>Назад</span>
+        </button>
+        <button type="button" aria-label="Меню"><MoreVertical size={22} /></button>
+      </header>
+
+      <section className="gt-hot-offers-hero">
+        <Thumb name="restaurant" className="gt-hot-offers-hero__photo" />
+        <div className="gt-hot-offers-hero__shade" />
+        <span className="gt-hot-offers-hero__discount">до<br /><b>-30%</b></span>
+        <div className="gt-hot-offers-hero__copy">
+          <h1>Вигідні пропозиції<br />для вашої подорожі</h1>
+          <p>Від партнерів, яким<br />ми довіряємо 💚</p>
+        </div>
+      </section>
+
+      <section className="gt-hot-offers-list">
+        {hotOffers.map((offer) => (
+          <button type="button" className="gt-hot-offer-row" key={offer.id} onClick={() => selectHotOffer(offer, navigate)}>
+            <Thumb name={offer.photo} className="gt-hot-offer-row__photo" />
+            <span className={`gt-hot-offer-row__discount ${offer.discount === "🎁" ? "is-gift" : ""}`}>{offer.discount}</span>
+            <span className="gt-hot-offer-row__content">
+              <small>{offer.category}</small>
+              <strong>{offer.title}</strong>
+              <span>{offer.description}</span>
+              <i><Clock3 size={15} /> {offer.validity}</i>
+            </span>
+            <em className={`gt-hot-offer-row__badge is-${offer.badgeTone}`}>{offer.badge}</em>
+            <ChevronRight className="gt-hot-offer-row__arrow" size={22} />
+          </button>
+        ))}
+      </section>
+    </div>
+  );
+}
+
+function HotOfferDetailScreen({ navigate }: { navigate: Navigate }) {
+  const [offer, setOffer] = useState<HotOffer>(hotOffers[0]);
+
+  useEffect(() => {
+    setOffer(readSelectedHotOffer());
+  }, []);
+
+  return (
+    <div className="tourist-screen gt-screen gt-hot-offer-detail-screen">
+      <header className="gt-hot-offer-detail-topbar">
+        <button type="button" onClick={() => navigate("tourist", "hot-offers")}><ArrowLeft size={23} /><span>Назад</span></button>
+        <button type="button" aria-label="Поділитися"><Share2 size={20} /></button>
+      </header>
+
+      <section className="gt-hot-offer-detail-hero">
+        <Thumb name={offer.photo} className="gt-hot-offer-detail-hero__photo" />
+        <div className="gt-hot-offer-detail-hero__shade" />
+        <span className="gt-hot-offer-detail-hero__discount">{offer.discount}</span>
+        <div className="gt-hot-offer-detail-hero__copy">
+          <small>{offer.category}</small>
+          <h1>{offer.title}</h1>
+          <p>{offer.description}</p>
+        </div>
+      </section>
+
+      <main className="gt-hot-offer-detail-content">
+        <div className="gt-hot-offer-detail-status">
+          <span><Clock3 size={19} /><i><small>Термін дії</small><strong>{offer.validity}</strong></i></span>
+          <span><BadgeCheck size={19} /><i><small>Статус</small><strong>Перевірено партнером</strong></i></span>
+        </div>
+
+        <section className="gt-hot-offer-detail-card">
+          <h2>Про пропозицію</h2>
+          <p>{offer.detail}</p>
+          <div className="gt-hot-offer-detail-tags">
+            <span><Sparkles size={15} /> Ексклюзивно</span>
+            <span><MapPin size={15} /> Поруч</span>
+            <span><ShieldCheck size={15} /> Перевірено</span>
+          </div>
+        </section>
+
+        <section className="gt-hot-offer-detail-card gt-hot-offer-detail-card--partner">
+          <Thumb name={offer.photo} className="gt-hot-offer-detail-partner-photo" />
+          <div><small>Партнер Gid Tourist</small><strong>{offer.title}</strong><span><Star size={14} fill="currentColor" /> 4.9 · 126 відгуків</span></div>
+          <ChevronRight size={20} />
+        </section>
+
+        <div className="gt-hot-offer-detail-actions">
+          <button type="button" className="is-primary" onClick={() => navigate("tourist", "qr")}><QrCode size={20} /> Скористатися пропозицією</button>
+          <button type="button"><MapPin size={19} /> Побудувати маршрут</button>
+        </div>
+      </main>
     </div>
   );
 }
@@ -1746,6 +1930,10 @@ export function TouristScreen({
       return <CatalogScreen navigate={navigate} />;
     case "shop":
       return <ShopScreen navigate={navigate} />;
+    case "hot-offers":
+      return <HotOffersScreen navigate={navigate} />;
+    case "hot-offer-detail":
+      return <HotOfferDetailScreen navigate={navigate} />;
     case "entertainment":
       return <EntertainmentScreen navigate={navigate} />;
     case "transfer":

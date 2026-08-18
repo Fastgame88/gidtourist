@@ -213,6 +213,22 @@ export const screens: ScreenDefinition[] = [
     description: "Таксі, міжміські трансфери та оренда автомобілів",
     role: "tourist",
   },
+  {
+    id: "C20",
+    slug: "hot-offers",
+    title: "Гарячі пропозиції",
+    shortTitle: "Гарячі пропозиції",
+    description: "Актуальні знижки та спеціальні пропозиції від партнерів",
+    role: "tourist",
+  },
+  {
+    id: "C21",
+    slug: "hot-offer-detail",
+    title: "Деталі гарячої пропозиції",
+    shortTitle: "Пропозиція",
+    description: "Деталі знижки, партнер, термін дії та спосіб скористатися",
+    role: "tourist",
+  },
 
   {
     id: "P01",
