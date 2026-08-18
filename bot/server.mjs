@@ -50,9 +50,6 @@ const commandAliases = new Map([
   ["турист", "start"],
   ["partner", "partner"],
   ["партнер", "partner"],
-  ["ambassador", "ambassador"],
-  ["ambasador", "ambassador"],
-  ["амбасадор", "ambassador"],
   ["regional", "regional"],
   ["region", "regional"],
   ["регіональний", "regional"],
@@ -78,6 +75,31 @@ function startKeyboard() {
 
 function roleKeyboard(role, chatType) {
   const url = appLink(roleContent[role].path);
+
+  if (role === "partner") {
+    if (chatType === "private") {
+      return {
+        inline_keyboard: [[
+          { text: "Відкрити в Telegram", web_app: { url } },
+        ]],
+      };
+    }
+
+    return {
+      inline_keyboard: [[
+        { text: "Відкрити чат з ботом", url: `https://t.me/${botUsername}` },
+      ]],
+    };
+  }
+
+  if (role === "admin") {
+    return {
+      inline_keyboard: [[
+        { text: "Відкрити на комп’ютері", url },
+      ]],
+    };
+  }
+
   const mobileButton = chatType === "private"
     ? { text: "Відкрити в Telegram", web_app: { url } }
     : { text: "Відкрити мобільну версію", url };
@@ -149,7 +171,7 @@ async function handleMessage(message) {
 
   await sendMessage(
     message.chat.id,
-    "Оберіть потрібний розділ командою:\n/start — застосунок туриста\n/partner — кабінет партнера\n/ambassador — кабінет амбасадора\n/regional — регіональний менеджер\n/admin — адміністратор",
+    "Оберіть потрібний розділ командою:\n/start — застосунок туриста\n/partner — кабінет партнера\n/regional — регіональний менеджер\n/admin — адміністратор",
   );
 }
 
@@ -162,7 +184,6 @@ async function configureBot() {
     commands: [
       { command: "start", description: "Відкрити застосунок туриста" },
       { command: "partner", description: "Кабінет партнера" },
-      { command: "ambassador", description: "Кабінет амбасадора" },
       { command: "regional", description: "Регіональний менеджер" },
       { command: "admin", description: "Головна адмінпанель" },
     ],
