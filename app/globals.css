@@ -17869,3 +17869,39 @@ button.gt-service-card {
     padding-top: 9px;
   }
 }
+
+/* Hot offers list spacing + home separation refinement */
+.gt-hot-offers-screen {
+  padding-left: 18px;
+  padding-right: 18px;
+}
+
+.gt-hot-offers-list {
+  gap: 8px;
+}
+
+.gt-hot-offer-row {
+  padding: 7px;
+  border: 0;
+  border-radius: 14px;
+  box-shadow: 0 3px 13px rgba(28,48,36,.065);
+}
+
+.gt-home-screen .gt-category-grid {
+  margin-top: 8px;
+}
+
+@media (max-width:390px) {
+  .gt-hot-offers-screen {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .gt-hot-offer-row {
+    padding: 7px;
+  }
+
+  .gt-home-screen .gt-category-grid {
+    margin-top: 7px;
+  }
+}
