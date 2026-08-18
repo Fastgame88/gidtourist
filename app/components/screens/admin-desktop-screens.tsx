@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   BarChart3,
   Bell,
+  Building2,
   BriefcaseBusiness,
   CalendarDays,
   Check,
@@ -15,23 +16,32 @@ import {
   Clock3,
   Download,
   Edit3,
+  Database,
   Eye,
   FileText,
   Filter,
   Gift,
   ImagePlus,
   Info,
+  KeyRound,
+  LockKeyhole,
+  Mail,
   MapPin,
   Menu,
   MoreVertical,
+  Palette,
   Percent,
+  Plug,
   Phone,
   Plus,
   RefreshCcw,
   Search,
   Settings,
   ShieldCheck,
+  Smartphone,
   Store,
+  Trash2,
+  Upload,
   UserRound,
   UsersRound,
   WalletCards,
@@ -100,11 +110,11 @@ function AdminSidebar({ active, navigate }: { active: NavKey; navigate: Navigate
   );
 }
 
-function AdminShell({ active, navigate, children }: AdminProps & { active: NavKey; children: ReactNode }) {
+function AdminShell({ active, navigate, children, contentClassName = "" }: AdminProps & { active: NavKey; children: ReactNode; contentClassName?: string }) {
   return (
     <div className="ad-shell">
       <AdminSidebar active={active} navigate={navigate} />
-      <main className="ad-main">{children}</main>
+      <main className={`ad-main ${contentClassName}`.trim()}>{children}</main>
     </div>
   );
 }
@@ -294,7 +304,7 @@ const clientRows = [
 
 function ClientsScreen({ navigate }: AdminProps) {
   return (
-    <AdminShell active="clients" navigate={navigate}>
+    <AdminShell active="clients" navigate={navigate} contentClassName="ad-main--clients">
       <AdminPageHeader title="Клієнти" />
       <FilterStrip type="clients" />
       <AdminTable columns={[
@@ -398,7 +408,7 @@ function ClientHeader({ navigate }: AdminProps) {
 
 function ClientDetailsScreen({ navigate }: AdminProps) {
   return (
-    <AdminShell active="clients" navigate={navigate}>
+    <AdminShell active="clients" navigate={navigate} contentClassName="ad-main--clients ad-main--client-detail">
       <ClientHeader navigate={navigate}/>
       <section className="ad-detail-card ad-client-detail-card">
         <div className="ad-detail-card__title"><h2>Дані клієнта</h2><Status>Після погодження даних ви зможете редагувати клієнта</Status></div>
@@ -422,7 +432,7 @@ function ClientHistoryScreen({ navigate }: AdminProps) {
     ["18.05.2024 09:22","Нарахування","Відгук про перебування\nГірський Затишок","+20","Зараховано"],
   ];
   return (
-    <AdminShell active="clients" navigate={navigate}>
+    <AdminShell active="clients" navigate={navigate} contentClassName="ad-main--clients ad-main--client-history">
       <ClientHeader navigate={navigate}/>
       <section className="ad-detail-card"><div className="ad-section-title"><h2>Історія бонусів</h2><DateRange/></div><AdminTable columns={[{label:"Дата / час",className:"1fr"},{label:"Тип операції",className:"1fr"},{label:"Опис",className:"2.2fr"},{label:"Бонуси",className:".7fr"},{label:"Партнер",className:"1.2fr"},{label:"Статус",className:".8fr"}]}>{bonusHistory.map((r)=><TableRow key={r[0]} columns={["1fr","1fr","2.2fr",".7fr","1.2fr",".8fr"]}><span>{r[0]}</span><Status tone={r[1]==="Списання"?"red":"green"}>{r[1]}</Status><span className="ad-preline">{r[2]}</span><strong className={r[3].startsWith("-")?"ad-red-number":"ad-green-number"}>{r[3]}</strong><span>Гірський Затишок</span><Status>{r[4]}</Status></TableRow>)}</AdminTable></section>
       <section className="ad-detail-card"><div className="ad-section-title"><h2>Історія активності</h2><DateRange/></div><AdminTable columns={[{label:"Дата / час",className:"1fr"},{label:"Тип активності",className:"1fr"},{label:"Деталі",className:"2fr"},{label:"Партнер / Локація",className:"1.4fr"},{label:"Пристрій",className:"1.2fr"}]}>{[["28.05.2024 14:32","Бронювання","Бронювання №B-4821\n2 дорослих, 2 ночі","Гірський Затишок\nЯремче","Веб\nChrome / Windows"],["24.05.2024 10:15","QR-сканування","Водоспад Пробій\nОтримано 15 бонусів","Гірський Затишок\nЯремче","Мобільний додаток\niOS 17.4"],["20.05.2024 16:40","Відгук","Оцінка 5 ⭐\nЧудове місце для відпочинку!","Гірський Затишок\nЯремче","Мобільний додаток\niOS 17.4"]].map((r)=><TableRow key={r[0]} columns={["1fr","1fr","2fr","1.4fr","1.2fr"]}><span>{r[0]}</span><strong>{r[1]}</strong><span className="ad-preline">{r[2]}</span><span className="ad-preline">{r[3]}</span><span className="ad-preline">{r[4]}</span></TableRow>)}</AdminTable></section>
@@ -436,7 +446,7 @@ function PartnerDetailHeader({ navigate }: AdminProps) {
 
 function PartnerDetailsScreen({ navigate }: AdminProps) {
   return (
-    <AdminShell active="partners" navigate={navigate}>
+    <AdminShell active="partners" navigate={navigate} contentClassName="ad-main--partner-detail">
       <PartnerDetailHeader navigate={navigate}/>
       <section className="ad-detail-card"><div className="ad-detail-card__title"><h2>Дані партнера</h2><Status>Після погодження даних ви зможете редагувати партнера</Status></div><div className="ad-partner-info-grid">
         <div><small>Категорія</small><strong>Харчування</strong></div><div><small>Графік роботи</small><strong>Щоденно 11:00 – 22:00</strong></div><div><small>Telegram ID</small><strong>@Hutsulshchyna_rest</strong></div>
@@ -452,7 +462,7 @@ function PartnerDetailsScreen({ navigate }: AdminProps) {
 
 function PartnerHistoryScreen({ navigate }: AdminProps) {
   return (
-    <AdminShell active="partners" navigate={navigate}>
+    <AdminShell active="partners" navigate={navigate} contentClassName="ad-main--partner-history">
       <PartnerDetailHeader navigate={navigate}/>
       <section className="ad-detail-card"><div className="ad-section-title"><h2>Історія взаєморозрахунків (нарахування за продаж)</h2><DateRange/></div><AdminTable columns={[{label:"Дата операції",className:"1fr"},{label:"Клієнт",className:"1fr"},{label:"Операція / Послуга",className:"2fr"},{label:"Сума продажу",className:"1fr"},{label:"Ставка платформи",className:"1fr"},{label:"Нараховано партнеру",className:"1.1fr"}]}>{[["31.05.2024 18:42","Іван Петренко","Рахунок №9371\nРесторанні послуги","1 280 ₴","10%","128 ₴"],["31.05.2024 15:21","Оксана Гнатюк","Рахунок №1362\nРесторанні послуги","950 ₴","10%","95 ₴"],["30.05.2024 20:05","Тарас Мельник","Рахунок №5181\nВечірнє обслуговування","5 600 ₴","10%","560 ₴"]].map(r=><TableRow key={r[0]} columns={["1fr","1fr","2fr","1fr","1fr","1.1fr"]}>{r.map((v,i)=><span key={i} className={i===2?"ad-preline":""}>{v}</span>)}</TableRow>)}</AdminTable></section>
       <section className="ad-detail-card"><div className="ad-section-title"><h2>Історія оплат бонусами (лише повна оплата)</h2></div><div className="ad-info-banner"><Info size={17}/> Оплата бонусами доступна лише на повну суму чека. Часткове списання бонусів недоступне.</div><AdminTable columns={[{label:"Дата операції",className:"1fr"},{label:"Клієнт",className:"1fr"},{label:"Операція / Послуга",className:"2fr"},{label:"Сума чека",className:"1fr"},{label:"Оплачено бонусами",className:"1.2fr"}]}>{[["31.05.2024 12:08","Іван Петренко","Рахунок №1391\nРесторанні послуги","1 120 ₴","1 120 бонусів"],["28.05.2024 21:44","Володимир Дячук","Рахунок №8350\nРесторанні послуги","3 480 ₴","3 480 бонусів"]].map(r=><TableRow key={r[0]} columns={["1fr","1fr","2fr","1fr","1.2fr"]}>{r.map((v,i)=><span key={i} className={i===2?"ad-preline":""}>{v}</span>)}</TableRow>)}</AdminTable></section>
@@ -470,7 +480,7 @@ function SettlementsScreen({ navigate }: AdminProps) {
     ["🚕","Таксі Карпати","Ворохта","Трансфер","1","3 200 грн","0 грн","3 200 грн","Очікує оплату","orange"],
   ];
   return (
-    <AdminShell active="settlements" navigate={navigate}>
+    <AdminShell active="settlements" navigate={navigate} contentClassName="ad-main--settlements">
       <AdminPageHeader title="Взаєморозрахунки з партнерами" subtitle="Контроль рахунків і платежів партнерів" action={<div className="ad-page-actions"><DateRange/><PrimaryButton><Download size={17}/> Експорт</PrimaryButton></div>} />
       <div className="ad-summary-grid ad-summary-grid--five"><SummaryCard label="Виставлено рахунків" value="128 450 грн" note="12 рахунків" tone="blue"/><SummaryCard label="Оплачено" value="92 350 грн" note="8 рахунків"/><SummaryCard label="Очікує оплату" value="28 100 грн" note="3 рахунки" tone="orange"/><SummaryCard label="Прострочено" value="7 850 грн" note="2 рахунки" tone="red"/><SummaryCard label="Загальна заборгованість" value="35 950 грн" note="Очікує + Прострочено" tone="violet"/></div>
       <FilterStrip type="settlements" />
@@ -501,7 +511,7 @@ function Donut({ center, colors = "green" }: { center: string; colors?: string }
 }
 
 function StatisticsOverview({ navigate }: AdminProps) {
-  return <AdminShell active="statistics" navigate={navigate}><StatTop slug="admin-statistics" navigate={navigate} title="Статистика"/><div className="ad-summary-grid ad-summary-grid--four"><SummaryCard label="Загальний оборот" value="1 245 820 грн" note="+12.5% порівняно з 01.04.2024 – 30.04.2024"/><SummaryCard label="Кількість клієнтів" value="8 732" note="+8.2% порівняно з попереднім періодом" tone="violet"/><SummaryCard label="Нараховано бонусів" value="124 582 грн" note="+9.7% порівняно з попереднім періодом" tone="orange"/><SummaryCard label="Кількість партнерів" value="186" note="+6 нових партнерів" tone="blue"/></div><FilterStrip type="stats"/><div className="ad-stats-dashboard"><section className="ad-chart-card ad-chart-card--wide"><div className="ad-section-title"><h2>Оборот за період</h2><SelectBox value="По днях"/></div><LineChart variant="mixed"/></section><section className="ad-chart-card"><h2>Оборот за категоріями</h2><div className="ad-donut-layout"><Donut center="1 245 820 грн" colors="multi"/><ul>{["Де купити 32%","Де поїсти 24%","Де відпочити 18%","Розваги 12%","Трансфер 9%","Халепа? 5%"].map(x=><li key={x}>{x}</li>)}</ul></div></section><section className="ad-chart-card"><h2>Розподіл по локаціях</h2>{["Яремче 28%","Татарів 24%","Микуличин 18%","Ворохта 16%","Поляниця 9%","Інше 5%"].map((x,i)=><div className="ad-progress-line" key={x}><span>{x}</span><i><b style={{width:`${92-i*12}%`}}/></i></div>)}</section><section className="ad-chart-card"><h2>Топ партнерів за оборотом</h2><div className="ad-simple-table">{["Колиба “Біля річки”","Готель “Карпатські зорі”","Магазин “Гірські товари”","Парк розваг “Драйв”","Таксі Карпати"].map((x,i)=><div key={x}><span>{i+1}</span><strong>{x}</strong><span>{["98 450 грн","82 600 грн","75 320 грн","62 180 грн","55 310 грн"][i]}</span></div>)}</div></section><section className="ad-chart-card"><h2>Активність клієнтів</h2><div className="ad-summary-grid ad-summary-grid--four"><SummaryCard label="Нові клієнти" value="1 245"/><SummaryCard label="Активні клієнти" value="5 672"/><SummaryCard label="Повернулися" value="2 815"/><SummaryCard label="Здійснено покупок" value="18 732"/></div><div className="ad-simple-table">{["QR код","Партнер","Рекомендації","Соціальні мережі","Інше"].map((x,i)=><div key={x}><strong>{x}</strong><span>{["3 245","2 876","1 254","856","501"][i]}</span><span>{["468 250 грн","389 420 грн","182 310 грн","128 450 грн","77 390 грн"][i]}</span></div>)}</div></section><section className="ad-chart-card"><h2>Фінансова картина</h2>{[["Виставлено рахунків","128 450 грн"],["Оплачено","92 350 грн"],["Очікує оплату","28 100 грн"],["Прострочено","7 850 грн"],["Загальна заборгованість","35 950 грн"]].map(([l,v])=><div className="ad-key-value" key={l}><span>{l}</span><strong>{v}</strong></div>)}<h2>Бонусна програма</h2>{[["Нараховано бонусів","124 582 грн"],["Використано бонусів","68 420 грн"],["Кількість операцій","2 856"],["Середній чек з бонусами","132 грн"]].map(([l,v])=><div className="ad-key-value" key={l}><span>{l}</span><strong>{v}</strong></div>)}</section></div></AdminShell>;
+  return <AdminShell active="statistics" navigate={navigate} contentClassName="ad-main--statistics"><StatTop slug="admin-statistics" navigate={navigate} title="Статистика"/><div className="ad-summary-grid ad-summary-grid--four"><SummaryCard label="Загальний оборот" value="1 245 820 грн" note="+12.5% порівняно з 01.04.2024 – 30.04.2024"/><SummaryCard label="Кількість клієнтів" value="8 732" note="+8.2% порівняно з попереднім періодом" tone="violet"/><SummaryCard label="Нараховано бонусів" value="124 582 грн" note="+9.7% порівняно з попереднім періодом" tone="orange"/><SummaryCard label="Кількість партнерів" value="186" note="+6 нових партнерів" tone="blue"/></div><FilterStrip type="stats"/><div className="ad-stats-dashboard"><section className="ad-chart-card ad-chart-card--wide"><div className="ad-section-title"><h2>Оборот за період</h2><SelectBox value="По днях"/></div><LineChart variant="mixed"/></section><section className="ad-chart-card"><h2>Оборот за категоріями</h2><div className="ad-donut-layout"><Donut center="1 245 820 грн" colors="multi"/><ul>{["Де купити 32%","Де поїсти 24%","Де відпочити 18%","Розваги 12%","Трансфер 9%","Халепа? 5%"].map(x=><li key={x}>{x}</li>)}</ul></div></section><section className="ad-chart-card"><h2>Розподіл по локаціях</h2>{["Яремче 28%","Татарів 24%","Микуличин 18%","Ворохта 16%","Поляниця 9%","Інше 5%"].map((x,i)=><div className="ad-progress-line" key={x}><span>{x}</span><i><b style={{width:`${92-i*12}%`}}/></i></div>)}</section><section className="ad-chart-card"><h2>Топ партнерів за оборотом</h2><div className="ad-simple-table">{["Колиба “Біля річки”","Готель “Карпатські зорі”","Магазин “Гірські товари”","Парк розваг “Драйв”","Таксі Карпати"].map((x,i)=><div key={x}><span>{i+1}</span><strong>{x}</strong><span>{["98 450 грн","82 600 грн","75 320 грн","62 180 грн","55 310 грн"][i]}</span></div>)}</div></section><section className="ad-chart-card"><h2>Активність клієнтів</h2><div className="ad-summary-grid ad-summary-grid--four"><SummaryCard label="Нові клієнти" value="1 245"/><SummaryCard label="Активні клієнти" value="5 672"/><SummaryCard label="Повернулися" value="2 815"/><SummaryCard label="Здійснено покупок" value="18 732"/></div><div className="ad-simple-table">{["QR код","Партнер","Рекомендації","Соціальні мережі","Інше"].map((x,i)=><div key={x}><strong>{x}</strong><span>{["3 245","2 876","1 254","856","501"][i]}</span><span>{["468 250 грн","389 420 грн","182 310 грн","128 450 грн","77 390 грн"][i]}</span></div>)}</div></section><section className="ad-chart-card"><h2>Фінансова картина</h2>{[["Виставлено рахунків","128 450 грн"],["Оплачено","92 350 грн"],["Очікує оплату","28 100 грн"],["Прострочено","7 850 грн"],["Загальна заборгованість","35 950 грн"]].map(([l,v])=><div className="ad-key-value" key={l}><span>{l}</span><strong>{v}</strong></div>)}<h2>Бонусна програма</h2>{[["Нараховано бонусів","124 582 грн"],["Використано бонусів","68 420 грн"],["Кількість операцій","2 856"],["Середній чек з бонусами","132 грн"]].map(([l,v])=><div className="ad-key-value" key={l}><span>{l}</span><strong>{v}</strong></div>)}</section></div></AdminShell>;
 }
 
 function StatsMetricGrid({ kind }: { kind: "partners" | "clients" | "bonuses" | "settlements" }) {
@@ -513,11 +523,263 @@ function StatisticsSubscreen({ navigate, kind }: AdminProps & { kind: "partners"
   const slug = `admin-statistics-${kind}`;
   const titleMap = { partners: "Статистика — Партнери", clients: "Статистика — Клієнти", bonuses: "Статистика — Бонуси", settlements: "Статистика — Розрахунки" };
   const donutCenter = kind === "partners" ? "186" : kind === "clients" ? "8 732" : kind === "bonuses" ? "124 582 грн" : "128 450 грн";
-  return <AdminShell active="statistics" navigate={navigate}><StatTop slug={slug} navigate={navigate} title={titleMap[kind]}/><StatsMetricGrid kind={kind}/><FilterStrip type="stats"/><div className="ad-stats-subgrid"><section className="ad-chart-card ad-chart-card--wide"><h2>{kind==="clients"?"Динаміка клієнтів":kind==="partners"?"Динаміка кількості партнерів":kind==="bonuses"?"Динаміка бонусів, грн":"Динаміка розрахунків, грн"}</h2><LineChart variant="mixed"/></section><section className="ad-chart-card"><h2>{kind==="clients"?"Клієнти за локаціями":kind==="partners"?"Партнери за категоріями":kind==="bonuses"?"Бонуси за категоріями (нараховано)":"Статус рахунків"}</h2><div className="ad-donut-layout"><Donut center={donutCenter} colors="multi"/><ul>{["Де купити 32%","Де поїсти 24%","Де відпочити 18%","Розваги 12%","Трансфер 9%","Інше 5%"].map(x=><li key={x}>{x}</li>)}</ul></div></section><section className="ad-chart-card"><h2>{kind==="clients"?"Клієнти за статтю":kind==="partners"?"Топ партнерів за оборотом":kind==="bonuses"?"Топ партнерів за нарахованими бонусами":"Заборгованість по локаціях"}</h2>{["Колиба “Біля річки”","Готель “Карпатські зорі”","Магазин “Гірські товари”","Парк розваг “Драйв”","Таксі Карпати"].map((x,i)=><div className="ad-progress-line" key={x}><span>{x}</span><i><b style={{width:`${92-i*13}%`}}/></i></div>)}</section><section className="ad-chart-card"><h2>{kind==="clients"?"Топ клієнтів":kind==="partners"?"Активність партнерів":kind==="bonuses"?"Топ клієнтів за використаними бонусами":"Рахунки"}</h2><div className="ad-simple-table">{["Олександр К.","Марія І.","Іван П.","Наталія Т.","Андрій С."].map((x,i)=><div key={x}><span>{i+1}</span><strong>{x}</strong><span>{["28","24","21","19","18"][i]}</span></div>)}</div></section></div></AdminShell>;
+  return <AdminShell active="statistics" navigate={navigate} contentClassName="ad-main--statistics"><StatTop slug={slug} navigate={navigate} title={titleMap[kind]}/><StatsMetricGrid kind={kind}/><FilterStrip type="stats"/><div className="ad-stats-subgrid"><section className="ad-chart-card ad-chart-card--wide"><h2>{kind==="clients"?"Динаміка клієнтів":kind==="partners"?"Динаміка кількості партнерів":kind==="bonuses"?"Динаміка бонусів, грн":"Динаміка розрахунків, грн"}</h2><LineChart variant="mixed"/></section><section className="ad-chart-card"><h2>{kind==="clients"?"Клієнти за локаціями":kind==="partners"?"Партнери за категоріями":kind==="bonuses"?"Бонуси за категоріями (нараховано)":"Статус рахунків"}</h2><div className="ad-donut-layout"><Donut center={donutCenter} colors="multi"/><ul>{["Де купити 32%","Де поїсти 24%","Де відпочити 18%","Розваги 12%","Трансфер 9%","Інше 5%"].map(x=><li key={x}>{x}</li>)}</ul></div></section><section className="ad-chart-card"><h2>{kind==="clients"?"Клієнти за статтю":kind==="partners"?"Топ партнерів за оборотом":kind==="bonuses"?"Топ партнерів за нарахованими бонусами":"Заборгованість по локаціях"}</h2>{["Колиба “Біля річки”","Готель “Карпатські зорі”","Магазин “Гірські товари”","Парк розваг “Драйв”","Таксі Карпати"].map((x,i)=><div className="ad-progress-line" key={x}><span>{x}</span><i><b style={{width:`${92-i*13}%`}}/></i></div>)}</section><section className="ad-chart-card"><h2>{kind==="clients"?"Топ клієнтів":kind==="partners"?"Активність партнерів":kind==="bonuses"?"Топ клієнтів за використаними бонусами":"Рахунки"}</h2><div className="ad-simple-table">{["Олександр К.","Марія І.","Іван П.","Наталія Т.","Андрій С."].map((x,i)=><div key={x}><span>{i+1}</span><strong>{x}</strong><span>{["28","24","21","19","18"][i]}</span></div>)}</div></section></div></AdminShell>;
+}
+
+type SettingsSlug =
+  | "admin-settings"
+  | "admin-settings-general"
+  | "admin-settings-company"
+  | "admin-settings-partners"
+  | "admin-settings-bonuses"
+  | "admin-settings-notifications"
+  | "admin-settings-security"
+  | "admin-settings-integrations"
+  | "admin-settings-audit";
+
+const settingsTabs: Array<{ label: string; slug: SettingsSlug }> = [
+  { label: "Загальні", slug: "admin-settings-general" },
+  { label: "Компанія", slug: "admin-settings-company" },
+  { label: "Партнери та комісії", slug: "admin-settings-partners" },
+  { label: "Бонусна система", slug: "admin-settings-bonuses" },
+  { label: "Сповіщення", slug: "admin-settings-notifications" },
+  { label: "Безпека", slug: "admin-settings-security" },
+  { label: "Інтеграції", slug: "admin-settings-integrations" },
+  { label: "Журнал дій", slug: "admin-settings-audit" },
+];
+
+function SettingsTabs({ active, navigate }: { active: SettingsSlug; navigate: Navigate }) {
+  const normalized = active === "admin-settings" ? "admin-settings-general" : active;
+  return (
+    <nav className="ad-settings-tabs">
+      {settingsTabs.map((tab) => (
+        <button
+          type="button"
+          key={tab.slug}
+          className={normalized === tab.slug ? "is-active" : ""}
+          onClick={() => navigate("admin", tab.slug)}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </nav>
+  );
+}
+
+function SettingsTop({ title, active, navigate }: { title: string; active: SettingsSlug; navigate: Navigate }) {
+  return (
+    <>
+      <AdminPageHeader
+        title={`Налаштування — ${title}`}
+        action={<div className="ad-page-actions"><DateRange /><PrimaryButton><Download size={17}/> Експорт <ChevronDown size={15}/></PrimaryButton></div>}
+      />
+      <SettingsTabs active={active} navigate={navigate} />
+    </>
+  );
+}
+
+function SettingToggle({ label, on = true, note }: { label: string; on?: boolean; note?: string }) {
+  return (
+    <div className="ad-setting-toggle-row">
+      <div><strong>{label}</strong>{note ? <small>{note}</small> : null}</div>
+      <button type="button" className={`ad-toggle ${on ? "is-on" : ""}`} aria-label={label}><i /></button>
+    </div>
+  );
+}
+
+function SettingField({ label, value, wide = false }: { label: string; value: string; wide?: boolean }) {
+  return (
+    <label className={`ad-setting-field ${wide ? "is-wide" : ""}`}>
+      <span>{label}</span>
+      <div>{value}<ChevronDown size={15}/></div>
+    </label>
+  );
+}
+
+function SettingsPanel({ title, children, className = "" }: { title: string; children: ReactNode; className?: string }) {
+  return <section className={`ad-settings-panel ${className}`.trim()}><h2>{title}</h2>{children}</section>;
+}
+
+function GeneralSettingsScreen({ navigate }: AdminProps) {
+  return (
+    <AdminShell active="settings" navigate={navigate} contentClassName="ad-main--settings">
+      <SettingsTop title="Загальні" active="admin-settings-general" navigate={navigate} />
+      <div className="ad-settings-layout ad-settings-layout--two">
+        <SettingsPanel title="Загальні налаштування">
+          <div className="ad-setting-fields-grid">
+            <SettingField label="Мова інтерфейсу" value="Українська" />
+            <SettingField label="Часовий пояс" value="(UTC+03:00) Київ" />
+            <SettingField label="Формат дати" value="DD.MM.YYYY" />
+            <SettingField label="Валюта" value="UAH (₴) – Гривня" />
+          </div>
+          <div className="ad-settings-toggle-stack">
+            <SettingToggle label="Показувати архівних партнерів" />
+            <SettingToggle label="Показувати неактивних клієнтів" />
+            <SettingToggle label="Автоматичне оновлення даних" />
+          </div>
+        </SettingsPanel>
+        <SettingsPanel title="Логотип та брендування">
+          <div className="ad-branding-box">
+            <div className="ad-brand-logo"><AdminLogo /></div>
+            <div className="ad-brand-actions"><OutlineButton><Upload size={16}/> Змінити логотип</OutlineButton><button type="button" className="ad-danger-outline"><Trash2 size={15}/> Видалити</button></div>
+          </div>
+          <div className="ad-color-row"><span>Основний колір</span><b className="is-green"/> <strong>#16A34A</strong></div>
+          <div className="ad-color-row"><span>Додатковий колір</span><b className="is-dark"/> <strong>#1F2937</strong></div>
+        </SettingsPanel>
+        <SettingsPanel title="Локації">
+          <p className="ad-settings-help">Керуйте локаціями, у яких працюють ваші партнери.</p>
+          <div className="ad-settings-table">
+            <div className="ad-settings-table__head"><span>Локація</span><span>Кількість партнерів</span><span>Дії</span></div>
+            {[['Яремче','42'],['Микуличин','28'],['Татарів','35'],['Ворохта','37'],['Поляниця','31'],['Інше','13']].map(([name,count])=><div key={name}><span>⋮⋮ &nbsp; {name}</span><span>{count}</span><span className="ad-mini-actions"><button><Edit3 size={14}/></button><button className="is-danger"><Trash2 size={14}/></button></span></div>)}
+          </div>
+          <OutlineButton><Plus size={16}/> Додати локацію</OutlineButton>
+        </SettingsPanel>
+        <SettingsPanel title="Інші налаштування">
+          <SettingToggle label="Дозволити реєстрацію нових партнерів" />
+          <SettingToggle label="Потрібне підтвердження партнера адміністратором" />
+          <SettingToggle label="Дозволити партнерам редагувати свої дані" />
+          <SettingToggle label="Відображати рейтинг партнера" />
+          <SettingToggle label="Показувати підказки в інтерфейсі" />
+          <SettingToggle label="Режим технічного обслуговування" on={false} />
+        </SettingsPanel>
+        <SettingsPanel title="Зберігання даних">
+          <div className="ad-setting-fields-grid"><SettingField label="Термін зберігання логів" value="12 місяців"/><SettingField label="Термін зберігання архівних даних" value="24 місяці"/></div>
+          <div className="ad-info-banner"><Info size={17}/> Після завершення терміну дані будуть автоматично архівовані або видалені.</div>
+        </SettingsPanel>
+        <SettingsPanel title="Дії">
+          <div className="ad-settings-actions"><OutlineButton><Download size={16}/> Експорт налаштувань</OutlineButton><button type="button" className="ad-danger-outline"><RefreshCcw size={16}/> Скинути налаштування</button></div>
+          <div className="ad-warning-banner">Скидання налаштувань поверне всі параметри до значень за замовчуванням.</div>
+        </SettingsPanel>
+      </div>
+    </AdminShell>
+  );
+}
+
+function CompanySettingsScreen({ navigate }: AdminProps) {
+  return (
+    <AdminShell active="settings" navigate={navigate} contentClassName="ad-main--settings">
+      <SettingsTop title="Компанія" active="admin-settings-company" navigate={navigate} />
+      <div className="ad-settings-layout ad-settings-layout--two">
+        <SettingsPanel title="Інформація про компанію">
+          <div className="ad-setting-fields-grid">
+            <SettingField label="Назва компанії" value="Gid Tourist"/><SettingField label="Email" value="info@gidtourist.ua"/>
+            <SettingField label="Юридична назва" value="ФОП Іваненко Іван Іванович"/><SettingField label="Телефон" value="+38 (097) 123-45-67"/>
+            <SettingField label="ЄДРПОУ / ІПН" value="1234567890"/><SettingField label="Вебсайт" value="https://gidtourist.ua"/>
+            <SettingField label="Країна" value="Україна"/><SettingField label="Адреса" value="м. Яремче, вул. Свободи, 123"/>
+          </div>
+        </SettingsPanel>
+        <SettingsPanel title="Банківські реквізити">
+          <div className="ad-kv-list">{[['IBAN','UA12 3456 7890 1234 5678 9012 3456 789'],['Банк','АТ КБ “ПриватБанк”'],['ЄДРПОУ банку','14360570']].map(([l,v])=><div key={l}><span>{l}</span><strong>{v}</strong></div>)}</div>
+          <h3>Додаткові реквізити</h3><div className="ad-kv-list">{[['Платник ПДВ','Так'],['Ставка ПДВ','20%'],['Тип діяльності','Надання туристичних послуг'],['Примітка','Доступна за співпраці']].map(([l,v])=><div key={l}><span>{l}</span><strong>{v}</strong></div>)}</div>
+        </SettingsPanel>
+        <SettingsPanel title="Додаткова інформація"><div className="ad-setting-fields-grid"><SettingField label="Часовий пояс" value="(UTC+03:00) Київ"/><SettingField label="Формат дати" value="DD.MM.YYYY"/><SettingField label="Валюта" value="UAH (₴) – Гривня"/><SettingField label="Формат часу" value="24 години (HH:mm)"/><SettingField label="Мова інтерфейсу" value="Українська"/><SettingField label="Початок робочого тижня" value="Понеділок"/></div></SettingsPanel>
+        <SettingsPanel title="Документи компанії">
+          <div className="ad-doc-list">{[['Свідоцтво про реєстрацію ФОП','svidotstvo_fop.pdf'],['Виписка з ЄДР','vypyska_edr.pdf'],['Платник ПДВ','pdv.pdf'],['Статут / Положення','statut.pdf']].map(([doc,file])=><div key={doc}><FileText size={16}/><span><strong>{doc}</strong><small>{file}</small></span><small>12.01.2024</small><button><Download size={14}/></button><button className="is-danger"><Trash2 size={14}/></button></div>)}</div>
+          <OutlineButton><Plus size={16}/> Додати документ</OutlineButton>
+        </SettingsPanel>
+        <SettingsPanel title="Логотип та брендування"><div className="ad-branding-box"><div className="ad-brand-logo"><AdminLogo /></div><div className="ad-brand-actions"><OutlineButton><Upload size={16}/> Змінити логотип</OutlineButton><button className="ad-danger-outline"><Trash2 size={15}/> Видалити</button></div></div><div className="ad-color-row"><span>Основний колір</span><b className="is-green"/><strong>#16A34A</strong></div><div className="ad-color-row"><span>Додатковий колір</span><b className="is-dark"/><strong>#1F2937</strong></div></SettingsPanel>
+        <SettingsPanel title="Налаштування брендування"><SettingToggle label="Відображати логотип у рахунках та чеках"/><SettingToggle label="Використовувати фірмові кольори в інтерфейсі"/><div className="ad-info-banner"><Info size={17}/> Зміни брендування застосовуються до всіх документів та сторінок адміністративної панелі.</div></SettingsPanel>
+      </div>
+    </AdminShell>
+  );
+}
+
+function PartnerCommissionSettingsScreen({ navigate }: AdminProps) {
+  const statuses = [['Активний','Партнер активний та співпрацює','42','green'],['На перевірці','Заявка партнера на розгляді','5','orange'],['Призупинений','Співпраця тимчасово призупинена','3','blue'],['Неактивний','Партнер неактивний','7','gray'],['Заблокований','Доступ партнера заблоковано','2','red']] as const;
+  return (
+    <AdminShell active="settings" navigate={navigate} contentClassName="ad-main--settings">
+      <SettingsTop title="Партнери та комісії" active="admin-settings-partners" navigate={navigate}/>
+      <div className="ad-settings-layout ad-settings-layout--two">
+        <SettingsPanel title="Умови комісії (за замовчуванням)"><div className="ad-setting-fields-grid"><SettingField label="Тип комісії" value="Відсоток від суми замовлення"/><SettingField label="Розмір комісії" value="10 %"/></div><div className="ad-info-banner"><Info size={17}/> Індивідуальні умови комісії для партнерів можна налаштувати на сторінці партнера.</div></SettingsPanel>
+        <SettingsPanel title="Додаткові налаштування"><SettingToggle label="Потрібне підтвердження партнера адміністратором"/><SettingToggle label="Автоматично призначати стандартну комісію"/><SettingToggle label="Дозволяти партнерам бачити свою комісію"/><SettingToggle label="Показувати партнерам борг у кабінеті"/></SettingsPanel>
+        <SettingsPanel title="Статуси партнерів"><div className="ad-status-settings-list">{statuses.map(([name,desc,count,tone])=><div key={name}><span className={`ad-status-dot is-${tone}`}/><strong>{name}</strong><small>{desc}</small><b>{count}</b><button><Edit3 size={14}/></button></div>)}</div><OutlineButton><Plus size={15}/> Додати статус</OutlineButton></SettingsPanel>
+        <SettingsPanel title="Типи партнерів"><div className="ad-settings-table"><div className="ad-settings-table__head"><span>Тип</span><span>Опис</span><span>Комісія</span><span>Дія</span></div>{[['Готелі','Проживання','10%'],['Ресторани','Харчування','8%'],['Екскурсії','Тури та екскурсії','12%'],['Транспорт','Трансфери, таксі','7%'],['Інші','Інші послуги','10%']].map(r=><div key={r[0]}><strong>{r[0]}</strong><span>{r[1]}</span><strong>{r[2]}</strong><span className="ad-mini-actions"><button><Edit3 size={14}/></button><button className="is-danger"><Trash2 size={14}/></button></span></div>)}</div><OutlineButton><Plus size={15}/> Додати тип</OutlineButton></SettingsPanel>
+      </div>
+      <SettingsPanel title="Додаткові умови комісії" className="ad-settings-panel--full"><div className="ad-commission-cards"><div><span>Мінімальна сума замовлення</span><strong>1 000 <small>грн</small></strong><p>Комісія нараховується тільки при перевищенні суми</p></div><div><span>Термін дії комісії</span><strong>365 <small>днів</small></strong><p>Комісія дійсна протягом зазначеного періоду</p></div><div><SettingToggle label="Бонус за активність"/><strong>2 <small>%</small></strong><p>Додатковий відсоток до комісії за активність</p></div><div><SettingToggle label="Комісія за передоплату"/><strong>1 <small>%</small></strong><p>Додатковий відсоток за оплату наперед</p></div></div></SettingsPanel>
+    </AdminShell>
+  );
+}
+
+function BonusSettingsScreen({ navigate }: AdminProps) {
+  return (
+    <AdminShell active="settings" navigate={navigate} contentClassName="ad-main--settings">
+      <SettingsTop title="Бонусна система" active="admin-settings-bonuses" navigate={navigate}/>
+      <SettingsPanel title="Основні налаштування бонусної системи" className="ad-settings-panel--full">
+        <div className="ad-setting-fields-grid ad-setting-fields-grid--three"><SettingField label="Тип нарахування бонусів" value="Відсоток від суми"/><SettingField label="Розмір бонусу" value="5 %"/><SettingField label="Валюта бонусів" value="Гривня (UAH)"/><SettingField label="Мінімальна сума нарахування" value="100 грн"/><SettingField label="Мінімальна сума списання" value="100 грн"/><SettingField label="Термін дії бонусів" value="365 днів"/></div>
+        <div className="ad-settings-toggle-stack"><SettingToggle label="Нараховувати бонуси за акційні товари"/><SettingToggle label="Списання бонусів частинами"/><SettingToggle label="Заборонити списання бонусів при оплаті алкоголю та тютюну"/></div>
+      </SettingsPanel>
+      <SettingsPanel title="Рівні бонусної системи" className="ad-settings-panel--full"><div className="ad-settings-table ad-settings-table--bonus"><div className="ad-settings-table__head"><span>Рівень</span><span>Назва</span><span>Умова (сума покупок)</span><span>Бонус</span><span>Статус</span><span>Дії</span></div>{[['1','Бронзовий','від 0 грн','5%'],['2','Срібний','від 10 000 грн','7%'],['3','Золотий','від 25 000 грн','10%'],['4','Платиновий','від 50 000 грн','12%']].map(r=><div key={r[0]}><span>{r[0]}</span><strong>{r[1]}</strong><span>{r[2]}</span><strong>{r[3]}</strong><Status>Активний</Status><span className="ad-mini-actions"><button><Edit3 size={14}/></button><button className="is-danger"><Trash2 size={14}/></button></span></div>)}</div><OutlineButton><Plus size={15}/> Додати рівень</OutlineButton></SettingsPanel>
+    </AdminShell>
+  );
+}
+
+function NotificationSettingsScreen({ navigate }: AdminProps) {
+  const rows = [
+    ['Реєстрація нового партнера',[true,false,true,true]],['Підтвердження партнера',[true,false,true,true]],['Нове замовлення',[true,true,true,true]],['Комісія нарахована',[true,false,true,true]],['Виплата комісії',[true,true,true,true]],['Низький баланс партнера',[true,true,true,false]],['Системні повідомлення',[true,false,false,true]],
+  ] as const;
+  return (
+    <AdminShell active="settings" navigate={navigate} contentClassName="ad-main--settings">
+      <SettingsTop title="Сповіщення" active="admin-settings-notifications" navigate={navigate}/>
+      <div className="ad-settings-layout ad-settings-layout--notifications">
+        <SettingsPanel title="Канали сповіщень"><p className="ad-settings-help">Виберіть канали, через які ви хочете отримувати сповіщення</p><div className="ad-channel-list"><div><Mail size={21}/><span><strong>Email</strong><small>info@gidtourist.ua</small></span><button className="ad-toggle is-on"><i/></button></div><div><Smartphone size={21}/><span><strong>SMS</strong><small>+38 (097) 123-45-67</small></span><button className="ad-toggle is-on"><i/></button></div><div><span className="ad-telegram-icon">➤</span><span><strong>Telegram</strong><small>@gid_tourist_bot</small></span><button className="ad-toggle is-on"><i/></button></div><div><Bell size={21}/><span><strong>Push-повідомлення</strong><small>Увімкнено в браузері</small></span><button className="ad-toggle is-on"><i/></button></div></div></SettingsPanel>
+        <SettingsPanel title="Типи сповіщень"><div className="ad-notification-matrix"><div className="ad-notification-matrix__head"><span>Тип сповіщення</span><span>Email</span><span>SMS</span><span>Telegram</span><span>Push</span></div>{rows.map(([name,values])=><div key={name}><strong>{name}</strong>{values.map((v,i)=><span key={i} className={`ad-checkbox ${v?'is-checked':''}`}>{v?'✓':''}</span>)}</div>)}</div></SettingsPanel>
+        <SettingsPanel title="Додаткові налаштування"><div className="ad-notification-extra"><SettingToggle label="Отримувати зведення за день"/><SelectBox value="18:00"/><SettingToggle label="Отримувати зведення за тиждень" on={false}/><SelectBox value="Понеділок"/><SettingToggle label="Не надсилати сповіщення вночі"/><div className="ad-time-range"><span>22:00</span><b>–</b><span>08:00</span></div></div></SettingsPanel>
+        <SettingsPanel title="Тестове сповіщення"><p className="ad-settings-help">Надіслати тестове сповіщення на всі активні канали</p><PrimaryButton>Надіслати тест</PrimaryButton></SettingsPanel>
+      </div>
+    </AdminShell>
+  );
+}
+
+function SecuritySettingsScreen({ navigate }: AdminProps) {
+  return (
+    <AdminShell active="settings" navigate={navigate} contentClassName="ad-main--settings">
+      <SettingsTop title="Безпека" active="admin-settings-security" navigate={navigate}/>
+      <div className="ad-settings-layout ad-settings-layout--two">
+        <SettingsPanel title="Вхід та пароль"><SettingToggle label="Двофакторна автентифікація для адміністраторів"/><SettingToggle label="Вимагати складний пароль"/><SettingToggle label="Блокувати вхід після 5 невдалих спроб"/><div className="ad-setting-fields-grid"><SettingField label="Термін дії пароля" value="90 днів"/><SettingField label="Тривалість сесії" value="12 годин"/></div></SettingsPanel>
+        <SettingsPanel title="Доступ адміністраторів"><div className="ad-security-users">{[['А','Адміністратор','admin@gidtourist.ua','Повний доступ'],['МІ','Марія Іванова','maria@gidtourist.ua','Фінанси, партнери'],['СП','Сергій Петренко','serhii@gidtourist.ua','Партнери, статистика']].map(r=><div key={r[2]}><span>{r[0]}</span><div><strong>{r[1]}</strong><small>{r[2]}</small></div><Status>{r[3]}</Status><button><Edit3 size={14}/></button></div>)}</div><OutlineButton><Plus size={15}/> Додати адміністратора</OutlineButton></SettingsPanel>
+        <SettingsPanel title="Обмеження доступу"><SettingToggle label="Дозволити вхід тільки з перевірених IP" on={false}/><SettingToggle label="Вести журнал усіх входів"/><SettingToggle label="Сповіщати про вхід з нового пристрою"/><SettingToggle label="Автоматично завершувати неактивні сесії"/></SettingsPanel>
+        <SettingsPanel title="Активні сесії"><div className="ad-kv-list">{[['Chrome / Windows','Київ · 192.168.1.1 · Зараз'],['Telegram WebApp / iOS','Яремче · 192.168.1.15 · 2 год тому'],['Safari / macOS','Львів · 192.168.1.21 · Вчора']].map(([device,meta])=><div key={device}><span>{device}<small>{meta}</small></span><button className="ad-danger-outline">Завершити</button></div>)}</div></SettingsPanel>
+      </div>
+    </AdminShell>
+  );
+}
+
+function IntegrationsSettingsScreen({ navigate }: AdminProps) {
+  const items = [['1C:Підприємство','Обмін даними з 1С','Підключено','31.05.2024 12:45'],['Вчасно.Каса','Фіскалізація чеків','Підключено','31.05.2024 12:40'],['Mailchimp','Email-розсилки','Підключено','31.05.2024 11:20'],['Telegram Bot','Telegram-бот для сповіщень','Підключено','31.05.2024 10:15'],['Google Analytics','Аналітика та статистика','Не підключено','—']];
+  return (
+    <AdminShell active="settings" navigate={navigate} contentClassName="ad-main--settings">
+      <SettingsTop title="Інтеграції" active="admin-settings-integrations" navigate={navigate}/>
+      <SettingsPanel title="Інтеграції" className="ad-settings-panel--full"><div className="ad-integrations-table"><div className="ad-integrations-table__head"><span>Сервіс</span><span>Опис</span><span>Статус</span><span>Остання синхронізація</span><span>Дії</span></div>{items.map(([service,desc,status,last],i)=><div key={service}><span className="ad-service-brand">{['1C','🟠','✉','➤','▥'][i]}</span><strong>{service}</strong><span>{desc}</span><Status tone={status==='Підключено'?'green':'gray'}>{status}</Status><span>{last}</span><span className="ad-mini-actions"><button><Settings size={14}/></button>{status==='Підключено'?<button className="is-danger"><Trash2 size={14}/></button>:null}</span></div>)}</div><OutlineButton><Plus size={15}/> Додати інтеграцію</OutlineButton></SettingsPanel>
+      <div className="ad-settings-layout ad-settings-layout--two"><SettingsPanel title="API ключі"><label className="ad-api-key"><span>Ваш API ключ</span><div>•••••••••••••••••••• <Eye size={15}/></div></label><OutlineButton><RefreshCcw size={15}/> Згенерувати новий</OutlineButton></SettingsPanel><SettingsPanel title="Документація API"><p className="ad-settings-help">Інтегруйте з системою через API</p><OutlineButton>Перейти до документації</OutlineButton></SettingsPanel></div>
+    </AdminShell>
+  );
+}
+
+function AuditSettingsScreen({ navigate }: AdminProps) {
+  const rows = [
+    ['31.05.2024 12:45:32','Адміністратор','Підтверджено партнера “Рибак. М’ясна історія”','Партнери','192.168.1.1'],
+    ['31.05.2024 12:40:18','Марія Іванова','Нараховано комісію партнеру “Верне Тур” (1 250 грн)','Взаєморозрахунки','192.168.1.15'],
+    ['31.05.2024 12:35:05','Сергій Петренко','Створено нового партнера “Карпати Екскурс”','Партнери','192.168.1.18'],
+    ['31.05.2024 11:22:47','Адміністратор','Змінено налаштування комісії для типу “Екскурсії”','Налаштування','192.168.1.1'],
+    ['31.05.2024 10:15:33','Марія Іванова','Експорт звіту по взаєморозрахунках','Взаєморозрахунки','192.168.1.15'],
+    ['31.05.2024 09:40:11','Сергій Петренко','Вхід у систему','Система','192.168.1.18'],
+    ['31.05.2024 09:12:09','Марія Іванова','Оновлено дані партнера “Говерла Тур”','Партнери','192.168.1.15'],
+    ['31.05.2024 08:55:23','Адміністратор','Налаштовано інтеграцію 1С','Інтеграції','192.168.1.1'],
+  ];
+  return (
+    <AdminShell active="settings" navigate={navigate} contentClassName="ad-main--settings">
+      <SettingsTop title="Журнал дій" active="admin-settings-audit" navigate={navigate}/>
+      <SettingsPanel title="Журнал дій" className="ad-settings-panel--full">
+        <div className="ad-audit-filters"><SettingField label="Період" value="01.05.2024 – 31.05.2024"/><SettingField label="Користувач" value="Всі користувачі"/><SettingField label="Дія" value="Всі дії"/><SettingField label="Сервіс" value="Всі сервіси"/><OutlineButton><Filter size={16}/> Фільтри</OutlineButton></div>
+        <div className="ad-audit-table"><div className="ad-audit-table__head"><span>Дата і час</span><span>Користувач</span><span>Дія</span><span>Сервіс / Розділ</span><span>IP-адреса</span></div>{rows.map(r=><div key={r[0]}>{r.map((v,i)=><span key={i}>{v}</span>)}</div>)}</div>
+        <div className="ad-audit-footer"><span>Показано 1–8 з 256 записів</span><div className="ad-pagination-mini"><button>‹</button><button className="is-active">1</button><button>2</button><button>3</button><span>…</span><button>32</button><button>›</button></div></div>
+      </SettingsPanel>
+    </AdminShell>
+  );
 }
 
 function SettingsScreen({ navigate }: AdminProps) {
-  return <AdminShell active="settings" navigate={navigate}><AdminPageHeader title="Налаштування" subtitle="Системні параметри адміністративної панелі"/><div className="ad-settings-grid">{["Загальні налаштування","Ролі та доступи","Сповіщення","Інтеграції","Безпека","Довідники"].map((x,i)=><section className="ad-detail-card" key={x}><span className="ad-settings-icon"><Settings size={22}/></span><h2>{x}</h2><p>Налаштування розділу в єдиному стилі нової ПК-адмінки.</p><OutlineButton>Відкрити</OutlineButton></section>)}</div></AdminShell>;
+  return <GeneralSettingsScreen navigate={navigate} />;
 }
 
 export function AdminDesktopScreen({ slug, navigate }: { slug: string; navigate: Navigate }) {
@@ -537,6 +799,14 @@ export function AdminDesktopScreen({ slug, navigate }: { slug: string; navigate:
     case "admin-statistics-bonuses": return <StatisticsSubscreen navigate={navigate} kind="bonuses" />;
     case "admin-statistics-settlements": return <StatisticsSubscreen navigate={navigate} kind="settlements" />;
     case "admin-settings": return <SettingsScreen navigate={navigate} />;
+    case "admin-settings-general": return <GeneralSettingsScreen navigate={navigate} />;
+    case "admin-settings-company": return <CompanySettingsScreen navigate={navigate} />;
+    case "admin-settings-partners": return <PartnerCommissionSettingsScreen navigate={navigate} />;
+    case "admin-settings-bonuses": return <BonusSettingsScreen navigate={navigate} />;
+    case "admin-settings-notifications": return <NotificationSettingsScreen navigate={navigate} />;
+    case "admin-settings-security": return <SecuritySettingsScreen navigate={navigate} />;
+    case "admin-settings-integrations": return <IntegrationsSettingsScreen navigate={navigate} />;
+    case "admin-settings-audit": return <AuditSettingsScreen navigate={navigate} />;
     default: return <PartnersScreen navigate={navigate} />;
   }
 }
