@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ComponentType } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Ambulance,
   ArrowDownToLine,
@@ -86,7 +86,6 @@ import {
 import type { RoleKey } from "../../lib/navigation";
 
 type Navigate = (role: RoleKey, slug: string) => void;
-type NearbyStickerIcon = ComponentType<{ size?: number; className?: string }>;
 
 type PhotoName =
   | "restaurant"
@@ -123,135 +122,6 @@ const qrPattern = [
 
 function Thumb({ name, className = "" }: { name: PhotoName; className?: string }) {
   return <span className={`gt-photo gt-photo--${name} ${className}`} aria-hidden="true" />;
-}
-
-
-function WeatherSunSticker() {
-  return (
-    <svg className="gt-weather-sticker" viewBox="0 0 40 40" aria-hidden="true">
-      <g fill="none" stroke="#f5b719" strokeLinecap="round" strokeWidth="2.6">
-        <path d="M20 2.8v5M20 32.2v5M2.8 20h5M32.2 20h5M7.8 7.8l3.5 3.5M28.7 28.7l3.5 3.5M32.2 7.8l-3.5 3.5M11.3 28.7l-3.5 3.5"/>
-        <circle cx="20" cy="20" r="8.2" fill="#ffd84b" stroke="#f5b719"/>
-      </g>
-    </svg>
-  );
-}
-
-function WeatherRainSticker() {
-  return (
-    <svg className="gt-weather-sticker" viewBox="0 0 40 40" aria-hidden="true">
-      <path d="M12.2 24.2h16.1c4 0 6.8-2.7 6.8-6.1 0-3.5-2.9-6.2-6.6-6.2-.8-4.2-4.3-7-8.8-7-5.1 0-9 3.6-9.1 8.6-3.3.5-5.7 2.8-5.7 5.7 0 3 2.6 5 7.3 5Z" fill="#43a7df"/>
-      <g stroke="#1688cb" strokeLinecap="round" strokeWidth="2.7">
-        <path d="m12 28.5-1.8 4.4M20 28.5l-1.8 4.4M28 28.5l-1.8 4.4"/>
-      </g>
-    </svg>
-  );
-}
-
-function WeatherWindSticker() {
-  return (
-    <svg className="gt-weather-sticker" viewBox="0 0 40 40" aria-hidden="true">
-      <g fill="none" stroke="#5a7280" strokeLinecap="round" strokeWidth="2.7">
-        <path d="M5 14h19.5c3 0 4.7-1.5 4.7-3.5S27.7 7 25.7 7c-1.8 0-3 1-3.8 2.4"/>
-        <path d="M5 20h27.5c2.2 0 3.5 1.1 3.5 2.8 0 1.8-1.5 3.2-3.5 3.2-1.5 0-2.8-.7-3.5-2"/>
-        <path d="M5 26h14.5c2.9 0 4.6 1.4 4.6 3.4 0 2.1-1.6 3.6-3.8 3.6-1.7 0-3-.8-3.8-2"/>
-      </g>
-    </svg>
-  );
-}
-
-function WeatherSunsetSticker() {
-  return (
-    <svg className="gt-weather-sticker" viewBox="0 0 40 40" aria-hidden="true">
-      <g fill="none" stroke="#f39e14" strokeLinecap="round" strokeWidth="2.4">
-        <path d="M5 28h30M8.5 33h23"/>
-        <path d="M12 27.8a8 8 0 0 1 16 0" fill="#ffc638"/>
-        <path d="M20 5v5M7.8 11.5l3.7 3.5M32.2 11.5 28.5 15M4.5 20h5M30.5 20h5"/>
-      </g>
-    </svg>
-  );
-}
-
-function CurrentPlaceSticker() {
-  return (
-    <svg className="gt-current-place-sticker" viewBox="0 0 70 72" aria-hidden="true">
-      <ellipse cx="35" cy="61" rx="24" ry="7" fill="none" stroke="#bfead4" strokeWidth="3"/>
-      <ellipse cx="35" cy="61" rx="14" ry="4" fill="#eaf8f0"/>
-      <path d="M35 6c-11.3 0-20.5 8.9-20.5 19.8 0 14.8 20.5 31.5 20.5 31.5s20.5-16.7 20.5-31.5C55.5 14.9 46.3 6 35 6Z" fill="#12a35e"/>
-      <circle cx="35" cy="25.5" r="7.6" fill="#fff"/>
-    </svg>
-  );
-}
-
-function NatureMountainsSticker({ size = 23 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="m2.7 19 5.4-9.2 3.1 4.6 3.2-5.5L21.4 19H2.7Z" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round"/>
-      <path d="m7.8 10.2 1.8 1.2 1-1.5M14.2 9.2l2 1.5 1.1-1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  );
-}
-
-function ChurchSticker({ size = 23 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M4 20h16M6.3 20v-8.7l5.7-3.6 5.7 3.6V20M9 20v-5h6v5" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
-      <path d="M12 3v4.6M9.9 5.1h4.2M7 10.9h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-    </svg>
-  );
-}
-
-function RiverSticker({ size = 23 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M6 3c5 4 1 7 5 10s1 5 7 8M11 3c5 4 1 7 5 10s1 5 4 6M2 5c4 3 1 6 4 9s1 5 6 7" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
-    </svg>
-  );
-}
-
-function WaterfallSticker({ size = 23 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M5 3h14M7 3v10M12 3v12M17 3v9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-      <path d="M4 16c2-2 4 2 6 0s4 2 6 0 3 1 4 .5M4 20c2-2 4 2 6 0s4 2 6 0 3 1 4 .5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
-    </svg>
-  );
-}
-
-function SpringSticker({ size = 23 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 3s-6 7-6 11a6 6 0 0 0 12 0c0-4-6-11-6-11Z" stroke="currentColor" strokeWidth="1.8"/>
-      <path d="M9.2 15.5c.8 1.6 2.1 2.4 3.9 2.4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-    </svg>
-  );
-}
-
-function LakeSticker({ size = 23 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M4 12a8 8 0 0 1 16 0M3 15c2-1.7 4 1.7 6 0s4 1.7 6 0 4 1.7 6 0M4 19c2-1.5 4 1.5 6 0s4 1.5 6 0 3 1 4 .3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
-    </svg>
-  );
-}
-
-function BinocularSticker({ size = 23 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M8 7h3v5H7l1-5Zm8 0h-3v5h4l-1-5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/>
-      <circle cx="6.5" cy="15.5" r="3.5" stroke="currentColor" strokeWidth="1.8"/><circle cx="17.5" cy="15.5" r="3.5" stroke="currentColor" strokeWidth="1.8"/>
-      <path d="M10 15.5h4" stroke="currentColor" strokeWidth="1.8"/>
-    </svg>
-  );
-}
-
-function CaveSticker({ size = 23 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M3 20c.5-8 4-15 9-15s8.5 7 9 15H3Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
-      <path d="M8.5 20c.2-4.3 1.6-7.2 3.5-7.2s3.3 2.9 3.5 7.2" fill="currentColor" opacity=".18" stroke="currentColor" strokeWidth="1.5"/>
-    </svg>
-  );
 }
 
 function SearchBar({ placeholder }: { placeholder: string }) {
@@ -348,6 +218,48 @@ function WalkingIcon({ size = 13 }: { size?: number }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+    </svg>
+  );
+}
+
+
+function WeatherSunIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg className={`gt-weather-icon ${className}`.trim()} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="4.25" fill="currentColor" opacity="0.18" />
+      <circle cx="12" cy="12" r="3.55" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M12 2.2v3.1M12 18.7v3.1M21.8 12h-3.1M5.3 12H2.2M18.8 5.2l-2.2 2.2M7.4 16.6l-2.2 2.2M18.8 18.8l-2.2-2.2M7.4 7.4 5.2 5.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function WeatherRainIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg className={`gt-weather-icon ${className}`.trim()} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M8.1 17.1c-2.4 0-4.4-1.7-4.4-4 0-2.1 1.7-3.8 3.9-4 .7-2.9 3.2-4.8 6.3-4.8 3.5 0 6.4 2.7 6.4 6.1 1.4.2 2.5 1.5 2.5 2.9 0 1.7-1.4 3.1-3.2 3.1H8.1Z" fill="currentColor" opacity="0.18" />
+      <path d="M8.1 16.4c-2 0-3.6-1.4-3.6-3.3 0-1.7 1.3-3 3.1-3.2.6-2.8 2.8-4.8 5.8-4.8 3.3 0 5.9 2.4 5.9 5.5 1.4 0 2.5 1.1 2.5 2.5 0 1.7-1.4 3.3-3.1 3.3H8.1Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M9 18.2 8.1 20M13 18.2 12.1 20M17 18.2 16.1 20" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function WeatherWindIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg className={`gt-weather-icon ${className}`.trim()} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M3 9.1h10.7c1.7 0 2.9-1.1 2.9-2.5 0-1.3-1-2.3-2.4-2.3-1.2 0-2.2.8-2.4 1.9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3 13.2h14.3c1.8 0 3.2 1.2 3.2 2.7 0 1.4-1.2 2.5-2.8 2.5-1.2 0-2.2-.7-2.6-1.8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3 17.3h7.2c1.3 0 2.3.8 2.3 1.9 0 1-.9 1.8-2 1.8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function WeatherSunsetIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg className={`gt-weather-icon ${className}`.trim()} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 17.3h16" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <path d="M7.1 17.1a4.9 4.9 0 0 1 9.8 0" fill="currentColor" opacity="0.18" />
+      <path d="M7.1 17.1a4.9 4.9 0 0 1 9.8 0" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <path d="M12 6v3.2M5.4 10.2l2.3 1.3M18.6 10.2l-2.3 1.3M8.3 7.6 10 9.4M15.7 7.6 14 9.4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -471,19 +383,19 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
 
         <div className="gt-weather gt-weather--reference">
           <div className="gt-weather-item gt-weather-item--sun">
-            <WeatherSunSticker />
+            <WeatherSunIcon className="gt-weather-icon--sun" />
             <span><strong>24°C</strong><small>Ясно</small></span>
           </div>
           <div className="gt-weather-item gt-weather-item--rain">
-            <WeatherRainSticker />
+            <WeatherRainIcon className="gt-weather-icon--rain" />
             <span><strong>10%</strong><small>Імовірність дощу</small></span>
           </div>
           <div className="gt-weather-item gt-weather-item--wind">
-            <WeatherWindSticker />
+            <WeatherWindIcon className="gt-weather-icon--wind" />
             <span><strong>6 км/год</strong><small>Вітер</small></span>
           </div>
           <div className="gt-weather-item gt-weather-item--sunset">
-            <WeatherSunsetSticker />
+            <WeatherSunsetIcon className="gt-weather-icon--sunset" />
             <span><strong>20:31</strong><small>Захід сонця</small></span>
           </div>
           <small className="gt-weather-updated">Оновлено 10:30</small>
@@ -495,7 +407,7 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
         className="gt-hotel-summary gt-hotel-summary--reference"
         onClick={() => navigate("tourist", "about")}
       >
-        <span className="gt-current-place-pin" aria-hidden="true"><CurrentPlaceSticker /></span>
+        <span className="gt-current-place-pin" aria-hidden="true"><MapPin size={33} fill="currentColor" /></span>
         <span className="gt-current-place-copy">
           <strong>Ви зараз тут</strong>
           <small>Готель «Гірський затишок»</small>
@@ -1006,12 +918,12 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
   const [activeSubcategory, setActiveSubcategory] = useState("Усі природні");
   const categoryScrollRef = useRef<HTMLDivElement | null>(null);
 
-  const categories: Array<{ label: string; icon: NearbyStickerIcon; tone: string }> = [
+  const categories: Array<{ label: string; icon: LucideIcon; tone: string }> = [
     { label: "Усі", icon: Grid2X2, tone: "all" },
     { label: "Де поїсти", icon: Utensils, tone: "food" },
     { label: "Де купити", icon: ShoppingBag, tone: "shop" },
-    { label: "Природа", icon: NatureMountainsSticker, tone: "nature" },
-    { label: "Цікаве", icon: ChurchSticker, tone: "interesting" },
+    { label: "Природа", icon: MountainSnow, tone: "nature" },
+    { label: "Цікаве", icon: TentTree, tone: "interesting" },
     { label: "Розваги", icon: Bike, tone: "fun" },
     { label: "Відпочинок", icon: Flower2, tone: "rest" },
     { label: "Трансфер", icon: CarFront, tone: "transfer" },
@@ -1019,15 +931,15 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
     { label: "Маршрути", icon: Route, tone: "routes" },
   ];
 
-  const natureSubcategories: Array<{ label: string; icon: NearbyStickerIcon }> = [
+  const natureSubcategories: Array<{ label: string; icon: LucideIcon }> = [
     { label: "Усі природні", icon: TentTree },
-    { label: "Гори", icon: NatureMountainsSticker },
-    { label: "Річки", icon: RiverSticker },
-    { label: "Водоспади", icon: WaterfallSticker },
-    { label: "Джерела", icon: SpringSticker },
-    { label: "Озера", icon: LakeSticker },
-    { label: "Оглядові точки", icon: BinocularSticker },
-    { label: "Печери", icon: CaveSticker },
+    { label: "Гори", icon: MountainSnow },
+    { label: "Річки", icon: Route },
+    { label: "Водоспади", icon: LifeBuoy },
+    { label: "Джерела", icon: MapPin },
+    { label: "Озера", icon: Flower2 },
+    { label: "Оглядові точки", icon: LocateFixed },
+    { label: "Печери", icon: MountainSnow },
   ];
 
   const allPlaces: Array<{
