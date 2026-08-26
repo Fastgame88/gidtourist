@@ -402,19 +402,19 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
         <div className="gt-weather gt-weather--reference">
           <div className="gt-weather-item gt-weather-item--sun">
             <WeatherSunIcon className="gt-weather-icon--sun" />
-            <span><strong>24°C</strong><small>Ясно</small></span>
+            <span><strong>24°C</strong><small className="gt-weather-label gt-weather-label--clear">Ясно</small></span>
           </div>
           <div className="gt-weather-item gt-weather-item--rain">
             <WeatherRainIcon className="gt-weather-icon--rain" />
-            <span><strong>10%</strong><small>Імовірність дощу</small></span>
+            <span><strong>10%</strong><small className="gt-weather-label gt-weather-label--rain">Імовірність дощу</small></span>
           </div>
           <div className="gt-weather-item gt-weather-item--wind">
             <WeatherWindIcon className="gt-weather-icon--wind" />
-            <span><strong>6 км/год</strong><small>Вітер</small></span>
+            <span><strong>6 км/год</strong><small className="gt-weather-label gt-weather-label--wind">Вітер</small></span>
           </div>
           <div className="gt-weather-item gt-weather-item--sunset">
             <WeatherSunsetIcon className="gt-weather-icon--sunset" />
-            <span><strong>20:31</strong><small>Захід сонця</small></span>
+            <span><strong>20:31</strong><small className="gt-weather-label gt-weather-label--sunset">Захід сонця</small></span>
           </div>
           <small className="gt-weather-updated">Оновлено 10:30</small>
         </div>

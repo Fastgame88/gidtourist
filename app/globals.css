@@ -18852,3 +18852,83 @@ button.gt-service-card {
     min-height: 74px !important;
   }
 }
+
+/* ===== 2026-08-26 text + sticker sizing refinement ===== */
+.gt-home-screen .gt-category-card,
+.gt-home-screen .gt-category-card--featured {
+  align-content: center !important;
+}
+
+.gt-home-screen .gt-category-card > span:nth-child(2),
+.gt-home-screen .gt-category-card--featured > span:nth-child(2) {
+  gap: 3px !important;
+}
+
+.gt-home-screen .gt-category-card strong,
+.gt-home-screen .gt-category-card--featured strong {
+  font-size: 12.6px !important;
+}
+
+.gt-home-screen .gt-category-card small,
+.gt-home-screen .gt-category-card--featured small {
+  font-size: 9.8px !important;
+  line-height: 1.16 !important;
+}
+
+.gt-home-screen .gt-hotel-summary--reference {
+  grid-template-columns: 60px minmax(0, 1fr) 74px auto !important;
+}
+
+.gt-home-screen .gt-current-place-pin {
+  width: 55px !important;
+  height: 55px !important;
+}
+
+.gt-home-screen .gt-current-place-sticker {
+  width: 55px !important;
+  height: 68px !important;
+}
+
+.gt-home-screen .gt-weather-label--clear {
+  font-size: 9.2px !important;
+}
+
+.gt-home-screen .gt-weather-label--wind,
+.gt-home-screen .gt-weather-label--sunset {
+  font-size: 8.5px !important;
+}
+
+@media (max-width: 390px) {
+  .gt-home-screen .gt-category-card strong,
+  .gt-home-screen .gt-category-card--featured strong {
+    font-size: 12.2px !important;
+  }
+
+  .gt-home-screen .gt-category-card small,
+  .gt-home-screen .gt-category-card--featured small {
+    font-size: 9.5px !important;
+  }
+
+  .gt-home-screen .gt-hotel-summary--reference {
+    grid-template-columns: 52px minmax(0, 1fr) 67px auto !important;
+  }
+
+  .gt-home-screen .gt-current-place-pin {
+    width: 51px !important;
+    height: 51px !important;
+  }
+
+  .gt-home-screen .gt-current-place-sticker {
+    width: 51px !important;
+    height: 63px !important;
+  }
+
+  .gt-home-screen .gt-weather-label--clear {
+    font-size: 8.6px !important;
+  }
+
+  .gt-home-screen .gt-weather-label--wind,
+  .gt-home-screen .gt-weather-label--sunset {
+    font-size: 7.9px !important;
+  }
+}
