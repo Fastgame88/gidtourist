@@ -19465,3 +19465,35 @@ button.gt-service-card {
     min-width: 52px !important;
   }
 }
+
+/* ===== 2026-08-26 force right-edge alignment on food/rest/entertainment cards ===== */
+:is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row__body {
+  width: 100% !important;
+  min-width: 0 !important;
+  padding-right: 0 !important;
+}
+
+:is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row__title,
+:is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row__meta {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) max-content !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  column-gap: 8px !important;
+}
+
+:is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row__title > b,
+:is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row__meta > span:last-child {
+  min-width: 0 !important;
+  width: max-content !important;
+  margin-left: 0 !important;
+  justify-self: end !important;
+  justify-content: flex-end !important;
+  text-align: right !important;
+  white-space: nowrap !important;
+}
+
+:is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row__meta > span:first-child {
+  min-width: 0 !important;
+  justify-self: start !important;
+}
