@@ -918,7 +918,7 @@ function CatalogScreen({ navigate }: { navigate: Navigate }) {
         <CategoryHeader icon={Utensils} title="Де поїсти" subtitle="Кафе, ресторани та заклади" tone="orange" />
         <SearchBar placeholder="Пошук закладу, кухні або страви" />
         <Chips items={["Усі", "Українська кухня", "Неукраїнська кухня", "Фаст фуд"]} />
-        <FoodMap />
+        <MapStrip />
         <SectionTitle title="Рекомендовані заклади" action="Переглянути всі" />
         <div className="gt-place-list">
           <PlaceRow photo="restaurant" title="Ресторан «Гуцульщина»" subtitle="Українська кухня" rating="4.8 (125)" distance="120 м" walk="2 хв" walking verified tags={["Банош", "Бограч", "Грибна юшка", "Деруни"]} onClick={() => navigate("tourist", "place")} />
