@@ -18395,3 +18395,347 @@ button.gt-service-card {
     right: 5px;
   }
 }
+
+/* ===== 26.08.2026 requested home + nearby precision pass ===== */
+/* Home: restore button/card proportions so the last row is never visually clipped. */
+.gt-home-screen {
+  grid-template-rows: minmax(270px, 34vh) 102px minmax(0, 1fr) !important;
+  gap: 9px !important;
+}
+
+.gt-home-screen .gt-category-grid {
+  grid-template-rows: repeat(4, minmax(78px, 1fr)) !important;
+  gap: 8px !important;
+  min-height: 0;
+  padding-bottom: 10px !important;
+}
+
+.gt-home-screen .gt-category-card {
+  min-height: 78px !important;
+  padding: 10px 11px !important;
+  grid-template-columns: 50px minmax(0,1fr) !important;
+  gap: 11px !important;
+  overflow: visible !important;
+}
+
+.gt-home-screen .gt-category-card__icon,
+.gt-home-screen .gt-category-card--featured .gt-category-card__icon {
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 14px !important;
+}
+
+.gt-home-screen .gt-category-card strong,
+.gt-home-screen .gt-category-card--featured strong {
+  font-size: 14.5px !important;
+}
+
+.gt-home-screen .gt-category-card small,
+.gt-home-screen .gt-category-card--featured small {
+  font-size: 10.5px !important;
+}
+
+.gt-home-screen .gt-category-card--featured {
+  grid-template-columns: 50px minmax(0,1fr) 16px !important;
+}
+
+/* Weather: custom design-matched stickers, all equal size, +15% typography. */
+.gt-home-screen .gt-weather--reference {
+  min-height: 79px !important;
+  padding: 10px 9px 20px !important;
+}
+
+.gt-home-screen .gt-weather-item {
+  gap: 7px !important;
+  padding: 0 6px !important;
+}
+
+.gt-home-screen .gt-weather-sticker {
+  display: block;
+  flex: 0 0 auto;
+  width: 31px;
+  height: 31px;
+  filter: drop-shadow(0 1px 1px rgba(30, 50, 39, .08));
+}
+
+.gt-home-screen .gt-weather-item strong {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+}
+
+.gt-home-screen .gt-weather-item small {
+  font-size: 9.2px !important;
+  line-height: 1.08 !important;
+}
+
+.gt-home-screen .gt-weather-updated {
+  right: 15px !important;
+  bottom: 5px !important;
+  font-size: 9.8px !important;
+}
+
+/* Current place card: sticker pin, 20% shorter card, complete hotel name, stronger Details button. */
+.gt-home-screen .gt-hotel-summary--reference {
+  grid-template-columns: 62px minmax(0,1fr) 78px 68px !important;
+  min-height: 102px !important;
+  height: 102px !important;
+  gap: 9px !important;
+  padding: 9px 12px !important;
+}
+
+.gt-home-screen .gt-current-place-pin {
+  width: 60px !important;
+  height: 64px !important;
+  color: inherit !important;
+}
+
+.gt-home-screen .gt-current-place-pin::after {
+  display: none !important;
+}
+
+.gt-home-screen .gt-current-place-sticker {
+  display: block;
+  width: 60px;
+  height: 64px;
+}
+
+.gt-home-screen .gt-current-place-copy {
+  gap: 5px !important;
+}
+
+.gt-home-screen .gt-current-place-copy strong {
+  font-size: 18px !important;
+  line-height: 1.05 !important;
+}
+
+.gt-home-screen .gt-current-place-copy small {
+  overflow: visible !important;
+  font-size: 12px !important;
+  line-height: 1.12 !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+}
+
+.gt-home-screen .gt-current-place-copy b {
+  gap: 5px !important;
+  font-size: 11.5px !important;
+  line-height: 1.1 !important;
+}
+
+.gt-home-screen .gt-current-place-photo {
+  width: 78px !important;
+  height: 70px !important;
+  border-radius: 13px !important;
+}
+
+.gt-home-screen .gt-hotel-summary--reference > i {
+  min-width: 68px !important;
+  padding: 10px 9px !important;
+  border: 1.5px solid #1688d4 !important;
+  border-radius: 11px !important;
+  color: #0d70b1 !important;
+  background: #f3faff !important;
+  box-shadow: 0 3px 9px rgba(22,136,212,.14) !important;
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+}
+
+/* Nearby: exactly five complete filters + a faded half of the sixth, with arrow on the edge. */
+.gt-nearby-categories-wrap {
+  overflow: hidden;
+}
+
+.gt-nearby-categories-wrap::after {
+  content: "";
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 42px;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.88) 55%, #fff 100%);
+}
+
+.gt-nearby-categories-wrap .gt-nearby-categories {
+  gap: 7px !important;
+  padding: 10px 8px 11px !important;
+  scroll-padding-right: 38px;
+}
+
+.gt-nearby-categories > button {
+  flex: 0 0 17% !important;
+  min-width: 58px !important;
+  gap: 6px !important;
+  padding-bottom: 7px !important;
+}
+
+.gt-nearby-category-icon {
+  width: 46px !important;
+  height: 46px !important;
+  border-radius: 14px !important;
+  box-shadow: 0 5px 13px rgba(20,48,32,.10) !important;
+}
+
+.gt-nearby-category-icon > svg {
+  width: 25px !important;
+  height: 25px !important;
+  stroke-width: 1.9;
+}
+
+.gt-nearby-categories > button strong {
+  font-size: 8.8px !important;
+  font-weight: 700 !important;
+}
+
+.gt-nearby-category-icon--food { background: linear-gradient(145deg,#f23b77,#dc1559) !important; }
+.gt-nearby-category-icon--shop { background: linear-gradient(145deg,#298df0,#0871d7) !important; }
+.gt-nearby-category-icon--nature { background: linear-gradient(145deg,#5fc68b,#2eaf73) !important; }
+.gt-nearby-category-icon--interesting { background: linear-gradient(145deg,#9b54dc,#7633c7) !important; }
+.gt-nearby-category-icon--fun { background: linear-gradient(145deg,#9947dc,#6c2bc1) !important; }
+.gt-nearby-category-icon--rest { background: linear-gradient(145deg,#35aee2,#168fc9) !important; }
+.gt-nearby-category-icon--transfer { background: linear-gradient(145deg,#ff961c,#f17608) !important; }
+.gt-nearby-category-icon--useful { background: linear-gradient(145deg,#2e92ed,#1271d0) !important; }
+.gt-nearby-category-icon--routes { background: linear-gradient(145deg,#f7c624,#efa910) !important; }
+
+.gt-nearby-categories-next {
+  z-index: 6 !important;
+  top: 50% !important;
+  right: 1px !important;
+  width: 34px !important;
+  height: 40px !important;
+  border-radius: 18px 0 0 18px !important;
+  border-right: 0 !important;
+  background: rgba(255,255,255,.96) !important;
+  transform: translateY(-56%) !important;
+}
+
+/* Nature subfilters: same sticker language as reference and +7% icon blocks. */
+.gt-nearby-subcategories {
+  gap: 8px !important;
+  padding: 9px 10px 10px !important;
+}
+
+.gt-nearby-subcategories > button {
+  flex-basis: 61px !important;
+  min-width: 61px !important;
+  gap: 5px !important;
+}
+
+.gt-nearby-subcategories > button > span {
+  width: 43px !important;
+  height: 43px !important;
+  border-radius: 12px !important;
+  border-color: #e1e9e5 !important;
+  color: #1fa467 !important;
+  background: #fbfdfc !important;
+  box-shadow: 0 3px 10px rgba(24,72,45,.045);
+}
+
+.gt-nearby-subcategories > button > span svg {
+  width: 22px !important;
+  height: 22px !important;
+}
+
+.gt-nearby-subcategories > button > strong {
+  font-size: 8px !important;
+  font-weight: 700 !important;
+}
+
+@media (max-width: 390px) {
+  .gt-home-screen {
+    grid-template-rows: minmax(246px, 33vh) 96px minmax(0,1fr) !important;
+    gap: 7px !important;
+  }
+
+  .gt-home-screen .gt-weather--reference {
+    min-height: 73px !important;
+    padding: 9px 6px 18px !important;
+  }
+
+  .gt-home-screen .gt-weather-item {
+    gap: 4px !important;
+    padding: 0 3px !important;
+  }
+
+  .gt-home-screen .gt-weather-sticker {
+    width: 27px;
+    height: 27px;
+  }
+
+  .gt-home-screen .gt-weather-item strong { font-size: 12.7px !important; }
+  .gt-home-screen .gt-weather-item small { font-size: 7.8px !important; }
+  .gt-home-screen .gt-weather-updated { font-size: 8.7px !important; }
+
+  .gt-home-screen .gt-hotel-summary--reference {
+    grid-template-columns: 52px minmax(0,1fr) 65px 58px !important;
+    min-height: 96px !important;
+    height: 96px !important;
+    gap: 6px !important;
+    padding: 8px 9px !important;
+  }
+
+  .gt-home-screen .gt-current-place-pin,
+  .gt-home-screen .gt-current-place-sticker {
+    width: 50px !important;
+    height: 56px !important;
+  }
+
+  .gt-home-screen .gt-current-place-copy strong { font-size: 15.5px !important; }
+  .gt-home-screen .gt-current-place-copy small { font-size: 10.2px !important; }
+  .gt-home-screen .gt-current-place-copy b { font-size: 10px !important; }
+  .gt-home-screen .gt-current-place-photo { width: 65px !important; height: 61px !important; }
+  .gt-home-screen .gt-hotel-summary--reference > i {
+    min-width: 58px !important;
+    padding: 8px 6px !important;
+    font-size: 10px !important;
+  }
+
+  .gt-home-screen .gt-category-grid {
+    grid-template-rows: repeat(4, minmax(72px, 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  .gt-home-screen .gt-category-card {
+    min-height: 72px !important;
+    grid-template-columns: 46px minmax(0,1fr) !important;
+    padding: 8px 9px !important;
+  }
+
+  .gt-home-screen .gt-category-card__icon,
+  .gt-home-screen .gt-category-card--featured .gt-category-card__icon {
+    width: 46px !important;
+    height: 46px !important;
+  }
+
+  .gt-home-screen .gt-category-card--featured {
+    grid-template-columns: 46px minmax(0,1fr) 14px !important;
+  }
+
+  .gt-nearby-categories-wrap .gt-nearby-categories {
+    gap: 6px !important;
+    padding-left: 7px !important;
+    padding-right: 7px !important;
+  }
+
+  .gt-nearby-categories > button {
+    flex-basis: 17% !important;
+    min-width: 54px !important;
+  }
+
+  .gt-nearby-category-icon {
+    width: 43px !important;
+    height: 43px !important;
+  }
+
+  .gt-nearby-category-icon > svg {
+    width: 23px !important;
+    height: 23px !important;
+  }
+
+  .gt-nearby-categories-next {
+    width: 31px !important;
+    height: 38px !important;
+    right: 0 !important;
+  }
+}
