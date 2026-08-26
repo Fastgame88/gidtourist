@@ -335,30 +335,43 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
     <div className="tourist-screen gt-screen gt-home-screen">
       <section className="gt-home-hero">
         <div className="gt-home-hero__copy">
-          <span className="gt-hero-pin" aria-hidden="true"><MapPin size={42} fill="currentColor" /></span>
           <p>Вітаємо в</p>
           <h1>Татарові</h1>
-          <span className="gt-home-welcome-note">Раді, що ви з нами!</span>
         </div>
-        <div className="gt-weather">
-          <SunMedium size={23} />
-          <strong>24°C</strong>
-          <span>Ясно</span>
-          <small>Оновлено 10:30</small>
+
+        <div className="gt-weather gt-weather--reference">
+          <div className="gt-weather-item gt-weather-item--sun">
+            <SunMedium size={29} />
+            <span><strong>24°C</strong><small>Ясно</small></span>
+          </div>
+          <div className="gt-weather-item gt-weather-item--rain">
+            <span className="gt-weather-symbol">🌧️</span>
+            <span><strong>10%</strong><small>Імовірність дощу</small></span>
+          </div>
+          <div className="gt-weather-item gt-weather-item--wind">
+            <span className="gt-weather-symbol">≋</span>
+            <span><strong>6 км/год</strong><small>Вітер</small></span>
+          </div>
+          <div className="gt-weather-item gt-weather-item--sunset">
+            <span className="gt-weather-symbol">🌅</span>
+            <span><strong>20:31</strong><small>Захід сонця</small></span>
+          </div>
+          <small className="gt-weather-updated">Оновлено 10:30</small>
         </div>
       </section>
 
       <button
         type="button"
-        className="gt-hotel-summary"
+        className="gt-hotel-summary gt-hotel-summary--reference"
         onClick={() => navigate("tourist", "about")}
       >
-        <Thumb name="hotel" />
-        <span>
-          <strong>Інфо про заклад</strong>
+        <span className="gt-current-place-pin" aria-hidden="true"><MapPin size={33} fill="currentColor" /></span>
+        <span className="gt-current-place-copy">
+          <strong>Ви зараз тут</strong>
           <small>Готель «Гірський затишок»</small>
           <b><Star size={14} fill="currentColor" /> 4.8 · 125 відгуків</b>
         </span>
+        <Thumb name="hotel" className="gt-current-place-photo" />
         <i>Деталі</i>
       </button>
 
@@ -385,7 +398,7 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
           <span className="gt-category-card__icon"><FlameKindling size={24} /></span>
           <span>
             <strong>Гаряча пропозиція</strong>
-            <small>Актуальні знижки від партнерів</small>
+            <small>Актуальні знижки</small>
           </span>
           <ChevronRight size={20} />
         </button>
@@ -393,7 +406,6 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
     </div>
   );
 }
-
 
 type HotOffer = {
   id: string;
@@ -860,16 +872,35 @@ function CatalogScreen({ navigate }: { navigate: Navigate }) {
 }
 
 function NearbyScreen({ navigate }: { navigate: Navigate }) {
+  const [activeCategory, setActiveCategory] = useState("Усі");
+  const [activeSubcategory, setActiveSubcategory] = useState("Усі природні");
+  const categoryScrollRef = useRef<HTMLDivElement | null>(null);
+
   const categories: Array<{ label: string; icon: LucideIcon; tone: string }> = [
     { label: "Усі", icon: Grid2X2, tone: "all" },
     { label: "Де поїсти", icon: Utensils, tone: "food" },
     { label: "Де купити", icon: ShoppingBag, tone: "shop" },
-    { label: "Де відпочити", icon: BedDouble, tone: "rest" },
+    { label: "Природа", icon: MountainSnow, tone: "nature" },
+    { label: "Цікаве", icon: TentTree, tone: "interesting" },
     { label: "Розваги", icon: Bike, tone: "fun" },
+    { label: "Відпочинок", icon: Flower2, tone: "rest" },
     { label: "Трансфер", icon: CarFront, tone: "transfer" },
+    { label: "Корисне", icon: CircleHelp, tone: "useful" },
+    { label: "Маршрути", icon: Route, tone: "routes" },
   ];
 
-  const nearbyPlaces: Array<{
+  const natureSubcategories: Array<{ label: string; icon: LucideIcon }> = [
+    { label: "Усі природні", icon: TentTree },
+    { label: "Гори", icon: MountainSnow },
+    { label: "Річки", icon: Route },
+    { label: "Водоспади", icon: LifeBuoy },
+    { label: "Джерела", icon: MapPin },
+    { label: "Озера", icon: Flower2 },
+    { label: "Оглядові точки", icon: LocateFixed },
+    { label: "Печери", icon: MountainSnow },
+  ];
+
+  const allPlaces: Array<{
     photo: PhotoName;
     title: string;
     subtitle: string;
@@ -883,6 +914,23 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
     { photo: "hotel", title: "Готель «Карпатський»", subtitle: "Де відпочити · Готель", distance: "450 м", rating: "4.8" },
     { photo: "jeep", title: "Говерла", subtitle: "Гірські вершини · Природа", distance: "1,2 км", rating: "4.9", mountain: true },
   ];
+
+  const naturePlaces: Array<{
+    photo: PhotoName;
+    title: string;
+    subtitle: string;
+    distance: string;
+    rating: string;
+    mountain?: boolean;
+    onClick?: () => void;
+  }> = [
+    { photo: "rafting", title: "Женецький водоспад", subtitle: "Водоспади", distance: "450 м", rating: "4.8" },
+    { photo: "jeep", title: "Гора Хом’як", subtitle: "Гори", distance: "2.1 км", rating: "4.7", mountain: true },
+    { photo: "excursion", title: "Річка Прут", subtitle: "Річки", distance: "2.8 км", rating: "4.6" },
+  ];
+
+  const nearbyPlaces = activeCategory === "Природа" ? naturePlaces : allPlaces;
+  const listTitle = activeCategory === "Природа" ? "Пам’ятки природи" : "Найближчі місця";
 
   return (
     <div className="tourist-screen gt-screen gt-nearby-screen">
@@ -898,19 +946,53 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
 
         <div className="gt-nearby-search"><SearchBar placeholder="Пошук поруч..." /></div>
 
-        <div className="gt-nearby-categories" aria-label="Категорії місць">
-          {categories.map(({ label, icon: Icon, tone }, index) => (
-            <button type="button" className={index === 0 ? "is-active" : ""} key={label}>
-              <span className={`gt-nearby-category-icon gt-nearby-category-icon--${tone}`}><Icon size={23} /></span>
-              <strong>{label}</strong>
-            </button>
-          ))}
+        <div className="gt-nearby-categories-wrap">
+          <div ref={categoryScrollRef} className="gt-nearby-categories" aria-label="Категорії місць">
+            {categories.map(({ label, icon: Icon, tone }) => (
+              <button
+                type="button"
+                className={activeCategory === label ? "is-active" : ""}
+                key={label}
+                onClick={() => {
+                  setActiveCategory(label);
+                  if (label !== "Природа") setActiveSubcategory("Усі природні");
+                }}
+              >
+                <span className={`gt-nearby-category-icon gt-nearby-category-icon--${tone}`}><Icon size={23} /></span>
+                <strong>{label}</strong>
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="gt-nearby-categories-next"
+            aria-label="Показати наступні категорії"
+            onClick={() => categoryScrollRef.current?.scrollBy({ left: 190, behavior: "smooth" })}
+          >
+            <ChevronRight size={21} />
+          </button>
         </div>
 
-        <div className="gt-nearby-map">
+        {activeCategory === "Природа" ? (
+          <div className="gt-nearby-subcategories" aria-label="Фільтри природи">
+            {natureSubcategories.map(({ label, icon: Icon }) => (
+              <button
+                type="button"
+                key={label}
+                className={activeSubcategory === label ? "is-active" : ""}
+                onClick={() => setActiveSubcategory(label)}
+              >
+                <span><Icon size={20} /></span>
+                <strong>{label}</strong>
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        <div className={`gt-nearby-map ${activeCategory === "Природа" ? "is-nature" : ""}`}>
           <span className="gt-nearby-map-pin gt-nearby-map-pin--food"><b>12</b></span>
           <span className="gt-nearby-map-pin gt-nearby-map-pin--shop"><ShoppingBag size={17} /></span>
-          <span className="gt-nearby-map-pin gt-nearby-map-pin--hotel"><BedDouble size={17} /></span>
+          <span className="gt-nearby-map-pin gt-nearby-map-pin--hotel"><MountainSnow size={17} /></span>
           <span className="gt-nearby-map-pin gt-nearby-map-pin--fun"><Bike size={17} /></span>
           <span className="gt-nearby-map-pin gt-nearby-map-pin--partner"><b>15</b></span>
           <span className="gt-nearby-map-pin gt-nearby-map-pin--service"><UsersRound size={17} /></span>
@@ -934,7 +1016,7 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
           </div>
 
           <div className="gt-nearby-list-head">
-            <h2>Найближчі місця</h2>
+            <h2>{listTitle}</h2>
             <button type="button">Сортувати: <strong>Відстань</strong></button>
           </div>
 
@@ -958,7 +1040,6 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
     </div>
   );
 }
-
 function PlaceScreen({ navigate }: { navigate: Navigate }) {
   return (
     <div className="tourist-screen gt-screen">

@@ -17981,3 +17981,417 @@ button.gt-service-card {
     padding-bottom: 0;
   }
 }
+
+/* ===== Tourist home + nearby reference update ===== */
+.gt-home-screen {
+  grid-template-rows: minmax(286px, 36vh) 128px minmax(0, 1fr) !important;
+  gap: 10px !important;
+  background: #f5f6f5 !important;
+}
+
+.gt-home-screen .gt-home-hero {
+  position: relative;
+  padding: 0 18px 82px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(180deg, rgba(5, 22, 12, .04) 0%, rgba(4, 27, 15, .28) 72%, rgba(4, 27, 15, .44) 100%),
+    url("/images/carpathian-river.webp") center 48% / cover no-repeat !important;
+}
+
+.gt-home-screen .gt-home-hero__copy {
+  position: relative;
+  z-index: 2;
+  transform: translateY(-16px) !important;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 2px 11px rgba(0, 0, 0, .34);
+}
+
+.gt-home-screen .gt-home-hero__copy p {
+  margin: 0 0 4px !important;
+  font-size: 21px !important;
+  line-height: 1.05 !important;
+  font-weight: 600 !important;
+}
+
+.gt-home-screen .gt-home-hero__copy h1 {
+  margin: 0 !important;
+  font-size: 42px !important;
+  line-height: 1 !important;
+  font-weight: 800 !important;
+}
+
+.gt-home-screen .gt-weather--reference {
+  position: absolute !important;
+  z-index: 4;
+  right: 16px !important;
+  bottom: 13px !important;
+  left: 16px !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr 1fr 1.05fr !important;
+  gap: 0 !important;
+  min-height: 74px !important;
+  padding: 11px 10px 18px !important;
+  border: 0 !important;
+  border-radius: 20px !important;
+  background: rgba(255, 255, 255, .97) !important;
+  box-shadow: 0 6px 20px rgba(25, 48, 33, .14) !important;
+}
+
+.gt-home-screen .gt-weather-item {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 7px;
+  border-right: 1px solid #dfe5e1;
+}
+
+.gt-home-screen .gt-weather-item:nth-child(4) {
+  border-right: 0;
+}
+
+.gt-home-screen .gt-weather-item > span:last-child {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.gt-home-screen .gt-weather-item strong {
+  color: #1d2721 !important;
+  font-size: 13px !important;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.gt-home-screen .gt-weather-item small {
+  color: #7b8580 !important;
+  font-size: 8px !important;
+  line-height: 1.1;
+}
+
+.gt-home-screen .gt-weather-item--sun > svg {
+  flex: 0 0 auto;
+  color: #f5bd17 !important;
+}
+
+.gt-home-screen .gt-weather-symbol {
+  flex: 0 0 auto;
+  color: #3c879a;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.gt-home-screen .gt-weather-item--wind .gt-weather-symbol {
+  color: #58717c;
+  font-size: 27px;
+  transform: rotate(-5deg);
+}
+
+.gt-home-screen .gt-weather-updated {
+  position: absolute;
+  right: 14px;
+  bottom: 5px;
+  color: #7f8883 !important;
+  font-size: 8.5px !important;
+}
+
+.gt-home-screen .gt-hotel-summary--reference {
+  grid-template-columns: 58px minmax(0, 1fr) 86px auto !important;
+  grid-template-rows: 1fr !important;
+  align-items: center !important;
+  gap: 9px !important;
+  width: calc(100% - 30px) !important;
+  min-height: 128px !important;
+  margin: 0 15px !important;
+  padding: 12px 14px !important;
+  border: 0 !important;
+  border-radius: 21px !important;
+  background: #fff !important;
+  box-shadow: 0 5px 17px rgba(28, 50, 36, .07) !important;
+}
+
+.gt-home-screen .gt-current-place-pin {
+  position: relative;
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  color: #12a35e;
+}
+
+.gt-home-screen .gt-current-place-pin::after {
+  content: "";
+  position: absolute;
+  right: 3px;
+  bottom: 1px;
+  left: 3px;
+  height: 9px;
+  border: 3px solid rgba(18, 163, 94, .18);
+  border-radius: 50%;
+}
+
+.gt-home-screen .gt-current-place-copy {
+  display: grid !important;
+  min-width: 0;
+  gap: 4px !important;
+  text-align: left;
+}
+
+.gt-home-screen .gt-current-place-copy strong {
+  color: #17201a;
+  font-size: 17px !important;
+  line-height: 1.1;
+}
+
+.gt-home-screen .gt-current-place-copy small {
+  overflow: hidden;
+  color: #67726c;
+  font-size: 11px !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gt-home-screen .gt-current-place-copy b {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #66716b;
+  font-size: 10.5px !important;
+}
+
+.gt-home-screen .gt-current-place-copy b svg {
+  color: #f1b51c;
+}
+
+.gt-home-screen .gt-current-place-photo {
+  width: 86px !important;
+  height: 76px !important;
+  border-radius: 13px !important;
+}
+
+.gt-home-screen .gt-hotel-summary--reference > i {
+  min-width: 62px;
+  padding: 9px 12px !important;
+  border: 1px solid #2c82bb !important;
+  border-radius: 11px !important;
+  color: #2673a8 !important;
+  background: #fff !important;
+  font-size: 11px !important;
+  text-align: center;
+}
+
+.gt-home-screen .gt-category-grid {
+  margin-top: 0 !important;
+}
+
+/* Nearby: horizontally scrollable category filters + expandable second row */
+.gt-nearby-categories {
+  gap: 10px !important;
+  padding: 10px 12px 11px !important;
+  scroll-snap-type: x mandatory !important;
+}
+
+.gt-nearby-categories > button {
+  position: relative;
+  flex: 0 0 57px !important;
+  min-width: 57px;
+  padding-bottom: 6px !important;
+  scroll-snap-align: start;
+}
+
+.gt-nearby-categories > button::after {
+  content: "";
+  position: absolute;
+  right: 5px;
+  bottom: 0;
+  left: 5px;
+  height: 3px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.gt-nearby-categories > button.is-active::after {
+  background: #18a25e;
+}
+
+.gt-nearby-category-icon {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 13px !important;
+}
+
+.gt-nearby-categories > button strong {
+  font-size: 8.5px !important;
+}
+
+.gt-nearby-category-icon--nature { color:#fff; background:linear-gradient(145deg,#62c989,#2fab6c); }
+.gt-nearby-category-icon--interesting { color:#fff; background:linear-gradient(145deg,#9d5be1,#7836c8); }
+.gt-nearby-category-icon--useful { color:#fff; background:linear-gradient(145deg,#2f8be5,#176bd1); }
+.gt-nearby-category-icon--routes { color:#fff; background:linear-gradient(145deg,#f6c51b,#eea50c); }
+
+.gt-nearby-subcategories {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 9px 12px 10px;
+  border-top: 1px solid #f0f2f1;
+  background: #fff;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+.gt-nearby-subcategories::-webkit-scrollbar { display: none; }
+
+.gt-nearby-subcategories > button {
+  position: relative;
+  display: grid;
+  flex: 0 0 58px;
+  min-width: 58px;
+  justify-items: center;
+  gap: 5px;
+  padding: 0 0 7px;
+  border: 0;
+  background: transparent;
+  scroll-snap-align: start;
+}
+
+.gt-nearby-subcategories > button > span {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid #e2e8e4;
+  border-radius: 12px;
+  color: #1fa467;
+  background: #f8fbf9;
+}
+
+.gt-nearby-subcategories > button > strong {
+  color: #4e5a53;
+  font-size: 7.7px;
+  line-height: 1.12;
+  white-space: nowrap;
+}
+
+.gt-nearby-subcategories > button::after {
+  content: "";
+  position: absolute;
+  right: 3px;
+  bottom: 0;
+  left: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.gt-nearby-subcategories > button.is-active > span {
+  color: #0d9d58;
+  background: #eaf8f0;
+  border-color: #d9f0e2;
+}
+
+.gt-nearby-subcategories > button.is-active > strong {
+  color: #0d9d58;
+}
+
+.gt-nearby-subcategories > button.is-active::after {
+  background: #0da05a;
+}
+
+.gt-nearby-map.is-nature .gt-nearby-map-pin:not(.gt-nearby-map-pin--food):not(.gt-nearby-map-pin--partner) {
+  background: #18a565;
+}
+
+@media (max-width: 390px) {
+  .gt-home-screen {
+    grid-template-rows: minmax(255px, 34vh) 116px minmax(0, 1fr) !important;
+  }
+
+  .gt-home-screen .gt-home-hero {
+    padding-bottom: 76px !important;
+  }
+
+  .gt-home-screen .gt-home-hero__copy p { font-size: 18px !important; }
+  .gt-home-screen .gt-home-hero__copy h1 { font-size: 37px !important; }
+
+  .gt-home-screen .gt-weather--reference {
+    right: 12px !important;
+    left: 12px !important;
+    min-height: 68px !important;
+    padding: 9px 7px 17px !important;
+  }
+
+  .gt-home-screen .gt-weather-item {
+    gap: 4px;
+    padding: 0 4px;
+  }
+
+  .gt-home-screen .gt-weather-item strong { font-size: 11px !important; }
+  .gt-home-screen .gt-weather-item small { font-size: 6.8px !important; }
+  .gt-home-screen .gt-weather-symbol { font-size: 18px; }
+
+  .gt-home-screen .gt-hotel-summary--reference {
+    grid-template-columns: 47px minmax(0,1fr) 70px auto !important;
+    min-height: 116px !important;
+    padding: 10px 11px !important;
+  }
+
+  .gt-home-screen .gt-current-place-pin { width: 44px; height: 44px; }
+  .gt-home-screen .gt-current-place-copy strong { font-size: 15px !important; }
+  .gt-home-screen .gt-current-place-copy small { font-size: 9.5px !important; }
+  .gt-home-screen .gt-current-place-photo { width: 70px !important; height: 66px !important; }
+  .gt-home-screen .gt-hotel-summary--reference > i { min-width: 54px; padding: 8px 8px !important; font-size: 10px !important; }
+
+  .gt-nearby-categories > button {
+    flex-basis: 53px !important;
+    min-width: 53px;
+  }
+
+  .gt-nearby-subcategories > button {
+    flex-basis: 54px;
+    min-width: 54px;
+  }
+}
+
+.gt-nearby-categories-wrap {
+  position: relative;
+  min-width: 0;
+  background: #fff;
+}
+
+.gt-nearby-categories-wrap .gt-nearby-categories {
+  padding-right: 58px !important;
+}
+
+.gt-nearby-categories-next {
+  position: absolute;
+  z-index: 5;
+  top: 50%;
+  right: 7px;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #e5e9e7;
+  border-radius: 50%;
+  color: #505b55;
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 4px 12px rgba(27,48,35,.12);
+  transform: translateY(-58%);
+}
+
+@media (max-width:390px) {
+  .gt-nearby-categories-next {
+    width: 34px;
+    height: 34px;
+    right: 5px;
+  }
+}
