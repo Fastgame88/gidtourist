@@ -18990,3 +18990,41 @@ button.gt-service-card {
     font-size: 10.5px !important;
   }
 }
+
+/* ===== 2026-08-26 current-place sticker reduce and center ===== */
+.gt-home-screen .gt-current-place-pin {
+  width: 56px !important;
+  height: 56px !important;
+  display: grid !important;
+  place-items: center !important;
+  align-self: center !important;
+  justify-self: center !important;
+  overflow: visible !important;
+}
+
+.gt-home-screen .gt-current-place-pin .gt-current-place-sticker {
+  width: 52px !important;
+  height: 64px !important;
+  margin: 0 auto !important;
+  transform: none !important;
+}
+
+.gt-home-screen .gt-hotel-summary--reference {
+  grid-template-columns: 56px minmax(0, 1fr) 74px auto !important;
+}
+
+@media (max-width: 390px) {
+  .gt-home-screen .gt-current-place-pin {
+    width: 52px !important;
+    height: 52px !important;
+  }
+
+  .gt-home-screen .gt-current-place-pin .gt-current-place-sticker {
+    width: 48px !important;
+    height: 59px !important;
+  }
+
+  .gt-home-screen .gt-hotel-summary--reference {
+    grid-template-columns: 52px minmax(0, 1fr) 67px auto !important;
+  }
+}
