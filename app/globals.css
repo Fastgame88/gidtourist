@@ -18932,3 +18932,61 @@ button.gt-service-card {
     font-size: 7.9px !important;
   }
 }
+
+/* ===== 2026-08-26 sticker visual scale + button typography refinement ===== */
+.gt-home-screen .gt-current-place-pin {
+  overflow: visible !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.gt-home-screen .gt-current-place-pin .gt-current-place-sticker {
+  width: 69px !important;
+  height: 85px !important;
+  max-width: none !important;
+  background: transparent !important;
+  overflow: visible !important;
+}
+
+.gt-home-screen .gt-hotel-summary--reference {
+  grid-template-columns: 68px minmax(0, 1fr) 74px auto !important;
+}
+
+.gt-home-screen .gt-category-card > span:nth-child(2),
+.gt-home-screen .gt-category-card--featured > span:nth-child(2) {
+  gap: 5px !important;
+}
+
+.gt-home-screen .gt-category-card strong,
+.gt-home-screen .gt-category-card--featured strong {
+  font-size: 13.9px !important;
+  line-height: 1.08 !important;
+}
+
+.gt-home-screen .gt-category-card small,
+.gt-home-screen .gt-category-card--featured small {
+  font-size: 10.8px !important;
+  line-height: 1.15 !important;
+}
+
+@media (max-width: 390px) {
+  .gt-home-screen .gt-current-place-pin .gt-current-place-sticker {
+    width: 64px !important;
+    height: 79px !important;
+  }
+
+  .gt-home-screen .gt-hotel-summary--reference {
+    grid-template-columns: 63px minmax(0, 1fr) 67px auto !important;
+  }
+
+  .gt-home-screen .gt-category-card strong,
+  .gt-home-screen .gt-category-card--featured strong {
+    font-size: 13.4px !important;
+  }
+
+  .gt-home-screen .gt-category-card small,
+  .gt-home-screen .gt-category-card--featured small {
+    font-size: 10.5px !important;
+  }
+}
