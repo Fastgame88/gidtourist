@@ -222,7 +222,6 @@ function WalkingIcon({ size = 13 }: { size?: number }) {
   );
 }
 
-
 function WeatherSunIcon({ className = "" }: { className?: string }) {
   return (
     <svg className={`gt-weather-icon ${className}`.trim()} viewBox="0 0 24 24" fill="none" aria-hidden="true">

@@ -18396,79 +18396,96 @@ button.gt-service-card {
   }
 }
 
-/* ===== 2026-08-26 final home screen tuning to match reference scale ===== */
+/* ===== 2026-08-26 home screen exact-fit correction ===== */
+.tourist-app-frame--home .phone-content {
+  overflow: hidden !important;
+}
+
 .gt-home-screen {
-  grid-template-rows: minmax(266px, 34vh) 112px minmax(0, 1fr) !important;
-  gap: 8px !important;
+  grid-template-rows: minmax(216px, 30vh) 92px minmax(0, 1fr) !important;
+  gap: 7px !important;
+  height: 100% !important;
+  overflow: hidden !important;
 }
 
 .gt-home-screen .gt-home-hero {
-  padding: 0 16px 74px !important;
+  padding: 0 14px 68px !important;
 }
 
 .gt-home-screen .gt-home-hero__copy {
-  transform: translateY(-12px) !important;
+  transform: translateY(-10px) !important;
 }
 
 .gt-home-screen .gt-home-hero__copy p {
+  margin: 0 0 4px !important;
   font-size: 20px !important;
+  line-height: 1.05 !important;
 }
 
 .gt-home-screen .gt-home-hero__copy h1 {
   font-size: 41px !important;
+  line-height: 0.98 !important;
 }
 
 .gt-home-screen .gt-weather--reference {
-  right: 14px !important;
-  bottom: 11px !important;
-  left: 14px !important;
-  grid-template-columns: 0.95fr 1.07fr 1.02fr 1.08fr !important;
-  min-height: 66px !important;
-  padding: 9px 10px 17px !important;
-  border-radius: 19px !important;
+  right: 13px !important;
+  bottom: 10px !important;
+  left: 13px !important;
+  grid-template-columns: 0.95fr 1.05fr 1.02fr 1.06fr !important;
+  min-height: 63px !important;
+  padding: 8px 9px 15px !important;
+  border-radius: 18px !important;
 }
 
 .gt-home-screen .gt-weather-item {
-  justify-content: flex-start !important;
+  align-items: center !important;
+  justify-content: center !important;
   gap: 6px !important;
-  padding: 0 6px !important;
+  padding: 0 5px !important;
 }
 
 .gt-home-screen .gt-weather-item > span:last-child {
+  display: grid !important;
+  align-content: center !important;
+  min-height: 28px !important;
   gap: 1px !important;
 }
 
 .gt-home-screen .gt-weather-icon {
-  width: 23px;
-  height: 23px;
-  flex: 0 0 23px;
+  width: 24px !important;
+  height: 24px !important;
+  flex: 0 0 24px !important;
 }
 
 .gt-home-screen .gt-weather-icon--sun {
-  color: #f2bf1c;
+  color: #f3bf19 !important;
 }
 
 .gt-home-screen .gt-weather-icon--rain {
-  color: #41a4ea;
+  color: #42a4ec !important;
 }
 
 .gt-home-screen .gt-weather-icon--wind {
-  color: #667987;
+  color: #667885 !important;
 }
 
 .gt-home-screen .gt-weather-icon--sunset {
-  color: #f0aa17;
+  color: #f3ad16 !important;
 }
 
 .gt-home-screen .gt-weather-item strong {
-  font-size: 11.8px !important;
-  line-height: 1.05 !important;
+  display: block !important;
+  color: #202722 !important;
+  font-size: 12.4px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
 }
 
 .gt-home-screen .gt-weather-item small {
+  display: block !important;
+  color: #747f79 !important;
   font-size: 7.7px !important;
   line-height: 1.08 !important;
-  letter-spacing: -0.01em;
 }
 
 .gt-home-screen .gt-weather-updated {
@@ -18478,61 +18495,91 @@ button.gt-service-card {
 }
 
 .gt-home-screen .gt-hotel-summary--reference {
-  grid-template-columns: 52px minmax(0, 1fr) 78px auto !important;
-  gap: 10px !important;
+  grid-template-columns: 49px minmax(0, 1fr) 74px auto !important;
+  gap: 12px !important;
   width: calc(100% - 28px) !important;
-  min-height: 103px !important;
+  min-height: 92px !important;
   margin: 0 14px !important;
-  padding: 11px 12px !important;
-  border-radius: 20px !important;
+  padding: 10px 12px !important;
+  border-radius: 19px !important;
 }
 
 .gt-home-screen .gt-current-place-pin {
-  width: 45px !important;
-  height: 45px !important;
+  position: relative !important;
+  display: grid !important;
+  width: 42px !important;
+  height: 42px !important;
+  place-items: center !important;
+  color: #11a85d !important;
 }
 
 .gt-home-screen .gt-current-place-pin svg {
-  width: 39px;
-  height: 39px;
+  position: relative;
+  z-index: 2;
+  width: 35px !important;
+  height: 35px !important;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,.08));
+}
+
+.gt-home-screen .gt-current-place-pin::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  right: 5px;
+  bottom: 1px;
+  height: 10px;
+  border: 2.6px solid rgba(65, 203, 139, 0.28);
+  border-radius: 50%;
+  background: rgba(255,255,255,.32);
+}
+
+.gt-home-screen .gt-current-place-pin::after {
+  content: "";
+  position: absolute;
+  left: 13px;
+  bottom: 8px;
+  width: 16px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(9, 165, 88, 0.22);
 }
 
 .gt-home-screen .gt-current-place-copy {
-  gap: 3px !important;
+  gap: 4px !important;
 }
 
 .gt-home-screen .gt-current-place-copy strong {
-  font-size: 15.5px !important;
+  font-size: 15.8px !important;
+  line-height: 1.06 !important;
 }
 
 .gt-home-screen .gt-current-place-copy small {
-  display: -webkit-box;
-  overflow: hidden;
-  font-size: 10px !important;
-  line-height: 1.14 !important;
-  text-overflow: clip !important;
+  display: block !important;
+  overflow: hidden !important;
+  font-size: 10.4px !important;
+  line-height: 1.16 !important;
   white-space: normal !important;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
 }
 
 .gt-home-screen .gt-current-place-copy b {
-  gap: 4px !important;
-  font-size: 11px !important;
+  font-size: 11.1px !important;
+  line-height: 1 !important;
 }
 
 .gt-home-screen .gt-current-place-photo {
-  width: 78px !important;
-  height: 70px !important;
+  width: 74px !important;
+  height: 66px !important;
   border-radius: 12px !important;
 }
 
 .gt-home-screen .gt-hotel-summary--reference > i {
-  min-width: 67px !important;
-  padding: 9px 10px !important;
-  border-width: 1.4px !important;
+  min-width: 66px !important;
+  padding: 8px 10px !important;
+  border: 1.5px solid #2788c1 !important;
   border-radius: 11px !important;
-  color: #1d7eb8 !important;
+  color: #2379b0 !important;
   font-size: 11px !important;
   font-weight: 800 !important;
 }
@@ -18540,91 +18587,90 @@ button.gt-service-card {
 .gt-home-screen .gt-category-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   grid-template-rows: none !important;
-  grid-auto-rows: minmax(84px, auto) !important;
+  grid-auto-rows: minmax(72px, auto) !important;
   align-content: start !important;
-  gap: 10px !important;
-  margin-top: 2px !important;
-  padding: 0 14px 10px !important;
+  gap: 8px !important;
+  margin-top: 0 !important;
+  padding: 0 14px 8px !important;
 }
 
 .gt-home-screen .gt-category-card {
-  grid-template-columns: 44px minmax(0, 1fr) !important;
+  grid-template-columns: 40px minmax(0, 1fr) !important;
   align-items: center !important;
-  min-height: 84px !important;
-  padding: 8px 10px !important;
-  gap: 10px !important;
-  border-radius: 18px !important;
+  min-height: 72px !important;
+  padding: 7px 9px !important;
+  gap: 9px !important;
+  border-radius: 16px !important;
 }
 
 .gt-home-screen .gt-category-card__icon {
-  width: 44px !important;
-  height: 44px !important;
+  width: 40px !important;
+  height: 40px !important;
 }
 
 .gt-home-screen .gt-category-card > span:nth-child(2) {
-  gap: 3px !important;
+  gap: 2px !important;
 }
 
 .gt-home-screen .gt-category-card strong {
-  font-size: 12.5px !important;
-  line-height: 1.12 !important;
+  font-size: 11.8px !important;
+  line-height: 1.08 !important;
 }
 
 .gt-home-screen .gt-category-card small {
-  font-size: 10px !important;
-  line-height: 1.18 !important;
+  font-size: 9.2px !important;
+  line-height: 1.14 !important;
 }
 
 .gt-home-screen .gt-category-card--featured {
-  grid-template-columns: 44px minmax(0, 1fr) 15px !important;
-  min-height: 84px !important;
+  grid-template-columns: 40px minmax(0, 1fr) 14px !important;
+  min-height: 72px !important;
 }
 
 .gt-home-screen .gt-category-card--featured .gt-category-card__icon {
-  width: 44px !important;
-  height: 44px !important;
+  width: 40px !important;
+  height: 40px !important;
 }
 
 .gt-home-screen .gt-category-card--featured strong {
-  font-size: 12.5px !important;
-  line-height: 1.1 !important;
+  font-size: 11.8px !important;
+  line-height: 1.08 !important;
 }
 
 .gt-home-screen .gt-category-card--featured small {
-  font-size: 9.5px !important;
+  font-size: 9.1px !important;
   line-height: 1.13 !important;
 }
 
 .tourist-app-frame--home .tourist-bottom-nav {
-  min-height: 77px !important;
-  padding-top: 6px !important;
+  min-height: 76px !important;
+  padding-top: 5px !important;
 }
 
 .tourist-app-frame--home .tourist-bottom-nav button {
-  min-height: 47px !important;
+  min-height: 45px !important;
 }
 
 .tourist-app-frame--home .tourist-bottom-nav button.is-qr {
-  margin-top: -22px !important;
+  margin-top: -21px !important;
 }
 
 .tourist-app-frame--home .tourist-bottom-nav button.is-qr svg {
-  width: 54px !important;
-  height: 54px !important;
+  width: 53px !important;
+  height: 53px !important;
 }
 
 @media (max-width: 390px) {
   .gt-home-screen {
-    grid-template-rows: minmax(246px, 33vh) 102px minmax(0, 1fr) !important;
-    gap: 7px !important;
+    grid-template-rows: minmax(208px, 29vh) 88px minmax(0, 1fr) !important;
+    gap: 6px !important;
   }
 
   .gt-home-screen .gt-home-hero {
-    padding: 0 12px 72px !important;
+    padding: 0 12px 66px !important;
   }
 
   .gt-home-screen .gt-home-hero__copy p {
-    margin-bottom: 4px !important;
     font-size: 18px !important;
   }
 
@@ -18633,11 +18679,10 @@ button.gt-service-card {
   }
 
   .gt-home-screen .gt-weather--reference {
-    right: 12px !important;
-    bottom: 10px !important;
-    left: 12px !important;
-    min-height: 64px !important;
-    padding: 8px 8px 16px !important;
+    right: 11px !important;
+    left: 11px !important;
+    min-height: 61px !important;
+    padding: 8px 7px 15px !important;
   }
 
   .gt-home-screen .gt-weather-item {
@@ -18646,96 +18691,95 @@ button.gt-service-card {
   }
 
   .gt-home-screen .gt-weather-icon {
-    width: 21px;
-    height: 21px;
-    flex-basis: 21px;
+    width: 22px !important;
+    height: 22px !important;
+    flex-basis: 22px !important;
   }
 
   .gt-home-screen .gt-weather-item strong {
-    font-size: 10.9px !important;
+    font-size: 11.8px !important;
   }
 
   .gt-home-screen .gt-weather-item small {
-    font-size: 7px !important;
+    font-size: 7.2px !important;
   }
 
   .gt-home-screen .gt-hotel-summary--reference {
-    grid-template-columns: 44px minmax(0, 1fr) 68px auto !important;
+    grid-template-columns: 42px minmax(0, 1fr) 67px auto !important;
     width: calc(100% - 24px) !important;
-    min-height: 96px !important;
+    min-height: 88px !important;
     margin: 0 12px !important;
-    padding: 10px 11px !important;
-    gap: 8px !important;
+    padding: 9px 10px !important;
+    gap: 10px !important;
   }
 
   .gt-home-screen .gt-current-place-pin {
-    width: 40px !important;
-    height: 40px !important;
+    width: 38px !important;
+    height: 38px !important;
   }
 
   .gt-home-screen .gt-current-place-pin svg {
-    width: 34px;
-    height: 34px;
+    width: 31px !important;
+    height: 31px !important;
   }
 
   .gt-home-screen .gt-current-place-copy strong {
-    font-size: 14.5px !important;
+    font-size: 14.8px !important;
   }
 
   .gt-home-screen .gt-current-place-copy small {
-    font-size: 9.4px !important;
+    font-size: 9.7px !important;
   }
 
   .gt-home-screen .gt-current-place-copy b {
-    font-size: 10px !important;
+    font-size: 10.3px !important;
   }
 
   .gt-home-screen .gt-current-place-photo {
-    width: 68px !important;
-    height: 62px !important;
+    width: 67px !important;
+    height: 60px !important;
   }
 
   .gt-home-screen .gt-hotel-summary--reference > i {
-    min-width: 60px !important;
-    padding: 8px 8px !important;
+    min-width: 59px !important;
+    padding: 7px 8px !important;
     font-size: 10px !important;
   }
 
   .gt-home-screen .gt-category-grid {
-    grid-auto-rows: minmax(80px, auto) !important;
+    grid-auto-rows: minmax(69px, auto) !important;
     gap: 8px !important;
-    padding: 0 12px 8px !important;
+    padding: 0 12px 7px !important;
+  }
+
+  .gt-home-screen .gt-category-card,
+  .gt-home-screen .gt-category-card--featured {
+    min-height: 69px !important;
   }
 
   .gt-home-screen .gt-category-card {
-    grid-template-columns: 40px minmax(0, 1fr) !important;
-    min-height: 80px !important;
-    padding: 8px 9px !important;
+    grid-template-columns: 38px minmax(0, 1fr) !important;
+    padding: 7px 8px !important;
     gap: 8px !important;
   }
 
   .gt-home-screen .gt-category-card__icon,
   .gt-home-screen .gt-category-card--featured .gt-category-card__icon {
-    width: 40px !important;
-    height: 40px !important;
+    width: 38px !important;
+    height: 38px !important;
   }
 
   .gt-home-screen .gt-category-card strong,
   .gt-home-screen .gt-category-card--featured strong {
-    font-size: 12px !important;
+    font-size: 11.4px !important;
   }
 
   .gt-home-screen .gt-category-card small,
   .gt-home-screen .gt-category-card--featured small {
-    font-size: 9.2px !important;
+    font-size: 8.9px !important;
   }
 
   .gt-home-screen .gt-category-card--featured {
-    grid-template-columns: 40px minmax(0, 1fr) 14px !important;
-    min-height: 80px !important;
-  }
-
-  .tourist-app-frame--home .tourist-bottom-nav {
-    min-height: 76px !important;
+    grid-template-columns: 38px minmax(0, 1fr) 13px !important;
   }
 }
