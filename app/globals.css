@@ -18783,3 +18783,72 @@ button.gt-service-card {
     grid-template-columns: 38px minmax(0, 1fr) 13px !important;
   }
 }
+
+/* ===== 2026-08-26 button height + sticker refinement ===== */
+.gt-home-screen .gt-hotel-summary--reference {
+  gap: 13px !important;
+}
+
+.gt-home-screen .gt-current-place-pin {
+  width: 44px !important;
+  height: 44px !important;
+  color: transparent !important;
+}
+
+.gt-home-screen .gt-current-place-pin::before,
+.gt-home-screen .gt-current-place-pin::after {
+  content: none !important;
+}
+
+.gt-home-screen .gt-current-place-sticker {
+  width: 44px !important;
+  height: 54px !important;
+  display: block;
+}
+
+.gt-home-screen .gt-category-grid {
+  grid-auto-rows: minmax(77px, auto) !important;
+  gap: 8px !important;
+  padding: 0 14px 4px !important;
+}
+
+.gt-home-screen .gt-category-card,
+.gt-home-screen .gt-category-card--featured {
+  min-height: 77px !important;
+}
+
+.gt-home-screen .gt-category-card {
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+.gt-home-screen .gt-category-card--featured {
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+@media (max-width: 390px) {
+  .gt-home-screen .gt-hotel-summary--reference {
+    gap: 11px !important;
+  }
+
+  .gt-home-screen .gt-current-place-pin {
+    width: 41px !important;
+    height: 41px !important;
+  }
+
+  .gt-home-screen .gt-current-place-sticker {
+    width: 41px !important;
+    height: 50px !important;
+  }
+
+  .gt-home-screen .gt-category-grid {
+    grid-auto-rows: minmax(74px, auto) !important;
+    padding: 0 12px 3px !important;
+  }
+
+  .gt-home-screen .gt-category-card,
+  .gt-home-screen .gt-category-card--featured {
+    min-height: 74px !important;
+  }
+}

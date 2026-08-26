@@ -263,6 +263,25 @@ function WeatherSunsetIcon({ className = "" }: { className?: string }) {
   );
 }
 
+
+function CurrentPlaceSticker() {
+  return (
+    <svg className="gt-current-place-sticker" viewBox="0 0 56 70" fill="none" aria-hidden="true">
+      <ellipse cx="28" cy="61" rx="17" ry="5" fill="#CBEBDD" />
+      <ellipse cx="28" cy="61" rx="11" ry="2.8" fill="#FFFFFF" opacity="0.95" />
+      <path d="M28 6c-9.7 0-17 7.1-17 16.6 0 12.2 12.2 21.4 16 25.9.5.7 1.5.7 2 0 3.8-4.5 16-13.7 16-25.9C45 13.1 37.7 6 28 6Z" fill="url(#pinGradient)"/>
+      <path d="M28 8.7c-8.1 0-14.2 5.8-14.2 13.8 0 10.3 10.4 18.3 14.2 22.7 3.8-4.4 14.2-12.4 14.2-22.7 0-8-6.1-13.8-14.2-13.8Z" fill="#20B364"/>
+      <circle cx="28" cy="22.5" r="7.6" fill="#FFFFFF"/>
+      <defs>
+        <linearGradient id="pinGradient" x1="28" y1="6" x2="28" y2="48" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#28C56E"/>
+          <stop offset="1" stopColor="#0EA154"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
 function PlaceRow({
   photo,
   title,
@@ -406,7 +425,7 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
         className="gt-hotel-summary gt-hotel-summary--reference"
         onClick={() => navigate("tourist", "about")}
       >
-        <span className="gt-current-place-pin" aria-hidden="true"><MapPin size={33} fill="currentColor" /></span>
+        <span className="gt-current-place-pin" aria-hidden="true"><CurrentPlaceSticker /></span>
         <span className="gt-current-place-copy">
           <strong>Ви зараз тут</strong>
           <small>Готель «Гірський затишок»</small>
