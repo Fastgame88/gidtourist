@@ -19497,3 +19497,79 @@ button.gt-service-card {
   min-width: 0 !important;
   justify-self: start !important;
 }
+
+/* ===== 2026-08-26 exact shop-style right edge alignment: food/rest/fun ===== */
+.gt-food-screen .gt-place-row__body,
+.gt-rest-screen .gt-place-row__body,
+.gt-entertainment-screen .gt-place-row__body {
+  grid-column: 2 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  justify-self: stretch !important;
+  padding-right: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.gt-food-screen .gt-place-row__title,
+.gt-rest-screen .gt-place-row__title,
+.gt-entertainment-screen .gt-place-row__title,
+.gt-food-screen .gt-place-row__meta,
+.gt-rest-screen .gt-place-row__meta,
+.gt-entertainment-screen .gt-place-row__meta {
+  display: flex !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+}
+
+.gt-food-screen .gt-place-row__title > strong,
+.gt-rest-screen .gt-place-row__title > strong,
+.gt-entertainment-screen .gt-place-row__title > strong,
+.gt-food-screen .gt-place-row__meta > span:first-child,
+.gt-rest-screen .gt-place-row__meta > span:first-child,
+.gt-entertainment-screen .gt-place-row__meta > span:first-child {
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+}
+
+.gt-food-screen .gt-place-row__title > b,
+.gt-rest-screen .gt-place-row__title > b,
+.gt-entertainment-screen .gt-place-row__title > b,
+.gt-food-screen .gt-place-row__meta > span:last-child,
+.gt-rest-screen .gt-place-row__meta > span:last-child,
+.gt-entertainment-screen .gt-place-row__meta > span:last-child {
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+  width: auto !important;
+  margin-left: auto !important;
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+  justify-content: flex-end !important;
+  text-align: right !important;
+  white-space: nowrap !important;
+}
+
+.gt-food-screen .gt-place-row,
+.gt-rest-screen .gt-place-row,
+.gt-entertainment-screen .gt-place-row {
+  padding-right: 7px !important;
+}
+
+@media (max-width: 390px) {
+  .gt-food-screen .gt-place-row,
+  .gt-rest-screen .gt-place-row,
+  .gt-entertainment-screen .gt-place-row {
+    padding-right: 6px !important;
+  }
+
+  .gt-food-screen .gt-place-row__title,
+  .gt-rest-screen .gt-place-row__title,
+  .gt-entertainment-screen .gt-place-row__title,
+  .gt-food-screen .gt-place-row__meta,
+  .gt-rest-screen .gt-place-row__meta,
+  .gt-entertainment-screen .gt-place-row__meta {
+    gap: 6px !important;
+  }
+}
