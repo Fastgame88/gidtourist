@@ -19441,3 +19441,27 @@ button.gt-service-card {
     min-height: 84px !important;
   }
 }
+
+/* ===== 2026-08-26 align distance + walking time to card right edge ===== */
+:is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row__body {
+  padding-right: 0 !important;
+}
+
+:is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row__title b,
+:is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row__meta > span:last-child {
+  min-width: 58px !important;
+  margin-left: auto !important;
+  justify-content: flex-end !important;
+  text-align: right !important;
+}
+
+:is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row__title b {
+  display: block !important;
+}
+
+@media (max-width: 390px) {
+  :is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row__title b,
+  :is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row__meta > span:last-child {
+    min-width: 52px !important;
+  }
+}
