@@ -22501,3 +22501,154 @@ button.gt-service-card {
     height: 15px;
   }
 }
+
+/* ===== 2026-08-30 hot offers nearby cards layout 1:1 refinement ===== */
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-list {
+  gap: 12px !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row {
+  grid-template-columns: 78px 56px minmax(0, 1fr) 16px !important;
+  align-items: center !important;
+  gap: 11px !important;
+  min-height: 96px !important;
+  padding: 10px 12px 10px 9px !important;
+  border-radius: 20px !important;
+  box-shadow: 0 3px 10px rgba(21, 31, 25, 0.04) !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row > .gt-hot-mosaic {
+  height: 78px !important;
+  border-radius: 16px !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row__discount {
+  min-height: 56px !important;
+  border-radius: 15px !important;
+  font-size: 17px !important;
+  line-height: 0.95 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row__discount.is-text-deal {
+  font-size: 14px !important;
+  line-height: 0.98 !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body {
+  position: relative !important;
+  display: grid !important;
+  align-content: start !important;
+  gap: 2px !important;
+  padding-top: 2px !important;
+  padding-right: 72px !important;
+  min-height: 76px !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body > small {
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  letter-spacing: 0.02em !important;
+  text-transform: uppercase !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row:nth-child(1) .gt-hot-offers-reference-row__body > small {
+  color: #de8c1b !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row:nth-child(n+2) .gt-hot-offers-reference-row__body > small {
+  color: #3a9a3a !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body > strong {
+  margin-top: 1px !important;
+  color: #182119 !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  line-height: 1.08 !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body > span {
+  color: #555f58 !important;
+  font-size: 12px !important;
+  line-height: 1.14 !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body > i {
+  margin-top: 5px !important;
+  color: #6d746f !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body > i svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row__badge {
+  top: 10px !important;
+  right: 33px !important;
+  padding: 6px 10px !important;
+  font-size: 10.5px !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row__arrow {
+  justify-self: end !important;
+  align-self: center !important;
+  color: #55a92f !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+@media (max-width: 390px) {
+  .gt-hot-offers-screen--reference .gt-hot-offers-reference-row {
+    grid-template-columns: 74px 52px minmax(0, 1fr) 14px !important;
+    gap: 9px !important;
+    min-height: 92px !important;
+    padding: 9px 10px 9px 8px !important;
+  }
+
+  .gt-hot-offers-screen--reference .gt-hot-offers-reference-row > .gt-hot-mosaic {
+    height: 74px !important;
+  }
+
+  .gt-hot-offers-screen--reference .gt-hot-offers-reference-row__discount {
+    min-height: 52px !important;
+    font-size: 16px !important;
+  }
+
+  .gt-hot-offers-screen--reference .gt-hot-offers-reference-row__discount.is-text-deal {
+    font-size: 13px !important;
+  }
+
+  .gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body {
+    padding-right: 68px !important;
+    min-height: 72px !important;
+  }
+
+  .gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body > small {
+    font-size: 10.5px !important;
+  }
+
+  .gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body > strong {
+    font-size: 12.5px !important;
+  }
+
+  .gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body > span {
+    font-size: 11.5px !important;
+  }
+
+  .gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body > i {
+    font-size: 10.5px !important;
+  }
+
+  .gt-hot-offers-screen--reference .gt-hot-offers-reference-row__badge {
+    right: 28px !important;
+    padding: 5px 9px !important;
+    font-size: 9.8px !important;
+  }
+}
