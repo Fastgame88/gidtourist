@@ -46,6 +46,7 @@ type TelegramWindow = Window & {
       expand: () => void;
       setHeaderColor?: (color: string) => void;
       setBackgroundColor?: (color: string) => void;
+      platform?: string;
       BackButton?: {
         show: () => void;
         hide: () => void;
@@ -126,6 +127,7 @@ function TouristBottomNav({
 export default function ProductApplication({ role, slug }: { role: RoleKey; slug: string }) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [telegramPlatform, setTelegramPlatform] = useState("");
   const activeScreen = getScreen(role, slug);
 
   useEffect(() => {
@@ -146,6 +148,10 @@ export default function ProductApplication({ role, slug }: { role: RoleKey; slug
       webApp?.expand();
       webApp?.setHeaderColor?.("#f8fbf9");
       webApp?.setBackgroundColor?.("#f8fbf9");
+
+      const detectedPlatform = webApp?.platform
+        ?? (/Android/i.test(window.navigator.userAgent) ? "android" : "");
+      setTelegramPlatform(detectedPlatform);
     };
 
     connectTelegram();
@@ -205,8 +211,9 @@ export default function ProductApplication({ role, slug }: { role: RoleKey; slug
 
   if (role === "tourist") {
     const isHomeScreen = slug === "home" || slug === "welcome";
+    const isAndroidTelegram = telegramPlatform.startsWith("android");
     return (
-      <main className="tourist-app-shell">
+      <main className={`tourist-app-shell ${isAndroidTelegram ? "tourist-app-shell--android" : ""}`}>
         <div className={`tourist-app-frame ${slug === "welcome" ? "tourist-app-frame--welcome" : ""} ${isHomeScreen ? "tourist-app-frame--home" : ""}`}>
           <div className="phone-content">
             <TouristScreen slug={activeScreen.slug} navigate={navigate} />
