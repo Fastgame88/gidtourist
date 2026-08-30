@@ -21292,3 +21292,25 @@ button.gt-service-card {
 .gt-nearby-design__card-copy {
   padding-bottom: 11px !important;
 }
+
+/* ===== 2026-08-30 Nearby: extend offer cards to the bottom nav edge ===== */
+.gt-nearby-design__cards {
+  align-items: stretch !important;
+}
+
+.gt-nearby-design__card {
+  min-height: 166px !important;
+  height: 166px !important;
+}
+
+.gt-nearby-design__card-copy {
+  align-content: start !important;
+  min-height: 0 !important;
+}
+
+@media (max-width: 390px) {
+  .gt-nearby-design__card {
+    min-height: 162px !important;
+    height: 162px !important;
+  }
+}
