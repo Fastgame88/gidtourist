@@ -19756,3 +19756,53 @@ button.gt-service-card {
   padding: 15px !important;
   border-width: 4px !important;
 }
+
+/* ===== 2026-08-30 Android home exact-fit parity with iPhone ===== */
+/* Android Telegram has a shorter usable viewport because of its native chrome.
+   Use the real content height (not vh) and let the 4 card rows share the remaining space. */
+.tourist-app-shell--android .tourist-app-frame--home .phone-content {
+  padding-bottom: 88px !important;
+}
+
+.tourist-app-shell--android .gt-home-screen {
+  grid-template-rows: minmax(0, 31%) 92px minmax(0, 1fr) !important;
+  gap: 7px !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-home-hero {
+  min-height: 0 !important;
+  height: 100% !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-category-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  grid-template-rows: repeat(4, minmax(0, 1fr)) !important;
+  grid-auto-rows: unset !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  align-content: stretch !important;
+  gap: 8px !important;
+  padding-bottom: 4px !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-category-card,
+.tourist-app-shell--android .gt-home-screen .gt-category-card--featured {
+  min-height: 0 !important;
+  height: 100% !important;
+}
+
+@media (max-height: 760px) {
+  .tourist-app-shell--android .gt-home-screen {
+    grid-template-rows: minmax(0, 29%) 86px minmax(0, 1fr) !important;
+    gap: 6px !important;
+  }
+
+  .tourist-app-shell--android .gt-home-screen .gt-category-grid {
+    gap: 7px !important;
+    padding-bottom: 2px !important;
+  }
+}
