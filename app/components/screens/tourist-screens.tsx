@@ -1296,36 +1296,89 @@ function TransferKindIcon({ kind }: { kind: "taxi" | "transfer" | "rental" }) {
   return <span className={`gt-transfer-kind-icon gt-transfer-kind-icon--${kind}`} aria-hidden="true" />;
 }
 
+const transferReferencePlaces = [
+  {
+    image: "/images/transfer-reference/taxi-card.jpg",
+    title: "Таксі «Карпати трансфер»",
+    subtitle: "Трансфери по Карпатах та Україні",
+    rating: "4.8 (126)",
+    distance: "150 м",
+    walk: "2 хв",
+    walking: false,
+    tags: ["Трансфери", "Мікроавтобуси", "24/7"],
+  },
+  {
+    image: "/images/transfer-reference/bus-card.jpg",
+    title: "Автостанція Татарів",
+    subtitle: "Міжміські та приміські маршрути",
+    rating: "4.6 (89)",
+    distance: "350 м",
+    walk: "5 хв",
+    walking: true,
+    tags: ["Автобуси", "Каси", "Розклад"],
+  },
+  {
+    image: "/images/transfer-reference/gas-card.jpg",
+    title: "АЗС ОККО",
+    subtitle: "Паливо, кава, магазин",
+    rating: "4.5 (72)",
+    distance: "450 м",
+    walk: "3 хв",
+    walking: false,
+    tags: ["Заправки", "Магазин", "Кава"],
+  },
+  {
+    image: "/images/transfer-reference/parking-card.jpg",
+    title: "Парковка біля вокзалу",
+    subtitle: "Зручна парковка для автомобілів",
+    rating: "4.3 (51)",
+    distance: "600 м",
+    walk: "8 хв",
+    walking: true,
+    tags: ["Парковки", "Відеонагляд", "Безпека"],
+  },
+] as const;
+
+function TransferReferenceRow({ place }: { place: (typeof transferReferencePlaces)[number] }) {
+  return (
+    <article className="gt-transfer-reference-row">
+      <img src={place.image} alt="" className="gt-transfer-reference-row__image" />
+      <div className="gt-transfer-reference-row__body">
+        <div className="gt-transfer-reference-row__title">
+          <strong>{place.title}</strong>
+          <b>{place.distance}</b>
+        </div>
+        <p>{place.subtitle}</p>
+        <div className="gt-transfer-reference-row__meta">
+          <span><Star size={14} fill="currentColor" /> {place.rating}</span>
+          <span>{place.walking ? <WalkingIcon size={13} /> : <CarFront size={13} />} {place.walk}</span>
+        </div>
+        <div className="gt-transfer-reference-row__tags">
+          {place.tags.map((tag) => <i key={tag}>{tag}</i>)}
+        </div>
+      </div>
+    </article>
+  );
+}
+
 function TransferScreen() {
   return (
-    <div className="tourist-screen gt-screen gt-transfer-screen">
-      <section className="gt-transfer-hero">
-        <span className="gt-transfer-hero-badge"><i aria-hidden="true" /></span>
-        <h1>Трансфер</h1>
-        <p>Таксі, трансфери та оренда авто</p>
-        <div className="gt-transfer-kinds">
-          <button type="button"><TransferKindIcon kind="taxi" /><span className="gt-transfer-kind-copy"><strong>Таксі</strong><small>Швидко<br />та зручно</small></span></button>
-          <button type="button"><TransferKindIcon kind="transfer" /><span className="gt-transfer-kind-copy"><strong>Трансфер</strong><small>По місту та<br />між містами</small></span></button>
-          <button type="button"><TransferKindIcon kind="rental" /><span className="gt-transfer-kind-copy"><strong>Оренда авто</strong><small>Обирай авто<br />та вирушай</small></span></button>
+    <div className="tourist-screen gt-screen gt-transfer-reference-screen">
+      <main className="gt-transfer-reference-content">
+        <CategoryHeader
+          icon={CarFront}
+          title="Трансфер"
+          subtitle="Транспортні послуги та перевезення"
+          tone="teal"
+        />
+        <SearchBar placeholder="Пошук трансферу або маршруту" />
+        <div className="gt-transfer-reference-chips">
+          <Chips items={["Усі", "Автобусні зупинки", "Залізничні станції", "Автостанції", "Таксі", "Парковки"]} />
         </div>
-      </section>
-      <main className="gt-content gt-transfer-content">
-        <SectionTitle title="Наші партнери" />
-        <div className="gt-transfer-list">
-          {transferPartners.map((partner) => (
-            <article key={partner.title}>
-              <Thumb name={partner.photo} />
-              <div>
-                <strong>{partner.title}</strong>
-                <p>{partner.note}</p>
-                <small><Star size={14} fill="currentColor" /> {partner.rating} · {partner.trips}</small>
-              </div>
-              <span>
-                <button type="button">{partner.action}{partner.action === "Деталі" ? <ChevronRight size={16} /> : null}</button>
-                <small>{partner.price}</small>
-              </span>
-            </article>
-          ))}
+        <MapStrip />
+        <SectionTitle title="Трансфери поруч" action="Переглянути всі" />
+        <div className="gt-transfer-reference-list">
+          {transferReferencePlaces.map((place) => <TransferReferenceRow key={place.title} place={place} />)}
         </div>
       </main>
     </div>
