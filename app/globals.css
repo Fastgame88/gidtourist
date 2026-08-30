@@ -21314,3 +21314,67 @@ button.gt-service-card {
     height: 162px !important;
   }
 }
+
+/* ===== 2026-08-30 Nearby: larger offer card content ===== */
+.gt-nearby-design__card > .gt-photo {
+  height: 76px !important;
+}
+
+.gt-nearby-design__card-copy {
+  height: calc(100% - 76px) !important;
+  min-height: 0 !important;
+  gap: 3px !important;
+  padding: 4px 7px 6px !important;
+  align-content: stretch !important;
+}
+
+.gt-nearby-design__card-copy > strong {
+  min-height: 0 !important;
+  margin: 0 !important;
+  font-size: 11px !important;
+  line-height: 1.12 !important;
+}
+
+.gt-nearby-design__card-copy > small {
+  min-height: 0 !important;
+  font-size: 9px !important;
+  line-height: 1.1 !important;
+}
+
+.gt-nearby-design__card-copy > span {
+  width: 100% !important;
+  margin-top: auto !important;
+  align-self: end !important;
+  padding-top: 3px !important;
+}
+
+.gt-nearby-design__card-copy b,
+.gt-nearby-design__card-copy em {
+  font-size: 9px !important;
+}
+
+.gt-nearby-design__card-copy b svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+@media (max-width: 390px) {
+  .gt-nearby-design__card > .gt-photo {
+    height: 74px !important;
+  }
+
+  .gt-nearby-design__card-copy {
+    height: calc(100% - 74px) !important;
+    padding: 4px 6px 5px !important;
+  }
+
+  .gt-nearby-design__card-copy > strong {
+    font-size: 10.7px !important;
+  }
+
+  .gt-nearby-design__card-copy > small,
+  .gt-nearby-design__card-copy b,
+  .gt-nearby-design__card-copy em {
+    font-size: 8.8px !important;
+  }
+}
