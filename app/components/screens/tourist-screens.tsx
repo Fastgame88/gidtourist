@@ -1045,7 +1045,7 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
 
   return (
     <div className={`tourist-screen gt-screen gt-nearby-screen gt-nearby-design gt-nearby-theme--${activeTone}`}>
-      <main className="gt-nearby-design__content">
+      <main className={`gt-nearby-design__content ${activeSubcategories.length ? "has-subcategories" : ""}`.trim()}>
         <section className="gt-nearby-design__head">
           <div className="gt-nearby-design__brand-row">
             <h1>Gid Tourist</h1>
