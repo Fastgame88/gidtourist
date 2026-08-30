@@ -20996,3 +20996,132 @@ button.gt-service-card {
     scroll-padding-right: 20px !important;
   }
 }
+
+/* ===== 2026-08-30 Nearby: constrain full screen inside the right viewport edge ===== */
+/* Narrow only the Nearby page content slightly so every control stays inside Telegram's visible viewport. */
+.gt-nearby-design__content {
+  width: calc(100% - 14px) !important;
+  max-width: calc(100% - 14px) !important;
+  margin: 0 14px 0 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+/* Cancel the old full-bleed rail offsets: they were making the rows wider than the page. */
+.gt-nearby-design__categories-wrap,
+.gt-nearby-design__subcategories-wrap {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.gt-nearby-design__categories,
+.gt-nearby-design__subcategories {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  padding-left: 0 !important;
+  padding-right: 46px !important;
+}
+
+.gt-nearby-design__categories-next,
+.gt-nearby-design__subcategories-next {
+  right: 5px !important;
+}
+
+/* Search/filter row must never grow wider than the narrowed page. */
+.gt-nearby-design__search-row {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding-right: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Keep map, map controls and radius selector inside the same narrowed viewport. */
+.gt-nearby-design__map,
+.gt-nearby-design__sheet {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.gt-nearby-design__map-controls {
+  right: 12px !important;
+}
+
+.gt-nearby-design__radius {
+  right: 12px !important;
+  left: 12px !important;
+  width: auto !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+}
+
+/* Keep the sheet header and cards rail strictly inside the sheet width. */
+.gt-nearby-design__sheet {
+  padding-right: 16px !important;
+  padding-left: 16px !important;
+  overflow: hidden !important;
+}
+
+.gt-nearby-design__sheet-head {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.gt-nearby-design__sheet-head > span:last-child {
+  padding-right: 0 !important;
+  white-space: nowrap !important;
+}
+
+.gt-nearby-design__cards {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 14px !important;
+  scroll-padding-left: 0 !important;
+  scroll-padding-right: 14px !important;
+  box-sizing: border-box !important;
+}
+
+.gt-nearby-design__card:last-child {
+  margin-right: 8px !important;
+}
+
+@media (max-width: 390px) {
+  .gt-nearby-design__content {
+    width: calc(100% - 12px) !important;
+    max-width: calc(100% - 12px) !important;
+    margin-right: 12px !important;
+  }
+
+  .gt-nearby-design__categories,
+  .gt-nearby-design__subcategories {
+    padding-right: 42px !important;
+  }
+
+  .gt-nearby-design__map-controls {
+    right: 10px !important;
+  }
+
+  .gt-nearby-design__radius {
+    right: 10px !important;
+    left: 10px !important;
+  }
+
+  .gt-nearby-design__sheet {
+    padding-right: 14px !important;
+    padding-left: 14px !important;
+  }
+
+  .gt-nearby-design__cards {
+    padding-right: 12px !important;
+    scroll-padding-right: 12px !important;
+  }
+}
