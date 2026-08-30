@@ -20904,3 +20904,95 @@ button.gt-service-card {
     height: 50px !important;
   }
 }
+
+/* ===== 2026-08-30 Nearby: right safe inset + hide profile icon only on this screen ===== */
+/* Keep the existing profile route/logic intact; only hide its shortcut on Nearby. */
+.gt-nearby-design__brand-row > button {
+  display: none !important;
+}
+
+/* Keep the filter button safely inside the visible right edge. */
+.gt-nearby-design__search-row {
+  padding-right: 4px !important;
+}
+
+/* The category rails used negative right margins for a full-bleed effect.
+   Remove only the right bleed so arrows/icons cannot clip past the viewport. */
+.gt-nearby-design__categories-wrap,
+.gt-nearby-design__subcategories-wrap {
+  margin-right: 0 !important;
+}
+
+.gt-nearby-design__categories,
+.gt-nearby-design__subcategories {
+  padding-right: 52px !important;
+}
+
+.gt-nearby-design__categories-next,
+.gt-nearby-design__subcategories-next {
+  right: 6px !important;
+}
+
+/* Map controls and radius selector: give them a consistent right safe inset. */
+.gt-nearby-design__map-controls {
+  right: 18px !important;
+}
+
+.gt-nearby-design__radius {
+  width: calc(100% - 36px) !important;
+}
+
+/* Sheet header: keep “Дивитись все” away from the edge. */
+.gt-nearby-design__sheet {
+  padding-right: 22px !important;
+}
+
+.gt-nearby-design__sheet-head > span:last-child {
+  padding-right: 2px !important;
+}
+
+/* Offer rail: reserve space after the last card so it never disappears under the right edge. */
+.gt-nearby-design__cards {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  margin-right: 0 !important;
+  padding-right: 22px !important;
+  scroll-padding-right: 22px !important;
+}
+
+.gt-nearby-design__card:last-child {
+  margin-right: 2px !important;
+}
+
+@media (max-width: 390px) {
+  .gt-nearby-design__search-row {
+    padding-right: 3px !important;
+  }
+
+  .gt-nearby-design__categories,
+  .gt-nearby-design__subcategories {
+    padding-right: 48px !important;
+  }
+
+  .gt-nearby-design__categories-next,
+  .gt-nearby-design__subcategories-next {
+    right: 5px !important;
+  }
+
+  .gt-nearby-design__map-controls {
+    right: 16px !important;
+  }
+
+  .gt-nearby-design__radius {
+    width: calc(100% - 32px) !important;
+  }
+
+  .gt-nearby-design__sheet {
+    padding-right: 20px !important;
+  }
+
+  .gt-nearby-design__cards {
+    padding-right: 20px !important;
+    scroll-padding-right: 20px !important;
+  }
+}
