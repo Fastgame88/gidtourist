@@ -19651,3 +19651,54 @@ button.gt-service-card {
     top: 40px !important;
   }
 }
+
+/* ===== 2026-08-30 Android bottom nav parity + emergency hero removal ===== */
+/* Keep the tourist viewport stable inside Telegram on Android so the bottom nav is not clipped. */
+.tourist-app-frame {
+  height: var(--tg-viewport-stable-height, 100dvh) !important;
+  min-height: 0 !important;
+}
+
+.tourist-app-frame .phone-content {
+  height: 100% !important;
+  padding-bottom: calc(92px + max(10px, env(safe-area-inset-bottom))) !important;
+}
+
+.tourist-bottom-nav,
+.tourist-app-frame--home .tourist-bottom-nav {
+  right: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  min-height: 84px !important;
+  padding: 8px 10px max(10px, env(safe-area-inset-bottom)) !important;
+  align-items: end !important;
+}
+
+.tourist-bottom-nav button,
+.tourist-app-frame--home .tourist-bottom-nav button {
+  min-height: 53px !important;
+  padding: 5px 2px !important;
+  font-size: 10px !important;
+}
+
+.tourist-bottom-nav button > svg:not(.gt-walking-icon) {
+  flex: 0 0 auto;
+}
+
+.tourist-bottom-nav button.is-qr,
+.tourist-app-frame--home .tourist-bottom-nav button.is-qr {
+  margin-top: -26px !important;
+}
+
+.tourist-bottom-nav button.is-qr svg,
+.tourist-app-frame--home .tourist-bottom-nav button.is-qr svg {
+  width: 58px !important;
+  height: 58px !important;
+  padding: 15px !important;
+  border-width: 4px !important;
+}
+
+/* User-requested removal only: keep markup/logic intact, hide the circled helper block. */
+.gt-emergency .gt-help-hero {
+  display: none !important;
+}
