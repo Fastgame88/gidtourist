@@ -21125,3 +21125,161 @@ button.gt-service-card {
     scroll-padding-right: 12px !important;
   }
 }
+
+/* ===== 2026-08-30 Nearby: restore centered full-width layout ===== */
+/* Undo the previous one-sided narrowing. Keep the whole Nearby screen centered
+   and use equal left/right insets, matching the approved reference. */
+.gt-nearby-design__content {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  overflow-x: hidden !important;
+}
+
+.gt-nearby-design__head {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding-right: 18px !important;
+  padding-left: 18px !important;
+  box-sizing: border-box !important;
+}
+
+.gt-nearby-design__search-row {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Category rails are full-bleed inside the 18px header inset, exactly as in the design. */
+.gt-nearby-design__categories-wrap,
+.gt-nearby-design__subcategories-wrap {
+  width: auto !important;
+  max-width: none !important;
+  margin-right: -18px !important;
+  margin-left: -18px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.gt-nearby-design__categories,
+.gt-nearby-design__subcategories {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding-left: 18px !important;
+  padding-right: 52px !important;
+  box-sizing: border-box !important;
+}
+
+.gt-nearby-design__categories-next,
+.gt-nearby-design__subcategories-next {
+  right: 8px !important;
+}
+
+/* Map remains true full width; controls use symmetrical safe spacing. */
+.gt-nearby-design__map {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.gt-nearby-design__map-controls {
+  right: 14px !important;
+}
+
+.gt-nearby-design__radius {
+  right: 18px !important;
+  left: 18px !important;
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+  transform: none !important;
+  box-sizing: border-box !important;
+}
+
+/* Bottom sheet and offer cards get the same left/right inset, so nothing clips. */
+.gt-nearby-design__sheet {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding-right: 18px !important;
+  padding-left: 18px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.gt-nearby-design__sheet-head {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.gt-nearby-design__sheet-head > span:last-child {
+  padding-right: 0 !important;
+  margin-right: 0 !important;
+  white-space: nowrap !important;
+}
+
+.gt-nearby-design__cards {
+  width: calc(100% + 18px) !important;
+  max-width: none !important;
+  margin-right: -18px !important;
+  margin-left: 0 !important;
+  padding-right: 18px !important;
+  padding-left: 0 !important;
+  scroll-padding-right: 18px !important;
+  box-sizing: border-box !important;
+}
+
+.gt-nearby-design__card:last-child {
+  margin-right: 0 !important;
+}
+
+@media (max-width: 390px) {
+  .gt-nearby-design__head {
+    padding-right: 14px !important;
+    padding-left: 14px !important;
+  }
+
+  .gt-nearby-design__categories-wrap,
+  .gt-nearby-design__subcategories-wrap {
+    margin-right: -14px !important;
+    margin-left: -14px !important;
+  }
+
+  .gt-nearby-design__categories,
+  .gt-nearby-design__subcategories {
+    padding-left: 14px !important;
+    padding-right: 46px !important;
+  }
+
+  .gt-nearby-design__categories-next,
+  .gt-nearby-design__subcategories-next {
+    right: 7px !important;
+  }
+
+  .gt-nearby-design__map-controls {
+    right: 12px !important;
+  }
+
+  .gt-nearby-design__radius {
+    right: 14px !important;
+    left: 14px !important;
+  }
+
+  .gt-nearby-design__sheet {
+    padding-right: 14px !important;
+    padding-left: 14px !important;
+  }
+
+  .gt-nearby-design__cards {
+    width: calc(100% + 14px) !important;
+    margin-right: -14px !important;
+    padding-right: 14px !important;
+    scroll-padding-right: 14px !important;
+  }
+}
