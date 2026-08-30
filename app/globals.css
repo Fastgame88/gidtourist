@@ -22388,3 +22388,116 @@ button.gt-service-card {
     margin-bottom: 14px !important;
   }
 }
+
+/* ===== 2026-08-30 hot offers real map + generated banner ===== */
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-hero__banner {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background-image: url('/images/hot-offers-banner-generated.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-hero__overlay {
+  background: linear-gradient(90deg, rgba(10, 13, 11, 0.68) 0%, rgba(10, 13, 11, 0.48) 26%, rgba(10, 13, 11, 0.18) 56%, rgba(10, 13, 11, 0.05) 100%) !important;
+  z-index: 1;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-hero__discount,
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-hero__copy,
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-hero__dots {
+  z-index: 2;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-hero__discount {
+  min-width: 52px !important;
+  padding: 7px 5px 7px !important;
+  border-radius: 15px !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-hero__discount b {
+  font-size: 15px !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-hero__copy {
+  max-width: 228px !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-hero__copy h1 {
+  max-width: 220px;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-category {
+  gap: 8px !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-category small {
+  white-space: nowrap !important;
+  font-size: 9px !important;
+  line-height: 1 !important;
+}
+
+.gt-hot-offers-screen--reference .gt-map-strip--real {
+  position: relative;
+  overflow: hidden;
+  background: #eef6ea;
+}
+
+.gt-hot-offers-screen--reference .gt-map-strip--real::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url('/images/tatariv-map-strip-real.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 1;
+}
+
+.gt-hot-offers-screen--reference .gt-map-strip--real > div,
+.gt-hot-offers-screen--reference .gt-map-strip--real .gt-map-strip__dot {
+  position: relative;
+  z-index: 1;
+}
+
+.gt-hot-offers-screen--reference .gt-map-strip--real > div {
+  background: linear-gradient(90deg, rgba(241, 247, 239, 0.94) 0%, rgba(241, 247, 239, 0.92) 46%, rgba(241, 247, 239, 0.54) 100%);
+}
+
+.gt-hot-offers-screen--reference .gt-map-strip--real .gt-map-strip__dot {
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border: 4px solid #fff;
+  box-shadow: 0 0 0 4px rgba(45, 138, 216, 0.14);
+}
+
+@media (max-width: 390px) {
+  .gt-hot-offers-screen--reference .gt-hot-offers-reference-hero__discount {
+    min-width: 49px !important;
+    padding: 6px 4px 6px !important;
+  }
+
+  .gt-hot-offers-screen--reference .gt-hot-offers-reference-hero__copy {
+    max-width: 212px !important;
+  }
+
+  .gt-hot-offers-screen--reference .gt-hot-offers-reference-category small {
+    font-size: 8.5px !important;
+  }
+
+  .gt-hot-offers-screen--reference .gt-map-strip--real .gt-map-strip__dot {
+    right: 14px;
+    width: 15px;
+    height: 15px;
+  }
+}

@@ -145,9 +145,9 @@ function Chips({ items }: { items: string[] }) {
   );
 }
 
-function MapStrip() {
+function MapStrip({ real = false }: { real?: boolean } = {}) {
   return (
-    <div className="gt-map-strip">
+    <div className={`gt-map-strip ${real ? "gt-map-strip--real" : ""}`.trim()}>
       <div>
         <MapPin size={21} />
         <span>
@@ -155,8 +155,8 @@ function MapStrip() {
           <strong>вул. Незалежності, 35, Татарів</strong>
         </span>
       </div>
-      <i className="gt-map-strip__road" />
-      <i className="gt-map-strip__river" />
+      {!real && <i className="gt-map-strip__road" />}
+      {!real && <i className="gt-map-strip__river" />}
       <i className="gt-map-strip__dot" />
     </div>
   );
@@ -602,7 +602,7 @@ function HotOffersScreen({ navigate }: { navigate: Navigate }) {
   return (
     <div className="tourist-screen gt-screen gt-hot-offers-screen gt-hot-offers-screen--reference">
       <section className="gt-hot-offers-reference-hero">
-        <HotOfferMosaic primary="restaurant" />
+        <span className="gt-hot-offers-reference-hero__banner" aria-hidden="true" />
         <div className="gt-hot-offers-reference-hero__overlay" />
         <span className="gt-hot-offers-reference-hero__discount">до<br /><b>-30%</b></span>
         <div className="gt-hot-offers-reference-hero__copy">
@@ -623,7 +623,7 @@ function HotOffersScreen({ navigate }: { navigate: Navigate }) {
         ))}
       </div>
 
-      <MapStrip />
+      <MapStrip real />
 
       <SectionTitle title="Пропозиції поруч" action="Переглянути всі" />
 
