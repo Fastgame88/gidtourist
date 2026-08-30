@@ -558,32 +558,88 @@ function readSelectedHotOffer() {
   return hotOffers.find((offer) => offer.id === selectedId) ?? hotOffers[0];
 }
 
+
+const hotOfferCategories: Array<{ label: string; icon: LucideIcon; tone: string }> = [
+  { label: "Де поїсти", icon: Utensils, tone: "orange" },
+  { label: "Де купити", icon: ShoppingBag, tone: "blue" },
+  { label: "Де відпочити", icon: TentTree, tone: "green" },
+  { label: "Розваги", icon: Sparkles, tone: "purple" },
+  { label: "Трансфер", icon: CarFront, tone: "cyan" },
+  { label: "Проживання", icon: BedDouble, tone: "yellow" },
+];
+
+function HotOfferMosaic({ primary }: { primary: PhotoName }) {
+  const sets: Record<PhotoName, PhotoName[]> = {
+    restaurant: ["restaurant", "coffee", "store", "burger", "tub", "pool", "jeep", "van"],
+    coffee: ["coffee", "restaurant", "store", "pizza", "burger", "tub", "pool", "van"],
+    store: ["store", "restaurant", "coffee", "pool", "jeep", "burger", "tub", "van"],
+    pharmacy: ["pharmacy", "store", "restaurant", "pool", "jeep", "burger", "coffee", "van"],
+    hotel: ["hotel", "restaurant", "coffee", "tub", "pool", "van", "burger", "store"],
+    pizza: ["pizza", "coffee", "restaurant", "burger", "tub", "pool", "van", "store"],
+    burger: ["burger", "restaurant", "coffee", "pizza", "tub", "pool", "van", "store"],
+    tub: ["tub", "sauna", "pool", "restaurant", "burger", "jeep", "van", "hotel"],
+    sauna: ["sauna", "tub", "pool", "restaurant", "coffee", "hotel", "van", "burger"],
+    pool: ["pool", "tub", "sauna", "restaurant", "coffee", "van", "hotel", "burger"],
+    massage: ["massage", "sauna", "pool", "tub", "restaurant", "coffee", "hotel", "van"],
+    excursion: ["excursion", "jeep", "quad", "rafting", "zipline", "restaurant", "pool", "van"],
+    jeep: ["jeep", "restaurant", "coffee", "tub", "pool", "van", "excursion", "hotel"],
+    quad: ["quad", "jeep", "rafting", "zipline", "restaurant", "pool", "van", "hotel"],
+    rafting: ["rafting", "excursion", "jeep", "quad", "zipline", "restaurant", "pool", "hotel"],
+    zipline: ["zipline", "rafting", "excursion", "quad", "jeep", "restaurant", "pool", "hotel"],
+    van: ["van", "hotel", "restaurant", "coffee", "store", "tub", "pool", "jeep"],
+  };
+  const tiles = sets[primary] ?? sets.restaurant;
+  return (
+    <span className="gt-hot-mosaic" aria-hidden="true">
+      {tiles.map((name, index) => (
+        <Thumb key={`${name}-${index}`} name={name} className={`gt-hot-mosaic__tile is-${index + 1}`} />
+      ))}
+    </span>
+  );
+}
+
 function HotOffersScreen({ navigate }: { navigate: Navigate }) {
   return (
-    <div className="tourist-screen gt-screen gt-hot-offers-screen">
-      <section className="gt-hot-offers-hero">
-        <Thumb name="restaurant" className="gt-hot-offers-hero__photo" />
-        <div className="gt-hot-offers-hero__shade" />
-        <span className="gt-hot-offers-hero__discount">до<br /><b>-30%</b></span>
-        <div className="gt-hot-offers-hero__copy">
-          <h1>Вигідні пропозиції<br />для вашої подорожі</h1>
-          <p>Від партнерів, яким<br />ми довіряємо 💚</p>
+    <div className="tourist-screen gt-screen gt-hot-offers-screen gt-hot-offers-screen--reference">
+      <section className="gt-hot-offers-reference-hero">
+        <HotOfferMosaic primary="restaurant" />
+        <div className="gt-hot-offers-reference-hero__overlay" />
+        <span className="gt-hot-offers-reference-hero__discount">до<br /><b>-30%</b></span>
+        <div className="gt-hot-offers-reference-hero__copy">
+          <h1>Вигідні пропозиції<br />для вашого відпочинку</h1>
+          <p>Спеціальні знижки<br />від перевірених партнерів 💚</p>
         </div>
+        <div className="gt-hot-offers-reference-hero__dots"><i className="is-active" /><i /></div>
       </section>
 
-      <section className="gt-hot-offers-list">
-        {hotOffers.map((offer) => (
-          <button type="button" className="gt-hot-offer-row" key={offer.id} onClick={() => selectHotOffer(offer, navigate)}>
-            <Thumb name={offer.photo} className="gt-hot-offer-row__photo" />
-            <span className={`gt-hot-offer-row__discount ${offer.discount === "🎁" ? "is-gift" : ""}`}>{offer.discount}</span>
-            <span className="gt-hot-offer-row__content">
+      <SearchBar placeholder="Пошук місць, маршрутів, активностей..." />
+
+      <div className="gt-hot-offers-reference-categories">
+        {hotOfferCategories.map(({ label, icon: Icon, tone }) => (
+          <button type="button" key={label} className={`gt-hot-offers-reference-category is-${tone}`}>
+            <span><Icon size={25} /></span>
+            <small>{label}</small>
+          </button>
+        ))}
+      </div>
+
+      <MapStrip />
+
+      <SectionTitle title="Пропозиції поруч" action="Переглянути всі" />
+
+      <section className="gt-hot-offers-reference-list">
+        {hotOffers.slice(0, 4).map((offer) => (
+          <button type="button" className="gt-hot-offers-reference-row" key={offer.id} onClick={() => selectHotOffer(offer, navigate)}>
+            <HotOfferMosaic primary={offer.photo} />
+            <span className={`gt-hot-offers-reference-row__discount ${offer.discount === "2 за 1" ? "is-text-deal" : ""}`}>{offer.discount}</span>
+            <span className="gt-hot-offers-reference-row__body">
               <small>{offer.category}</small>
               <strong>{offer.title}</strong>
               <span>{offer.description}</span>
               <i><Clock3 size={15} /> {offer.validity}</i>
             </span>
-            <em className={`gt-hot-offer-row__badge is-${offer.badgeTone}`}>{offer.badge}</em>
-            <ChevronRight className="gt-hot-offer-row__arrow" size={22} />
+            <em className={`gt-hot-offers-reference-row__badge is-${offer.badgeTone}`}>{offer.badge}</em>
+            <ChevronRight size={22} className="gt-hot-offers-reference-row__arrow" />
           </button>
         ))}
       </section>
