@@ -21283,3 +21283,12 @@ button.gt-service-card {
     scroll-padding-right: 14px !important;
   }
 }
+
+/* ===== 2026-08-30 Nearby: fill bottom gap by making offer cards 10px taller ===== */
+.gt-nearby-design__card > .gt-photo {
+  height: 63px !important;
+}
+
+.gt-nearby-design__card-copy {
+  padding-bottom: 11px !important;
+}
