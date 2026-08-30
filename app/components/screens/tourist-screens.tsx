@@ -934,7 +934,9 @@ function CatalogScreen({ navigate }: { navigate: Navigate }) {
 function NearbyScreen({ navigate }: { navigate: Navigate }) {
   const [activeCategory, setActiveCategory] = useState("Усі");
   const [activeSubcategory, setActiveSubcategory] = useState("");
+  const [resultsExpanded, setResultsExpanded] = useState(false);
   const categoryScrollRef = useRef<HTMLDivElement | null>(null);
+  const subcategoryScrollRef = useRef<HTMLDivElement | null>(null);
 
   const categories: Array<{ label: string; icon: LucideIcon; tone: string }> = [
     { label: "Усі", icon: Grid2X2, tone: "all" },
@@ -943,227 +945,241 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
     { label: "Природа", icon: MountainSnow, tone: "nature" },
     { label: "Цікаве", icon: TentTree, tone: "interesting" },
     { label: "Розваги", icon: Bike, tone: "fun" },
-    { label: "Відпочинок", icon: Flower2, tone: "rest" },
     { label: "Трансфер", icon: CarFront, tone: "transfer" },
-    { label: "Корисне", icon: CircleHelp, tone: "useful" },
+    { label: "Корисне", icon: Info, tone: "useful" },
     { label: "Маршрути", icon: Route, tone: "routes" },
   ];
 
   const subcategoryGroups: Record<string, Array<{ label: string; icon: LucideIcon }>> = {
     "Де поїсти": [
-      { label: "Усі заклади", icon: Utensils },
-      { label: "Українська кухня", icon: Flame },
-      { label: "Неукраїнська кухня", icon: Globe },
-      { label: "Кав’ярні", icon: Sparkles },
-      { label: "Фаст фуд", icon: FlameKindling },
+      { label: "Ресторани", icon: Utensils },
+      { label: "Кафе", icon: Sparkles },
+      { label: "Бари", icon: CircleHelp },
+      { label: "Піцерії", icon: Flame },
+      { label: "Кондитерські", icon: Gift },
+      { label: "Фастфуд", icon: FlameKindling },
+      { label: "Їжа з собою", icon: ShoppingBag },
+      { label: "Традиційна кухня", icon: BadgeCheck },
     ],
     "Де купити": [
-      { label: "Усі магазини", icon: ShoppingBag },
-      { label: "Продовольчі", icon: ShoppingBag },
-      { label: "Промтовари", icon: Wrench },
+      { label: "Продукти", icon: ShoppingBag },
       { label: "Сувеніри", icon: Gift },
+      { label: "Одяг і взуття", icon: UsersRound },
+      { label: "Товари для дому", icon: Hotel },
       { label: "Аптеки", icon: Pill },
+      { label: "Техніка", icon: Gauge },
+      { label: "Будівництво", icon: Wrench },
+      { label: "Косметика", icon: Sparkles },
     ],
     "Природа": [
-      { label: "Усі природні", icon: TentTree },
       { label: "Гори", icon: MountainSnow },
       { label: "Річки", icon: Route },
       { label: "Водоспади", icon: LifeBuoy },
       { label: "Джерела", icon: MapPin },
       { label: "Озера", icon: Flower2 },
       { label: "Оглядові точки", icon: LocateFixed },
-      { label: "Печери", icon: MountainSnow },
+      { label: "Печери", icon: TentTree },
+      { label: "Ліси", icon: Leaf },
     ],
     "Цікаве": [
-      { label: "Усі цікаві", icon: TentTree },
-      { label: "Церкви", icon: Cross },
       { label: "Пам’ятки", icon: BadgeCheck },
       { label: "Музеї", icon: Info },
-      { label: "Історичні об’єкти", icon: Clock3 },
+      { label: "Храми", icon: Cross },
+      { label: "Архітектура", icon: Hotel },
+      { label: "Історичні місця", icon: Clock3 },
+      { label: "Скульптури", icon: UserRound },
+      { label: "Місцеві легенди", icon: MessageSquareMore },
+      { label: "Події", icon: CalendarDays },
     ],
     "Розваги": [
-      { label: "Усі розваги", icon: Bike },
-      { label: "Джипи", icon: CarFront },
-      { label: "Квадроцикли", icon: Bike },
-      { label: "Рафтинг", icon: LifeBuoy },
-      { label: "Зіплайн", icon: Navigation },
-      { label: "Для дітей", icon: UsersRound },
-      { label: "Коні", icon: PawPrint },
-    ],
-    "Відпочинок": [
-      { label: "Усі місця", icon: Flower2 },
-      { label: "Чани", icon: Flame },
-      { label: "Сауни", icon: FlameKindling },
-      { label: "Басейни", icon: LifeBuoy },
-      { label: "Масаж", icon: Flower2 },
-      { label: "Походи", icon: Footprints },
+      { label: "Активний відпочинок", icon: Footprints },
+      { label: "Атракціони", icon: Sparkles },
       { label: "Екскурсії", icon: Route },
+      { label: "SPA і басейни", icon: Flower2 },
+      { label: "Риболовля", icon: LifeBuoy },
+      { label: "Верхова їзда", icon: PawPrint },
+      { label: "Квадроцикли", icon: Bike },
+      { label: "Польоти", icon: Navigation },
     ],
     "Трансфер": [
-      { label: "Усі", icon: CarFront },
+      { label: "Автобусні зупинки", icon: CarFront },
+      { label: "Залізничні станції", icon: Route },
+      { label: "Автостанції", icon: Hotel },
       { label: "Таксі", icon: CarFront },
-      { label: "Трансфери", icon: Route },
+      { label: "Парковки", icon: MapPin },
       { label: "Оренда авто", icon: CarFront },
+      { label: "Заправки", icon: Gauge },
+      { label: "Зарядні станції", icon: Plus },
     ],
     "Корисне": [
-      { label: "Усі корисні", icon: CircleHelp },
-      { label: "Лікарні", icon: Cross },
-      { label: "Амбулаторії", icon: Stethoscope },
-      { label: "Поліція", icon: ShieldCheck },
-      { label: "Вокзали", icon: Route },
       { label: "Банкомати", icon: Banknote },
+      { label: "Обмін валют", icon: WalletCards },
+      { label: "Пошта", icon: Send },
+      { label: "Лікарні", icon: Heart },
+      { label: "Туалети", icon: UsersRound },
+      { label: "Wi‑Fi", icon: Wifi },
+      { label: "Поліція", icon: ShieldCheck },
+      { label: "Інформаційні центри", icon: Info },
     ],
     "Маршрути": [
-      { label: "Усі маршрути", icon: Route },
-      { label: "Пішохідні", icon: Footprints },
+      { label: "Піші маршрути", icon: Footprints },
       { label: "Веломаршрути", icon: Bike },
-      { label: "Автомобільні", icon: CarFront },
-      { label: "Оглядові", icon: LocateFixed },
+      { label: "Автомаршрути", icon: CarFront },
+      { label: "Верхові маршрути", icon: PawPrint },
+      { label: "Водні маршрути", icon: LifeBuoy },
+      { label: "Популярні маршрути", icon: BadgeCheck },
+      { label: "Складні маршрути", icon: MountainSnow },
+      { label: "Маршрути вихідного дня", icon: SunMedium },
     ],
   };
 
   const activeSubcategories = subcategoryGroups[activeCategory] ?? [];
+  const activeTone = categories.find((item) => item.label === activeCategory)?.tone ?? "all";
 
-  const allPlaces: Array<{
-    photo: PhotoName;
-    title: string;
-    subtitle: string;
-    distance: string;
-    rating: string;
-    mountain?: boolean;
-    onClick?: () => void;
-  }> = [
-    { photo: "pizza", title: "Піцерія «Татаріно»", subtitle: "Де поїсти · Піца, італійська кухня", distance: "250 м", rating: "4.7", onClick: () => navigate("tourist", "place") },
-    { photo: "store", title: "Супермаркет «Гірський»", subtitle: "Де купити · Продукти", distance: "300 м", rating: "4.5" },
-    { photo: "hotel", title: "Готель «Карпатський»", subtitle: "Де відпочити · Готель", distance: "450 м", rating: "4.8" },
-    { photo: "jeep", title: "Говерла", subtitle: "Гірські вершини · Природа", distance: "1,2 км", rating: "4.9", mountain: true },
+  const nearbyPlaces = [
+    { photo: "pizza" as PhotoName, title: "Піцерія «Татаріно»", subtitle: "Піца, італійська кухня", distance: "250 м", rating: "4.7" },
+    { photo: "rafting" as PhotoName, title: "Водоспад Женецький Гук", subtitle: "Природа", distance: "1.2 км", rating: "4.8" },
+    { photo: "store" as PhotoName, title: "Яремчанський ринок", subtitle: "Фрукти, сувеніри", distance: "1.5 км", rating: "4.6" },
+    { photo: "jeep" as PhotoName, title: "Скелі Довбуша", subtitle: "Природа", distance: "2 км", rating: "4.9" },
   ];
-
-  const naturePlaces: Array<{
-    photo: PhotoName;
-    title: string;
-    subtitle: string;
-    distance: string;
-    rating: string;
-    mountain?: boolean;
-    onClick?: () => void;
-  }> = [
-    { photo: "rafting", title: "Женецький водоспад", subtitle: "Водоспади", distance: "450 м", rating: "4.8" },
-    { photo: "jeep", title: "Гора Хом’як", subtitle: "Гори", distance: "2.1 км", rating: "4.7", mountain: true },
-    { photo: "excursion", title: "Річка Прут", subtitle: "Річки", distance: "2.8 км", rating: "4.6" },
-  ];
-
-  const nearbyPlaces = activeCategory === "Природа" ? naturePlaces : allPlaces;
-  const listTitle = activeCategory === "Природа" ? "Пам’ятки природи" : "Найближчі місця";
 
   return (
-    <div className="tourist-screen gt-screen gt-nearby-screen">
-      <main className="gt-nearby-content">
-        <header className="gt-nearby-toolbar">
-          <button type="button" aria-label="Назад" onClick={() => navigate("tourist", "home")}><ArrowLeft size={25} /></button>
-          <h1>Що поруч</h1>
-          <span>
-            <button type="button" aria-label="Фільтри"><SlidersHorizontal size={21} /></button>
-            <button type="button" aria-label="Карта"><Map size={22} /></button>
-          </span>
-        </header>
-
-        <div className="gt-nearby-search"><SearchBar placeholder="Пошук поруч..." /></div>
-
-        <div className="gt-nearby-categories-wrap">
-          <div ref={categoryScrollRef} className="gt-nearby-categories" aria-label="Категорії місць">
-            {categories.map(({ label, icon: Icon, tone }) => (
-              <button
-                type="button"
-                className={activeCategory === label ? "is-active" : ""}
-                key={label}
-                onClick={() => {
-                  setActiveCategory(label);
-                  setActiveSubcategory(subcategoryGroups[label]?.[0]?.label ?? "");
-                }}
-              >
-                <span className={`gt-nearby-category-icon gt-nearby-category-icon--${tone}`}><Icon size={23} /></span>
-                <strong>{label}</strong>
-              </button>
-            ))}
+    <div className={`tourist-screen gt-screen gt-nearby-screen gt-nearby-design gt-nearby-theme--${activeTone}`}>
+      <main className="gt-nearby-design__content">
+        <section className="gt-nearby-design__head">
+          <div className="gt-nearby-design__brand-row">
+            <h1>Gid Tourist</h1>
+            <button type="button" aria-label="Профіль" onClick={() => navigate("tourist", "profile")}>
+              <UserRound size={24} />
+            </button>
           </div>
-          <button
-            type="button"
-            className="gt-nearby-categories-next"
-            aria-label="Показати наступні категорії"
-            onClick={() => categoryScrollRef.current?.scrollBy({ left: 190, behavior: "smooth" })}
-          >
-            <ChevronRight size={21} />
-          </button>
-        </div>
 
-        {activeSubcategories.length ? (
-          <div className="gt-nearby-subcategories" aria-label={`Підкатегорії: ${activeCategory}`}>
-            {activeSubcategories.map(({ label, icon: Icon }) => (
-              <button
-                type="button"
-                key={`${activeCategory}-${label}`}
-                className={activeSubcategory === label ? "is-active" : ""}
-                onClick={() => setActiveSubcategory(label)}
-              >
-                <span><Icon size={20} /></span>
-                <strong>{label}</strong>
-              </button>
-            ))}
+          <div className="gt-nearby-design__search-row">
+            <label className="gt-nearby-design__search">
+              <Search size={21} />
+              <input aria-label="Пошук" placeholder="Пошук місць, маршрутів, активностей..." />
+            </label>
+            <button type="button" className="gt-nearby-design__filter" aria-label="Фільтри">
+              <SlidersHorizontal size={23} />
+            </button>
           </div>
-        ) : null}
 
-        <div className={`gt-nearby-map ${activeCategory === "Природа" ? "is-nature" : ""}`}>
-          <span className="gt-nearby-map-pin gt-nearby-map-pin--food"><b>12</b></span>
-          <span className="gt-nearby-map-pin gt-nearby-map-pin--shop"><ShoppingBag size={17} /></span>
-          <span className="gt-nearby-map-pin gt-nearby-map-pin--hotel"><MountainSnow size={17} /></span>
-          <span className="gt-nearby-map-pin gt-nearby-map-pin--fun"><Bike size={17} /></span>
-          <span className="gt-nearby-map-pin gt-nearby-map-pin--partner"><b>15</b></span>
-          <span className="gt-nearby-map-pin gt-nearby-map-pin--service"><UsersRound size={17} /></span>
-          <i className="gt-nearby-map-user" />
-          <button type="button" className="gt-nearby-locate" aria-label="Моє місцезнаходження"><LocateFixed size={23} /></button>
-        </div>
-
-        <section className="gt-nearby-results">
-          <div className="gt-nearby-radius">
-            <strong>Радіус пошуку</strong>
-            <div>
-              {["300 м", "500 м", "1 км", "2 км", "5 км"].map((radius, index) => (
-                <button type="button" className={index === 0 ? "is-active" : ""} key={radius}>{radius}</button>
+          <div className="gt-nearby-design__categories-wrap">
+            <div ref={categoryScrollRef} className="gt-nearby-design__categories">
+              {categories.map(({ label, icon: Icon, tone }) => (
+                <button
+                  type="button"
+                  key={label}
+                  className={activeCategory === label ? "is-active" : ""}
+                  onClick={() => {
+                    setActiveCategory(label);
+                    const firstSubcategory = subcategoryGroups[label]?.[0]?.label ?? "";
+                    setActiveSubcategory(firstSubcategory);
+                  }}
+                >
+                  <span className={`gt-nearby-design__category-icon gt-nearby-category-icon--${tone}`}>
+                    <Icon size={25} />
+                  </span>
+                  <strong>{label}</strong>
+                </button>
               ))}
+            </div>
+            <button
+              type="button"
+              className="gt-nearby-design__categories-next"
+              aria-label="Наступні категорії"
+              onClick={() => categoryScrollRef.current?.scrollBy({ left: 220, behavior: "smooth" })}
+            >
+              <ChevronRight size={22} />
+            </button>
+          </div>
+
+          {activeCategory !== "Усі" && activeSubcategories.length ? (
+            <div className="gt-nearby-design__subcategories-wrap">
+              <div ref={subcategoryScrollRef} className="gt-nearby-design__subcategories">
+                {activeSubcategories.map(({ label, icon: Icon }) => (
+                  <button
+                    type="button"
+                    key={`${activeCategory}-${label}`}
+                    className={activeSubcategory === label ? "is-active" : ""}
+                    onClick={() => setActiveSubcategory(label)}
+                  >
+                    <span><Icon size={22} /></span>
+                    <strong>{label}</strong>
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                className="gt-nearby-design__subcategories-next"
+                aria-label="Наступні підкатегорії"
+                onClick={() => subcategoryScrollRef.current?.scrollBy({ left: 250, behavior: "smooth" })}
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          ) : null}
+        </section>
+
+        <section className="gt-nearby-design__map" aria-label="Карта місць поруч">
+          <span className="gt-nearby-design__pin gt-nearby-design__pin--partner gt-nearby-design__pin--p1"><b>12</b></span>
+          <span className="gt-nearby-design__pin gt-nearby-design__pin--fun gt-nearby-design__pin--p2"><Bike size={18} /></span>
+          <span className="gt-nearby-design__pin gt-nearby-design__pin--interesting gt-nearby-design__pin--p3"><TentTree size={18} /></span>
+          <span className="gt-nearby-design__pin gt-nearby-design__pin--nature gt-nearby-design__pin--p4"><MountainSnow size={18} /></span>
+          <span className="gt-nearby-design__pin gt-nearby-design__pin--shop gt-nearby-design__pin--p5"><ShoppingBag size={18} /></span>
+          <span className="gt-nearby-design__pin gt-nearby-design__pin--useful gt-nearby-design__pin--p6"><UsersRound size={18} /></span>
+          <span className="gt-nearby-design__pin gt-nearby-design__pin--partner gt-nearby-design__pin--p7"><b>15</b></span>
+          <span className="gt-nearby-design__pin gt-nearby-design__pin--partner gt-nearby-design__pin--p8"><b>8</b></span>
+          <span className="gt-nearby-design__pin gt-nearby-design__pin--fun gt-nearby-design__pin--p9"><Bike size={18} /></span>
+          <span className="gt-nearby-design__pin gt-nearby-design__pin--partner gt-nearby-design__pin--p10"><b>5</b></span>
+          <span className="gt-nearby-design__user"><i /></span>
+
+          <div className="gt-nearby-design__map-controls">
+            <button type="button" aria-label="Моє місцезнаходження"><LocateFixed size={22} /></button>
+            <div>
+              <button type="button" aria-label="Наблизити"><Plus size={23} /></button>
+              <button type="button" aria-label="Віддалити"><Minus size={23} /></button>
             </div>
           </div>
 
-          <div className="gt-map-partner-legend">
-            <span><MapPin size={14} /></span>
-            <strong>Помаранчеві мітки — заклади-партнери</strong>
-          </div>
-
-          <div className="gt-nearby-list-head">
-            <h2>{listTitle}</h2>
-            <button type="button">Сортувати: <strong>Відстань</strong></button>
-          </div>
-
-          <div className="gt-nearby-list">
-            {nearbyPlaces.map((place) => (
-              <button type="button" className="gt-nearby-place" key={place.title} onClick={place.onClick}>
-                <Thumb name={place.photo} className={place.mountain ? "gt-nearby-place__mountain" : ""} />
-                <span>
-                  <strong>{place.title}</strong>
-                  <small>{place.subtitle}</small>
-                </span>
-                <span>
-                  <b>{place.distance}</b>
-                  <small><Star size={13} fill="currentColor" /> {place.rating}</small>
-                </span>
-              </button>
+          <div className="gt-nearby-design__radius">
+            {["300 м", "500 м", "1 км", "2 км", "5 км"].map((radius, index) => (
+              <button type="button" key={radius} className={index === 0 ? "is-active" : ""}>{radius}</button>
             ))}
           </div>
+        </section>
+
+        <section className={`gt-nearby-design__sheet ${resultsExpanded ? "is-expanded" : ""}`}>
+          <button
+            type="button"
+            className="gt-nearby-design__sheet-head"
+            onClick={() => setResultsExpanded((value) => !value)}
+            aria-expanded={resultsExpanded}
+          >
+            <span className="gt-nearby-design__sheet-caret"><ChevronRight size={18} /></span>
+            <strong>Поруч з вами</strong>
+            <span>Дивитись все</span>
+          </button>
+          {resultsExpanded ? (
+            <div className="gt-nearby-design__cards">
+              {nearbyPlaces.map((place) => (
+                <button type="button" className="gt-nearby-design__card" key={place.title} onClick={() => navigate("tourist", "place")}>
+                  <Thumb name={place.photo} />
+                  <span className="gt-nearby-design__card-copy">
+                    <strong>{place.title}</strong>
+                    <small>{place.subtitle}</small>
+                    <span><b><Star size={12} fill="currentColor" /> {place.rating}</b><em>{place.distance}</em></span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : null}
         </section>
       </main>
     </div>
   );
 }
+
 function PlaceScreen({ navigate }: { navigate: Navigate }) {
   return (
     <div className="tourist-screen gt-screen">

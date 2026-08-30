@@ -19891,3 +19891,716 @@ button.gt-service-card {
     font-size: 8px !important;
   }
 }
+
+/* ===== 2026-08-30 nearby map screen rebuilt from approved design ===== */
+.gt-nearby-design {
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  background: #fff !important;
+}
+
+.gt-nearby-design__content {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: #fff;
+}
+
+.gt-nearby-design__head {
+  position: relative;
+  z-index: 20;
+  display: grid;
+  gap: 10px;
+  padding: 15px 18px 0;
+  background: #fff;
+}
+
+.gt-nearby-design__brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 36px;
+}
+
+.gt-nearby-design__brand-row h1 {
+  margin: 0;
+  color: #0d1510;
+  font-size: 24px !important;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.gt-nearby-design__brand-row > button,
+.gt-nearby-design__filter {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #e8ebe9;
+  color: #111915;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(28, 45, 35, .055);
+}
+
+.gt-nearby-design__brand-row > button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.gt-nearby-design__search-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  gap: 10px;
+  align-items: center;
+}
+
+.gt-nearby-design__search {
+  display: flex;
+  min-width: 0;
+  height: 48px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 15px;
+  border: 1px solid #e1e5e2;
+  border-radius: 17px;
+  color: #7c8580;
+  background: #fbfcfb;
+}
+
+.gt-nearby-design__search svg {
+  flex: 0 0 auto;
+  color: #77817b;
+}
+
+.gt-nearby-design__search input {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  color: #222a25;
+  background: transparent;
+  font: inherit;
+  font-size: 12px !important;
+}
+
+.gt-nearby-design__search input::placeholder {
+  color: #8a928e;
+  opacity: 1;
+}
+
+.gt-nearby-design__filter {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+}
+
+.gt-nearby-design__categories-wrap,
+.gt-nearby-design__subcategories-wrap {
+  position: relative;
+  min-width: 0;
+  margin-right: -18px;
+  margin-left: -18px;
+  background: #fff;
+}
+
+.gt-nearby-design__categories {
+  display: flex;
+  gap: 9px;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 3px 48px 11px 18px;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.gt-nearby-design__categories::-webkit-scrollbar,
+.gt-nearby-design__subcategories::-webkit-scrollbar,
+.gt-nearby-design__cards::-webkit-scrollbar {
+  display: none;
+}
+
+.gt-nearby-design__categories > button {
+  display: grid;
+  flex: 0 0 57px;
+  min-width: 57px;
+  justify-items: center;
+  gap: 6px;
+  padding: 5px 2px 3px;
+  border: 0;
+  border-radius: 15px;
+  color: #171e19;
+  background: transparent;
+}
+
+.gt-nearby-design__categories > button.is-active {
+  background: #f7f7f6;
+}
+
+.gt-nearby-theme--food .gt-nearby-design__categories > button.is-active { background: #fff3e8; }
+.gt-nearby-theme--shop .gt-nearby-design__categories > button.is-active { background: #eef6ff; }
+.gt-nearby-theme--nature .gt-nearby-design__categories > button.is-active { background: #edf9f2; }
+.gt-nearby-theme--interesting .gt-nearby-design__categories > button.is-active { background: #f6effd; }
+.gt-nearby-theme--fun .gt-nearby-design__categories > button.is-active { background: #f9eef9; }
+.gt-nearby-theme--transfer .gt-nearby-design__categories > button.is-active { background: #eefbfc; }
+.gt-nearby-theme--useful .gt-nearby-design__categories > button.is-active { background: #fff7e7; }
+.gt-nearby-theme--routes .gt-nearby-design__categories > button.is-active { background: #fff0f0; }
+
+.gt-nearby-design__category-icon {
+  display: grid;
+  width: 48px !important;
+  height: 48px !important;
+  place-items: center;
+  border-radius: 14px !important;
+  color: #fff !important;
+  box-shadow: 0 3px 8px rgba(34, 57, 43, .09);
+}
+
+.gt-nearby-design__category-icon.gt-nearby-category-icon--all {
+  background: linear-gradient(145deg, #10b568, #079852) !important;
+}
+.gt-nearby-design__category-icon.gt-nearby-category-icon--food {
+  background: linear-gradient(145deg, #ff8a11, #f46a00) !important;
+}
+.gt-nearby-design__category-icon.gt-nearby-category-icon--shop {
+  background: linear-gradient(145deg, #167fe9, #0962cf) !important;
+}
+.gt-nearby-design__category-icon.gt-nearby-category-icon--nature {
+  background: linear-gradient(145deg, #10aa5f, #078949) !important;
+}
+.gt-nearby-design__category-icon.gt-nearby-category-icon--interesting {
+  background: linear-gradient(145deg, #8333db, #6c20c4) !important;
+}
+.gt-nearby-design__category-icon.gt-nearby-category-icon--fun {
+  background: linear-gradient(145deg, #8c30e2, #6c1fc5) !important;
+}
+.gt-nearby-design__category-icon.gt-nearby-category-icon--transfer {
+  background: linear-gradient(145deg, #26b7c5, #1099a9) !important;
+}
+.gt-nearby-design__category-icon.gt-nearby-category-icon--useful {
+  background: linear-gradient(145deg, #f2ad0d, #eb8f00) !important;
+}
+.gt-nearby-design__category-icon.gt-nearby-category-icon--routes {
+  background: linear-gradient(145deg, #ef3737, #db1f26) !important;
+}
+
+.gt-nearby-design__categories > button strong {
+  width: max-content;
+  max-width: 68px;
+  overflow: hidden;
+  color: #181f1a;
+  font-size: 8.4px !important;
+  line-height: 1.1;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gt-nearby-design__categories-next,
+.gt-nearby-design__subcategories-next {
+  position: absolute;
+  z-index: 5;
+  right: 7px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #e1e5e2;
+  border-radius: 50%;
+  color: #252d28;
+  background: rgba(255,255,255,.97);
+  box-shadow: 0 4px 12px rgba(22, 41, 29, .12);
+}
+
+.gt-nearby-design__categories-next {
+  top: 14px;
+  width: 38px;
+  height: 38px;
+}
+
+.gt-nearby-design__subcategories-wrap {
+  border-top: 1px solid #f0f2f1;
+}
+
+.gt-nearby-design__subcategories {
+  display: flex;
+  gap: 9px;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 8px 49px 10px 18px;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.gt-nearby-design__subcategories > button {
+  display: grid;
+  flex: 0 0 57px;
+  min-width: 57px;
+  justify-items: center;
+  align-content: start;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  color: #f17812;
+  background: transparent;
+}
+
+.gt-nearby-design__subcategories > button > span {
+  display: grid;
+  width: 47px;
+  height: 47px;
+  place-items: center;
+  border: 1px solid #e6e8e7;
+  border-radius: 13px;
+  color: currentColor;
+  background: #fff;
+  box-shadow: 0 2px 7px rgba(32, 47, 37, .035);
+}
+
+.gt-nearby-design__subcategories > button.is-active > span {
+  border-color: currentColor;
+  background: color-mix(in srgb, currentColor 7%, white);
+}
+
+.gt-nearby-design__subcategories > button strong {
+  width: 64px;
+  min-height: 19px;
+  color: #1e2521;
+  font-size: 7.2px !important;
+  line-height: 1.08;
+  font-weight: 600;
+  text-align: center;
+}
+
+.gt-nearby-theme--food .gt-nearby-design__subcategories > button { color: #f17710; }
+.gt-nearby-theme--shop .gt-nearby-design__subcategories > button { color: #1672db; }
+.gt-nearby-theme--nature .gt-nearby-design__subcategories > button { color: #10a75c; }
+.gt-nearby-theme--interesting .gt-nearby-design__subcategories > button { color: #7930d0; }
+.gt-nearby-theme--fun .gt-nearby-design__subcategories > button { color: #df2679; }
+.gt-nearby-theme--transfer .gt-nearby-design__subcategories > button { color: #17a8b8; }
+.gt-nearby-theme--useful .gt-nearby-design__subcategories > button { color: #efa407; }
+.gt-nearby-theme--routes .gt-nearby-design__subcategories > button { color: #e52b31; }
+
+.gt-nearby-design__subcategories-next {
+  top: 17px;
+  width: 34px;
+  height: 34px;
+}
+
+.gt-nearby-design__map {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(244,249,244,.18), rgba(239,247,239,.22)),
+    url("/images/tatariv-map-strip.webp") center / cover no-repeat,
+    #e8f0e3;
+}
+
+.gt-nearby-design__map::after {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(circle at 35% 42%, transparent 0 28%, rgba(238,247,237,.08) 72%);
+  pointer-events: none;
+  content: "";
+}
+
+.gt-nearby-design__pin {
+  position: absolute;
+  z-index: 3;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 2px solid #fff;
+  border-radius: 50% 50% 50% 8px;
+  color: #fff;
+  box-shadow: 0 2px 5px rgba(22, 48, 31, .28);
+  transform: rotate(-45deg);
+}
+
+.gt-nearby-design__pin > * {
+  transform: rotate(45deg);
+}
+
+.gt-nearby-design__pin b {
+  font-size: 11px !important;
+  line-height: 1;
+}
+
+.gt-nearby-design__pin--partner { background: #ff830c; }
+.gt-nearby-design__pin--fun { background: #7626d6; }
+.gt-nearby-design__pin--interesting { background: #7a31ce; }
+.gt-nearby-design__pin--nature { background: #0aa15a; }
+.gt-nearby-design__pin--shop { background: #147adf; }
+.gt-nearby-design__pin--useful { background: #0aa15a; }
+
+.gt-nearby-design__pin--p1 { top: 9%; left: 13%; }
+.gt-nearby-design__pin--p2 { top: 7%; left: 35%; }
+.gt-nearby-design__pin--p3 { top: 9%; right: 17%; }
+.gt-nearby-design__pin--p4 { top: 18%; left: 56%; }
+.gt-nearby-design__pin--p5 { top: 31%; left: 34%; }
+.gt-nearby-design__pin--p6 { top: 48%; left: 9%; }
+.gt-nearby-design__pin--p7 { top: 48%; left: 55%; }
+.gt-nearby-design__pin--p8 { top: 65%; left: 36%; }
+.gt-nearby-design__pin--p9 { top: 67%; left: 66%; }
+.gt-nearby-design__pin--p10 { right: 8%; bottom: 14%; }
+
+.gt-nearby-design__user {
+  position: absolute;
+  z-index: 4;
+  top: 50%;
+  left: 49%;
+  display: grid;
+  width: 70px;
+  height: 70px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(72, 174, 235, .20);
+  transform: translate(-50%, -50%);
+}
+
+.gt-nearby-design__user::before {
+  width: 24px;
+  height: 24px;
+  border: 6px solid #fff;
+  border-radius: 50%;
+  background: #118af0;
+  box-shadow: 0 2px 7px rgba(17, 91, 146, .24);
+  content: "";
+}
+
+.gt-nearby-design__map-controls {
+  position: absolute;
+  z-index: 6;
+  top: 19px;
+  right: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.gt-nearby-design__map-controls > button,
+.gt-nearby-design__map-controls > div {
+  overflow: hidden;
+  border: 1px solid rgba(224,229,226,.95);
+  border-radius: 18px;
+  background: rgba(255,255,255,.97);
+  box-shadow: 0 4px 13px rgba(27, 48, 34, .13);
+}
+
+.gt-nearby-design__map-controls > button {
+  display: grid;
+  width: 45px;
+  height: 45px;
+  place-items: center;
+  padding: 0;
+  color: #121a15;
+}
+
+.gt-nearby-design__map-controls > div {
+  display: grid;
+}
+
+.gt-nearby-design__map-controls > div button {
+  display: grid;
+  width: 45px;
+  height: 42px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  color: #202722;
+  background: transparent;
+}
+
+.gt-nearby-design__map-controls > div button + button {
+  border-top: 1px solid #edf0ee;
+}
+
+.gt-nearby-design__radius {
+  position: absolute;
+  z-index: 8;
+  right: 18px;
+  bottom: 12px;
+  left: 18px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: center;
+  gap: 4px;
+  min-height: 50px;
+  padding: 6px;
+  border: 1px solid rgba(221,227,223,.95);
+  border-radius: 24px;
+  background: rgba(255,255,255,.97);
+  box-shadow: 0 5px 16px rgba(20, 43, 28, .14);
+}
+
+.gt-nearby-design__radius button {
+  min-width: 0;
+  height: 36px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 18px;
+  color: #171e19;
+  background: transparent;
+  font-size: 10px !important;
+  font-weight: 700;
+}
+
+.gt-nearby-design__radius button.is-active {
+  color: #fff;
+  background: #0da75d;
+}
+
+.gt-nearby-design__sheet {
+  position: relative;
+  z-index: 12;
+  min-height: 58px;
+  padding: 9px 18px 7px;
+  border-radius: 25px 25px 0 0;
+  background: #fff;
+  box-shadow: 0 -4px 16px rgba(30, 47, 36, .08);
+}
+
+.gt-nearby-design__sheet::before {
+  display: block;
+  width: 38px;
+  height: 4px;
+  margin: -3px auto 6px;
+  border-radius: 999px;
+  background: #c8cbc9;
+  content: "";
+}
+
+.gt-nearby-design__sheet-head {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 20px minmax(0,1fr) auto;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  color: #151c18;
+  background: transparent;
+  text-align: left;
+}
+
+.gt-nearby-design__sheet-head > strong {
+  font-size: 11px !important;
+  line-height: 1.1;
+}
+
+.gt-nearby-design__sheet-head > span:last-child {
+  color: #14a35d;
+  font-size: 9px !important;
+  font-weight: 700;
+}
+
+.gt-nearby-design__sheet-caret {
+  display: grid;
+  place-items: center;
+  color: #1ea966;
+  transform: rotate(-90deg);
+  transition: transform .18s ease;
+}
+
+.gt-nearby-design__sheet.is-expanded .gt-nearby-design__sheet-caret {
+  transform: rotate(90deg);
+}
+
+.gt-nearby-design__cards {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 10px -4px 0;
+  padding: 0 4px 3px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.gt-nearby-design__card {
+  display: grid;
+  flex: 0 0 112px;
+  min-width: 112px;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid #e6e9e7;
+  border-radius: 12px;
+  color: #151c18;
+  background: #fff;
+  text-align: left;
+}
+
+.gt-nearby-design__card > .gt-photo {
+  width: 100% !important;
+  height: 76px !important;
+  border-radius: 0 !important;
+}
+
+.gt-nearby-design__card-copy {
+  display: grid;
+  gap: 4px;
+  padding: 7px 7px 8px;
+}
+
+.gt-nearby-design__card-copy > strong {
+  display: -webkit-box;
+  min-height: 26px;
+  overflow: hidden;
+  font-size: 8.6px !important;
+  line-height: 1.18;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.gt-nearby-design__card-copy > small {
+  min-height: 21px;
+  color: #6d7771;
+  font-size: 7px !important;
+  line-height: 1.15;
+}
+
+.gt-nearby-design__card-copy > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.gt-nearby-design__card-copy b {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: #555f59;
+  font-size: 7px !important;
+}
+
+.gt-nearby-design__card-copy b svg {
+  color: #f3a514;
+}
+
+.gt-nearby-design__card-copy em {
+  color: #4e5852;
+  font-size: 7px !important;
+  font-style: normal;
+}
+
+@media (max-width: 390px) {
+  .gt-nearby-design__head {
+    gap: 8px;
+    padding: 12px 14px 0;
+  }
+
+  .gt-nearby-design__brand-row h1 {
+    font-size: 21px !important;
+  }
+
+  .gt-nearby-design__brand-row > button {
+    width: 37px;
+    height: 37px;
+  }
+
+  .gt-nearby-design__search-row {
+    grid-template-columns: minmax(0,1fr) 44px;
+    gap: 8px;
+  }
+
+  .gt-nearby-design__search,
+  .gt-nearby-design__filter {
+    height: 44px;
+  }
+
+  .gt-nearby-design__filter {
+    width: 44px;
+  }
+
+  .gt-nearby-design__categories-wrap,
+  .gt-nearby-design__subcategories-wrap {
+    margin-right: -14px;
+    margin-left: -14px;
+  }
+
+  .gt-nearby-design__categories {
+    gap: 7px;
+    padding-right: 43px;
+    padding-left: 14px;
+  }
+
+  .gt-nearby-design__categories > button {
+    flex-basis: 53px;
+    min-width: 53px;
+  }
+
+  .gt-nearby-design__category-icon {
+    width: 45px !important;
+    height: 45px !important;
+  }
+
+  .gt-nearby-design__subcategories {
+    gap: 7px;
+    padding-right: 43px;
+    padding-left: 14px;
+  }
+
+  .gt-nearby-design__subcategories > button {
+    flex-basis: 53px;
+    min-width: 53px;
+  }
+
+  .gt-nearby-design__subcategories > button > span {
+    width: 44px;
+    height: 44px;
+  }
+
+  .gt-nearby-design__subcategories > button strong {
+    width: 58px;
+    font-size: 6.8px !important;
+  }
+
+  .gt-nearby-design__map-controls {
+    top: 14px;
+    right: 10px;
+  }
+
+  .gt-nearby-design__map-controls > button,
+  .gt-nearby-design__map-controls > div button {
+    width: 42px;
+  }
+
+  .gt-nearby-design__radius {
+    right: 12px;
+    bottom: 10px;
+    left: 12px;
+    min-height: 46px;
+    padding: 5px;
+  }
+
+  .gt-nearby-design__radius button {
+    height: 34px;
+    font-size: 9px !important;
+  }
+
+  .gt-nearby-design__sheet {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .gt-nearby-design__card {
+    flex-basis: 104px;
+    min-width: 104px;
+  }
+
+  .gt-nearby-design__card > .gt-photo {
+    height: 70px !important;
+  }
+}
