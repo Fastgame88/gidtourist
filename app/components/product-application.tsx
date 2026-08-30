@@ -91,6 +91,16 @@ function iconForScreen(slug: string) {
   return Layers3;
 }
 
+function AddLocationIcon({ size = 23 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 21s6-5.1 6-11a6 6 0 1 0-12 0c0 5.9 6 11 6 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="12" cy="10" r="2.2" stroke="currentColor" strokeWidth="2" />
+      <path d="M18.5 15.5v5M16 18h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function TouristBottomNav({
   activeSlug,
   navigate,
@@ -103,7 +113,7 @@ function TouristBottomNav({
     ["home", "Головна", Home],
     ["plan", "Мій план", BookOpenCheck],
     ["qr", "QR", QrCode],
-    ["wallet", "Бонуси", Gift],
+    ["add-location", "Додати локацію", AddLocationIcon],
     ["profile", "Профіль", UserRound],
   ] as const;
 
@@ -113,7 +123,7 @@ function TouristBottomNav({
         <button
           key={itemSlug}
           type="button"
-          className={`${normalizedActiveSlug === itemSlug ? "is-active" : ""} ${itemSlug === "qr" ? "is-qr" : ""}`}
+          className={`${normalizedActiveSlug === itemSlug ? "is-active" : ""} ${itemSlug === "qr" ? "is-qr" : ""} ${itemSlug === "add-location" ? "is-add-location" : ""}`}
           onClick={() => navigate("tourist", itemSlug)}
         >
           <Icon size={23} />

@@ -19806,3 +19806,88 @@ button.gt-service-card {
     padding-bottom: 2px !important;
   }
 }
+
+/* ===== 2026-08-30 nearby subcategories + add-location nav ===== */
+.gt-nearby-subcategories > button {
+  flex-basis: 66px !important;
+  min-width: 66px !important;
+}
+
+.gt-nearby-subcategories > button > strong {
+  width: 66px;
+  min-height: 18px;
+  white-space: normal !important;
+  text-align: center;
+}
+
+.gt-profile-screen .gt-profile-list--reference .gt-profile-row--bonuses > svg:first-child {
+  color: #f1b51c;
+}
+
+.tourist-bottom-nav button.is-add-location span {
+  font-size: 8.5px !important;
+  white-space: nowrap;
+}
+
+.tourist-bottom-nav button.is-add-location > svg {
+  width: 23px;
+  height: 23px;
+}
+
+.gt-add-location-content {
+  display: grid;
+  gap: 14px;
+}
+
+.gt-add-location-card {
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid #e8edea;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(24,48,34,.055);
+}
+
+.gt-add-location-card > span {
+  display: grid;
+  width: 50px;
+  height: 50px;
+  place-items: center;
+  border-radius: 14px;
+  color: #0b9a57;
+  background: #eaf8f0;
+}
+
+.gt-add-location-card > div {
+  display: grid;
+  gap: 4px;
+}
+
+.gt-add-location-card strong {
+  font-size: 15px;
+}
+
+.gt-add-location-card small {
+  color: #727e77;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+@media (max-width: 390px) {
+  .gt-nearby-subcategories > button {
+    flex-basis: 62px !important;
+    min-width: 62px !important;
+  }
+
+  .gt-nearby-subcategories > button > strong {
+    width: 62px;
+  }
+
+  .tourist-bottom-nav button.is-add-location span,
+  .tourist-app-shell--android .tourist-bottom-nav button.is-add-location span {
+    font-size: 8px !important;
+  }
+}

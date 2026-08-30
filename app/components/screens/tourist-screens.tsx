@@ -933,7 +933,7 @@ function CatalogScreen({ navigate }: { navigate: Navigate }) {
 
 function NearbyScreen({ navigate }: { navigate: Navigate }) {
   const [activeCategory, setActiveCategory] = useState("Усі");
-  const [activeSubcategory, setActiveSubcategory] = useState("Усі природні");
+  const [activeSubcategory, setActiveSubcategory] = useState("");
   const categoryScrollRef = useRef<HTMLDivElement | null>(null);
 
   const categories: Array<{ label: string; icon: LucideIcon; tone: string }> = [
@@ -949,16 +949,80 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
     { label: "Маршрути", icon: Route, tone: "routes" },
   ];
 
-  const natureSubcategories: Array<{ label: string; icon: LucideIcon }> = [
-    { label: "Усі природні", icon: TentTree },
-    { label: "Гори", icon: MountainSnow },
-    { label: "Річки", icon: Route },
-    { label: "Водоспади", icon: LifeBuoy },
-    { label: "Джерела", icon: MapPin },
-    { label: "Озера", icon: Flower2 },
-    { label: "Оглядові точки", icon: LocateFixed },
-    { label: "Печери", icon: MountainSnow },
-  ];
+  const subcategoryGroups: Record<string, Array<{ label: string; icon: LucideIcon }>> = {
+    "Де поїсти": [
+      { label: "Усі заклади", icon: Utensils },
+      { label: "Українська кухня", icon: Flame },
+      { label: "Неукраїнська кухня", icon: Globe },
+      { label: "Кав’ярні", icon: Sparkles },
+      { label: "Фаст фуд", icon: FlameKindling },
+    ],
+    "Де купити": [
+      { label: "Усі магазини", icon: ShoppingBag },
+      { label: "Продовольчі", icon: ShoppingBag },
+      { label: "Промтовари", icon: Wrench },
+      { label: "Сувеніри", icon: Gift },
+      { label: "Аптеки", icon: Pill },
+    ],
+    "Природа": [
+      { label: "Усі природні", icon: TentTree },
+      { label: "Гори", icon: MountainSnow },
+      { label: "Річки", icon: Route },
+      { label: "Водоспади", icon: LifeBuoy },
+      { label: "Джерела", icon: MapPin },
+      { label: "Озера", icon: Flower2 },
+      { label: "Оглядові точки", icon: LocateFixed },
+      { label: "Печери", icon: MountainSnow },
+    ],
+    "Цікаве": [
+      { label: "Усі цікаві", icon: TentTree },
+      { label: "Церкви", icon: Cross },
+      { label: "Пам’ятки", icon: BadgeCheck },
+      { label: "Музеї", icon: Info },
+      { label: "Історичні об’єкти", icon: Clock3 },
+    ],
+    "Розваги": [
+      { label: "Усі розваги", icon: Bike },
+      { label: "Джипи", icon: CarFront },
+      { label: "Квадроцикли", icon: Bike },
+      { label: "Рафтинг", icon: LifeBuoy },
+      { label: "Зіплайн", icon: Navigation },
+      { label: "Для дітей", icon: UsersRound },
+      { label: "Коні", icon: PawPrint },
+    ],
+    "Відпочинок": [
+      { label: "Усі місця", icon: Flower2 },
+      { label: "Чани", icon: Flame },
+      { label: "Сауни", icon: FlameKindling },
+      { label: "Басейни", icon: LifeBuoy },
+      { label: "Масаж", icon: Flower2 },
+      { label: "Походи", icon: Footprints },
+      { label: "Екскурсії", icon: Route },
+    ],
+    "Трансфер": [
+      { label: "Усі", icon: CarFront },
+      { label: "Таксі", icon: CarFront },
+      { label: "Трансфери", icon: Route },
+      { label: "Оренда авто", icon: CarFront },
+    ],
+    "Корисне": [
+      { label: "Усі корисні", icon: CircleHelp },
+      { label: "Лікарні", icon: Cross },
+      { label: "Амбулаторії", icon: Stethoscope },
+      { label: "Поліція", icon: ShieldCheck },
+      { label: "Вокзали", icon: Route },
+      { label: "Банкомати", icon: Banknote },
+    ],
+    "Маршрути": [
+      { label: "Усі маршрути", icon: Route },
+      { label: "Пішохідні", icon: Footprints },
+      { label: "Веломаршрути", icon: Bike },
+      { label: "Автомобільні", icon: CarFront },
+      { label: "Оглядові", icon: LocateFixed },
+    ],
+  };
+
+  const activeSubcategories = subcategoryGroups[activeCategory] ?? [];
 
   const allPlaces: Array<{
     photo: PhotoName;
@@ -1015,7 +1079,7 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
                 key={label}
                 onClick={() => {
                   setActiveCategory(label);
-                  if (label !== "Природа") setActiveSubcategory("Усі природні");
+                  setActiveSubcategory(subcategoryGroups[label]?.[0]?.label ?? "");
                 }}
               >
                 <span className={`gt-nearby-category-icon gt-nearby-category-icon--${tone}`}><Icon size={23} /></span>
@@ -1033,12 +1097,12 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
           </button>
         </div>
 
-        {activeCategory === "Природа" ? (
-          <div className="gt-nearby-subcategories" aria-label="Фільтри природи">
-            {natureSubcategories.map(({ label, icon: Icon }) => (
+        {activeSubcategories.length ? (
+          <div className="gt-nearby-subcategories" aria-label={`Підкатегорії: ${activeCategory}`}>
+            {activeSubcategories.map(({ label, icon: Icon }) => (
               <button
                 type="button"
-                key={label}
+                key={`${activeCategory}-${label}`}
                 className={activeSubcategory === label ? "is-active" : ""}
                 onClick={() => setActiveSubcategory(label)}
               >
@@ -1990,6 +2054,26 @@ function EmergencyScreen() {
   );
 }
 
+function AddLocationScreen({ navigate }: { navigate: Navigate }) {
+  return (
+    <div className="tourist-screen gt-screen gt-add-location-screen">
+      <main className="gt-content gt-add-location-content">
+        <h1 className="gt-simple-title">Додати локацію</h1>
+        <section className="gt-add-location-card">
+          <span><MapPin size={30} /></span>
+          <div>
+            <strong>Додайте нову локацію</strong>
+            <small>Оберіть потрібне місце на мапі та продовжіть додавання.</small>
+          </div>
+        </section>
+        <button type="button" className="gt-primary-button" onClick={() => navigate("tourist", "nearby")}>
+          <Map size={20} /> Обрати на мапі
+        </button>
+      </main>
+    </div>
+  );
+}
+
 function ProfileScreen({ navigate }: { navigate: Navigate }) {
   return (
     <div className="tourist-screen gt-screen gt-profile-screen">
@@ -2002,6 +2086,7 @@ function ProfileScreen({ navigate }: { navigate: Navigate }) {
         <div className="gt-profile-list gt-profile-list--reference">
           <button type="button" className="gt-profile-row--reviews" onClick={() => navigate("tourist", "review")}><MessageSquareMore size={27} /><span>Мої відгуки</span><ChevronRight size={20} /></button>
           <button type="button" className="gt-profile-row--favorites"><Heart size={27} /><span>Улюблені</span><ChevronRight size={20} /></button>
+          <button type="button" className="gt-profile-row--bonuses" onClick={() => navigate("tourist", "wallet")}><Gift size={27} /><span>Бонуси</span><ChevronRight size={20} /></button>
         </div>
         <div className="gt-profile-list gt-profile-list--reference">
           <button type="button" className="gt-profile-row--language"><Globe size={27} /><span>Мова</span><small>Українська</small><ChevronRight size={20} /></button>
@@ -2088,6 +2173,8 @@ export function TouristScreen({
       return <EmergencyScreen />;
     case "profile":
       return <ProfileScreen navigate={navigate} />;
+    case "add-location":
+      return <AddLocationScreen navigate={navigate} />;
     case "community":
       return <CommunityScreen />;
     default:

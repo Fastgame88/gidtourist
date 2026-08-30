@@ -182,6 +182,14 @@ export const screens: ScreenDefinition[] = [
     role: "tourist",
   },
   {
+    id: "C15A",
+    slug: "add-location",
+    title: "Додати локацію",
+    shortTitle: "Додати локацію",
+    description: "Вибір і додавання нової локації туристом",
+    role: "tourist",
+  },
+  {
     id: "C16",
     slug: "community",
     title: "Telegram-спільнота",
