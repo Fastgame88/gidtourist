@@ -20105,3 +20105,61 @@ button.gt-service-card {
     font-size: 6.8px !important;
   }
 }
+
+/* ===== 2026-08-30 Android home final spacing + weather tweaks ===== */
+.tourist-app-shell--android .gt-home-screen .gt-weather-item--wind strong {
+  font-size: 10.4px !important;
+  letter-spacing: -0.02em !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-weather-item--rain {
+  transform: translateX(-2px) !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-current-place-copy {
+  position: relative !important;
+  align-self: stretch !important;
+  padding-bottom: 10px !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-current-place-copy b {
+  position: absolute !important;
+  left: 0 !important;
+  bottom: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  width: max-content !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  font-size: 6px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-current-place-copy b svg {
+  width: 9px !important;
+  height: 9px !important;
+  flex: 0 0 9px !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-category-card,
+.tourist-app-shell--android .gt-home-screen .gt-category-card--featured {
+  height: 95% !important;
+  align-self: center !important;
+}
+
+@media (max-height: 760px) {
+  .tourist-app-shell--android .gt-home-screen .gt-weather-item--wind strong {
+    font-size: 10px !important;
+  }
+
+  .tourist-app-shell--android .gt-home-screen .gt-current-place-copy b {
+    font-size: 5.8px !important;
+  }
+
+  .tourist-app-shell--android .gt-home-screen .gt-category-card,
+  .tourist-app-shell--android .gt-home-screen .gt-category-card--featured {
+    height: 94.5% !important;
+  }
+}
