@@ -20604,3 +20604,30 @@ button.gt-service-card {
     height: 70px !important;
   }
 }
+
+
+/* ===== 2026-08-30 nearby: show cards by default + slightly smaller map ===== */
+.gt-nearby-design__card-copy > strong {
+  font-size: 10.6px !important;
+}
+
+.gt-nearby-design__card-copy > small {
+  font-size: 9px !important;
+}
+
+.gt-nearby-design__card-copy b,
+.gt-nearby-design__card-copy em {
+  font-size: 9px !important;
+}
+
+@media (max-width: 390px) {
+  .gt-nearby-design__card-copy > strong {
+    font-size: 10.6px !important;
+  }
+
+  .gt-nearby-design__card-copy > small,
+  .gt-nearby-design__card-copy b,
+  .gt-nearby-design__card-copy em {
+    font-size: 9px !important;
+  }
+}

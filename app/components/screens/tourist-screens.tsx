@@ -934,7 +934,7 @@ function CatalogScreen({ navigate }: { navigate: Navigate }) {
 function NearbyScreen({ navigate }: { navigate: Navigate }) {
   const [activeCategory, setActiveCategory] = useState("Усі");
   const [activeSubcategory, setActiveSubcategory] = useState("");
-  const [resultsExpanded, setResultsExpanded] = useState(false);
+  const [resultsExpanded, setResultsExpanded] = useState(true);
   const categoryScrollRef = useRef<HTMLDivElement | null>(null);
   const subcategoryScrollRef = useRef<HTMLDivElement | null>(null);
 
