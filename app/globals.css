@@ -26563,3 +26563,60 @@ html.gt-platform-android body,
   width: 40px !important;
   height: 40px !important;
 }
+
+/* ===== 2026-08-31 follow-up: catalog chips/location spacing + emergency geolocation height ===== */
+
+/* Category pages only: keep chip pills fully visible, move the location strip slightly lower,
+   and pull the recommendations/cards up after the location strip. Nearby is intentionally excluded. */
+:is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-chips {
+  min-height: 39px !important;
+  height: auto !important;
+  padding-top: 2px !important;
+  padding-bottom: 6px !important;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+}
+
+:is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-chips button {
+  margin-bottom: 0 !important;
+  border-radius: 999px !important;
+  overflow: visible !important;
+}
+
+:is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-map-strip {
+  margin-top: 4px !important;
+  margin-bottom: -7px !important;
+}
+
+:is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-section-title {
+  margin-top: 0 !important;
+  margin-bottom: -3px !important;
+}
+
+:is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-list {
+  margin-top: -1px !important;
+}
+
+/* Avoid fixed chip rows clipping the lower pill rounding in Android Telegram WebView. */
+.tourist-app-shell--android :is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-content {
+  grid-template-rows: auto auto auto 54px auto auto !important;
+  row-gap: 6px !important;
+}
+
+.tourist-app-shell--android :is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-chips {
+  min-height: 39px !important;
+  padding-bottom: 6px !important;
+  overflow-y: visible !important;
+}
+
+/* Emergency: user requested the geolocation-share card about 20% taller, without touching other blocks. */
+.gt-emergency .gt-location-button {
+  min-height: 82px !important;
+  padding: 10px 14px !important;
+}
+
+.gt-emergency .gt-location-button .gt-location-button__icon,
+.gt-emergency .gt-location-button .gt-location-button__icon svg {
+  width: 43px !important;
+  height: 43px !important;
+}
