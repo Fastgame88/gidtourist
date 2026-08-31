@@ -26496,3 +26496,70 @@ html.gt-platform-android body,
   line-height: inherit !important;
   white-space: normal !important;
 }
+
+/* ===== 2026-08-31 follow-up spacing refinements ===== */
+
+/* 1. Bottom-nav "Додати локацію": same visual icon scale as neighbours and one-line label. */
+.tourist-bottom-nav button.is-add-location > svg,
+.tourist-app-shell--android .tourist-bottom-nav button.is-add-location > svg,
+.tourist-app-shell--android .tourist-app-frame--home .tourist-bottom-nav button.is-add-location > svg {
+  width: 24px !important;
+  height: 24px !important;
+  flex: 0 0 24px !important;
+}
+
+.tourist-bottom-nav button.is-add-location span,
+.tourist-app-shell--android .tourist-bottom-nav button.is-add-location span,
+.tourist-app-shell--android .tourist-app-frame--home .tourist-bottom-nav button.is-add-location span {
+  font-size: inherit !important;
+  line-height: 1.05 !important;
+  letter-spacing: -0.18px !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+}
+
+/* 2. Catalog screens: keep a clean gap below filters, but pull the location/title/cards upward as one block.
+   Nearby is intentionally excluded. */
+:is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-chips {
+  margin-bottom: 2px !important;
+}
+
+:is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-map-strip {
+  margin-top: 1px !important;
+  margin-bottom: -3px !important;
+}
+
+:is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-section-title {
+  margin-top: 0 !important;
+  margin-bottom: -2px !important;
+}
+
+.tourist-app-shell--android :is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-content {
+  grid-template-rows: auto auto auto 54px auto auto !important;
+  row-gap: 6px !important;
+}
+
+.tourist-app-shell--android :is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-chips {
+  min-height: 34px !important;
+  height: auto !important;
+  padding-bottom: 5px !important;
+  overflow-y: visible !important;
+}
+
+.tourist-app-shell--android :is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-map-strip {
+  min-height: 54px !important;
+  height: 54px !important;
+  align-self: start !important;
+}
+
+/* 3. Emergency: restore a little height to the share-location block so the verified-contact footer sits lower. */
+.gt-emergency .gt-location-button {
+  min-height: 68px !important;
+  padding: 7px 12px !important;
+}
+
+.gt-emergency .gt-location-button .gt-location-button__icon,
+.gt-emergency .gt-location-button .gt-location-button__icon svg {
+  width: 40px !important;
+  height: 40px !important;
+}
