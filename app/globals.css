@@ -23131,3 +23131,248 @@ button.gt-service-card {
   .tourist-app-shell--android .gt-home-screen { grid-template-rows:minmax(0,40%) clamp(68px,7.8dvh,74px) minmax(0,1fr) !important; }
   .tourist-app-shell--android .gt-home-screen .gt-category-grid { padding-right:14px !important; padding-left:14px !important; }
 }
+
+/* ===== 2026-08-31 requested UI refinements only ===== */
+
+/* 1) Bottom navigation: make Add location icon slightly larger, keep label sizing unchanged. */
+.tourist-bottom-nav button.is-add-location > svg,
+.tourist-app-shell--android .tourist-bottom-nav button.is-add-location > svg {
+  width: 27px !important;
+  height: 27px !important;
+}
+
+/* 2) Hot offers: show full status badge text at the right edge without clipping. */
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body {
+  padding-right: 88px !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row__badge {
+  top: 6px !important;
+  right: 22px !important;
+  width: max-content !important;
+  max-width: none !important;
+  padding: 4px 6px !important;
+  overflow: visible !important;
+  font-size: 7.8px !important;
+  line-height: 1 !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 390px) {
+  .gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body {
+    padding-right: 80px !important;
+  }
+
+  .gt-hot-offers-screen--reference .gt-hot-offers-reference-row__badge {
+    right: 20px !important;
+    padding: 4px 5px !important;
+    font-size: 7.2px !important;
+  }
+}
+
+/* 3) Transfer cards: keep tags anchored close to the card bottom. */
+.gt-transfer-reference-row__body {
+  display: flex !important;
+  flex-direction: column !important;
+  align-content: initial !important;
+  justify-content: flex-start !important;
+  min-height: 0 !important;
+}
+
+.gt-transfer-reference-row__title,
+.gt-transfer-reference-row__body > p,
+.gt-transfer-reference-row__meta {
+  flex: 0 0 auto !important;
+}
+
+.gt-transfer-reference-row__tags {
+  margin-top: auto !important;
+  padding-top: 4px !important;
+  align-items: flex-end !important;
+}
+
+/* 4) Nearby screen: fixed-height layout, shorter cards, larger map, clean card text. */
+.gt-nearby-design,
+.gt-nearby-design__content {
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.gt-nearby-design__content {
+  grid-template-rows: auto minmax(0, 1fr) auto !important;
+}
+
+.gt-nearby-design__map {
+  min-height: 0 !important;
+  height: auto !important;
+}
+
+.gt-nearby-design__sheet {
+  flex: 0 0 auto !important;
+  padding-top: 7px !important;
+  padding-bottom: 5px !important;
+}
+
+.gt-nearby-design__cards {
+  align-items: stretch !important;
+  margin-top: 7px !important;
+  padding-bottom: 1px !important;
+}
+
+.gt-nearby-design__card {
+  flex-basis: 108px !important;
+  min-width: 108px !important;
+  min-height: 124px !important;
+  height: 124px !important;
+}
+
+.gt-nearby-design__card > .gt-photo {
+  width: 100% !important;
+  height: 56px !important;
+  flex: 0 0 56px !important;
+}
+
+.gt-nearby-design__card-copy {
+  display: grid !important;
+  grid-template-rows: auto auto 1fr !important;
+  height: 68px !important;
+  min-height: 0 !important;
+  align-content: start !important;
+  gap: 2px !important;
+  padding: 4px 6px 5px !important;
+  box-sizing: border-box !important;
+}
+
+.gt-nearby-design__card-copy > strong {
+  display: -webkit-box !important;
+  min-height: 0 !important;
+  max-height: 23px !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  color: #151c18 !important;
+  font-size: 9.6px !important;
+  line-height: 1.12 !important;
+  font-weight: 800 !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+}
+
+.gt-nearby-design__card-copy > small {
+  display: block !important;
+  min-height: 0 !important;
+  max-height: 18px !important;
+  overflow: hidden !important;
+  color: #6d7771 !important;
+  font-size: 7.8px !important;
+  line-height: 1.08 !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+}
+
+.gt-nearby-design__card-copy > span {
+  align-self: end !important;
+  margin-top: auto !important;
+  padding-top: 2px !important;
+}
+
+.gt-nearby-design__card-copy b,
+.gt-nearby-design__card-copy em {
+  font-size: 8px !important;
+}
+
+.gt-nearby-design__card-copy b svg {
+  width: 12px !important;
+  height: 12px !important;
+}
+
+/* Give the freed card height back to the map: roughly +25% in the common phone viewport. */
+.gt-nearby-design__map {
+  min-height: clamp(250px, 39dvh, 390px) !important;
+}
+
+/* 5) Center the blue location halo exactly around the marker. */
+.gt-nearby-design__user {
+  top: 50% !important;
+  left: 50% !important;
+  display: grid !important;
+  place-items: center !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+.gt-nearby-design__user::before {
+  margin: 0 !important;
+  transform: none !important;
+}
+
+@media (max-width: 390px) {
+  .gt-nearby-design__card {
+    flex-basis: 104px !important;
+    min-width: 104px !important;
+    min-height: 120px !important;
+    height: 120px !important;
+  }
+
+  .gt-nearby-design__card > .gt-photo {
+    height: 54px !important;
+    flex-basis: 54px !important;
+  }
+
+  .gt-nearby-design__card-copy {
+    height: 66px !important;
+    padding: 4px 5px !important;
+  }
+
+  .gt-nearby-design__card-copy > strong {
+    font-size: 9.2px !important;
+  }
+
+  .gt-nearby-design__card-copy > small,
+  .gt-nearby-design__card-copy b,
+  .gt-nearby-design__card-copy em {
+    font-size: 7.5px !important;
+  }
+
+  .gt-nearby-design__map {
+    min-height: clamp(235px, 38dvh, 350px) !important;
+  }
+}
+
+/* 6) Android home: +10% card height, smaller gaps, +5% text, balanced first-row spacing. */
+.tourist-app-shell--android .gt-home-screen {
+  gap: clamp(3px, .5dvh, 5px) !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-category-grid {
+  margin-top: 0 !important;
+  gap: clamp(3px, .45dvh, 5px) !important;
+  padding-top: 0 !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-category-card,
+.tourist-app-shell--android .gt-home-screen .gt-category-card--featured {
+  height: calc(100% - 2px) !important;
+  align-self: center !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-category-card strong,
+.tourist-app-shell--android .gt-home-screen .gt-category-card--featured strong {
+  font-size: clamp(10.5px, 3.05vw, 12.6px) !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-category-card small,
+.tourist-app-shell--android .gt-home-screen .gt-category-card--featured small {
+  font-size: clamp(8.2px, 2.36vw, 9.9px) !important;
+}
+
+@media (max-height: 760px) {
+  .tourist-app-shell--android .gt-home-screen .gt-category-grid {
+    gap: 3px !important;
+  }
+
+  .tourist-app-shell--android .gt-home-screen .gt-category-card,
+  .tourist-app-shell--android .gt-home-screen .gt-category-card--featured {
+    height: calc(100% - 1px) !important;
+  }
+}
