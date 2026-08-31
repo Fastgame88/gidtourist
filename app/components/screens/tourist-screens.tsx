@@ -1131,6 +1131,7 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
                     setActiveCategory(label);
                     const firstSubcategory = subcategoryGroups[label]?.[0]?.label ?? "";
                     setActiveSubcategory(firstSubcategory);
+                    setResultsExpanded(label === "Усі");
                   }}
                 >
                   <span className={`gt-nearby-design__category-icon gt-nearby-category-icon--${tone}`}>
