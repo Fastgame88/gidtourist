@@ -27343,3 +27343,102 @@ html.gt-platform-android body,
     font-size: 7.5px !important;
   }
 }
+
+/* ===== 2026-08-31 Transfer card image ratio + right-edge distance/time ===== */
+/* Requested only for Transfer: make the photo 15% narrower, 10% taller,
+   and pin distance / travel time to the same inner right edge as category cards. */
+.gt-transfer-reference-row {
+  grid-template-columns: 88px minmax(0, 1fr) !important;
+  min-height: 117px !important;
+}
+
+.gt-transfer-reference-row__image {
+  width: 88px !important;
+  height: 103px !important;
+}
+
+.gt-transfer-reference-row__body {
+  position: relative !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  padding-right: 58px !important;
+  box-sizing: border-box !important;
+}
+
+.gt-transfer-reference-row__title {
+  position: static !important;
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  padding-right: 0 !important;
+}
+
+.gt-transfer-reference-row__title > strong {
+  display: block !important;
+  min-width: 0 !important;
+  padding-right: 0 !important;
+}
+
+.gt-transfer-reference-row__title > b {
+  position: absolute !important;
+  top: 2px !important;
+  right: 0 !important;
+  width: auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: right !important;
+  white-space: nowrap !important;
+}
+
+.gt-transfer-reference-row__meta {
+  position: static !important;
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  padding-right: 0 !important;
+}
+
+.gt-transfer-reference-row__meta > span:first-child {
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.gt-transfer-reference-row__meta > span:last-child {
+  position: absolute !important;
+  top: 47px !important;
+  right: 0 !important;
+  display: inline-flex !important;
+  width: auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  text-align: right !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 390px) {
+  .gt-transfer-reference-row,
+  .tourist-app-shell--android .gt-transfer-reference-row {
+    grid-template-columns: 78px minmax(0, 1fr) !important;
+    min-height: 107px !important;
+  }
+
+  .gt-transfer-reference-row__image,
+  .tourist-app-shell--android .gt-transfer-reference-row__image {
+    width: 78px !important;
+    height: 95px !important;
+  }
+
+  .gt-transfer-reference-row__body,
+  .tourist-app-shell--android .gt-transfer-reference-row__body {
+    padding-right: 52px !important;
+  }
+
+  .gt-transfer-reference-row__meta > span:last-child,
+  .tourist-app-shell--android .gt-transfer-reference-row__meta > span:last-child {
+    top: 43px !important;
+  }
+}
