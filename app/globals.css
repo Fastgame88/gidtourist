@@ -27442,3 +27442,62 @@ html.gt-platform-android body,
     top: 43px !important;
   }
 }
+
+/* ===== 2026-08-31 requested: home card typography alignment + mobile offer rows 15% lower ===== */
+/* 1. Android home only: reduce button typography by 2px and keep title/description baselines aligned. */
+.tourist-app-shell--android .gt-home-screen .gt-category-card > span:nth-child(2),
+.tourist-app-shell--android .gt-home-screen .gt-category-card--featured > span:nth-child(2) {
+  display: grid !important;
+  grid-template-rows: 29px 27px !important;
+  align-content: center !important;
+  row-gap: 3px !important;
+  min-width: 0 !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-category-card strong,
+.tourist-app-shell--android .gt-home-screen .gt-category-card--featured strong {
+  display: flex !important;
+  min-height: 29px !important;
+  align-items: flex-end !important;
+  margin: 0 !important;
+  font-size: 13.4px !important;
+  line-height: 1.05 !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-category-card small,
+.tourist-app-shell--android .gt-home-screen .gt-category-card--featured small {
+  display: -webkit-box !important;
+  min-height: 27px !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  font-size: 10.9px !important;
+  line-height: 1.12 !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+}
+
+@media (max-width: 350px) {
+  .tourist-app-shell--android .gt-home-screen .gt-category-card strong,
+  .tourist-app-shell--android .gt-home-screen .gt-category-card--featured strong {
+    font-size: 12.6px !important;
+  }
+
+  .tourist-app-shell--android .gt-home-screen .gt-category-card small,
+  .tourist-app-shell--android .gt-home-screen .gt-category-card--featured small {
+    font-size: 10px !important;
+  }
+}
+
+/* 2. Mobile Telegram Mini App (Android + iPhone): move only the recommendation heading and cards lower.
+   Search, filters and the "Ваше місцезнаходження" strip stay exactly where they are. */
+@media (max-width: 600px) {
+  :is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-section-title,
+  :is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-list {
+    transform: translateY(4px) !important;
+  }
+
+  .gt-transfer-reference-screen .gt-section-title,
+  .gt-transfer-reference-screen .gt-transfer-reference-list {
+    transform: translateY(12px) !important;
+  }
+}
