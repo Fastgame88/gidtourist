@@ -23376,3 +23376,189 @@ button.gt-service-card {
     height: calc(100% - 1px) !important;
   }
 }
+
+/* ===== 2026-08-31 requested refinements: full text, transfer spacing, stable nearby map, Android place spacing ===== */
+
+/* 1) Hot offers cards: show every text in full, never replace content with ellipsis. */
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row {
+  min-height: 100px !important;
+  height: auto !important;
+  align-items: center !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body {
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  padding-right: 88px !important;
+  gap: 4px !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body > small,
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body > strong,
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body > span,
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body > i {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+  white-space: normal !important;
+  text-overflow: clip !important;
+  -webkit-line-clamp: unset !important;
+  -webkit-box-orient: initial !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body > strong {
+  display: block !important;
+  line-height: 1.12 !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body > span,
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body > i {
+  line-height: 1.16 !important;
+}
+
+.gt-hot-offers-screen--reference .gt-hot-offers-reference-row__badge {
+  max-width: calc(100% - 32px) !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+}
+
+/* 2) Transfer cards: balanced vertical spacing between title, description, rating and tags. */
+.gt-transfer-reference-row__body {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  gap: 5px !important;
+}
+
+.gt-transfer-reference-row__title {
+  margin: 0 !important;
+}
+
+.gt-transfer-reference-row__body > p {
+  margin: 0 !important;
+}
+
+.gt-transfer-reference-row__meta {
+  margin-top: 1px !important;
+}
+
+.gt-transfer-reference-row__tags {
+  margin-top: 3px !important;
+  padding-top: 0 !important;
+  gap: 5px !important;
+}
+
+/* 3) Nearby: selecting a category must not resize the map. The subcategory row simply pushes it lower.
+   Keep a single map height for both states and reserve a compact, always-visible sheet below. */
+.gt-nearby-design__content,
+.gt-nearby-design__content.has-subcategories {
+  display: grid !important;
+  grid-template-rows: auto clamp(220px, 31dvh, 300px) minmax(132px, 1fr) !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  align-content: stretch !important;
+}
+
+.gt-nearby-design__map,
+.gt-nearby-design__content.has-subcategories .gt-nearby-design__map {
+  grid-row: 2 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: hidden !important;
+}
+
+.gt-nearby-design__sheet,
+.gt-nearby-design__content.has-subcategories .gt-nearby-design__sheet {
+  grid-row: 3 !important;
+  min-height: 132px !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  padding-top: 6px !important;
+  padding-bottom: 3px !important;
+}
+
+.gt-nearby-design__cards {
+  margin-top: 5px !important;
+  padding-bottom: 0 !important;
+}
+
+/* Keep the user marker and its blue halo perfectly concentric. */
+.gt-nearby-design__user {
+  top: 50% !important;
+  left: 50% !important;
+  width: 62px !important;
+  height: 62px !important;
+  display: grid !important;
+  place-items: center !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+.gt-nearby-design__user::before {
+  position: absolute !important;
+  inset: 50% auto auto 50% !important;
+  margin: 0 !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+@media (max-width: 390px) {
+  .gt-nearby-design__content,
+  .gt-nearby-design__content.has-subcategories {
+    grid-template-rows: auto clamp(205px, 30dvh, 270px) minmax(126px, 1fr) !important;
+  }
+
+  .gt-nearby-design__sheet,
+  .gt-nearby-design__content.has-subcategories .gt-nearby-design__sheet {
+    min-height: 126px !important;
+  }
+}
+
+@media (max-height: 720px) {
+  .gt-nearby-design__content,
+  .gt-nearby-design__content.has-subcategories {
+    grid-template-rows: auto clamp(185px, 27dvh, 235px) minmax(118px, 1fr) !important;
+  }
+
+  .gt-nearby-design__sheet,
+  .gt-nearby-design__content.has-subcategories .gt-nearby-design__sheet {
+    min-height: 118px !important;
+  }
+}
+
+/* 4) Android home: normal readable spacing in the current-place card. */
+.tourist-app-shell--android .gt-home-screen .gt-current-place-copy {
+  position: static !important;
+  display: grid !important;
+  align-content: center !important;
+  gap: 3px !important;
+  min-width: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-current-place-copy strong {
+  margin: 0 !important;
+  line-height: 1.06 !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-current-place-copy small {
+  margin: 0 !important;
+  line-height: 1.12 !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-current-place-copy b {
+  position: static !important;
+  display: flex !important;
+  align-items: center !important;
+  width: auto !important;
+  max-width: 100% !important;
+  margin: 1px 0 0 !important;
+  gap: 3px !important;
+  overflow: visible !important;
+  white-space: nowrap !important;
+}
