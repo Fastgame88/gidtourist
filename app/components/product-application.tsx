@@ -47,6 +47,10 @@ type TelegramWindow = Window & {
       setHeaderColor?: (color: string) => void;
       setBackgroundColor?: (color: string) => void;
       platform?: string;
+      viewportHeight?: number;
+      viewportStableHeight?: number;
+      onEvent?: (eventType: "viewportChanged", callback: () => void) => void;
+      offEvent?: (eventType: "viewportChanged", callback: () => void) => void;
       BackButton?: {
         show: () => void;
         hide: () => void;
@@ -145,6 +149,20 @@ export default function ProductApplication({ role, slug }: { role: RoleKey; slug
 
     let attempts = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let connectedWebApp: NonNullable<NonNullable<TelegramWindow["Telegram"]>["WebApp"]> | undefined;
+
+    const syncViewport = () => {
+      const visualHeight = window.visualViewport?.height;
+      const stableHeight = connectedWebApp?.viewportStableHeight ?? visualHeight ?? window.innerHeight;
+      const currentHeight = connectedWebApp?.viewportHeight ?? visualHeight ?? stableHeight;
+      const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
+      const root = document.documentElement;
+
+      root.style.setProperty("--tg-viewport-stable-height", `${Math.round(stableHeight)}px`);
+      root.style.setProperty("--tg-viewport-height", `${Math.round(currentHeight)}px`);
+      root.style.setProperty("--gt-viewport-width", `${Math.round(viewportWidth)}px`);
+      root.style.setProperty("--gt-viewport-height", `${Math.round(currentHeight)}px`);
+    };
 
     const connectTelegram = () => {
       const webApp = (window as TelegramWindow).Telegram?.WebApp;
@@ -154,19 +172,37 @@ export default function ProductApplication({ role, slug }: { role: RoleKey; slug
         return;
       }
 
+      connectedWebApp = webApp;
       webApp?.ready();
       webApp?.expand();
       webApp?.setHeaderColor?.("#f8fbf9");
       webApp?.setBackgroundColor?.("#f8fbf9");
 
       const detectedPlatform = webApp?.platform
-        ?? (/Android/i.test(window.navigator.userAgent) ? "android" : "");
+        ?? (/Android/i.test(window.navigator.userAgent)
+          ? "android"
+          : /iPhone|iPad|iPod/i.test(window.navigator.userAgent) ? "ios" : "");
       setTelegramPlatform(detectedPlatform);
+
+      const root = document.documentElement;
+      root.classList.toggle("gt-platform-android", detectedPlatform.startsWith("android"));
+      root.classList.toggle("gt-platform-ios", detectedPlatform === "ios");
+
+      syncViewport();
+      webApp?.onEvent?.("viewportChanged", syncViewport);
+      window.addEventListener("resize", syncViewport);
+      window.addEventListener("orientationchange", syncViewport);
+      window.visualViewport?.addEventListener("resize", syncViewport);
     };
 
     connectTelegram();
     return () => {
       if (timer) clearTimeout(timer);
+      connectedWebApp?.offEvent?.("viewportChanged", syncViewport);
+      window.removeEventListener("resize", syncViewport);
+      window.removeEventListener("orientationchange", syncViewport);
+      window.visualViewport?.removeEventListener("resize", syncViewport);
+      document.documentElement.classList.remove("gt-platform-android", "gt-platform-ios");
     };
   }, [role]);
 
@@ -222,9 +258,11 @@ export default function ProductApplication({ role, slug }: { role: RoleKey; slug
   if (role === "tourist") {
     const isHomeScreen = slug === "home" || slug === "welcome";
     const isAndroidTelegram = telegramPlatform.startsWith("android");
+    const isIosTelegram = telegramPlatform === "ios";
+    const isNearbyScreen = slug === "nearby";
     return (
-      <main className={`tourist-app-shell ${isAndroidTelegram ? "tourist-app-shell--android" : ""}`}>
-        <div className={`tourist-app-frame ${slug === "welcome" ? "tourist-app-frame--welcome" : ""} ${isHomeScreen ? "tourist-app-frame--home" : ""}`}>
+      <main className={`tourist-app-shell ${isAndroidTelegram ? "tourist-app-shell--android" : ""} ${isIosTelegram ? "tourist-app-shell--ios" : ""}`.trim()}>
+        <div className={`tourist-app-frame ${slug === "welcome" ? "tourist-app-frame--welcome" : ""} ${isHomeScreen ? "tourist-app-frame--home" : ""} ${isNearbyScreen ? "tourist-app-frame--nearby" : ""}`.trim()}>
           <div className="phone-content">
             <TouristScreen slug={activeScreen.slug} navigate={navigate} />
           </div>

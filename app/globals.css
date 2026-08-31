@@ -19651,9 +19651,6 @@ button.gt-service-card {
     top: 40px !important;
   }
 }
-
-/* ===== 2026-08-30 Android bottom nav parity + emergency hero removal ===== */
-/* Keep the tourist viewport stable inside Telegram on Android so the bottom nav is not clipped. */
 .tourist-app-frame {
   height: var(--tg-viewport-stable-height, 100dvh) !important;
   min-height: 0 !important;
@@ -19701,110 +19698,6 @@ button.gt-service-card {
 /* User-requested removal only: keep markup/logic intact, hide the circled helper block. */
 .gt-emergency .gt-help-hero {
   display: none !important;
-}
-
-/* ===== 2026-08-30 Android-only bottom nav parity with iPhone ===== */
-/* iPhone/iOS remains untouched; these rules apply only after Telegram reports Android. */
-.tourist-app-shell--android .tourist-app-frame {
-  height: 100dvh !important;
-  min-height: 0 !important;
-  overflow: hidden !important;
-}
-
-.tourist-app-shell--android .tourist-app-frame .phone-content {
-  height: 100% !important;
-  min-height: 0 !important;
-  overflow-y: auto !important;
-  padding-bottom: 94px !important;
-}
-
-.tourist-app-shell--android .tourist-bottom-nav,
-.tourist-app-shell--android .tourist-app-frame--home .tourist-bottom-nav {
-  position: absolute !important;
-  z-index: 100 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  min-height: 84px !important;
-  padding: 8px 10px 10px !important;
-  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-  align-items: end !important;
-  background: rgba(255,255,255,.98) !important;
-  transform: none !important;
-}
-
-.tourist-app-shell--android .tourist-bottom-nav button,
-.tourist-app-shell--android .tourist-app-frame--home .tourist-bottom-nav button {
-  min-width: 0 !important;
-  min-height: 53px !important;
-  padding: 5px 2px !important;
-  gap: 4px !important;
-  font-size: 10px !important;
-}
-
-.tourist-app-shell--android .tourist-bottom-nav button.is-qr,
-.tourist-app-shell--android .tourist-app-frame--home .tourist-bottom-nav button.is-qr {
-  align-self: start !important;
-  margin-top: -26px !important;
-}
-
-.tourist-app-shell--android .tourist-bottom-nav button.is-qr svg,
-.tourist-app-shell--android .tourist-app-frame--home .tourist-bottom-nav button.is-qr svg {
-  width: 58px !important;
-  height: 58px !important;
-  padding: 15px !important;
-  border-width: 4px !important;
-}
-
-/* ===== 2026-08-30 Android home exact-fit parity with iPhone ===== */
-/* Android Telegram has a shorter usable viewport because of its native chrome.
-   Use the real content height (not vh) and let the 4 card rows share the remaining space. */
-.tourist-app-shell--android .tourist-app-frame--home .phone-content {
-  padding-bottom: 88px !important;
-}
-
-.tourist-app-shell--android .gt-home-screen {
-  grid-template-rows: minmax(0, 31%) 92px minmax(0, 1fr) !important;
-  gap: 7px !important;
-  height: 100% !important;
-  min-height: 0 !important;
-  overflow: hidden !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-home-hero {
-  min-height: 0 !important;
-  height: 100% !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-grid {
-  display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  grid-template-rows: repeat(4, minmax(0, 1fr)) !important;
-  grid-auto-rows: unset !important;
-  min-height: 0 !important;
-  height: 100% !important;
-  align-content: stretch !important;
-  gap: 8px !important;
-  padding-bottom: 4px !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-card,
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured {
-  min-height: 0 !important;
-  height: 100% !important;
-}
-
-@media (max-height: 760px) {
-  .tourist-app-shell--android .gt-home-screen {
-    grid-template-rows: minmax(0, 29%) 86px minmax(0, 1fr) !important;
-    gap: 6px !important;
-  }
-
-  .tourist-app-shell--android .gt-home-screen .gt-category-grid {
-    gap: 7px !important;
-    padding-bottom: 2px !important;
-  }
 }
 
 /* ===== 2026-08-30 nearby subcategories + add-location nav ===== */
@@ -19884,11 +19777,6 @@ button.gt-service-card {
 
   .gt-nearby-subcategories > button > strong {
     width: 62px;
-  }
-
-  .tourist-bottom-nav button.is-add-location span,
-  .tourist-app-shell--android .tourist-bottom-nav button.is-add-location span {
-    font-size: 8px !important;
   }
 }
 
@@ -22787,359 +22675,10 @@ button.gt-service-card {
     max-width: 62px !important;
   }
 }
-/* ===== 2026-08-30 Android home layout refinement per user ===== */
-.tourist-app-shell--android .tourist-app-frame--home .phone-content {
-  padding-bottom: 86px !important;
-}
-
-.tourist-app-shell--android .gt-home-screen {
-  grid-template-rows: minmax(0, 36%) 78px minmax(0, 1fr) !important;
-  gap: 8px !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-home-hero {
-  min-height: 0 !important;
-  padding: 0 12px 72px !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-home-hero__copy {
-  transform: translateY(-2px) !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-home-hero__copy p {
-  margin-bottom: 5px !important;
-  font-size: 18px !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-home-hero__copy h1 {
-  font-size: 38px !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-weather--reference {
-  right: 11px !important;
-  left: 11px !important;
-  bottom: 10px !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-hotel-summary--reference {
-  grid-template-columns: 40px minmax(0, 1fr) 64px auto !important;
-  width: calc(100% - 24px) !important;
-  min-height: 75px !important;
-  margin: 0 12px !important;
-  padding: 8px 10px !important;
-  gap: 10px !important;
-  border-radius: 18px !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-current-place-pin {
-  width: 36px !important;
-  height: 36px !important;
-  justify-self: center !important;
-  align-self: center !important;
-  margin: 0 auto !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-current-place-pin svg {
-  width: 30px !important;
-  height: 30px !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-current-place-pin::before {
-  left: 4px !important;
-  right: 4px !important;
-  bottom: 0 !important;
-  height: 8px !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-current-place-pin::after {
-  left: 11px !important;
-  bottom: 6px !important;
-  width: 14px !important;
-  height: 5px !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-current-place-copy {
-  gap: 3px !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-current-place-copy strong {
-  font-size: 14.2px !important;
-  line-height: 1.04 !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-current-place-copy small {
-  font-size: 8.8px !important;
-  line-height: 1.12 !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-current-place-copy b {
-  font-size: 10px !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-current-place-photo {
-  width: 64px !important;
-  height: 56px !important;
-  justify-self: center !important;
-  align-self: center !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-hotel-summary--reference > i {
-  min-width: 58px !important;
-  padding: 7px 8px !important;
-  justify-self: center !important;
-  align-self: center !important;
-  font-size: 10px !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  grid-template-rows: repeat(4, minmax(0, 1fr)) !important;
-  grid-auto-rows: unset !important;
-  gap: 7px !important;
-  padding: 0 12px 0 !important;
-  height: 100% !important;
-  min-height: 0 !important;
-  align-content: stretch !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-card,
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured {
-  min-height: 0 !important;
-  height: 100% !important;
-  border-radius: 15px !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-card {
-  grid-template-columns: 32px minmax(0, 1fr) !important;
-  padding: 6px 8px !important;
-  gap: 7px !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured {
-  grid-template-columns: 32px minmax(0, 1fr) 12px !important;
-  padding: 6px 8px !important;
-  gap: 7px !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-card__icon,
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured .gt-category-card__icon {
-  width: 32px !important;
-  height: 32px !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-card__icon svg,
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured .gt-category-card__icon svg {
-  width: 18px !important;
-  height: 18px !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-card > span:nth-child(2) {
-  gap: 3px !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-card strong,
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured strong {
-  font-size: 9px !important;
-  line-height: 1.08 !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-card small,
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured small {
-  font-size: 7px !important;
-  line-height: 1.12 !important;
-}
-
-@media (max-height: 760px) {
-  .tourist-app-shell--android .tourist-app-frame--home .phone-content {
-    padding-bottom: 84px !important;
-  }
-
-  .tourist-app-shell--android .gt-home-screen {
-    grid-template-rows: minmax(0, 35%) 74px minmax(0, 1fr) !important;
-    gap: 7px !important;
-  }
-
-  .tourist-app-shell--android .gt-home-screen .gt-home-hero {
-    padding-bottom: 69px !important;
-  }
-
-  .tourist-app-shell--android .gt-home-screen .gt-home-hero__copy p {
-    font-size: 17px !important;
-  }
-
-  .tourist-app-shell--android .gt-home-screen .gt-home-hero__copy h1 {
-    font-size: 36px !important;
-  }
-
-  .tourist-app-shell--android .gt-home-screen .gt-hotel-summary--reference {
-    min-height: 72px !important;
-    padding: 7px 9px !important;
-  }
-
-  .tourist-app-shell--android .gt-home-screen .gt-current-place-photo {
-    width: 60px !important;
-    height: 53px !important;
-  }
-
-  .tourist-app-shell--android .gt-home-screen .gt-category-grid {
-    gap: 6px !important;
-  }
-
-  .tourist-app-shell--android .gt-home-screen .gt-category-card,
-  .tourist-app-shell--android .gt-home-screen .gt-category-card--featured {
-    border-radius: 14px !important;
-  }
-
-  .tourist-app-shell--android .gt-home-screen .gt-category-card strong,
-  .tourist-app-shell--android .gt-home-screen .gt-category-card--featured strong {
-    font-size: 8.8px !important;
-  }
-
-  .tourist-app-shell--android .gt-home-screen .gt-category-card small,
-  .tourist-app-shell--android .gt-home-screen .gt-category-card--featured small {
-    font-size: 6.8px !important;
-  }
-}
-
-/* ===== 2026-08-30 Android home final spacing + weather tweaks ===== */
-.tourist-app-shell--android .gt-home-screen .gt-weather-item--wind strong {
-  font-size: 10.4px !important;
-  letter-spacing: -0.02em !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-weather-item--rain {
-  transform: translateX(-2px) !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-current-place-copy {
-  position: relative !important;
-  align-self: stretch !important;
-  padding-bottom: 10px !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-current-place-copy b {
-  position: absolute !important;
-  left: 0 !important;
-  bottom: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 3px !important;
-  width: max-content !important;
-  max-width: 100% !important;
-  overflow: hidden !important;
-  font-size: 6px !important;
-  line-height: 1 !important;
-  white-space: nowrap !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-current-place-copy b svg {
-  width: 9px !important;
-  height: 9px !important;
-  flex: 0 0 9px !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-card,
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured {
-  height: 95% !important;
-  align-self: center !important;
-}
-
-@media (max-height: 760px) {
-  .tourist-app-shell--android .gt-home-screen .gt-weather-item--wind strong {
-    font-size: 10px !important;
-  }
-
-  .tourist-app-shell--android .gt-home-screen .gt-current-place-copy b {
-    font-size: 5.8px !important;
-  }
-
-  .tourist-app-shell--android .gt-home-screen .gt-category-card,
-  .tourist-app-shell--android .gt-home-screen .gt-category-card--featured {
-    height: 94.5% !important;
-  }
-}
-
-/* ===== 2026-08-30 Android weather shift + button height refinement ===== */
-.tourist-app-shell--android .gt-home-screen .gt-weather-item--rain,
-.tourist-app-shell--android .gt-home-screen .gt-weather-item--wind {
-  transform: translateX(-7px) !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-card,
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured {
-  height: 85.5% !important;
-  align-self: center !important;
-}
-
-@media (max-height: 760px) {
-  .tourist-app-shell--android .gt-home-screen .gt-category-card,
-  .tourist-app-shell--android .gt-home-screen .gt-category-card--featured {
-    height: 85% !important;
-  }
-}
-
-/* ===== 2026-08-31 Android responsive home + restored late-screen styles ===== */
-.tourist-app-shell--android .tourist-app-frame--home .phone-content { padding-bottom:86px !important; }
-.tourist-app-shell--android .gt-home-screen { grid-template-rows:minmax(0,39%) clamp(64px,7.6dvh,70px) minmax(0,1fr) !important; gap:clamp(4px,.7dvh,7px) !important; }
-.tourist-app-shell--android .gt-home-screen .gt-home-hero { min-height:0 !important; padding:0 12px 72px !important; }
-.tourist-app-shell--android .gt-home-screen .gt-home-hero__copy { transform:translateY(-1px) !important; }
-.tourist-app-shell--android .gt-home-screen .gt-home-hero__copy p { margin-bottom:5px !important; font-size:clamp(16px,4.6vw,20px) !important; }
-.tourist-app-shell--android .gt-home-screen .gt-home-hero__copy h1 { font-size:clamp(34px,9.8vw,42px) !important; }
-
-.tourist-app-shell--android .gt-home-screen .gt-hotel-summary--reference { grid-template-columns:clamp(34px,9vw,40px) minmax(0,1fr) clamp(56px,15vw,64px) auto !important; width:calc(100% - 24px) !important; min-height:0 !important; height:100% !important; margin:0 12px !important; padding:clamp(5px,1.5vw,7px) clamp(7px,2vw,9px) !important; gap:clamp(6px,1.8vw,9px) !important; border-radius:17px !important; }
-.tourist-app-shell--android .gt-home-screen .gt-current-place-pin { width:clamp(32px,8.8vw,38px) !important; height:clamp(32px,8.8vw,38px) !important; justify-self:center !important; align-self:center !important; margin:0 !important; }
-.tourist-app-shell--android .gt-home-screen .gt-current-place-pin svg,
-.tourist-app-shell--android .gt-home-screen .gt-current-place-sticker { width:clamp(27px,7.5vw,32px) !important; height:clamp(34px,9.5vw,40px) !important; }
-.tourist-app-shell--android .gt-home-screen .gt-current-place-copy { position:relative !important; align-self:center !important; display:grid !important; gap:1px !important; min-width:0 !important; padding-bottom:9px !important; }
-.tourist-app-shell--android .gt-home-screen .gt-current-place-copy strong { font-size:clamp(12.5px,3.5vw,14.5px) !important; line-height:1.02 !important; }
-.tourist-app-shell--android .gt-home-screen .gt-current-place-copy small { font-size:clamp(7.8px,2.2vw,9px) !important; line-height:1.08 !important; -webkit-line-clamp:1 !important; white-space:nowrap !important; text-overflow:ellipsis !important; }
-.tourist-app-shell--android .gt-home-screen .gt-current-place-copy b { position:absolute !important; left:0 !important; bottom:0 !important; display:flex !important; align-items:center !important; gap:3px !important; width:max-content !important; max-width:100% !important; overflow:hidden !important; font-size:clamp(6.3px,1.75vw,7.2px) !important; line-height:1 !important; white-space:nowrap !important; }
-.tourist-app-shell--android .gt-home-screen .gt-current-place-copy b svg { width:9px !important; height:9px !important; flex:0 0 9px !important; }
-.tourist-app-shell--android .gt-home-screen .gt-current-place-photo { width:clamp(56px,15vw,64px) !important; height:clamp(48px,13vw,56px) !important; justify-self:center !important; align-self:center !important; }
-.tourist-app-shell--android .gt-home-screen .gt-hotel-summary--reference > i { min-width:clamp(52px,14vw,59px) !important; padding:6px 7px !important; justify-self:center !important; align-self:center !important; font-size:clamp(8.5px,2.35vw,10px) !important; }
-
-.tourist-app-shell--android .gt-home-screen .gt-category-grid { grid-template-columns:repeat(2,minmax(0,1fr)) !important; grid-template-rows:repeat(4,minmax(0,1fr)) !important; grid-auto-rows:unset !important; height:100% !important; min-height:0 !important; margin-top:-2px !important; padding:0 12px !important; gap:clamp(4px,.7dvh,7px) !important; align-content:stretch !important; }
-.tourist-app-shell--android .gt-home-screen .gt-category-card,
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured { min-height:0 !important; height:calc(100% - 8px) !important; align-self:start !important; border-radius:clamp(13px,3.8vw,16px) !important; }
-.tourist-app-shell--android .gt-home-screen .gt-category-card { grid-template-columns:clamp(32px,8.8vw,40px) minmax(0,1fr) !important; padding:clamp(5px,1.5vw,7px) clamp(7px,2vw,9px) !important; gap:clamp(6px,1.8vw,9px) !important; }
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured { grid-template-columns:clamp(32px,8.8vw,40px) minmax(0,1fr) 12px !important; padding:clamp(5px,1.5vw,7px) clamp(7px,2vw,9px) !important; gap:clamp(6px,1.8vw,9px) !important; }
-.tourist-app-shell--android .gt-home-screen .gt-category-card__icon,
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured .gt-category-card__icon { width:clamp(32px,8.8vw,40px) !important; height:clamp(32px,8.8vw,40px) !important; }
-.tourist-app-shell--android .gt-home-screen .gt-category-card__icon svg,
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured .gt-category-card__icon svg { width:clamp(18px,5vw,22px) !important; height:clamp(18px,5vw,22px) !important; }
-.tourist-app-shell--android .gt-home-screen .gt-category-card > span:nth-child(2),
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured > span:nth-child(2) { gap:clamp(2px,.55vw,3px) !important; min-width:0 !important; }
-.tourist-app-shell--android .gt-home-screen .gt-category-card strong,
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured strong { font-size:clamp(10px,2.9vw,12px) !important; line-height:1.06 !important; }
-.tourist-app-shell--android .gt-home-screen .gt-category-card small,
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured small { font-size:clamp(7.8px,2.25vw,9.4px) !important; line-height:1.1 !important; }
-
-.tourist-app-shell--android .tourist-bottom-nav button,
-.tourist-app-shell--android .tourist-app-frame--home .tourist-bottom-nav button { font-size:clamp(9px,2.45vw,10px) !important; }
-.tourist-app-shell--android .tourist-bottom-nav button.is-add-location span,
-.tourist-bottom-nav button.is-add-location span { font-size:inherit !important; line-height:1.05 !important; white-space:nowrap !important; }
-.tourist-app-shell--android .tourist-bottom-nav button.is-add-location > svg,
-.tourist-bottom-nav button.is-add-location > svg { width:24px !important; height:24px !important; }
-
-@media (max-height:760px) {
-  .tourist-app-shell--android .gt-home-screen { grid-template-rows:minmax(0,38%) clamp(62px,7.4dvh,67px) minmax(0,1fr) !important; }
-  .tourist-app-shell--android .gt-home-screen .gt-home-hero { padding-bottom:68px !important; }
-  .tourist-app-shell--android .gt-home-screen .gt-category-card,
-  .tourist-app-shell--android .gt-home-screen .gt-category-card--featured { height:calc(100% - 9px) !important; }
-}
-@media (min-width:430px) {
-  .tourist-app-shell--android .gt-home-screen { grid-template-rows:minmax(0,40%) clamp(68px,7.8dvh,74px) minmax(0,1fr) !important; }
-  .tourist-app-shell--android .gt-home-screen .gt-category-grid { padding-right:14px !important; padding-left:14px !important; }
-}
 
 /* ===== 2026-08-31 requested UI refinements only ===== */
 
 /* 1) Bottom navigation: make Add location icon slightly larger, keep label sizing unchanged. */
-.tourist-bottom-nav button.is-add-location > svg,
-.tourist-app-shell--android .tourist-bottom-nav button.is-add-location > svg {
-  width: 27px !important;
-  height: 27px !important;
-}
 
 /* 2) Hot offers: show full status badge text at the right edge without clipping. */
 .gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body {
@@ -23339,46 +22878,6 @@ button.gt-service-card {
   }
 }
 
-/* 6) Android home: +10% card height, smaller gaps, +5% text, balanced first-row spacing. */
-.tourist-app-shell--android .gt-home-screen {
-  gap: clamp(3px, .5dvh, 5px) !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-grid {
-  margin-top: 0 !important;
-  gap: clamp(3px, .45dvh, 5px) !important;
-  padding-top: 0 !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-card,
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured {
-  height: calc(100% - 2px) !important;
-  align-self: center !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-card strong,
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured strong {
-  font-size: clamp(10.5px, 3.05vw, 12.6px) !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-card small,
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured small {
-  font-size: clamp(8.2px, 2.36vw, 9.9px) !important;
-}
-
-@media (max-height: 760px) {
-  .tourist-app-shell--android .gt-home-screen .gt-category-grid {
-    gap: 3px !important;
-  }
-
-  .tourist-app-shell--android .gt-home-screen .gt-category-card,
-  .tourist-app-shell--android .gt-home-screen .gt-category-card--featured {
-    height: calc(100% - 1px) !important;
-  }
-}
-
-/* ===== 2026-08-31 requested refinements: full text, transfer spacing, stable nearby map, Android place spacing ===== */
-
 /* 1) Hot offers cards: show every text in full, never replace content with ellipsis. */
 .gt-hot-offers-screen--reference .gt-hot-offers-reference-row {
   min-height: 100px !important;
@@ -23530,40 +23029,6 @@ button.gt-service-card {
     min-height: 118px !important;
   }
 }
-
-/* 4) Android home: normal readable spacing in the current-place card. */
-.tourist-app-shell--android .gt-home-screen .gt-current-place-copy {
-  position: static !important;
-  display: grid !important;
-  align-content: center !important;
-  gap: 3px !important;
-  min-width: 0 !important;
-  padding-bottom: 0 !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-current-place-copy strong {
-  margin: 0 !important;
-  line-height: 1.06 !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-current-place-copy small {
-  margin: 0 !important;
-  line-height: 1.12 !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-current-place-copy b {
-  position: static !important;
-  display: flex !important;
-  align-items: center !important;
-  width: auto !important;
-  max-width: 100% !important;
-  margin: 1px 0 0 !important;
-  gap: 3px !important;
-  overflow: visible !important;
-  white-space: nowrap !important;
-}
-
-/* ===== 2026-08-31 FINAL: hot offers one-line text, Nearby 1:1 layout, Android proportional parity ===== */
 
 /* 1) HOT OFFERS — restore the original balanced spacing, but keep title/description/date fully visible on one line. */
 .gt-hot-offers-screen--reference .gt-hot-offers-reference-list {
@@ -24068,242 +23533,7 @@ button.gt-service-card {
   .gt-nearby-design__card > .gt-photo { height: 70px !important; flex-basis: 70px !important; }
 }
 
-/* 3) ANDROID HOME — same composition as iPhone, but fluidly scaled by viewport size. iOS rules are untouched. */
-.tourist-app-shell--android .tourist-app-frame--home .phone-content {
-  height: 100% !important;
-  min-height: 0 !important;
-  overflow: hidden !important;
-  padding-bottom: clamp(80px, 10.4dvh, 88px) !important;
-}
-
-.tourist-app-shell--android .gt-home-screen {
-  display: grid !important;
-  grid-template-rows: minmax(0, 35%) clamp(68px, 9.2dvh, 82px) minmax(0, 1fr) !important;
-  gap: clamp(4px, .55dvh, 6px) !important;
-  height: 100% !important;
-  min-height: 0 !important;
-  overflow: hidden !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-home-hero {
-  min-height: 0 !important;
-  height: 100% !important;
-  padding: 0 clamp(11px, 3vw, 14px) clamp(66px, 8.5dvh, 73px) !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-home-hero__copy {
-  transform: translateY(0) !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-home-hero__copy p {
-  margin-bottom: clamp(3px, .5dvh, 5px) !important;
-  font-size: clamp(17px, 4.7vw, 20px) !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-home-hero__copy h1 {
-  font-size: clamp(36px, 10vw, 42px) !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-hotel-summary--reference {
-  grid-template-columns: clamp(34px, 9.5vw, 40px) minmax(0, 1fr) clamp(56px, 15.5vw, 66px) auto !important;
-  width: calc(100% - clamp(22px, 6vw, 28px)) !important;
-  min-height: 0 !important;
-  height: 100% !important;
-  margin: 0 auto !important;
-  padding: clamp(5px, 1.5vw, 7px) clamp(7px, 2vw, 10px) !important;
-  gap: clamp(5px, 1.5vw, 8px) !important;
-  border-radius: clamp(16px, 4.4vw, 19px) !important;
-  box-sizing: border-box !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-current-place-pin {
-  width: clamp(32px, 8.7vw, 38px) !important;
-  height: clamp(32px, 8.7vw, 38px) !important;
-  align-self: center !important;
-  justify-self: center !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-current-place-pin svg,
-.tourist-app-shell--android .gt-home-screen .gt-current-place-sticker {
-  width: clamp(28px, 7.6vw, 33px) !important;
-  height: clamp(35px, 9.6vw, 41px) !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-current-place-copy {
-  position: static !important;
-  display: grid !important;
-  min-width: 0 !important;
-  align-content: center !important;
-  gap: clamp(2px, .45dvh, 4px) !important;
-  padding: 0 !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-current-place-copy strong {
-  margin: 0 !important;
-  font-size: clamp(12.5px, 3.45vw, 14.8px) !important;
-  line-height: 1.05 !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-current-place-copy small {
-  margin: 0 !important;
-  overflow: hidden !important;
-  font-size: clamp(8px, 2.2vw, 9.2px) !important;
-  line-height: 1.1 !important;
-  white-space: nowrap !important;
-  text-overflow: ellipsis !important;
-  -webkit-line-clamp: 1 !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-current-place-copy b {
-  position: static !important;
-  display: flex !important;
-  width: auto !important;
-  max-width: 100% !important;
-  margin: 1px 0 0 !important;
-  align-items: center !important;
-  gap: 3px !important;
-  overflow: visible !important;
-  font-size: clamp(7px, 1.95vw, 8.2px) !important;
-  line-height: 1 !important;
-  white-space: nowrap !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-current-place-copy b svg {
-  width: clamp(9px, 2.4vw, 10px) !important;
-  height: clamp(9px, 2.4vw, 10px) !important;
-  flex: 0 0 auto !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-current-place-photo {
-  width: clamp(56px, 15.4vw, 66px) !important;
-  height: clamp(49px, 13.5vw, 58px) !important;
-  align-self: center !important;
-  justify-self: center !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-hotel-summary--reference > i {
-  min-width: clamp(52px, 14vw, 60px) !important;
-  padding: clamp(5px, 1.35vw, 7px) clamp(6px, 1.8vw, 8px) !important;
-  align-self: center !important;
-  justify-self: center !important;
-  font-size: clamp(8.5px, 2.35vw, 10px) !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-grid {
-  display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  grid-template-rows: repeat(4, minmax(0, 1fr)) !important;
-  grid-auto-rows: unset !important;
-  width: 100% !important;
-  height: 100% !important;
-  min-height: 0 !important;
-  margin: 0 !important;
-  padding: 0 clamp(11px, 3vw, 14px) clamp(1px, .2dvh, 3px) !important;
-  gap: clamp(3px, .45dvh, 5px) clamp(6px, 1.7vw, 9px) !important;
-  align-content: stretch !important;
-  box-sizing: border-box !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-card,
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured {
-  width: 100% !important;
-  min-height: 0 !important;
-  height: 100% !important;
-  align-self: stretch !important;
-  border-radius: clamp(13px, 3.7vw, 16px) !important;
-  box-sizing: border-box !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-card {
-  grid-template-columns: clamp(31px, 8.6vw, 39px) minmax(0, 1fr) !important;
-  gap: clamp(6px, 1.7vw, 9px) !important;
-  padding: clamp(5px, 1.35vw, 7px) clamp(7px, 1.9vw, 9px) !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured {
-  grid-template-columns: clamp(31px, 8.6vw, 39px) minmax(0, 1fr) 12px !important;
-  gap: clamp(5px, 1.5vw, 8px) !important;
-  padding: clamp(5px, 1.35vw, 7px) clamp(7px, 1.9vw, 9px) !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-card__icon,
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured .gt-category-card__icon {
-  width: clamp(31px, 8.6vw, 39px) !important;
-  height: clamp(31px, 8.6vw, 39px) !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-card__icon svg,
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured .gt-category-card__icon svg {
-  width: clamp(17px, 4.7vw, 21px) !important;
-  height: clamp(17px, 4.7vw, 21px) !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-card > span:nth-child(2),
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured > span:nth-child(2) {
-  min-width: 0 !important;
-  gap: clamp(2px, .4dvh, 3px) !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-card strong,
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured strong {
-  font-size: clamp(10.4px, 2.9vw, 12.4px) !important;
-  line-height: 1.06 !important;
-}
-
-.tourist-app-shell--android .gt-home-screen .gt-category-card small,
-.tourist-app-shell--android .gt-home-screen .gt-category-card--featured small {
-  font-size: clamp(8px, 2.22vw, 9.5px) !important;
-  line-height: 1.1 !important;
-}
-
-/* Bottom navigation uses the same relative scale on Android. */
-.tourist-app-shell--android .tourist-bottom-nav,
-.tourist-app-shell--android .tourist-app-frame--home .tourist-bottom-nav {
-  min-height: clamp(80px, 10.4dvh, 88px) !important;
-  padding: clamp(6px, .9dvh, 8px) clamp(8px, 2.5vw, 11px) clamp(8px, 1.2dvh, 11px) !important;
-}
-
-.tourist-app-shell--android .tourist-bottom-nav button,
-.tourist-app-shell--android .tourist-app-frame--home .tourist-bottom-nav button {
-  min-height: clamp(49px, 6.5dvh, 55px) !important;
-  gap: clamp(3px, .45dvh, 4px) !important;
-  font-size: clamp(9px, 2.45vw, 10.3px) !important;
-}
-
-.tourist-app-shell--android .tourist-bottom-nav button.is-add-location > svg {
-  width: clamp(25px, 6.8vw, 28px) !important;
-  height: clamp(25px, 6.8vw, 28px) !important;
-}
-
-.tourist-app-shell--android .tourist-bottom-nav button.is-add-location span {
-  font-size: inherit !important;
-  line-height: 1.05 !important;
-}
-
-@media (max-height: 720px) {
-  .tourist-app-shell--android .gt-home-screen {
-    grid-template-rows: minmax(0, 34%) clamp(64px, 9dvh, 72px) minmax(0, 1fr) !important;
-  }
-
-  .tourist-app-shell--android .gt-home-screen .gt-category-grid {
-    gap: 3px 6px !important;
-  }
-}
-
-@media (min-width: 430px) and (min-height: 800px) {
-  .tourist-app-shell--android .gt-home-screen {
-    grid-template-rows: minmax(0, 36%) clamp(74px, 9.4dvh, 84px) minmax(0, 1fr) !important;
-  }
-}
-
 /* ===== 2026-08-31 requested-only patch: Nearby reference + Telegram Mini App viewport scaling ===== */
-/* Telegram reports a stable WebApp viewport. Keep the existing iPhone XR composition,
-   but use that real viewport on iOS/Android instead of the browser's outer 100dvh. */
-.tourist-app-shell--ios .tourist-app-frame,
-.tourist-app-shell--android .tourist-app-frame {
-  height: var(--tg-viewport-stable-height, 100dvh) !important;
-  min-height: 0 !important;
-}
 
 .tourist-app-frame--nearby {
   --gt-nearby-nav-space: max(84px, calc(61px + env(safe-area-inset-bottom)));
@@ -24853,10 +24083,2216 @@ button.gt-service-card {
   }
 }
 
-/* ===== 2026-08-31 Nearby Android: use the bottom spare space for a taller map ===== */
-/* Android Telegram has no iOS home-indicator safe area inside the Mini App frame.
-   Reserve exactly the bottom-nav height on Nearby so the grid gives the released
-   space to the map row. iPhone/iOS and every other screen stay untouched. */
+/*  ===== 2026-08-31 unified Android compact reference (all tourist screens) =====  */
+@media (min-width: 391px) and (max-width: 560px) {
+    .tourist-app-shell--android .gt-content {
+        padding-right: 13px;
+        padding-left: 13px
+    }
+    .tourist-app-shell--android .gt-category-grid {
+        padding-right: 13px;
+        padding-left: 13px
+    }
+    .tourist-app-shell--android .gt-category-card {
+        grid-template-columns: 38px minmax(0,1fr);
+        padding: 8px
+    }
+    .tourist-app-shell--android .gt-category-card__icon {
+        width: 38px;
+        height: 38px
+    }
+    .tourist-app-shell--android .gt-category-card strong {
+        font-size: 12px
+    }
+    .tourist-app-shell--android .gt-hotel-summary {
+        width: calc(100% - 26px);
+        margin-right: 13px;
+        margin-left: 13px
+    }
+    .tourist-app-shell--android .gt-place-row {
+        grid-template-columns: 78px minmax(0,1fr);
+        gap: 8px
+    }
+    .tourist-app-shell--android .gt-place-row .gt-photo {
+        width: 78px
+    }
+    .tourist-app-shell--android .gt-service-mini-grid {
+        grid-template-columns: repeat(2,1fr)
+    }
+    .tourist-app-shell--android .gt-service-mini-grid button {
+        min-height: 80px
+    }
+    .tourist-app-shell--android .gt-reward-list > div {
+        grid-template-columns: 62px minmax(0,1fr)
+    }
+    .tourist-app-shell--android .gt-reward-list button {
+        grid-column: 2;
+        justify-self: start
+    }
+    .tourist-app-shell--android .tourist-bottom-nav {
+        padding-right: 4px;
+        padding-left: 4px
+    }
+    .tourist-app-shell--android .gt-plan-home-hero {
+        min-height: 203px;
+        padding: 14px 20px 10px
+    }
+    .tourist-app-shell--android .gt-plan-home-hero h2 {
+        font-size: 21px
+    }
+    .tourist-app-shell--android .gt-plan-mode-list {
+        gap: 10px;
+        padding: 0 13px
+    }
+    .tourist-app-shell--android .gt-plan-mode-list > button {
+        grid-template-columns: 58px minmax(0,1fr) 18px;
+        gap: 10px;
+        min-height: 121px;
+        padding: 12px
+    }
+    .tourist-app-shell--android .gt-plan-mode-list > button > span {
+        width: 58px;
+        height: 62px
+    }
+    .tourist-app-shell--android .gt-plan-mode-list strong {
+        font-size: 15px
+    }
+    .tourist-app-shell--android .gt-plan-mode-list p {
+        font-size: 10px
+    }
+    .tourist-app-shell--android .gt-plan-mode-list small {
+        font-size: 9px
+    }
+    .tourist-app-shell--android .gt-plan-start-button {
+        width: calc(100% - 26px);
+        margin-right: 13px;
+        margin-left: 13px
+    }
+    .tourist-app-shell--android .gt-plan-question,
+.tourist-app-shell--android .gt-plan-result {
+        padding-right: 13px;
+        padding-left: 13px
+    }
+    .tourist-app-shell--android .gt-plan-question > h1,
+.tourist-app-shell--android .gt-plan-result h1 {
+        font-size: 21px
+    }
+    .tourist-app-shell--android .gt-plan-activity-grid--wide {
+        grid-template-columns: repeat(3,minmax(0,1fr))
+    }
+    .tourist-app-shell--android .gt-plan-activity-grid--wide > button {
+        padding: 7px 4px;
+        font-size: 9px !important
+    }
+    .tourist-app-shell--android .gt-home-screen {
+        grid-template-rows: minmax(208px, 29vh) 88px minmax(0, 1fr) !important;
+        gap: 6px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-hotel-summary {
+        width: calc(100% - 24px);
+        margin-right: 12px;
+        margin-left: 12px;
+        grid-template-columns: 70px minmax(0,1fr) auto;
+        min-height: 88px;
+        padding: 9px 10px
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-category-grid {
+        padding-right: 12px;
+        padding-left: 12px;
+        gap: 8px !important;
+        margin-top: 7px;
+        grid-auto-rows: minmax(74px, auto) !important;
+        padding: 0 12px 3px !important
+    }
+    .tourist-app-shell--android .gt-large-type .gt-place-row {
+        grid-template-columns: 94px minmax(0,1fr);
+        gap: 9px
+    }
+    .tourist-app-shell--android .gt-large-type .gt-place-row .gt-photo {
+        width: 94px;
+        height: 100%;
+        min-height: 96px
+    }
+    .tourist-app-shell--android .gt-transfer-list article {
+        grid-template-columns: 82px minmax(0,1fr)
+    }
+    .tourist-app-shell--android .gt-transfer-list .gt-photo {
+        width: 82px;
+        height: 88px
+    }
+    .tourist-app-shell--android .gt-transfer-list article > span {
+        grid-column: 2;
+        grid-template-columns: auto auto;
+        align-items: center;
+        justify-content: space-between;
+        justify-items: start;
+        width: 100%;
+        gap: 8px
+    }
+    .tourist-app-shell--android .gt-wallet-screen .gt-reward-list > div {
+        grid-template-columns: 82px minmax(0,1fr)
+    }
+    .tourist-app-shell--android .gt-wallet-screen .gt-reward-list .gt-photo {
+        width: 82px;
+        height: 92px
+    }
+    .tourist-app-shell--android .gt-wallet-screen .gt-reward-list button {
+        grid-column: 2
+    }
+    .tourist-app-shell--android .gt-emergency .gt-contact-list a {
+        grid-template-columns: 38px minmax(0,1fr) auto 31px;
+        gap: 8px;
+        min-height: 53px;
+        padding: 7px 10px
+    }
+    .tourist-app-shell--android .gt-emergency .gt-contact-list b {
+        grid-column: auto
+    }
+    .tourist-app-shell--android .gt-emergency .gt-contact-list i {
+        grid-column: auto;
+        grid-row: auto
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-home-hero {
+        padding-bottom: 76px !important;
+        padding: 0 12px 66px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-weather {
+        right: 13px;
+        left: 13px
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-hotel-summary .gt-photo {
+        width: 70px;
+        height: 66px
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-category-card {
+        grid-template-columns: 38px minmax(0, 1fr) !important;
+        gap: 8px !important;
+        padding: 7px 8px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-category-card__icon,
+.tourist-app-shell--android .gt-home-screen .gt-category-card--featured .gt-category-card__icon {
+        width: 38px !important;
+        height: 38px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-category-card--featured {
+        grid-template-columns: 38px minmax(0, 1fr) 13px !important;
+        gap: 8px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-content {
+        grid-template-rows: auto 43px 31px 70px auto auto;
+        gap: 8px;
+        padding: 15px 12px 9px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-category-head {
+        grid-template-columns: 43px minmax(0,1fr) 57px;
+        gap: 9px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-category-head__icon {
+        width: 43px;
+        height: 43px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-category-head h1 {
+        font-size: 21px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-category-head p {
+        font-size: 10.5px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-category-head > button {
+        min-width: 57px;
+        min-height: 53px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-chips {
+        gap: 6px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-chips button {
+        min-height: 30px;
+        padding: 5px 11px;
+        font-size: 10px !important
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-map-strip {
+        min-height: 70px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-map-strip > div {
+        top: 14px;
+        left: 12px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-place-list {
+        gap: 6px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-place-row {
+        grid-template-columns: 78px minmax(0,1fr);
+        gap: 8px;
+        min-height: 106px;
+        padding: 6px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-place-row .gt-photo {
+        width: 78px;
+        height: 94px;
+        min-height: 94px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-place-row__title strong {
+        font-size: 12px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-place-row__body > small,
+.tourist-app-shell--android .gt-shop-screen .gt-place-row__meta,
+.tourist-app-shell--android .gt-shop-screen .gt-place-row__title b {
+        font-size: 9px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-place-row__tags i {
+        padding: 3px 6px;
+        font-size: 8px
+    }
+    .tourist-app-shell--android .gt-transfer-screen .gt-transfer-hero {
+        min-height: 236px;
+        margin-bottom: 50px;
+        padding: 28px 10px 0
+    }
+    .tourist-app-shell--android .gt-transfer-screen .gt-transfer-hero > .gt-transfer-hero-badge {
+        width: 44px;
+        height: 44px
+    }
+    .tourist-app-shell--android .gt-transfer-hero-badge > i {
+        width: 25px;
+        height: 25px
+    }
+    .tourist-app-shell--android .gt-transfer-screen .gt-transfer-hero > h1 {
+        margin-top: 7px;
+        font-size: 34px
+    }
+    .tourist-app-shell--android .gt-transfer-screen .gt-transfer-hero > p {
+        margin-bottom: 0;
+        font-size: 12.8px
+    }
+    .tourist-app-shell--android .gt-transfer-screen .gt-transfer-kinds {
+        right: 10px;
+        bottom: -50px;
+        left: 10px;
+        gap: 5px;
+        padding: 8px
+    }
+    .tourist-app-shell--android .gt-transfer-screen .gt-transfer-kinds button {
+        grid-template-columns: minmax(25px,29px) minmax(0,1fr);
+        column-gap: 4px;
+        min-height: 86px;
+        padding: 8px 4px
+    }
+    .tourist-app-shell--android .gt-transfer-screen .gt-transfer-kinds button:last-child {
+        grid-template-columns: 25px minmax(0,1fr);
+        column-gap: 2px;
+        padding-right: 2px;
+        padding-left: 3px
+    }
+    .tourist-app-shell--android .gt-transfer-screen .gt-transfer-kinds button:last-child .gt-transfer-kind-icon {
+        width: 25px
+    }
+    .tourist-app-shell--android .gt-transfer-kind-icon {
+        width: 29px;
+        height: 37px
+    }
+    .tourist-app-shell--android .gt-transfer-screen .gt-transfer-kinds strong {
+        font-size: 10.2px;
+        line-height: 1.12
+    }
+    .tourist-app-shell--android .gt-transfer-screen .gt-transfer-kinds button:nth-child(2) strong,
+.tourist-app-shell--android .gt-transfer-screen .gt-transfer-kinds button:last-child strong {
+        font-size: 9.2px
+    }
+    .tourist-app-shell--android .gt-transfer-screen .gt-transfer-kinds small {
+        font-size: 8.4px
+    }
+    .tourist-app-shell--android .gt-transfer-screen .gt-transfer-content {
+        padding: 15px 12px 18px
+    }
+    .tourist-app-shell--android .gt-transfer-screen .gt-transfer-list article {
+        grid-template-columns: 66px minmax(0,1fr) auto;
+        gap: 8px;
+        min-height: 84px;
+        padding: 5px
+    }
+    .tourist-app-shell--android .gt-transfer-screen .gt-transfer-list .gt-photo {
+        width: 66px;
+        height: 69px
+    }
+    .tourist-app-shell--android .gt-transfer-screen .gt-transfer-list article > div strong {
+        font-size: 13px
+    }
+    .tourist-app-shell--android .gt-transfer-screen .gt-transfer-list article > div p {
+        font-size: 9.5px
+    }
+    .tourist-app-shell--android .gt-transfer-screen .gt-transfer-list article > div small,
+.tourist-app-shell--android .gt-transfer-screen .gt-transfer-list article > span small {
+        font-size: 9px
+    }
+    .tourist-app-shell--android .gt-transfer-screen .gt-transfer-list article > span button {
+        min-height: 31px;
+        padding: 5px 7px;
+        font-size: 9.5px !important
+    }
+    .tourist-app-shell--android .gt-nearby-toolbar {
+        grid-template-columns: 38px minmax(0,1fr) 80px;
+        min-height: 52px;
+        padding: 5px 12px
+    }
+    .tourist-app-shell--android .gt-nearby-toolbar h1 {
+        font-size: 20px
+    }
+    .tourist-app-shell--android .gt-nearby-toolbar > button,
+.tourist-app-shell--android .gt-nearby-toolbar > span button {
+        width: 34px;
+        height: 34px
+    }
+    .tourist-app-shell--android .gt-nearby-search {
+        padding: 7px 12px 2px
+    }
+    .tourist-app-shell--android .gt-nearby-search .gt-search {
+        min-height: 36px
+    }
+    .tourist-app-shell--android .gt-nearby-categories {
+        gap: 8px;
+        padding: 9px 12px 11px
+    }
+    .tourist-app-shell--android .gt-nearby-categories > button {
+        flex-basis: 53px !important;
+        min-width: 53px
+    }
+    .tourist-app-shell--android .gt-nearby-category-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 13px
+    }
+    .tourist-app-shell--android .gt-nearby-categories > button strong {
+        font-size: 8px
+    }
+    .tourist-app-shell--android .gt-nearby-map {
+        height: 154px
+    }
+    .tourist-app-shell--android .gt-nearby-map-pin {
+        width: 31px;
+        height: 31px
+    }
+    .tourist-app-shell--android .gt-nearby-results {
+        gap: 10px;
+        padding: 13px 12px 18px
+    }
+    .tourist-app-shell--android .gt-nearby-radius > div {
+        gap: 5px
+    }
+    .tourist-app-shell--android .gt-nearby-radius button {
+        min-height: 37px;
+        font-size: 9.5px !important
+    }
+    .tourist-app-shell--android .gt-nearby-list-head h2 {
+        font-size: 18px
+    }
+    .tourist-app-shell--android .gt-nearby-place {
+        grid-template-columns: 60px minmax(0,1fr) 52px;
+        gap: 8px;
+        min-height: 80px;
+        padding: 7px
+    }
+    .tourist-app-shell--android .gt-nearby-place .gt-photo {
+        width: 60px;
+        height: 60px
+    }
+    .tourist-app-shell--android .gt-nearby-place > span:nth-child(2) strong {
+        font-size: 12px
+    }
+    .tourist-app-shell--android .gt-nearby-place > span:nth-child(2) small,
+.tourist-app-shell--android .gt-nearby-place > span:last-child small {
+        font-size: 9px
+    }
+    .tourist-app-shell--android .gt-nearby-place > span:last-child b {
+        font-size: 10px
+    }
+    .tourist-app-shell--android .gt-about-screen .gt-checkin-card--hero {
+        right: 14px;
+        bottom: 17px;
+        width: 172px;
+        padding: 7px 5px
+    }
+    .tourist-app-shell--android .gt-about-screen .gt-about-hero__copy > p {
+        padding-right: 177px;
+        font-size: 10px
+    }
+    .tourist-app-shell--android .gt-about-screen .gt-checkin-card--hero > p > span {
+        gap: 4px;
+        padding: 0 5px;
+        font-size: 8px
+    }
+    .tourist-app-shell--android .gt-about-screen .gt-checkin-card--hero b {
+        font-size: 11.5px
+    }
+    .tourist-app-shell--android .gt-wallet-ledger {
+        gap: 22px;
+        padding: 22px 12px 26px
+    }
+    .tourist-app-shell--android .gt-wallet-balance {
+        width: 170px;
+        height: 170px
+    }
+    .tourist-app-shell--android .gt-wallet-balance > strong {
+        font-size: 43px
+    }
+    .tourist-app-shell--android .gt-wallet-actions > button {
+        gap: 8px;
+        min-height: 51px
+    }
+    .tourist-app-shell--android .gt-wallet-actions > button span {
+        font-size: 11px
+    }
+    .tourist-app-shell--android .gt-wallet-history > h1 {
+        font-size: 17px
+    }
+    .tourist-app-shell--android .gt-wallet-transactions > article {
+        grid-template-columns: 42px minmax(0,1fr) auto;
+        gap: 8px;
+        min-height: 76px;
+        padding: 9px 10px
+    }
+    .tourist-app-shell--android .gt-wallet-transaction-icon {
+        width: 39px;
+        height: 39px
+    }
+    .tourist-app-shell--android .gt-wallet-transactions > article > div strong {
+        font-size: 12px
+    }
+    .tourist-app-shell--android .gt-wallet-transactions > article > div small {
+        font-size: 9.5px
+    }
+    .tourist-app-shell--android .gt-wallet-transaction-value b {
+        font-size: 17px
+    }
+    .tourist-app-shell--android .gt-wallet-transaction-value small {
+        font-size: 8px
+    }
+    .tourist-app-shell--android .gt-profile-screen .gt-profile-content {
+        gap: 11px;
+        padding: 18px 12px 22px
+    }
+    .tourist-app-shell--android .gt-profile-screen .gt-profile-content > .gt-simple-title {
+        font-size: 23px
+    }
+    .tourist-app-shell--android .gt-profile-screen .gt-profile-card--reference {
+        grid-template-columns: 94px minmax(0,1fr);
+        gap: 16px;
+        min-height: 138px;
+        padding: 18px
+    }
+    .tourist-app-shell--android .gt-profile-screen .gt-avatar--photo {
+        width: 94px;
+        height: 94px
+    }
+    .tourist-app-shell--android .gt-profile-screen .gt-profile-card--reference > div strong {
+        font-size: 17px
+    }
+    .tourist-app-shell--android .gt-profile-screen .gt-profile-card--reference > div small {
+        font-size: 12px
+    }
+    .tourist-app-shell--android .gt-profile-screen .gt-profile-list--reference button {
+        grid-template-columns: 29px minmax(0,1fr) auto auto;
+        gap: 9px;
+        min-height: 54px;
+        padding: 9px 14px
+    }
+    .tourist-app-shell--android .gt-profile-screen .gt-profile-list--reference span {
+        font-size: 14px
+    }
+    .tourist-app-shell--android .gt-profile-screen .gt-profile-list--reference small {
+        font-size: 11px
+    }
+    .tourist-app-shell--android .gt-profile-screen .gt-profile-logout {
+        min-height: 48px;
+        font-size: 14px !important
+    }
+    .tourist-app-shell--android .gt-profile-screen .gt-profile-edit {
+        min-height: 44px;
+        font-size: 13px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-content {
+        gap: 9px;
+        padding: 13px 13px 20px
+    }
+    .tourist-app-shell--android :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-category-head {
+        grid-template-columns: 42px minmax(0,1fr) 58px;
+        gap: 9px;
+        min-height: 50px
+    }
+    .tourist-app-shell--android :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-category-head__icon {
+        width: 42px;
+        height: 42px
+    }
+    .tourist-app-shell--android :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-category-head h1 {
+        font-size: 20px
+    }
+    .tourist-app-shell--android :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-category-head > button {
+        min-width: 58px;
+        min-height: 50px
+    }
+    .tourist-app-shell--android :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-search {
+        min-height: 43px
+    }
+    .tourist-app-shell--android :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-chips button {
+        min-height: 29px;
+        padding: 5px 11px;
+        font-size: 9.5px !important
+    }
+    .tourist-app-shell--android .gt-food-map {
+        min-height: 124px
+    }
+    .tourist-app-shell--android :is(.gt-rest-screen,.gt-entertainment-screen) .gt-map-strip {
+        min-height: 64px
+    }
+    .tourist-app-shell--android :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-section-title h2 {
+        font-size: 15px
+    }
+    .tourist-app-shell--android :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row {
+        grid-template-columns: 106px minmax(0,1fr);
+        gap: 9px;
+        min-height: 98px;
+        padding: 6px
+    }
+    .tourist-app-shell--android :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row .gt-photo {
+        width: 106px;
+        height: 86px
+    }
+    .tourist-app-shell--android :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__title strong {
+        font-size: 12.5px
+    }
+    .tourist-app-shell--android :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__title b,
+.tourist-app-shell--android :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__body > small,
+.tourist-app-shell--android :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__meta {
+        font-size: 9px
+    }
+    .tourist-app-shell--android :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__tags i {
+        padding: 2px 5px;
+        font-size: 7.5px
+    }
+    .tourist-app-shell--android :is(.gt-food-screen,.gt-rest-screen,.gt-entertainment-screen) .gt-place-row__body {
+        min-height: 86px;
+        gap: 4px
+    }
+    .tourist-app-shell--android .gt-entertainment-screen .gt-place-row {
+        grid-template-columns: 90px minmax(0,1fr)
+    }
+    .tourist-app-shell--android .gt-entertainment-screen .gt-place-row .gt-photo {
+        width: 90px
+    }
+    .tourist-app-shell--android .gt-hotel-services {
+        gap: 12px;
+        padding: 11px 12px 22px
+    }
+    .tourist-app-shell--android .gt-hotel-services-header {
+        grid-template-columns: 62px minmax(0,1fr) 62px;
+        min-height: 42px
+    }
+    .tourist-app-shell--android .gt-hotel-services-header > h1 {
+        font-size: 19px
+    }
+    .tourist-app-shell--android .gt-hotel-services-feature {
+        min-height: 196px;
+        border-radius: 15px
+    }
+    .tourist-app-shell--android .gt-hotel-services-feature__copy {
+        right: 18px;
+        bottom: 26px;
+        left: 18px
+    }
+    .tourist-app-shell--android .gt-hotel-services-feature__copy strong {
+        font-size: 21px
+    }
+    .tourist-app-shell--android .gt-hotel-services-feature__copy small {
+        font-size: 13px
+    }
+    .tourist-app-shell--android .gt-hotel-services-feature__copy > button {
+        min-height: 39px;
+        margin-top: 11px;
+        padding: 9px 16px;
+        font-size: 14px
+    }
+    .tourist-app-shell--android .gt-hotel-services-title {
+        font-size: 17px
+    }
+    .tourist-app-shell--android .gt-hotel-services-card {
+        min-height: 131px;
+        border-radius: 14px
+    }
+    .tourist-app-shell--android .gt-hotel-services-card > span {
+        right: 48px;
+        bottom: 11px;
+        left: 11px
+    }
+    .tourist-app-shell--android .gt-hotel-services-card > span strong {
+        font-size: 9px
+    }
+    .tourist-app-shell--android .gt-hotel-services-card > span small {
+        font-size: 10px
+    }
+    .tourist-app-shell--android .gt-hotel-services-card > i {
+        right: 8px;
+        bottom: 10px;
+        width: 32px;
+        height: 38px;
+        border-radius: 10px
+    }
+    .tourist-app-shell--android .gt-hotel-service-detail {
+        gap: 8px;
+        padding: 8px 12px 14px !important
+    }
+    .tourist-app-shell--android .gt-hotel-service-photo {
+        min-height: 228px
+    }
+    .tourist-app-shell--android .gt-hotel-service-copy h2 {
+        font-size: 20px
+    }
+    .tourist-app-shell--android .gt-hotel-service-copy p {
+        font-size: 11.5px
+    }
+    .tourist-app-shell--android .gt-hotel-service-facts {
+        gap: 4px
+    }
+    .tourist-app-shell--android .gt-hotel-service-facts span {
+        font-size: 8px
+    }
+    .tourist-app-shell--android .gt-hotel-service-price {
+        padding: 10px 9px
+    }
+    .tourist-app-shell--android .gt-contact-edit-row {
+        min-height: 76px;
+        padding-right: 10px;
+        padding-left: 10px
+    }
+    .tourist-app-shell--android .gt-service-thumbnail {
+        width: 39px;
+        height: 39px
+    }
+    .tourist-app-shell--android .gt-qr-viewfinder {
+        width: min(72vw, 270px)
+    }
+    .tourist-app-shell--android .gt-emergency .gt-content {
+        gap: 7px;
+        padding: 9px 14px 7px
+    }
+    .tourist-app-shell--android .gt-emergency-head {
+        grid-template-columns: 54px minmax(0,1fr);
+        min-height: 70px
+    }
+    .tourist-app-shell--android .gt-emergency-sos {
+        width: 52px;
+        height: 52px;
+        font-size: 18px
+    }
+    .tourist-app-shell--android .gt-emergency-head h1 {
+        font-size: 28px
+    }
+    .tourist-app-shell--android .gt-emergency .gt-help-hero {
+        grid-template-columns: 56px minmax(0,1fr);
+        min-height: 103px;
+        padding: 10px 13px
+    }
+    .tourist-app-shell--android .gt-help-hero__icon {
+        width: 54px;
+        height: 54px
+    }
+    .tourist-app-shell--android .gt-emergency .gt-help-hero h2 {
+        font-size: 22px
+    }
+    .tourist-app-shell--android .gt-emergency .gt-location-button {
+        grid-template-columns: 48px minmax(0,1fr) 17px;
+        min-height: 80px;
+        padding: 8px 12px
+    }
+    .tourist-app-shell--android .gt-location-button__icon {
+        width: 42px;
+        height: 42px
+    }
+    .tourist-app-shell--android .gt-emergency .gt-contact-list strong {
+        font-size: 12.5px
+    }
+    .tourist-app-shell--android .gt-emergency .gt-contact-list small {
+        font-size: 11px
+    }
+    .tourist-app-shell--android .gt-emergency .gt-contact-list b,
+.tourist-app-shell--android .gt-emergency .gt-contact-list a.is-long-number b {
+        font-size: 13.5px
+    }
+    .tourist-app-shell--android .gt-emergency .gt-service-mini-grid {
+        grid-auto-columns: 70px;
+        gap: 6px
+    }
+    .tourist-app-shell--android .gt-emergency .gt-service-mini-grid button {
+        min-width: 70px;
+        min-height: 70px;
+        height: 70px;
+        width: 70px
+    }
+    .tourist-app-shell--android .gt-emergency .gt-expiry {
+        font-size: 8.8px
+    }
+    .tourist-app-shell--android .gt-emergency .gt-expiry b {
+        font-size: 8.5px
+    }
+    .tourist-app-shell--android .gt-emergency-head p {
+        font-size: 12px
+    }
+    .tourist-app-shell--android .gt-location-button__icon,
+.tourist-app-shell--android .gt-location-button__icon svg {
+        width: 46px !important;
+        height: 46px !important
+    }
+    .tourist-app-shell--android .gt-emergency-mountains {
+        height: 126px
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-hot-offer-visual {
+        width: 58px;
+        height: 46px
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-hot-offer-visual__main {
+        width: 46px;
+        height: 46px
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-hot-offer-visual__mini--right {
+        left: 29px
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen,
+.tourist-app-shell--android .gt-hot-offer-detail-screen {
+        padding-left: 10px;
+        padding-right: 10px
+    }
+    .tourist-app-shell--android .gt-hot-offers-hero {
+        height: 196px
+    }
+    .tourist-app-shell--android .gt-hot-offer-row {
+        grid-template-columns: 72px 50px minmax(0,1fr) 18px;
+        gap: 7px;
+        padding: 7px
+    }
+    .tourist-app-shell--android .gt-hot-offer-row__photo {
+        width: 72px;
+        height: 72px
+    }
+    .tourist-app-shell--android .gt-hot-offer-row__discount {
+        min-width: 48px;
+        font-size: 15px
+    }
+    .tourist-app-shell--android .gt-hot-offer-row__content > strong {
+        font-size: 12.5px
+    }
+    .tourist-app-shell--android .gt-hot-offer-row__badge {
+        right: 29px
+    }
+    .tourist-app-shell--android .gt-hot-offer-detail-hero {
+        height: 224px
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        padding-top: 8px
+    }
+    .tourist-app-shell--android .gt-hot-offer-detail-screen {
+        padding-left: 14px;
+        padding-right: 14px
+    }
+    .tourist-app-shell--android .gt-hot-offer-detail-content {
+        gap: 10px;
+        padding-top: 11px;
+        padding-bottom: 0
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-home-hero__copy p {
+        font-size: 18px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-home-hero__copy h1 {
+        font-size: 38px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-weather--reference {
+        right: 11px !important;
+        left: 11px !important;
+        min-height: 61px !important;
+        padding: 8px 7px 15px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-weather-item {
+        gap: 4px !important;
+        padding: 0 4px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-weather-item strong {
+        font-size: 11.8px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-weather-item small {
+        font-size: 7.2px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-weather-symbol {
+        font-size: 18px
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-hotel-summary--reference {
+        grid-template-columns: 52px minmax(0, 1fr) 67px auto !important;
+        min-height: 88px !important;
+        padding: 9px 10px !important;
+        width: calc(100% - 24px) !important;
+        margin: 0 12px !important;
+        gap: 11px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-current-place-pin {
+        width: 52px !important;
+        height: 52px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-current-place-copy strong {
+        font-size: 14.8px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-current-place-copy small {
+        font-size: 9.7px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-current-place-photo {
+        width: 67px !important;
+        height: 60px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-hotel-summary--reference > i {
+        min-width: 59px !important;
+        padding: 7px 8px !important;
+        font-size: 10px !important
+    }
+    .tourist-app-shell--android .gt-nearby-subcategories > button {
+        flex-basis: 62px !important;
+        min-width: 62px !important
+    }
+    .tourist-app-shell--android .gt-nearby-categories-next {
+        width: 34px;
+        height: 34px;
+        right: 5px
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-weather-icon {
+        width: 22px !important;
+        height: 22px !important;
+        flex-basis: 22px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-current-place-pin svg {
+        width: 31px !important;
+        height: 31px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-current-place-copy b {
+        font-size: 10.3px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-category-card,
+.tourist-app-shell--android .gt-home-screen .gt-category-card--featured {
+        min-height: 74px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-category-card strong,
+.tourist-app-shell--android .gt-home-screen .gt-category-card--featured strong {
+        font-size: 13.4px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-category-card small,
+.tourist-app-shell--android .gt-home-screen .gt-category-card--featured small {
+        font-size: 10.5px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-current-place-sticker {
+        width: 51px !important;
+        height: 63px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-weather-label--clear {
+        font-size: 8.6px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-weather-label--wind,
+.tourist-app-shell--android .gt-home-screen .gt-weather-label--sunset {
+        font-size: 7.9px !important
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-current-place-pin .gt-current-place-sticker {
+        width: 48px !important;
+        height: 59px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-content {
+        grid-template-rows: auto 43px 31px 70px auto auto !important;
+        gap: 8px !important;
+        padding: 15px 12px 9px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-category-head {
+        grid-template-columns: 43px minmax(0, 1fr) 57px !important;
+        gap: 9px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-category-head__icon {
+        width: 43px !important;
+        height: 43px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-category-head h1 {
+        font-size: 21px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-category-head p {
+        font-size: 10.5px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-category-head > button {
+        min-width: 57px !important;
+        min-height: 53px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-search {
+        min-height: 43px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-chips {
+        gap: 6px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-chips button {
+        min-height: 30px !important;
+        padding: 5px 11px !important;
+        font-size: 10px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-map-strip {
+        min-height: 70px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-map-strip > div {
+        top: 14px !important;
+        left: 12px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-section-title h2 {
+        font-size: 18px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-list {
+        gap: 6px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row {
+        grid-template-columns: 78px minmax(0, 1fr) !important;
+        gap: 8px !important;
+        min-height: 106px !important;
+        padding: 6px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row .gt-photo {
+        width: 78px !important;
+        height: 94px !important;
+        min-height: 94px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row__body {
+        min-height: 0 !important;
+        gap: 5px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row__title strong {
+        font-size: 12px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row__body > small,
+.tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row__meta,
+.tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row__title b {
+        font-size: 9px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row__tags i {
+        padding: 3px 6px !important;
+        font-size: 8px !important
+    }
+    .tourist-app-shell--android :is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row__title b,
+.tourist-app-shell--android :is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row__meta > span:last-child {
+        min-width: 52px !important
+    }
+    .tourist-app-shell--android .gt-food-screen .gt-place-row,
+.tourist-app-shell--android .gt-rest-screen .gt-place-row,
+.tourist-app-shell--android .gt-entertainment-screen .gt-place-row {
+        padding-right: 6px !important
+    }
+    .tourist-app-shell--android .gt-food-screen .gt-place-row__title,
+.tourist-app-shell--android .gt-rest-screen .gt-place-row__title,
+.tourist-app-shell--android .gt-entertainment-screen .gt-place-row__title,
+.tourist-app-shell--android .gt-food-screen .gt-place-row__meta,
+.tourist-app-shell--android .gt-rest-screen .gt-place-row__meta,
+.tourist-app-shell--android .gt-entertainment-screen .gt-place-row__meta {
+        gap: 6px !important
+    }
+    .tourist-app-shell--android .gt-food-screen .gt-place-row__body,
+.tourist-app-shell--android .gt-rest-screen .gt-place-row__body,
+.tourist-app-shell--android .gt-entertainment-screen .gt-place-row__body {
+        padding-right: 54px !important
+    }
+    .tourist-app-shell--android .gt-food-screen .gt-place-row__meta > span:last-child,
+.tourist-app-shell--android .gt-rest-screen .gt-place-row__meta > span:last-child,
+.tourist-app-shell--android .gt-entertainment-screen .gt-place-row__meta > span:last-child {
+        top: 40px !important
+    }
+    .tourist-app-shell--android .gt-nearby-subcategories > button > strong {
+        width: 62px
+    }
+    .tourist-app-shell--android .gt-nearby-design__head {
+        gap: 8px !important;
+        padding: 12px 14px 0 !important;
+        padding-top: 9px !important;
+        padding-right: 14px !important;
+        padding-left: 14px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__brand-row h1 {
+        font-size: 21px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__brand-row > button {
+        width: 37px;
+        height: 37px
+    }
+    .tourist-app-shell--android .gt-nearby-design__search-row {
+        grid-template-columns: minmax(0,1fr) 44px !important;
+        gap: 8px !important;
+        padding-right: 3px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__search,
+.tourist-app-shell--android .gt-nearby-design__filter {
+        height: 44px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__filter {
+        width: 44px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__categories-wrap,
+.tourist-app-shell--android .gt-nearby-design__subcategories-wrap {
+        margin-right: -14px !important;
+        margin-left: -14px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__categories {
+        gap: 7px !important;
+        padding-right: 43px !important;
+        padding-left: 14px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__categories > button {
+        flex-basis: 53px !important;
+        min-width: 53px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__category-icon {
+        width: 45px !important;
+        height: 45px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__subcategories {
+        gap: 7px !important;
+        padding-right: 43px !important;
+        padding-left: 14px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__subcategories > button {
+        flex-basis: 53px !important;
+        min-width: 53px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__subcategories > button > span {
+        width: 44px !important;
+        height: 44px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__subcategories > button strong {
+        width: 58px !important;
+        font-size: 6.8px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__map-controls {
+        top: 14px !important;
+        right: 10px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__map-controls > button,
+.tourist-app-shell--android .gt-nearby-design__map-controls > div button {
+        width: 42px
+    }
+    .tourist-app-shell--android .gt-nearby-design__radius {
+        right: 12px !important;
+        bottom: 10px !important;
+        left: 12px !important;
+        min-height: 42px !important;
+        padding: 5px;
+        width: calc(100% - 32px) !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__radius button {
+        height: 32px !important;
+        font-size: 8.7px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__sheet {
+        padding-right: 14px !important;
+        padding-left: 14px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__card {
+        flex-basis: 104px !important;
+        min-width: 104px !important;
+        min-height: 120px !important;
+        height: 120px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__card > .gt-photo {
+        height: 70px !important;
+        flex-basis: 70px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__card-copy > strong {
+        font-size: 9.2px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__card-copy > small,
+.tourist-app-shell--android .gt-nearby-design__card-copy b,
+.tourist-app-shell--android .gt-nearby-design__card-copy em {
+        font-size: 7.5px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__content.has-subcategories {
+        grid-template-rows: auto minmax(158px, 28%) minmax(142px, 1fr) !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__content.has-subcategories .gt-nearby-design__map {
+        min-height: 158px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__categories,
+.tourist-app-shell--android .gt-nearby-design__subcategories {
+        padding-right: 46px !important;
+        padding-left: 14px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__categories-next,
+.tourist-app-shell--android .gt-nearby-design__subcategories-next {
+        right: 7px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__cards {
+        padding-right: 14px !important;
+        scroll-padding-right: 14px !important;
+        width: calc(100% + 14px) !important;
+        margin-right: -14px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__content {
+        width: calc(100% - 12px) !important;
+        max-width: calc(100% - 12px) !important;
+        margin-right: 12px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__card-copy {
+        height: 66px !important;
+        padding: 4px 5px !important
+    }
+    .tourist-app-shell--android .gt-transfer-reference-content {
+        gap: 9px;
+        padding: 8px 12px 92px
+    }
+    .tourist-app-shell--android .gt-transfer-reference-screen .gt-category-head {
+        grid-template-columns: 44px minmax(0, 1fr) 58px;
+        gap: 9px;
+        min-height: 55px
+    }
+    .tourist-app-shell--android .gt-transfer-reference-screen .gt-category-head__icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 13px
+    }
+    .tourist-app-shell--android .gt-transfer-reference-screen .gt-category-head h1 {
+        font-size: 20px
+    }
+    .tourist-app-shell--android .gt-transfer-reference-screen .gt-category-head p {
+        font-size: 10px
+    }
+    .tourist-app-shell--android .gt-transfer-reference-screen .gt-category-head > button {
+        width: 58px;
+        min-width: 58px;
+        min-height: 54px
+    }
+    .tourist-app-shell--android .gt-transfer-reference-screen .gt-search {
+        min-height: 48px
+    }
+    .tourist-app-shell--android .gt-transfer-reference-chips .gt-chips {
+        gap: 7px 6px
+    }
+    .tourist-app-shell--android .gt-transfer-reference-chips .gt-chips button {
+        min-height: 32px;
+        padding: 6px 10px;
+        font-size: 9.7px !important
+    }
+    .tourist-app-shell--android .gt-transfer-reference-screen .gt-map-strip {
+        min-height: 78px
+    }
+    .tourist-app-shell--android .gt-transfer-reference-screen .gt-map-strip > div {
+        top: 19px;
+        left: 14px
+    }
+    .tourist-app-shell--android .gt-transfer-reference-screen .gt-section-title h2 {
+        font-size: 18px
+    }
+    .tourist-app-shell--android .gt-transfer-reference-row {
+        grid-template-columns: 78px minmax(0, 1fr);
+        gap: 9px;
+        min-height: 98px;
+        padding: 7px;
+        border-radius: 15px
+    }
+    .tourist-app-shell--android .gt-transfer-reference-row__image {
+        width: 78px;
+        height: 78px;
+        border-radius: 11px
+    }
+    .tourist-app-shell--android .gt-transfer-reference-row__body {
+        gap: 3px
+    }
+    .tourist-app-shell--android .gt-transfer-reference-row__title strong {
+        font-size: 12px
+    }
+    .tourist-app-shell--android .gt-transfer-reference-row__title b {
+        font-size: 9.7px
+    }
+    .tourist-app-shell--android .gt-transfer-reference-row__body > p {
+        font-size: 9.2px
+    }
+    .tourist-app-shell--android .gt-transfer-reference-row__meta {
+        font-size: 8.8px
+    }
+    .tourist-app-shell--android .gt-transfer-reference-row__tags i {
+        padding: 3px 6px;
+        font-size: 7.9px
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference {
+        padding: 10px 12px 14px !important;
+        gap: 14px !important
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-hot-offers-reference-hero {
+        height: 154px !important;
+        border-radius: 20px !important
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-hot-offers-reference-hero__copy {
+        bottom: 21px !important;
+        left: 14px !important;
+        max-width: 212px !important
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-hot-offers-reference-hero__copy h1 {
+        font-size: 16.5px !important
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-hot-offers-reference-hero__copy p {
+        font-size: 10.5px !important
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-hot-offers-reference-categories {
+        gap: 14px !important;
+        margin-bottom: 14px !important
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-hot-offers-reference-category > span {
+        width: 38px !important;
+        height: 38px !important
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-hot-offers-reference-category small {
+        font-size: 8.5px !important
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-hot-offers-reference-row {
+        grid-template-columns: 74px 49px minmax(0, 1fr) 13px !important;
+        gap: 8px !important;
+        padding: 5px 8px !important;
+        min-height: 84px !important
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-hot-offers-reference-row > .gt-hot-mosaic {
+        height: 74px !important
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-hot-offers-reference-row__discount {
+        min-height: 49px !important;
+        font-size: 15.2px !important;
+        width: 49px !important
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body > small {
+        font-size: 10px !important
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body > strong {
+        font-size: 12px !important
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body > span {
+        font-size: 11px !important
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body > i {
+        font-size: 10px !important
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-hot-offers-reference-row__badge {
+        right: 20px !important;
+        font-size: 7.2px !important;
+        padding: 4px 5px !important;
+        top: 6px !important;
+        max-width: 62px !important
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-hot-offers-reference-category > span svg {
+        width: 18px !important;
+        height: 18px !important
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-hot-mosaic {
+        gap: 2px !important
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-hot-offers-reference-hero__discount {
+        top: 10px !important;
+        left: 10px !important;
+        min-width: 49px !important;
+        padding: 6px 4px 6px !important;
+        font-size: 9px !important
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-hot-offers-reference-hero__discount b {
+        font-size: 15px !important
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-search {
+        margin-bottom: 12px !important
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-map-strip {
+        margin-bottom: 14px !important
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-map-strip--real .gt-map-strip__dot {
+        right: 14px;
+        width: 15px;
+        height: 15px
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-hot-offers-reference-row__discount.is-text-deal {
+        font-size: 12.4px !important
+    }
+    .tourist-app-shell--android .gt-hot-offers-screen--reference .gt-hot-offers-reference-row__body {
+        padding-right: 80px !important;
+        min-height: 72px !important;
+        gap: 3px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__map {
+        min-height: clamp(235px, 38dvh, 350px) !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__content,
+.tourist-app-shell--android .gt-nearby-design__content.has-subcategories {
+        grid-template-rows: auto clamp(205px, 30dvh, 270px) minmax(126px, 1fr) !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__sheet,
+.tourist-app-shell--android .gt-nearby-design__content.has-subcategories .gt-nearby-design__sheet {
+        min-height: 126px !important;
+        padding-right: 14px !important;
+        padding-left: 14px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__categories-next {
+        right: 7px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__subcategories-next {
+        right: 7px !important
+    }
+}
+
+/*  ===== 2026-08-31 unified Android compact height reference (Samsung-sized) =====  */
+@media (min-height: 721px) {
+    .tourist-app-shell--android .gt-home-screen {
+        grid-template-rows: 190px 82px minmax(0,1fr);
+        gap: 5px
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-home-hero {
+        padding-bottom: 58px
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-hero-pin {
+        width: 46px;
+        height: 46px
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-home-hero__copy p {
+        margin-top: 2px;
+        font-size: 17px
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-home-hero__copy h1 {
+        font-size: 34px
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-home-hero__copy span {
+        display: none
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-weather {
+        bottom: 8px;
+        min-height: 48px
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-hotel-summary {
+        min-height: 78px;
+        padding: 7px 10px
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-hotel-summary .gt-photo {
+        height: 61px
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-category-grid {
+        gap: 5px;
+        padding-bottom: 4px
+    }
+    .tourist-app-shell--android .gt-home-screen .gt-category-card {
+        padding-top: 4px;
+        padding-bottom: 4px
+    }
+    .tourist-app-shell--android .gt-emergency .gt-content {
+        gap: 5px;
+        padding-top: 7px;
+        padding-bottom: 6px
+    }
+    .tourist-app-shell--android .gt-emergency-head {
+        min-height: 62px;
+        padding-top: 3px;
+        padding-bottom: 3px
+    }
+    .tourist-app-shell--android .gt-emergency-sos {
+        width: 44px;
+        height: 44px
+    }
+    .tourist-app-shell--android .gt-emergency .gt-help-hero {
+        min-height: 79px;
+        padding-top: 9px;
+        padding-bottom: 9px
+    }
+    .tourist-app-shell--android .gt-emergency .gt-location-button {
+        min-height: 50px;
+        padding-top: 6px;
+        padding-bottom: 6px
+    }
+    .tourist-app-shell--android .gt-emergency .gt-contact-list a {
+        min-height: 43px;
+        padding-top: 3px;
+        padding-bottom: 3px
+    }
+    .tourist-app-shell--android .gt-emergency .gt-service-mini-grid button {
+        min-height: 68px;
+        padding-top: 5px;
+        padding-bottom: 5px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-content {
+        grid-template-rows: auto 40px 29px 62px auto auto;
+        gap: 6px;
+        padding-top: 10px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-category-head__icon {
+        width: 39px;
+        height: 39px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-category-head {
+        grid-template-columns: 39px minmax(0,1fr) 53px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-category-head h1 {
+        font-size: 19px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-category-head > button {
+        min-width: 53px;
+        min-height: 46px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-category-head > button svg {
+        width: 20px;
+        height: 20px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-search {
+        min-height: 40px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-map-strip {
+        min-height: 62px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-map-strip > div {
+        top: 11px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-place-row {
+        min-height: 96px
+    }
+    .tourist-app-shell--android .gt-shop-screen .gt-place-row .gt-photo {
+        height: 84px;
+        min-height: 84px
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-content {
+        grid-template-rows: auto 40px 29px 62px auto auto !important;
+        gap: 6px !important;
+        padding-top: 10px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-category-head {
+        grid-template-columns: 39px minmax(0, 1fr) 53px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-category-head__icon {
+        width: 39px !important;
+        height: 39px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-category-head h1 {
+        font-size: 19px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-category-head > button {
+        min-width: 53px !important;
+        min-height: 46px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-category-head > button svg {
+        width: 20px !important;
+        height: 20px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-search {
+        min-height: 40px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-map-strip {
+        min-height: 62px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-map-strip > div {
+        top: 11px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row {
+        min-height: 96px !important
+    }
+    .tourist-app-shell--android :is(.gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-row .gt-photo {
+        height: 84px !important;
+        min-height: 84px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__content.has-subcategories {
+        grid-template-rows: auto minmax(145px, 25%) minmax(132px, 1fr) !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__brand-row {
+        min-height: 30px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__brand-row h1 {
+        font-size: 20px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__search,
+.tourist-app-shell--android .gt-nearby-design__filter {
+        height: 40px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__category-icon {
+        width: 38px !important;
+        height: 38px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__subcategories > button > span {
+        width: 35px !important;
+        height: 35px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__content.has-subcategories .gt-nearby-design__map {
+        min-height: 145px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__card > .gt-photo {
+        height: 50px !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__content,
+.tourist-app-shell--android .gt-nearby-design__content.has-subcategories {
+        grid-template-rows: auto clamp(185px, 27dvh, 235px) minmax(118px, 1fr) !important
+    }
+    .tourist-app-shell--android .gt-nearby-design__sheet,
+.tourist-app-shell--android .gt-nearby-design__content.has-subcategories .gt-nearby-design__sheet {
+        min-height: 118px !important
+    }
+}
+
+/* ===== 2026-08-31 unified Android Telegram Mini App adaptive system ===== */
+/* Keep Android WebView from auto-inflating text differently between manufacturers. */
+html.gt-platform-android {
+  -webkit-text-size-adjust: 100% !important;
+  text-size-adjust: 100% !important;
+}
+
+html.gt-platform-android body,
+.tourist-app-shell--android,
+.tourist-app-shell--android button,
+.tourist-app-shell--android input,
+.tourist-app-shell--android textarea,
+.tourist-app-shell--android select {
+  -webkit-text-size-adjust: 100% !important;
+  text-size-adjust: 100% !important;
+}
+
+/* Use the real Telegram stable viewport and split it into content + actual bottom navigation.
+   This removes hard-coded bottom reserves and the grey/empty strip on every Android screen. */
+.tourist-app-shell--android {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: var(--tg-viewport-stable-height, 100dvh) !important;
+  height: var(--tg-viewport-stable-height, 100dvh) !important;
+  overflow: hidden !important;
+  background: #f8fbf9 !important;
+}
+
+.tourist-app-shell--android .tourist-app-frame {
+  display: grid !important;
+  grid-template-rows: minmax(0, 1fr) auto !important;
+  width: min(100%, 560px) !important;
+  max-width: 560px !important;
+  height: var(--tg-viewport-stable-height, 100dvh) !important;
+  min-height: 0 !important;
+  max-height: var(--tg-viewport-stable-height, 100dvh) !important;
+  overflow: hidden !important;
+}
+
+.tourist-app-shell--android .tourist-app-frame .phone-content {
+  grid-row: 1 !important;
+  width: 100% !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding-bottom: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior-y: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.tourist-app-shell--android .tourist-bottom-nav,
+.tourist-app-shell--android .tourist-app-frame--home .tourist-bottom-nav {
+  position: relative !important;
+  z-index: 100 !important;
+  inset: auto !important;
+  grid-row: 2 !important;
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  width: 100% !important;
+  min-height: 84px !important;
+  margin: 0 !important;
+  padding: 8px 9px max(9px, env(safe-area-inset-bottom)) !important;
+  align-items: end !important;
+  background: rgba(255,255,255,.985) !important;
+  border-top: 1px solid rgba(18,41,28,.055) !important;
+  box-shadow: 0 -5px 18px rgba(23,48,32,.045) !important;
+  transform: none !important;
+}
+
+.tourist-app-shell--android .tourist-bottom-nav button,
+.tourist-app-shell--android .tourist-app-frame--home .tourist-bottom-nav button {
+  min-width: 0 !important;
+  min-height: 53px !important;
+  padding: 5px 1px !important;
+  gap: 4px !important;
+  font-size: 10px !important;
+  line-height: 1.05 !important;
+}
+
+.tourist-app-shell--android .tourist-bottom-nav button > svg:not(.gt-walking-icon) {
+  width: 24px !important;
+  height: 24px !important;
+  flex: 0 0 24px !important;
+}
+
+.tourist-app-shell--android .tourist-bottom-nav button.is-add-location span {
+  font-size: 8.5px !important;
+  line-height: 1.05 !important;
+  white-space: nowrap !important;
+}
+
+.tourist-app-shell--android .tourist-bottom-nav button.is-add-location > svg {
+  width: 25px !important;
+  height: 25px !important;
+  flex-basis: 25px !important;
+}
+
+.tourist-app-shell--android .tourist-bottom-nav button.is-qr,
+.tourist-app-shell--android .tourist-app-frame--home .tourist-bottom-nav button.is-qr {
+  align-self: start !important;
+  margin-top: -27px !important;
+}
+
+.tourist-app-shell--android .tourist-bottom-nav button.is-qr svg,
+.tourist-app-shell--android .tourist-app-frame--home .tourist-bottom-nav button.is-qr svg {
+  width: 59px !important;
+  height: 59px !important;
+  flex-basis: 59px !important;
+  padding: 15px !important;
+  border-width: 4px !important;
+}
+
+/* Home: same visual scale on every Android phone. Width changes card width, not typography.
+   Height changes are absorbed by the hero/card grid instead of scaling text up/down. */
+.tourist-app-shell--android .tourist-app-frame--home .phone-content {
+  overflow: hidden !important;
+}
+
+.tourist-app-shell--android .gt-home-screen {
+  display: grid !important;
+  grid-template-rows: minmax(250px, 36%) 76px minmax(0, 1fr) !important;
+  gap: 7px !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-home-hero {
+  min-height: 0 !important;
+  height: 100% !important;
+  padding-right: 12px !important;
+  padding-left: 12px !important;
+  padding-bottom: 70px !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-home-hero__copy p {
+  margin-bottom: 4px !important;
+  font-size: 18px !important;
+  line-height: 1.05 !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-home-hero__copy h1 {
+  font-size: 38px !important;
+  line-height: .98 !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-weather--reference {
+  right: 12px !important;
+  bottom: 10px !important;
+  left: 12px !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-hotel-summary--reference {
+  grid-template-columns: 40px minmax(0, 1fr) 64px auto !important;
+  width: calc(100% - 24px) !important;
+  min-height: 0 !important;
+  height: 76px !important;
+  margin: 0 12px !important;
+  padding: 7px 9px !important;
+  gap: 8px !important;
+  border-radius: 18px !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-current-place-pin {
+  width: 36px !important;
+  height: 36px !important;
+  place-self: center !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-current-place-pin svg,
+.tourist-app-shell--android .gt-home-screen .gt-current-place-sticker {
+  width: 30px !important;
+  height: 38px !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-current-place-copy {
+  position: static !important;
+  display: grid !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  align-content: center !important;
+  gap: 2px !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-current-place-copy strong {
+  font-size: 14px !important;
+  line-height: 1.04 !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-current-place-copy small {
+  overflow: hidden !important;
+  font-size: 9px !important;
+  line-height: 1.1 !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+  -webkit-line-clamp: 1 !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-current-place-copy b {
+  position: static !important;
+  display: flex !important;
+  width: auto !important;
+  max-width: 100% !important;
+  margin-top: 1px !important;
+  align-items: center !important;
+  gap: 3px !important;
+  overflow: visible !important;
+  font-size: 8px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-current-place-copy b svg {
+  width: 10px !important;
+  height: 10px !important;
+  flex: 0 0 10px !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-current-place-photo {
+  width: 64px !important;
+  height: 56px !important;
+  place-self: center !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-hotel-summary--reference > i {
+  min-width: 58px !important;
+  padding: 7px 8px !important;
+  place-self: center !important;
+  font-size: 10px !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-category-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  grid-template-rows: repeat(4, minmax(0, 1fr)) !important;
+  grid-auto-rows: unset !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 12px 2px !important;
+  gap: 6px 8px !important;
+  align-content: stretch !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-category-card,
+.tourist-app-shell--android .gt-home-screen .gt-category-card--featured {
+  width: 100% !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  align-self: stretch !important;
+  border-radius: 15px !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-category-card {
+  grid-template-columns: 36px minmax(0, 1fr) !important;
+  padding: 6px 8px !important;
+  gap: 8px !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-category-card--featured {
+  grid-template-columns: 36px minmax(0, 1fr) 12px !important;
+  padding: 6px 8px !important;
+  gap: 7px !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-category-card__icon,
+.tourist-app-shell--android .gt-home-screen .gt-category-card--featured .gt-category-card__icon {
+  width: 36px !important;
+  height: 36px !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-category-card__icon svg,
+.tourist-app-shell--android .gt-home-screen .gt-category-card--featured .gt-category-card__icon svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-category-card > span:nth-child(2),
+.tourist-app-shell--android .gt-home-screen .gt-category-card--featured > span:nth-child(2) {
+  min-width: 0 !important;
+  gap: 3px !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-category-card strong,
+.tourist-app-shell--android .gt-home-screen .gt-category-card--featured strong {
+  font-size: 11.4px !important;
+  line-height: 1.06 !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-category-card small,
+.tourist-app-shell--android .gt-home-screen .gt-category-card--featured small {
+  font-size: 8.9px !important;
+  line-height: 1.1 !important;
+}
+
+/* Nearby: exact content/nav grid on every Android size, no profile shortcut, no grey gap. */
 .tourist-app-shell--android .tourist-app-frame--nearby .phone-content {
-  padding-bottom: 84px !important;
+  overflow: hidden !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__brand-row {
+  justify-content: flex-start !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__brand-row > button {
+  display: none !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design,
+.tourist-app-shell--android .gt-nearby-design__content,
+.tourist-app-shell--android .gt-nearby-design__content.has-subcategories {
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__content,
+.tourist-app-shell--android .gt-nearby-design__content.has-subcategories {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) auto !important;
+  overflow: hidden !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__map,
+.tourist-app-shell--android .gt-nearby-design__content.has-subcategories .gt-nearby-design__map {
+  min-height: 0 !important;
+  height: 100% !important;
+}
+
+/* Short Android Mini App windows: only vertical geometry tightens; typography stays stable. */
+@media (max-height: 760px) {
+  .tourist-app-shell--android .tourist-bottom-nav,
+  .tourist-app-shell--android .tourist-app-frame--home .tourist-bottom-nav {
+    min-height: 80px !important;
+    padding-top: 6px !important;
+    padding-bottom: max(7px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .tourist-app-shell--android .gt-home-screen {
+    grid-template-rows: minmax(220px, 34%) 72px minmax(0, 1fr) !important;
+    gap: 5px !important;
+  }
+
+  .tourist-app-shell--android .gt-home-screen .gt-home-hero {
+    padding-bottom: 66px !important;
+  }
+
+  .tourist-app-shell--android .gt-home-screen .gt-hotel-summary--reference {
+    height: 72px !important;
+  }
+
+  .tourist-app-shell--android .gt-home-screen .gt-category-grid {
+    gap: 4px 7px !important;
+    padding-bottom: 0 !important;
+  }
+}
+
+/* Very narrow Android phones scale down spacing/icons only; text remains legible and consistent. */
+@media (max-width: 350px) {
+  .tourist-app-shell--android .tourist-bottom-nav,
+  .tourist-app-shell--android .tourist-app-frame--home .tourist-bottom-nav {
+    padding-right: 5px !important;
+    padding-left: 5px !important;
+  }
+
+  .tourist-app-shell--android .tourist-bottom-nav button,
+  .tourist-app-shell--android .tourist-app-frame--home .tourist-bottom-nav button {
+    font-size: 9.2px !important;
+  }
+
+  .tourist-app-shell--android .tourist-bottom-nav button.is-add-location span {
+    font-size: 7.7px !important;
+  }
+
+  .tourist-app-shell--android .gt-home-screen .gt-category-card,
+  .tourist-app-shell--android .gt-home-screen .gt-category-card--featured {
+    padding-right: 6px !important;
+    padding-left: 6px !important;
+  }
+}
+
+/* ===== 2026-08-31 Android Nearby fixed visual scale =====
+   Keep the approved Samsung-sized typography/controls on every Android width;
+   only the free map area expands/shrinks with the Telegram viewport. */
+.tourist-app-shell--android .gt-nearby-design {
+  --nearby-side: 14px !important;
+  --nearby-gap: 8px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__head {
+  gap: 8px !important;
+  padding: 11px 14px 0 !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__brand-row {
+  min-height: 36px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__brand-row h1 {
+  font-size: 22px !important;
+  line-height: 1 !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__search-row {
+  grid-template-columns: minmax(0, 1fr) 40px !important;
+  gap: 8px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__search,
+.tourist-app-shell--android .gt-nearby-design__filter {
+  height: 40px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__search {
+  gap: 9px !important;
+  padding: 0 13px !important;
+  border-radius: 14px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__search svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__search input {
+  font-size: 10.5px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__filter {
+  width: 40px !important;
+  border-radius: 14px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__filter svg {
+  width: 21px !important;
+  height: 21px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__categories {
+  gap: 7px !important;
+  padding: 2px 45px 8px 14px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__categories > button {
+  flex: 0 0 48px !important;
+  min-width: 48px !important;
+  gap: 4px !important;
+  padding: 3px 1px 2px !important;
+  border-radius: 13px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__category-icon {
+  width: 39px !important;
+  height: 39px !important;
+  border-radius: 12px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__category-icon svg {
+  width: 21px !important;
+  height: 21px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__categories > button strong {
+  max-width: 58px !important;
+  font-size: 7.5px !important;
+  line-height: 1.08 !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__categories-next {
+  top: 9px !important;
+  right: 7px !important;
+  width: 33px !important;
+  height: 33px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__subcategories {
+  gap: 6px !important;
+  padding: 6px 44px 8px 14px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__subcategories > button {
+  flex: 0 0 44px !important;
+  min-width: 44px !important;
+  gap: 3px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__subcategories > button > span {
+  width: 35px !important;
+  height: 35px !important;
+  border-radius: 10px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__subcategories > button > span svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__subcategories > button strong {
+  width: 50px !important;
+  min-height: 14px !important;
+  font-size: 6.1px !important;
+  line-height: 1.06 !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__subcategories-next {
+  top: 10px !important;
+  right: 7px !important;
+  width: 30px !important;
+  height: 30px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__pin {
+  width: 31px !important;
+  height: 31px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__pin svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__pin b {
+  font-size: 10px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__user {
+  width: 59px !important;
+  height: 59px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__user::before {
+  width: 21px !important;
+  height: 21px !important;
+  border-width: 5px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__map-controls {
+  top: 14px !important;
+  right: 14px !important;
+  gap: 9px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__map-controls > button {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 16px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__map-controls > div {
+  border-radius: 16px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__map-controls > div button {
+  width: 40px !important;
+  height: 37px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__map-controls svg {
+  width: 21px !important;
+  height: 21px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__radius {
+  right: 14px !important;
+  bottom: 9px !important;
+  left: 14px !important;
+  min-height: 42px !important;
+  padding: 4px !important;
+  border-radius: 21px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__radius button {
+  height: 32px !important;
+  font-size: 9px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__sheet,
+.tourist-app-shell--android .gt-nearby-design__content.has-subcategories .gt-nearby-design__sheet {
+  min-height: 51px !important;
+  padding: 7px 14px 6px !important;
+  border-radius: 24px 24px 0 0 !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__sheet::before {
+  width: 36px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__sheet-head > strong {
+  font-size: 10.5px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__sheet-head > span:last-child {
+  font-size: 9px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__sheet-caret svg {
+  width: 17px !important;
+  height: 17px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__cards {
+  width: calc(100% + 14px) !important;
+  gap: 7px !important;
+  margin: 8px -14px 0 0 !important;
+  padding: 0 14px 1px 0 !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__card {
+  grid-template-rows: 64px minmax(0, 1fr) !important;
+  flex: 0 0 94px !important;
+  min-width: 94px !important;
+  min-height: 138px !important;
+  height: 138px !important;
+  border-radius: 10px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__card-copy {
+  gap: 2px !important;
+  padding: 5px 5px 6px !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__card-copy > strong {
+  min-height: 21px !important;
+  font-size: 9.2px !important;
+  line-height: 1.12 !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__card-copy > small {
+  min-height: 15px !important;
+  font-size: 7.8px !important;
+  line-height: 1.08 !important;
+}
+
+.tourist-app-shell--android .gt-nearby-design__card-copy b,
+.tourist-app-shell--android .gt-nearby-design__card-copy em {
+  font-size: 8px !important;
+}
+
+@media (max-height: 700px) {
+  .tourist-app-shell--android .gt-nearby-design__head {
+    gap: 6px !important;
+    padding-top: 8px !important;
+  }
+
+  .tourist-app-shell--android .gt-nearby-design__brand-row {
+    min-height: 32px !important;
+  }
+
+  .tourist-app-shell--android .gt-nearby-design__brand-row h1 {
+    font-size: 21px !important;
+  }
+
+  .tourist-app-shell--android .gt-nearby-design__search,
+  .tourist-app-shell--android .gt-nearby-design__filter {
+    height: 37px !important;
+  }
+
+  .tourist-app-shell--android .gt-nearby-design__search-row {
+    grid-template-columns: minmax(0, 1fr) 37px !important;
+  }
+
+  .tourist-app-shell--android .gt-nearby-design__filter {
+    width: 37px !important;
+  }
+
+  .tourist-app-shell--android .gt-nearby-design__card {
+    grid-template-rows: 59px minmax(0, 1fr) !important;
+    min-height: 128px !important;
+    height: 128px !important;
+  }
 }
