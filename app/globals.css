@@ -24295,3 +24295,560 @@ button.gt-service-card {
     grid-template-rows: minmax(0, 36%) clamp(74px, 9.4dvh, 84px) minmax(0, 1fr) !important;
   }
 }
+
+/* ===== 2026-08-31 requested-only patch: Nearby reference + Telegram Mini App viewport scaling ===== */
+/* Telegram reports a stable WebApp viewport. Keep the existing iPhone XR composition,
+   but use that real viewport on iOS/Android instead of the browser's outer 100dvh. */
+.tourist-app-shell--ios .tourist-app-frame,
+.tourist-app-shell--android .tourist-app-frame {
+  height: var(--tg-viewport-stable-height, 100dvh) !important;
+  min-height: 0 !important;
+}
+
+.tourist-app-frame--nearby {
+  --gt-nearby-nav-space: max(84px, calc(61px + env(safe-area-inset-bottom)));
+}
+
+.tourist-app-frame--nearby .phone-content {
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  padding-bottom: var(--gt-nearby-nav-space) !important;
+}
+
+/* Nearby screen uses the iPhone XR proportions as the reference and scales fluidly by viewport width. */
+.gt-nearby-design {
+  --nearby-side: clamp(12px, 3.4vw, 16px);
+  --nearby-gap: clamp(7px, 2vw, 9px);
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  background: #fff !important;
+}
+
+.gt-nearby-design__content,
+.gt-nearby-design__content.has-subcategories {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) auto !important;
+  align-content: stretch !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: #fff !important;
+  box-sizing: border-box !important;
+}
+
+.gt-nearby-design__head {
+  position: relative !important;
+  z-index: 20 !important;
+  display: grid !important;
+  gap: var(--nearby-gap) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: clamp(10px, 2.9vw, 13px) var(--nearby-side) 0 !important;
+  background: #fff !important;
+  box-sizing: border-box !important;
+}
+
+.gt-nearby-design__brand-row {
+  min-height: clamp(34px, 8.8vw, 38px) !important;
+}
+
+.gt-nearby-design__brand-row h1 {
+  font-size: clamp(21px, 5.55vw, 23.5px) !important;
+  line-height: 1 !important;
+  letter-spacing: -.035em !important;
+}
+
+/* The approved reference contains the profile shortcut; restore it visually without changing its route/logic. */
+.gt-nearby-design__brand-row > button {
+  display: grid !important;
+  width: clamp(36px, 9.2vw, 40px) !important;
+  height: clamp(36px, 9.2vw, 40px) !important;
+  place-items: center !important;
+  border-radius: 50% !important;
+}
+
+.gt-nearby-design__brand-row > button svg {
+  width: clamp(20px, 5.3vw, 23px) !important;
+  height: clamp(20px, 5.3vw, 23px) !important;
+}
+
+.gt-nearby-design__search-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) clamp(38px, 9.7vw, 42px) !important;
+  gap: clamp(7px, 1.95vw, 9px) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.gt-nearby-design__search,
+.gt-nearby-design__filter {
+  height: clamp(38px, 9.7vw, 42px) !important;
+}
+
+.gt-nearby-design__search {
+  gap: clamp(8px, 2.2vw, 10px) !important;
+  padding: 0 clamp(11px, 3.15vw, 14px) !important;
+  border-radius: clamp(13px, 3.5vw, 15px) !important;
+  background: #fbfcfb !important;
+}
+
+.gt-nearby-design__search svg {
+  width: clamp(18px, 4.8vw, 21px) !important;
+  height: clamp(18px, 4.8vw, 21px) !important;
+}
+
+.gt-nearby-design__search input {
+  font-size: clamp(10px, 2.65vw, 11.3px) !important;
+}
+
+.gt-nearby-design__filter {
+  width: clamp(38px, 9.7vw, 42px) !important;
+  border-radius: clamp(13px, 3.5vw, 15px) !important;
+}
+
+.gt-nearby-design__filter svg {
+  width: clamp(20px, 5.2vw, 22px) !important;
+  height: clamp(20px, 5.2vw, 22px) !important;
+}
+
+.gt-nearby-design__categories-wrap,
+.gt-nearby-design__subcategories-wrap {
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  margin-right: calc(var(--nearby-side) * -1) !important;
+  margin-left: calc(var(--nearby-side) * -1) !important;
+  overflow: hidden !important;
+  background: #fff !important;
+  box-sizing: border-box !important;
+}
+
+.gt-nearby-design__categories {
+  display: flex !important;
+  gap: clamp(6px, 1.7vw, 8px) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 2px clamp(43px, 10.7vw, 47px) 8px var(--nearby-side) !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  box-sizing: border-box !important;
+}
+
+.gt-nearby-design__categories > button {
+  display: grid !important;
+  flex: 0 0 clamp(46px, 11.8vw, 50px) !important;
+  min-width: clamp(46px, 11.8vw, 50px) !important;
+  justify-items: center !important;
+  gap: 4px !important;
+  padding: 3px 1px 2px !important;
+  border-radius: clamp(12px, 3.2vw, 14px) !important;
+}
+
+.gt-nearby-design__category-icon {
+  width: clamp(38px, 9.7vw, 41px) !important;
+  height: clamp(38px, 9.7vw, 41px) !important;
+  border-radius: clamp(11px, 3vw, 13px) !important;
+}
+
+.gt-nearby-design__category-icon svg {
+  width: clamp(20px, 5.2vw, 22px) !important;
+  height: clamp(20px, 5.2vw, 22px) !important;
+}
+
+.gt-nearby-design__categories > button strong {
+  width: max-content !important;
+  max-width: clamp(52px, 14vw, 60px) !important;
+  font-size: clamp(7.2px, 1.9vw, 8px) !important;
+  line-height: 1.08 !important;
+  text-overflow: clip !important;
+}
+
+.gt-nearby-design__categories-next {
+  top: clamp(8px, 2.15vw, 10px) !important;
+  right: clamp(6px, 1.8vw, 8px) !important;
+  width: clamp(31px, 8.2vw, 34px) !important;
+  height: clamp(31px, 8.2vw, 34px) !important;
+}
+
+.gt-nearby-design__subcategories-wrap {
+  border-top: 1px solid #f0f2f1 !important;
+}
+
+.gt-nearby-design__subcategories {
+  display: flex !important;
+  gap: clamp(6px, 1.65vw, 7px) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 6px clamp(42px, 10.5vw, 46px) 8px var(--nearby-side) !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  box-sizing: border-box !important;
+}
+
+.gt-nearby-design__subcategories > button {
+  display: grid !important;
+  flex: 0 0 clamp(43px, 10.9vw, 46px) !important;
+  min-width: clamp(43px, 10.9vw, 46px) !important;
+  justify-items: center !important;
+  gap: 3px !important;
+}
+
+.gt-nearby-design__subcategories > button > span {
+  width: clamp(34px, 8.9vw, 37px) !important;
+  height: clamp(34px, 8.9vw, 37px) !important;
+  border-radius: clamp(10px, 2.7vw, 11px) !important;
+}
+
+.gt-nearby-design__subcategories > button > span svg {
+  width: clamp(17px, 4.55vw, 19px) !important;
+  height: clamp(17px, 4.55vw, 19px) !important;
+}
+
+.gt-nearby-design__subcategories > button strong {
+  width: clamp(48px, 12.7vw, 53px) !important;
+  min-height: 14px !important;
+  font-size: clamp(5.8px, 1.55vw, 6.5px) !important;
+  line-height: 1.06 !important;
+}
+
+.gt-nearby-design__subcategories-next {
+  top: clamp(9px, 2.4vw, 11px) !important;
+  right: clamp(6px, 1.8vw, 8px) !important;
+  width: clamp(29px, 7.6vw, 32px) !important;
+  height: clamp(29px, 7.6vw, 32px) !important;
+}
+
+/* Generated map background follows the pale green mountainous/river reference. */
+.gt-nearby-design__map,
+.gt-nearby-design__content.has-subcategories .gt-nearby-design__map {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  background:
+    linear-gradient(rgba(245, 249, 243, .10), rgba(242, 248, 241, .13)),
+    url("/images/nearby-map-reference.webp") 50% 50% / cover no-repeat,
+    #dfe9d7 !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+}
+
+.gt-nearby-design__map::after {
+  inset: 0 !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.08)) !important;
+}
+
+.gt-nearby-design__pin {
+  width: clamp(29px, 7.55vw, 32px) !important;
+  height: clamp(29px, 7.55vw, 32px) !important;
+  border-width: 2px !important;
+  border-radius: 50% 50% 50% 7px !important;
+  box-shadow: 0 2px 5px rgba(22,48,31,.28) !important;
+}
+
+.gt-nearby-design__pin svg {
+  width: clamp(15px, 4vw, 17px) !important;
+  height: clamp(15px, 4vw, 17px) !important;
+}
+
+.gt-nearby-design__pin b {
+  font-size: clamp(9.5px, 2.55vw, 10.8px) !important;
+}
+
+.gt-nearby-design__user {
+  top: 50% !important;
+  left: 49% !important;
+  width: clamp(56px, 14.8vw, 62px) !important;
+  height: clamp(56px, 14.8vw, 62px) !important;
+  transform: translate(-50%, -50%) !important;
+  background: rgba(72,174,235,.19) !important;
+}
+
+.gt-nearby-design__user::before {
+  width: clamp(19px, 5.15vw, 22px) !important;
+  height: clamp(19px, 5.15vw, 22px) !important;
+  border-width: clamp(4px, 1.2vw, 5px) !important;
+}
+
+.gt-nearby-design__map-controls {
+  top: clamp(13px, 3.5vw, 16px) !important;
+  right: var(--nearby-side) !important;
+  gap: clamp(8px, 2.15vw, 10px) !important;
+}
+
+.gt-nearby-design__map-controls > button {
+  width: clamp(38px, 9.7vw, 41px) !important;
+  height: clamp(38px, 9.7vw, 41px) !important;
+  border-radius: clamp(15px, 4vw, 17px) !important;
+}
+
+.gt-nearby-design__map-controls > div {
+  border-radius: clamp(15px, 4vw, 17px) !important;
+}
+
+.gt-nearby-design__map-controls > div button {
+  width: clamp(38px, 9.7vw, 41px) !important;
+  height: clamp(35px, 9vw, 38px) !important;
+}
+
+.gt-nearby-design__map-controls svg {
+  width: clamp(19px, 5vw, 22px) !important;
+  height: clamp(19px, 5vw, 22px) !important;
+}
+
+.gt-nearby-design__radius {
+  right: var(--nearby-side) !important;
+  bottom: clamp(8px, 2.2vw, 10px) !important;
+  left: var(--nearby-side) !important;
+  width: auto !important;
+  max-width: none !important;
+  min-height: clamp(40px, 10.35vw, 43px) !important;
+  margin: 0 !important;
+  padding: 4px !important;
+  gap: 3px !important;
+  border-radius: clamp(20px, 5.25vw, 22px) !important;
+  transform: none !important;
+  box-sizing: border-box !important;
+}
+
+.gt-nearby-design__radius button {
+  height: clamp(30px, 7.9vw, 33px) !important;
+  border-radius: 999px !important;
+  font-size: clamp(8.5px, 2.25vw, 9.5px) !important;
+}
+
+.gt-nearby-design__sheet,
+.gt-nearby-design__content.has-subcategories .gt-nearby-design__sheet {
+  position: relative !important;
+  z-index: 12 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: clamp(49px, 12.5vw, 53px) !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 7px var(--nearby-side) 6px !important;
+  overflow: hidden !important;
+  border-radius: clamp(22px, 5.9vw, 25px) clamp(22px, 5.9vw, 25px) 0 0 !important;
+  background: #fff !important;
+  box-shadow: 0 -4px 16px rgba(30,47,36,.08) !important;
+  box-sizing: border-box !important;
+}
+
+.gt-nearby-design__sheet::before {
+  width: clamp(34px, 8.9vw, 38px) !important;
+  height: 4px !important;
+  margin: -2px auto 5px !important;
+}
+
+.gt-nearby-design__sheet-head {
+  display: grid !important;
+  grid-template-columns: 18px minmax(0,1fr) auto !important;
+  gap: 5px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 0 !important;
+}
+
+.gt-nearby-design__sheet-head > strong {
+  font-size: clamp(10px, 2.65vw, 11px) !important;
+  line-height: 1.1 !important;
+}
+
+.gt-nearby-design__sheet-head > span:last-child {
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: clamp(8.4px, 2.25vw, 9.4px) !important;
+  white-space: nowrap !important;
+}
+
+.gt-nearby-design__sheet-caret svg {
+  width: clamp(16px, 4.3vw, 18px) !important;
+  height: clamp(16px, 4.3vw, 18px) !important;
+}
+
+.gt-nearby-design__cards {
+  display: flex !important;
+  width: calc(100% + var(--nearby-side)) !important;
+  max-width: none !important;
+  gap: clamp(6px, 1.65vw, 7px) !important;
+  align-items: stretch !important;
+  margin: 8px calc(var(--nearby-side) * -1) 0 0 !important;
+  padding: 0 var(--nearby-side) 1px 0 !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scroll-padding-right: var(--nearby-side) !important;
+  box-sizing: border-box !important;
+}
+
+.gt-nearby-design__card {
+  display: grid !important;
+  grid-template-rows: clamp(62px, 16vw, 67px) minmax(0, 1fr) !important;
+  flex: 0 0 clamp(90px, 23vw, 96px) !important;
+  min-width: clamp(90px, 23vw, 96px) !important;
+  min-height: clamp(134px, 34.5vw, 143px) !important;
+  height: clamp(134px, 34.5vw, 143px) !important;
+  overflow: hidden !important;
+  border-radius: clamp(9px, 2.5vw, 11px) !important;
+}
+
+.gt-nearby-design__card > .gt-photo {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  flex-basis: auto !important;
+  border-radius: 0 !important;
+}
+
+.gt-nearby-design__card-copy {
+  display: grid !important;
+  grid-template-rows: auto auto 1fr !important;
+  min-height: 0 !important;
+  height: auto !important;
+  align-content: start !important;
+  gap: 2px !important;
+  padding: 5px 5px 6px !important;
+}
+
+.gt-nearby-design__card-copy > strong {
+  display: -webkit-box !important;
+  min-height: 21px !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  font-size: clamp(8.8px, 2.35vw, 9.7px) !important;
+  line-height: 1.12 !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+}
+
+.gt-nearby-design__card-copy > small {
+  min-height: 15px !important;
+  font-size: clamp(7.4px, 1.95vw, 8.2px) !important;
+  line-height: 1.08 !important;
+}
+
+.gt-nearby-design__card-copy > span {
+  width: 100% !important;
+  margin-top: auto !important;
+  padding-top: 2px !important;
+  align-self: end !important;
+}
+
+.gt-nearby-design__card-copy b,
+.gt-nearby-design__card-copy em {
+  font-size: clamp(7.6px, 2.05vw, 8.5px) !important;
+}
+
+.gt-nearby-design__card-copy b svg {
+  width: clamp(11px, 3vw, 12px) !important;
+  height: clamp(11px, 3vw, 12px) !important;
+}
+
+/* Short Telegram viewports get the same composition at a slightly tighter vertical scale. */
+@media (max-height: 700px) {
+  .gt-nearby-design__head {
+    gap: 6px !important;
+    padding-top: 8px !important;
+  }
+
+  .gt-nearby-design__brand-row {
+    min-height: 31px !important;
+  }
+
+  .gt-nearby-design__brand-row h1 {
+    font-size: 20px !important;
+  }
+
+  .gt-nearby-design__brand-row > button {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  .gt-nearby-design__search,
+  .gt-nearby-design__filter {
+    height: 36px !important;
+  }
+
+  .gt-nearby-design__search-row {
+    grid-template-columns: minmax(0,1fr) 36px !important;
+  }
+
+  .gt-nearby-design__filter {
+    width: 36px !important;
+  }
+
+  .gt-nearby-design__category-icon {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .gt-nearby-design__categories > button {
+    flex-basis: 44px !important;
+    min-width: 44px !important;
+  }
+
+  .gt-nearby-design__subcategories > button > span {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .gt-nearby-design__card {
+    grid-template-rows: 58px minmax(0,1fr) !important;
+    min-height: 126px !important;
+    height: 126px !important;
+  }
+
+  .gt-nearby-design__card-copy > strong {
+    min-height: 19px !important;
+    font-size: 8.6px !important;
+  }
+}
+
+/* Extra-narrow phones scale down only the Nearby reference; no other legacy screens are redesigned. */
+@media (max-width: 370px) {
+  .gt-nearby-design {
+    --nearby-side: 12px;
+  }
+
+  .gt-nearby-design__brand-row h1 {
+    font-size: 21px !important;
+  }
+
+  .gt-nearby-design__categories > button {
+    flex-basis: 45px !important;
+    min-width: 45px !important;
+  }
+
+  .gt-nearby-design__category-icon {
+    width: 37px !important;
+    height: 37px !important;
+  }
+
+  .gt-nearby-design__subcategories > button {
+    flex-basis: 42px !important;
+    min-width: 42px !important;
+  }
+
+  .gt-nearby-design__subcategories > button > span {
+    width: 33px !important;
+    height: 33px !important;
+  }
+
+  .gt-nearby-design__card {
+    flex-basis: 88px !important;
+    min-width: 88px !important;
+  }
+}
