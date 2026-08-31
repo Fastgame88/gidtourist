@@ -1191,10 +1191,6 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
 
           <div className="gt-nearby-design__map-controls">
             <button type="button" aria-label="Моє місцезнаходження"><LocateFixed size={22} /></button>
-            <div>
-              <button type="button" aria-label="Наблизити"><Plus size={23} /></button>
-              <button type="button" aria-label="Віддалити"><Minus size={23} /></button>
-            </div>
           </div>
 
           <div className="gt-nearby-design__radius">
