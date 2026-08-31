@@ -24852,3 +24852,11 @@ button.gt-service-card {
     min-width: 88px !important;
   }
 }
+
+/* ===== 2026-08-31 Nearby Android: use the bottom spare space for a taller map ===== */
+/* Android Telegram has no iOS home-indicator safe area inside the Mini App frame.
+   Reserve exactly the bottom-nav height on Nearby so the grid gives the released
+   space to the map row. iPhone/iOS and every other screen stay untouched. */
+.tourist-app-shell--android .tourist-app-frame--nearby .phone-content {
+  padding-bottom: 84px !important;
+}
