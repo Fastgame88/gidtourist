@@ -26620,3 +26620,576 @@ html.gt-platform-android body,
   width: 43px !important;
   height: 43px !important;
 }
+
+/* ===== 2026-08-31 requested: recommendations closer to location + new Add Location template ===== */
+
+/* 1. Only move the recommendation heading and its cards upward.
+   The location strip and every element above it stay untouched. */
+:is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-section-title,
+:is(.gt-shop-screen, .gt-food-screen, .gt-rest-screen, .gt-entertainment-screen) .gt-place-list {
+  transform: translateY(-8px) !important;
+}
+
+/* 2. Add-location screen: tourist-style moderated submission template. */
+.gt-add-location-screen {
+  min-height: 100%;
+  background: #f6f8f7;
+}
+
+.gt-add-location-content {
+  display: grid !important;
+  gap: 10px !important;
+  padding: 14px 14px 24px !important;
+}
+
+.gt-add-location-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 11px;
+  align-items: center;
+  padding: 14px 14px 13px;
+  overflow: hidden;
+  border: 1px solid #e4ebe7;
+  border-radius: 19px;
+  background:
+    radial-gradient(circle at 94% 8%, rgba(21,170,99,.13), transparent 31%),
+    linear-gradient(140deg, #ffffff 0%, #f3fbf6 100%);
+  box-shadow: 0 8px 24px rgba(27,55,38,.055);
+}
+
+.gt-add-location-hero__icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: 16px;
+  color: #fff;
+  background: linear-gradient(145deg,#1bb56d,#078d4e);
+  box-shadow: 0 8px 18px rgba(8,145,79,.2);
+}
+
+.gt-add-location-hero > div {
+  min-width: 0;
+  padding-right: 74px;
+}
+
+.gt-add-location-hero > div > small {
+  display: block;
+  margin-bottom: 1px;
+  color: #14925a;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+
+.gt-add-location-hero h1 {
+  margin: 0;
+  color: #18211c;
+  font-size: 23px;
+  line-height: 1.05;
+}
+
+.gt-add-location-hero p {
+  margin: 5px 0 0;
+  color: #6c7771;
+  font-size: 11.5px;
+  line-height: 1.32;
+}
+
+.gt-add-location-hero > em {
+  position: absolute;
+  top: 13px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 7px;
+  border-radius: 999px;
+  color: #118650;
+  background: #e8f7ef;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.gt-add-location-section {
+  display: grid;
+  gap: 10px;
+  padding: 13px;
+  border: 1px solid #e5ebe7;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(27,55,38,.045);
+}
+
+.gt-add-location-section__head {
+  display: grid;
+  grid-template-columns: 31px minmax(0, 1fr);
+  gap: 9px;
+  align-items: center;
+}
+
+.gt-add-location-section__head > span {
+  display: grid;
+  width: 31px;
+  height: 31px;
+  place-items: center;
+  border-radius: 10px;
+  color: #0b9555;
+  background: #e8f7ef;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.gt-add-location-section__head > div {
+  display: grid;
+  gap: 1px;
+}
+
+.gt-add-location-section__head strong {
+  color: #1b241f;
+  font-size: 14px;
+  line-height: 1.15;
+}
+
+.gt-add-location-section__head small {
+  color: #8a948e;
+  font-size: 10px;
+  line-height: 1.25;
+}
+
+.gt-add-location-section__head strong em {
+  margin-left: 4px;
+  color: #9aa39e;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.gt-add-location-field {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.gt-add-location-field > span {
+  color: #59645e;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.gt-add-location-field > span b {
+  color: #e65353;
+}
+
+.gt-add-location-field input,
+.gt-add-location-field textarea,
+.gt-add-location-contact-grid input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #dfe6e2;
+  outline: 0;
+  color: #1c2520;
+  background: #fbfcfb;
+  font-family: inherit;
+  font-size: 13px !important;
+  font-weight: 600;
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.gt-add-location-field input {
+  height: 43px;
+  padding: 0 12px;
+  border-radius: 12px;
+}
+
+.gt-add-location-field textarea {
+  min-height: 82px;
+  padding: 11px 12px 22px;
+  resize: vertical;
+  border-radius: 12px;
+  line-height: 1.35;
+}
+
+.gt-add-location-field input::placeholder,
+.gt-add-location-field textarea::placeholder,
+.gt-add-location-contact-grid input::placeholder {
+  color: #a2aaa5;
+  font-weight: 500;
+}
+
+.gt-add-location-field input:focus,
+.gt-add-location-field textarea:focus,
+.gt-add-location-contact-grid input:focus {
+  border-color: #72c59a;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(26,166,98,.09);
+}
+
+.gt-add-location-counter {
+  position: absolute;
+  right: 9px;
+  bottom: 6px;
+  color: #a3aaa6 !important;
+  font-size: 8.5px !important;
+  font-weight: 600 !important;
+}
+
+.gt-add-location-categories {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.gt-add-location-categories > button {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 68px;
+  place-items: center;
+  gap: 4px;
+  padding: 8px 4px 7px;
+  border: 1px solid #e4e9e6;
+  border-radius: 13px;
+  color: #53605a;
+  background: #fff;
+  cursor: pointer;
+}
+
+.gt-add-location-categories > button > i {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 9px;
+  color: #0c9957;
+  background: #eaf8f0;
+  font-style: normal;
+}
+
+.gt-add-location-categories > button.is-orange > i { color:#ef6b16; background:#fff0e5; }
+.gt-add-location-categories > button.is-blue > i { color:#1373d6; background:#eaf3ff; }
+.gt-add-location-categories > button.is-purple > i { color:#7650d6; background:#f0ebff; }
+.gt-add-location-categories > button.is-violet > i { color:#8a2fd5; background:#f5eaff; }
+.gt-add-location-categories > button.is-green > i { color:#0b9b59; background:#e8f8ef; }
+.gt-add-location-categories > button.is-yellow > i { color:#e29a0a; background:#fff6df; }
+
+.gt-add-location-categories > button strong {
+  max-width: 100%;
+  overflow: hidden;
+  color: #303a34;
+  font-size: 9.8px;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gt-add-location-categories > button > svg {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  color: #0b9b59;
+}
+
+.gt-add-location-categories > button.is-active {
+  border-color: #7bc69e;
+  background: #f7fcf9;
+  box-shadow: inset 0 0 0 1px rgba(27,166,98,.11);
+}
+
+.gt-add-location-map-card {
+  overflow: hidden;
+  border: 1px solid #e1e7e3;
+  border-radius: 15px;
+  background: #fff;
+}
+
+.gt-add-location-map-card__map {
+  position: relative;
+  height: 90px;
+  overflow: hidden;
+  background:
+    linear-gradient(29deg, transparent 0 38%, rgba(255,255,255,.9) 39% 42%, transparent 43%),
+    linear-gradient(146deg, transparent 0 53%, rgba(255,255,255,.9) 54% 57%, transparent 58%),
+    linear-gradient(120deg,#dff2dc 0%,#eef2d8 45%,#dceee5 100%);
+}
+
+.gt-add-location-map-card__river {
+  position: absolute;
+  top: -22px;
+  right: 53px;
+  width: 20px;
+  height: 145px;
+  border-radius: 50%;
+  background: #b9e0eb;
+  transform: rotate(15deg);
+  opacity: .9;
+}
+
+.gt-add-location-map-card__road {
+  position: absolute;
+  top: 35px;
+  left: -18px;
+  width: 120%;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.95);
+  transform: rotate(-7deg);
+  box-shadow: 0 0 0 1px rgba(205,214,208,.5);
+}
+
+.gt-add-location-map-card__map > span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 3px solid #fff;
+  border-radius: 50% 50% 50% 8px;
+  color: #fff;
+  background: #0da15b;
+  box-shadow: 0 5px 12px rgba(19,98,58,.2);
+  transform: translate(-50%,-56%) rotate(-45deg);
+}
+
+.gt-add-location-map-card__map > span svg {
+  transform: rotate(45deg);
+}
+
+.gt-add-location-map-card__copy {
+  display: grid;
+  gap: 4px;
+  padding: 10px 11px 11px;
+}
+
+.gt-add-location-map-card__copy > strong {
+  color: #222b26;
+  font-size: 12.5px;
+}
+
+.gt-add-location-map-card__copy > small {
+  color: #89928d;
+  font-size: 9.5px;
+  line-height: 1.3;
+}
+
+.gt-add-location-map-card__copy > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 7px;
+  margin-top: 4px;
+}
+
+.gt-add-location-map-card__copy button {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 8px;
+  border: 1px solid #dfe6e2;
+  border-radius: 10px;
+  color: #4b5a52;
+  background: #f9fbfa;
+  font-size: 9.5px;
+  font-weight: 800;
+}
+
+.gt-add-location-map-card__copy button:first-child {
+  border-color: #b8dfca;
+  color: #0b8f51;
+  background: #effaf4;
+}
+
+.gt-add-location-field--icon {
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  padding: 9px 11px;
+  border: 1px solid #dfe6e2;
+  border-radius: 12px;
+  background: #fbfcfb;
+}
+
+.gt-add-location-field--icon > svg {
+  grid-row: 1 / span 2;
+  color: #0b9a57;
+}
+
+.gt-add-location-field--icon > span {
+  align-self: end;
+  color: #87918b;
+  font-size: 8.5px;
+}
+
+.gt-add-location-field--icon input {
+  height: 19px;
+  padding: 0;
+  align-self: start;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 11px !important;
+}
+
+.gt-add-location-upload {
+  display: grid;
+  grid-template-columns: 41px minmax(0,1fr) 18px;
+  gap: 9px;
+  align-items: center;
+  min-height: 62px;
+  padding: 9px 10px;
+  border: 1px dashed #9fd4b8;
+  border-radius: 14px;
+  color: #4f5c55;
+  background: #f6fcf8;
+  text-align: left;
+}
+
+.gt-add-location-upload > i {
+  display: grid;
+  width: 41px;
+  height: 41px;
+  place-items: center;
+  border-radius: 12px;
+  color: #0b9b58;
+  background: #e7f7ee;
+  font-style: normal;
+}
+
+.gt-add-location-upload > span {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.gt-add-location-upload strong {
+  color: #29332d;
+  font-size: 11.5px;
+}
+
+.gt-add-location-upload small {
+  color: #8e9892;
+  font-size: 9px;
+}
+
+.gt-add-location-upload > svg {
+  color: #94a099;
+}
+
+.gt-add-location-section--optional {
+  background: #fbfcfb;
+}
+
+.gt-add-location-contact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 8px;
+}
+
+.gt-add-location-contact-grid label {
+  display: grid;
+  grid-template-columns: 20px minmax(0,1fr);
+  align-items: center;
+  gap: 6px;
+  height: 42px;
+  padding: 0 10px;
+  border: 1px solid #dfe6e2;
+  border-radius: 11px;
+  color: #0b9957;
+  background: #fff;
+}
+
+.gt-add-location-contact-grid input {
+  height: 100%;
+  padding: 0;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 10.5px !important;
+}
+
+.gt-add-location-note {
+  display: grid;
+  grid-template-columns: 21px minmax(0,1fr);
+  gap: 8px;
+  align-items: start;
+  padding: 10px 11px;
+  border: 1px solid #dce9e2;
+  border-radius: 13px;
+  color: #168654;
+  background: #eff9f4;
+}
+
+.gt-add-location-note > p {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+
+.gt-add-location-note strong {
+  color: #316b4d;
+  font-size: 10px;
+}
+
+.gt-add-location-note span {
+  color: #75827b;
+  font-size: 9px;
+  line-height: 1.3;
+}
+
+.gt-add-location-submit {
+  min-height: 48px !important;
+  margin-top: 1px;
+  font-size: 13.5px !important;
+}
+
+@media (max-width: 350px) {
+  .gt-add-location-content {
+    padding-right: 11px !important;
+    padding-left: 11px !important;
+  }
+
+  .gt-add-location-hero {
+    grid-template-columns: 46px minmax(0,1fr);
+    padding: 12px;
+  }
+
+  .gt-add-location-hero__icon {
+    width: 46px;
+    height: 46px;
+  }
+
+  .gt-add-location-hero > div {
+    padding-right: 0;
+  }
+
+  .gt-add-location-hero > em {
+    display: none;
+  }
+
+  .gt-add-location-hero h1 { font-size: 21px; }
+  .gt-add-location-hero p { font-size: 10.5px; }
+
+  .gt-add-location-categories {
+    grid-template-columns: repeat(2, minmax(0,1fr));
+  }
+
+  .gt-add-location-contact-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Android Telegram WebView: keep fields comfortable and avoid text auto-scaling. */
+.tourist-app-shell--android .gt-add-location-screen input,
+.tourist-app-shell--android .gt-add-location-screen textarea,
+.tourist-app-shell--android .gt-add-location-screen button {
+  -webkit-text-size-adjust: 100% !important;
+  text-size-adjust: 100% !important;
+}

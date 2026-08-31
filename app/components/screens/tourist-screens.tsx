@@ -2193,19 +2193,125 @@ function EmergencyScreen() {
 }
 
 function AddLocationScreen({ navigate }: { navigate: Navigate }) {
+  const [category, setCategory] = useState("Де поїсти");
+  const categories: Array<{ label: string; icon: LucideIcon; tone: string }> = [
+    { label: "Де поїсти", icon: Utensils, tone: "orange" },
+    { label: "Де купити", icon: ShoppingBag, tone: "blue" },
+    { label: "Відпочинок", icon: BedDouble, tone: "purple" },
+    { label: "Розваги", icon: Bike, tone: "violet" },
+    { label: "Природа", icon: MountainSnow, tone: "green" },
+    { label: "Корисне", icon: Info, tone: "yellow" },
+  ];
+
   return (
     <div className="tourist-screen gt-screen gt-add-location-screen">
       <main className="gt-content gt-add-location-content">
-        <h1 className="gt-simple-title">Додати локацію</h1>
-        <section className="gt-add-location-card">
-          <span><MapPin size={30} /></span>
+        <header className="gt-add-location-hero">
+          <span className="gt-add-location-hero__icon"><MapPin size={28} /></span>
           <div>
-            <strong>Додайте нову локацію</strong>
-            <small>Оберіть потрібне місце на мапі та продовжіть додавання.</small>
+            <small>Нова локація</small>
+            <h1>Додати місце</h1>
+            <p>Поділіться корисним місцем — після перевірки воно зʼявиться у «Гід турист».</p>
+          </div>
+          <em><ShieldCheck size={15} /> Модерація</em>
+        </header>
+
+        <section className="gt-add-location-section">
+          <div className="gt-add-location-section__head">
+            <span>1</span>
+            <div><strong>Основна інформація</strong><small>Назва та категорія місця</small></div>
+          </div>
+
+          <label className="gt-add-location-field">
+            <span>Назва локації <b>*</b></span>
+            <input type="text" placeholder="Наприклад, оглядовий майданчик Ягідна" />
+          </label>
+
+          <div className="gt-add-location-field">
+            <span>Категорія <b>*</b></span>
+            <div className="gt-add-location-categories">
+              {categories.map(({ label, icon: Icon, tone }) => (
+                <button
+                  type="button"
+                  key={label}
+                  className={`${category === label ? "is-active" : ""} is-${tone}`}
+                  onClick={() => setCategory(label)}
+                >
+                  <i><Icon size={19} /></i>
+                  <strong>{label}</strong>
+                  {category === label ? <Check size={16} /> : null}
+                </button>
+              ))}
+            </div>
           </div>
         </section>
-        <button type="button" className="gt-primary-button" onClick={() => navigate("tourist", "nearby")}>
-          <Map size={20} /> Обрати на мапі
+
+        <section className="gt-add-location-section">
+          <div className="gt-add-location-section__head">
+            <span>2</span>
+            <div><strong>Де знаходиться</strong><small>Вкажіть точку та адресу</small></div>
+          </div>
+
+          <div className="gt-add-location-map-card">
+            <div className="gt-add-location-map-card__map" aria-hidden="true">
+              <i className="gt-add-location-map-card__river" />
+              <i className="gt-add-location-map-card__road" />
+              <span><MapPin size={22} /></span>
+            </div>
+            <div className="gt-add-location-map-card__copy">
+              <strong>Позначте місце на мапі</strong>
+              <small>Перетягніть точку або використайте поточну геолокацію.</small>
+              <div>
+                <button type="button"><LocateFixed size={17} /> Моє місце</button>
+                <button type="button" onClick={() => navigate("tourist", "nearby")}><Map size={17} /> Відкрити мапу</button>
+              </div>
+            </div>
+          </div>
+
+          <label className="gt-add-location-field gt-add-location-field--icon">
+            <MapPin size={18} />
+            <span>Адреса</span>
+            <input type="text" placeholder="вул., номер, населений пункт" />
+          </label>
+        </section>
+
+        <section className="gt-add-location-section">
+          <div className="gt-add-location-section__head">
+            <span>3</span>
+            <div><strong>Фото та опис</strong><small>Допоможіть туристам зрозуміти, що тут цікавого</small></div>
+          </div>
+
+          <button type="button" className="gt-add-location-upload">
+            <i><Plus size={24} /></i>
+            <span><strong>Додати фотографії</strong><small>До 6 фото · JPG, PNG або WEBP</small></span>
+            <ChevronRight size={19} />
+          </button>
+
+          <label className="gt-add-location-field">
+            <span>Короткий опис</span>
+            <textarea maxLength={500} placeholder="Що варто знати про це місце, чим воно цікаве, коли краще відвідати..." />
+            <small className="gt-add-location-counter">до 500 символів</small>
+          </label>
+        </section>
+
+        <section className="gt-add-location-section gt-add-location-section--optional">
+          <div className="gt-add-location-section__head">
+            <span><Plus size={16} /></span>
+            <div><strong>Контакти <em>необовʼязково</em></strong><small>Якщо місце має контакти або сайт</small></div>
+          </div>
+          <div className="gt-add-location-contact-grid">
+            <label><Phone size={18} /><input type="tel" placeholder="Телефон" /></label>
+            <label><Globe size={18} /><input type="url" placeholder="Сайт або соцмережа" /></label>
+          </div>
+        </section>
+
+        <div className="gt-add-location-note">
+          <Info size={18} />
+          <p><strong>Перед публікацією ми перевіримо локацію.</strong><span>Це допомагає уникати дублів та некоректних місць.</span></p>
+        </div>
+
+        <button type="button" className="gt-primary-button gt-add-location-submit">
+          <Send size={19} /> Надіслати на модерацію
         </button>
       </main>
     </div>
