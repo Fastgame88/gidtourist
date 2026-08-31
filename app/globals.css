@@ -26296,3 +26296,203 @@ html.gt-platform-android body,
     height: 128px !important;
   }
 }
+
+/* ===== 2026-08-31 requested tourist UI refinements ===== */
+
+/* 1 + 8. Compact location strip on category pages and hot offers.
+   Nearby has its own full map and is intentionally not targeted here. */
+.gt-reference-list-screen .gt-map-strip,
+.gt-transfer-reference-screen .gt-map-strip,
+.gt-hot-offers-screen--reference .gt-map-strip {
+  min-height: 54px !important;
+  height: 54px !important;
+  border-radius: 12px !important;
+}
+
+.gt-reference-list-screen .gt-map-strip > div,
+.gt-transfer-reference-screen .gt-map-strip > div,
+.gt-hot-offers-screen--reference .gt-map-strip > div {
+  top: 8px !important;
+  left: 12px !important;
+  gap: 7px !important;
+}
+
+.gt-reference-list-screen .gt-map-strip > div > svg,
+.gt-transfer-reference-screen .gt-map-strip > div > svg,
+.gt-hot-offers-screen--reference .gt-map-strip > div > svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.gt-reference-list-screen .gt-map-strip__dot,
+.gt-transfer-reference-screen .gt-map-strip__dot,
+.gt-hot-offers-screen--reference .gt-map-strip__dot {
+  top: 17px !important;
+  width: 16px !important;
+  height: 16px !important;
+  border-width: 4px !important;
+  box-shadow: 0 0 0 5px rgba(39,143,223,.13) !important;
+}
+
+/* Hot offers now uses exactly the same compact location treatment as category pages. */
+.gt-hot-offers-screen--reference .gt-map-strip {
+  margin-top: 0 !important;
+  margin-bottom: 10px !important;
+  background:
+    linear-gradient(107deg,rgba(230,247,238,.96) 0 47%,rgba(241,241,227,.8) 47% 70%,rgba(222,237,243,.9) 70%) !important;
+}
+
+/* 2. Android home cards: +4px typography and a clear title/description gap. */
+.tourist-app-shell--android .gt-home-screen .gt-category-card > span:nth-child(2),
+.tourist-app-shell--android .gt-home-screen .gt-category-card--featured > span:nth-child(2) {
+  display: grid !important;
+  align-content: center !important;
+  row-gap: 5px !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-category-card strong,
+.tourist-app-shell--android .gt-home-screen .gt-category-card--featured strong {
+  font-size: 15.4px !important;
+  line-height: 1.04 !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-category-card small,
+.tourist-app-shell--android .gt-home-screen .gt-category-card--featured small {
+  font-size: 12.9px !important;
+  line-height: 1.08 !important;
+}
+
+/* 3. A little more breathing room inside the Android "Ви зараз тут" card. */
+.tourist-app-shell--android .gt-home-screen .gt-hotel-summary--reference {
+  padding: 8px 11px !important;
+  gap: 10px !important;
+}
+
+.tourist-app-shell--android .gt-home-screen .gt-current-place-copy {
+  gap: 3px !important;
+}
+
+/* 4. Route subfilters must never run into neighbouring items. */
+.gt-nearby-theme--routes .gt-nearby-design__subcategories > button {
+  flex-basis: 56px !important;
+  min-width: 56px !important;
+}
+
+.gt-nearby-theme--routes .gt-nearby-design__subcategories > button strong {
+  width: 60px !important;
+  max-width: 60px !important;
+  min-height: 20px !important;
+  overflow: hidden !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  line-height: 1.04 !important;
+  text-align: center !important;
+}
+
+/* 5. Filters: preserve the full lower rounding and keep Transfer in one horizontal row. */
+.gt-reference-list-screen .gt-chips,
+.gt-transfer-reference-chips .gt-chips {
+  padding-top: 2px !important;
+  padding-bottom: 6px !important;
+}
+
+.gt-reference-list-screen .gt-chips button,
+.gt-transfer-reference-chips .gt-chips button {
+  flex: 0 0 auto !important;
+  margin-bottom: 1px !important;
+  border-radius: 999px !important;
+}
+
+.gt-transfer-reference-chips {
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.gt-transfer-reference-chips .gt-chips {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  gap: 7px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scrollbar-width: none !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.gt-transfer-reference-chips .gt-chips::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* 6. Only the geolocation-share block is reduced on the emergency page. */
+.gt-emergency .gt-location-button {
+  grid-template-columns: 40px minmax(0,1fr) 16px !important;
+  min-height: 62px !important;
+  padding: 5px 11px !important;
+  gap: 9px !important;
+}
+
+.gt-emergency .gt-location-button .gt-location-button__icon,
+.gt-emergency .gt-location-button .gt-location-button__icon svg {
+  width: 38px !important;
+  height: 38px !important;
+}
+
+/* 7. "Додати локацію" in bottom navigation uses the same scale as neighbouring items. */
+.tourist-bottom-nav button.is-add-location span {
+  font-size: inherit !important;
+  line-height: inherit !important;
+  white-space: normal !important;
+}
+
+.tourist-bottom-nav button.is-add-location > svg {
+  width: 23px !important;
+  height: 23px !important;
+  flex-basis: 23px !important;
+}
+
+.tourist-app-shell--android .tourist-bottom-nav button.is-add-location > svg {
+  width: 24px !important;
+  height: 24px !important;
+  flex-basis: 24px !important;
+}
+
+/* Keep the compact location strip compact even after the older Android overrides above. */
+.tourist-app-shell--android .gt-reference-list-screen .gt-map-strip,
+.tourist-app-shell--android .gt-transfer-reference-screen .gt-map-strip,
+.tourist-app-shell--android .gt-hot-offers-screen--reference .gt-map-strip {
+  min-height: 54px !important;
+  height: 54px !important;
+}
+
+.tourist-app-shell--android .gt-reference-list-screen .gt-map-strip > div,
+.tourist-app-shell--android .gt-transfer-reference-screen .gt-map-strip > div,
+.tourist-app-shell--android .gt-hot-offers-screen--reference .gt-map-strip > div {
+  top: 8px !important;
+  left: 12px !important;
+}
+
+@media (max-width: 350px) {
+  .tourist-app-shell--android .tourist-bottom-nav button.is-add-location span {
+    font-size: inherit !important;
+  }
+
+  .tourist-app-shell--android .gt-home-screen .gt-category-card strong,
+  .tourist-app-shell--android .gt-home-screen .gt-category-card--featured strong {
+    font-size: 14.6px !important;
+  }
+
+  .tourist-app-shell--android .gt-home-screen .gt-category-card small,
+  .tourist-app-shell--android .gt-home-screen .gt-category-card--featured small {
+    font-size: 12px !important;
+  }
+}
+
+/* Final specificity guard: Android add-location label must match the other nav labels. */
+.tourist-app-shell--android .tourist-bottom-nav button.is-add-location span,
+.tourist-app-shell--android .tourist-app-frame--home .tourist-bottom-nav button.is-add-location span {
+  font-size: inherit !important;
+  line-height: inherit !important;
+  white-space: normal !important;
+}

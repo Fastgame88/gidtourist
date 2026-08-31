@@ -623,7 +623,7 @@ function HotOffersScreen({ navigate }: { navigate: Navigate }) {
         ))}
       </div>
 
-      <MapStrip real />
+      <MapStrip />
 
       <SectionTitle title="Пропозиції поруч" action="Переглянути всі" />
 
@@ -990,9 +990,10 @@ function CatalogScreen({ navigate }: { navigate: Navigate }) {
 function NearbyScreen({ navigate }: { navigate: Navigate }) {
   const [activeCategory, setActiveCategory] = useState("Усі");
   const [activeSubcategory, setActiveSubcategory] = useState("");
-  const [resultsExpanded, setResultsExpanded] = useState(true);
+  const [resultsExpanded, setResultsExpanded] = useState(false);
   const categoryScrollRef = useRef<HTMLDivElement | null>(null);
   const subcategoryScrollRef = useRef<HTMLDivElement | null>(null);
+  const sheetTouchStartY = useRef<number | null>(null);
 
   const categories: Array<{ label: string; icon: LucideIcon; tone: string }> = [
     { label: "Усі", icon: Grid2X2, tone: "all" },
@@ -1105,9 +1106,6 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
         <section className="gt-nearby-design__head">
           <div className="gt-nearby-design__brand-row">
             <h1>Gid Tourist</h1>
-            <button type="button" aria-label="Профіль" onClick={() => navigate("tourist", "profile")}>
-              <UserRound size={24} />
-            </button>
           </div>
 
           <div className="gt-nearby-design__search-row">
@@ -1131,7 +1129,7 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
                     setActiveCategory(label);
                     const firstSubcategory = subcategoryGroups[label]?.[0]?.label ?? "";
                     setActiveSubcategory(firstSubcategory);
-                    setResultsExpanded(label === "Усі");
+                    setResultsExpanded(false);
                   }}
                 >
                   <span className={`gt-nearby-design__category-icon gt-nearby-category-icon--${tone}`}>
@@ -1206,7 +1204,21 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
           </div>
         </section>
 
-        <section className={`gt-nearby-design__sheet ${resultsExpanded ? "is-expanded" : ""}`}>
+        <section
+          className={`gt-nearby-design__sheet ${resultsExpanded ? "is-expanded" : ""}`}
+          onTouchStart={(event) => {
+            sheetTouchStartY.current = event.touches[0]?.clientY ?? null;
+          }}
+          onTouchEnd={(event) => {
+            const startY = sheetTouchStartY.current;
+            const endY = event.changedTouches[0]?.clientY;
+            sheetTouchStartY.current = null;
+            if (startY == null || endY == null) return;
+            const deltaY = endY - startY;
+            if (deltaY < -28) setResultsExpanded(true);
+            if (deltaY > 28) setResultsExpanded(false);
+          }}
+        >
           <button
             type="button"
             className="gt-nearby-design__sheet-head"
@@ -1430,7 +1442,7 @@ function TransferScreen() {
         />
         <SearchBar placeholder="Пошук трансферу або маршруту" />
         <div className="gt-transfer-reference-chips">
-          <Chips items={["Усі", "Автобусні зупинки", "Залізничні станції", "Автостанції", "Таксі", "Парковки"]} />
+          <Chips items={["Усі", "Таксі", "Автобусні зупинки", "Залізничні станції", "Автостанції", "Парковки"]} />
         </div>
         <MapStrip />
         <SectionTitle title="Трансфери поруч" action="Переглянути всі" />
