@@ -3,6 +3,7 @@ import { createServer } from "node:http";
 const BOT_TOKEN = process.env.BOT_TOKEN?.trim();
 const APP_URL = process.env.APP_URL?.trim().replace(/\/$/, "");
 const PORT = Number(process.env.PORT || 3000);
+const MINI_APP_SHORT_NAME = process.env.MINI_APP_SHORT_NAME?.trim() || "";
 
 if (!BOT_TOKEN) {
   throw new Error("BOT_TOKEN is required");
@@ -62,12 +63,27 @@ function appLink(path) {
   return `${APP_URL}${path}`;
 }
 
-function startKeyboard() {
+function startKeyboard(startParam = "") {
+  const safeStart = startParam.trim().slice(0, 64);
+  const fallbackUrl = new URL(appLink("/tourist/welcome"));
+  if (safeStart) fallbackUrl.searchParams.set("startapp", safeStart);
+
+  if (safeStart && botUsername && MINI_APP_SHORT_NAME) {
+    return {
+      inline_keyboard: [[
+        {
+          text: "Відкрити додаток",
+          url: `https://t.me/${botUsername}/${MINI_APP_SHORT_NAME}?startapp=${encodeURIComponent(safeStart)}`,
+        },
+      ]],
+    };
+  }
+
   return {
     inline_keyboard: [[
       {
         text: "Відкрити додаток",
-        web_app: { url: appLink("/tourist/welcome") },
+        web_app: { url: fallbackUrl.toString() },
       },
     ]],
   };
@@ -137,6 +153,11 @@ async function sendMessage(chatId, text, replyMarkup) {
   });
 }
 
+function readStartParam(text) {
+  const parts = text.trim().split(/\s+/);
+  return parts.length > 1 ? parts.slice(1).join(" ").trim().slice(0, 64) : "";
+}
+
 function readCommand(text) {
   const firstWord = text.trim().toLowerCase().split(/\s+/)[0] || "";
   const withSlash = firstWord.startsWith("\\") ? `/${firstWord.slice(1)}` : firstWord;
@@ -154,7 +175,7 @@ async function handleMessage(message) {
     await sendMessage(
       message.chat.id,
       "Вітаємо в «Гід туриста»! Знаходьте цікаві місця, заклади, маршрути, бронювання та бонуси в одному застосунку.",
-      startKeyboard(),
+      startKeyboard(readStartParam(text)),
     );
     return;
   }

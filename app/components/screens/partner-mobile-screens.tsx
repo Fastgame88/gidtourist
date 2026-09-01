@@ -51,6 +51,7 @@ import {
   LockKeyhole,
 } from "lucide-react";
 import type { RoleKey } from "../../lib/navigation";
+import { ensureTelegramSession, stage2Fetch, type Stage2Category } from "../../lib/stage2-api";
 
 type Navigate = (role: RoleKey, slug: string) => void;
 type PartnerProps = { navigate: Navigate; activated: boolean };
@@ -58,7 +59,10 @@ type PartnerProps = { navigate: Navigate; activated: boolean };
 type PartnerProfile = {
   placeName: string;
   placeType: string;
+  categorySlug: string;
   address: string;
+  lat: string;
+  lng: string;
   description: string;
   roomCount: string;
   openedYear: string;
@@ -393,7 +397,10 @@ function saveServiceDraft(service: PartnerService) {
 const defaultProfile: PartnerProfile = {
   placeName: "Гірський Затишок",
   placeType: "Готель",
+  categorySlug: "hotel",
   address: "Татарів, вул. Незалежності, 155",
+  lat: "48.34490",
+  lng: "24.57920",
   description:
     "Затишний готель у серці Карпат з видом на гори та річку. Комфортні номери, чан, сауна та відкритий басейн.",
   roomCount: "18 номерів",
@@ -460,6 +467,67 @@ function usePartnerProfile() {
   }, [profile]);
 
   return { profile, setProfile };
+}
+
+
+const PARTNER_STAGE2_PLACE_KEY = "gid-tourist-stage2-partner-place-id";
+
+function categoryFromPlaceType(placeType: string) {
+  const value = placeType.toLocaleLowerCase("uk");
+  if (/ресторан|кафе|кав|їж|food|пі/.test(value)) return "food";
+  if (/магаз|сувен|аптек|shop/.test(value)) return "shop";
+  if (/чан|саун|басейн|spa|масаж|відпоч/.test(value)) return "rest";
+  if (/розваг|квадро|рафт|зіп|джип|entertain/.test(value)) return "entertainment";
+  if (/трансфер|таксі|оренда авто|transfer/.test(value)) return "transfer";
+  return "hotel";
+}
+
+async function submitPartnerProfile(profile: PartnerProfile) {
+  await ensureTelegramSession();
+  const existingId = typeof window !== "undefined" ? window.localStorage.getItem(PARTNER_STAGE2_PLACE_KEY) : null;
+  const hours = profile.workHours.match(/(\d{2}:\d{2}).*?(\d{2}:\d{2})/);
+  const payload = {
+    region_id: "region-tatariv",
+    category_slug: profile.categorySlug || categoryFromPlaceType(profile.placeType),
+    subcategory: profile.placeType,
+    name: profile.placeName,
+    organization_name: profile.placeName,
+    description: profile.description,
+    address: profile.address,
+    lat: Number(profile.lat) || 48.34535,
+    lng: Number(profile.lng) || 24.57855,
+    phone: profile.phone,
+    telegram: profile.messenger.startsWith("http") ? profile.messenger : undefined,
+    website: profile.website.startsWith("http") ? profile.website : profile.website ? `https://${profile.website}` : undefined,
+    image_url: heroImage,
+    work_hours: profile.workMode.toLocaleLowerCase("uk").includes("цілодоб") ? { always_open: true } : hours ? { daily: { from: hours[1], to: hours[2] } } : {},
+    attributes: { partner: true, parking: true, wifi: Boolean(profile.wifiSsid) },
+    details: {
+      check_in: profile.checkIn.match(/\d{2}:\d{2}/)?.[0] || "14:00",
+      check_out: profile.checkOut.match(/\d{2}:\d{2}/)?.[0] || "11:00",
+      wifi_ssid: profile.wifiSsid,
+      wifi_password: profile.wifiPassword,
+      rules: [profile.quietHours, profile.petPolicy, profile.cancellation, profile.payment, profile.otherRules].filter(Boolean),
+      room_count: profile.roomCount,
+      opened_year: profile.openedYear,
+      languages: profile.languages,
+      accommodation_type: profile.accommodationType,
+      email: profile.email,
+      instagram: profile.instagram,
+      facebook: profile.facebook,
+    },
+  };
+
+  if (existingId) {
+    try {
+      return await stage2Fetch<{ id: string; status?: string }>(`/partner/places/${encodeURIComponent(existingId)}`, { method: "PATCH", body: JSON.stringify(payload) });
+    } catch {
+      window.localStorage.removeItem(PARTNER_STAGE2_PLACE_KEY);
+    }
+  }
+  const created = await stage2Fetch<{ id: string; status?: string }>("/partner/onboarding", { method: "POST", body: JSON.stringify(payload) });
+  if (typeof window !== "undefined") window.localStorage.setItem(PARTNER_STAGE2_PLACE_KEY, created.id);
+  return created;
 }
 
 function PartnerHeader({
@@ -759,7 +827,16 @@ function AmenitiesRow() {
 
 function PartnerInfoScreen({ navigate, activated }: PartnerProps) {
   const { profile, setProfile } = usePartnerProfile();
+  const [stage2Categories, setStage2Categories] = useState<Stage2Category[]>([]);
   const goBack = activated ? "partner-cabinet" : "partner-dashboard";
+
+  useEffect(() => {
+    let cancelled = false;
+    void stage2Fetch<Stage2Category[]>("/categories").then((items) => {
+      if (!cancelled) setStage2Categories(items.filter((item) => item.slug !== "emergency"));
+    }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <div className="gt-partner-mobile-screen has-bottom-nav">
@@ -784,17 +861,58 @@ function PartnerInfoScreen({ navigate, activated }: PartnerProps) {
             value={profile.placeName}
             onChange={(placeName) => setProfile((prev) => ({ ...prev, placeName }))}
           />
-          <InputRow
-            label="Тип закладу"
-            value={profile.placeType}
-            onChange={(placeType) => setProfile((prev) => ({ ...prev, placeType }))}
-            rightIcon={<ChevronRight size={16} />}
-          />
+          {stage2Categories.length ? (
+            <>
+              <label className="gt-partner-input-row">
+                <span className="gt-partner-input-row__content">
+                  <small>Розділ у гіді</small>
+                  <select value={profile.categorySlug || categoryFromPlaceType(profile.placeType)} onChange={(event) => {
+                    const category = stage2Categories.find((item) => item.slug === event.target.value);
+                    const firstSubcategory = category?.subcategories?.[0];
+                    setProfile((prev) => ({ ...prev, categorySlug: event.target.value, placeType: firstSubcategory || (event.target.value === "hotel" ? "Готель" : prev.placeType) }));
+                  }}>
+                    {stage2Categories.map((item) => <option key={item.slug} value={item.slug}>{item.slug === "hotel" ? "Готель / точка входу" : item.name}</option>)}
+                  </select>
+                </span>
+                <i><ChevronRight size={16} /></i>
+              </label>
+              {stage2Categories.find((item) => item.slug === profile.categorySlug)?.subcategories?.length ? (
+                <label className="gt-partner-input-row">
+                  <span className="gt-partner-input-row__content">
+                    <small>Тип / підкатегорія</small>
+                    <select value={profile.placeType} onChange={(event) => setProfile((prev) => ({ ...prev, placeType: event.target.value }))}>
+                      {stage2Categories.find((item) => item.slug === profile.categorySlug)?.subcategories?.map((item) => <option key={item} value={item}>{item}</option>)}
+                    </select>
+                  </span>
+                  <i><ChevronRight size={16} /></i>
+                </label>
+              ) : (
+                <InputRow label="Тип закладу" value={profile.placeType} onChange={(placeType) => setProfile((prev) => ({ ...prev, placeType }))} />
+              )}
+            </>
+          ) : (
+            <InputRow
+              label="Тип закладу"
+              value={profile.placeType}
+              onChange={(placeType) => setProfile((prev) => ({ ...prev, placeType, categorySlug: categoryFromPlaceType(placeType) }))}
+              rightIcon={<ChevronRight size={16} />}
+            />
+          )}
           <InputRow
             label="Адреса"
             value={profile.address}
             onChange={(address) => setProfile((prev) => ({ ...prev, address }))}
             rightIcon={<MapPin size={16} />}
+          />
+          <InputRow
+            label="Широта"
+            value={profile.lat}
+            onChange={(lat) => setProfile((prev) => ({ ...prev, lat }))}
+          />
+          <InputRow
+            label="Довгота"
+            value={profile.lng}
+            onChange={(lng) => setProfile((prev) => ({ ...prev, lng }))}
           />
           <InputRow
             label="Опис"
@@ -1063,8 +1181,10 @@ function ContactsScreen({ navigate, activated, onActivate }: PartnerProps & { on
         back="partner-wifi"
         nextLabel="Зберегти"
         onNext={() => {
-          onActivate();
-          navigate("partner", "partner-dashboard");
+          void submitPartnerProfile(profile).then((place) => {
+            if (place.status === "approved") onActivate();
+            navigate("partner", place.status === "approved" ? "partner-cabinet" : "partner-pending");
+          }).catch(() => navigate("partner", "partner-pending"));
         }}
       />
       <main className="gt-partner-mobile-content gt-partner-form-page gt-contact-page-content">
@@ -1348,6 +1468,51 @@ function StatisticsServicesTab() {
         </div>
       </section>
     </>
+  );
+}
+
+
+function PartnerPendingScreen({ navigate, onActivate }: { navigate: Navigate; onActivate: () => void }) {
+  const [status, setStatus] = useState<"loading" | "pending" | "approved" | "rejected" | "error">("loading");
+  const [comment, setComment] = useState("");
+
+  const refresh = async () => {
+    setStatus("loading");
+    try {
+      await ensureTelegramSession();
+      const places = await stage2Fetch<Array<{ id: string; status: string; moderation_comment?: string | null }>>("/partner/places");
+      const placeId = typeof window !== "undefined" ? window.localStorage.getItem(PARTNER_STAGE2_PLACE_KEY) : null;
+      const place = places.find((item) => item.id === placeId) ?? places[0];
+      if (!place) { setStatus("error"); return; }
+      setComment(place.moderation_comment || "");
+      if (place.status === "approved") {
+        onActivate();
+        setStatus("approved");
+      } else if (place.status === "rejected") setStatus("rejected");
+      else setStatus("pending");
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  useEffect(() => { void refresh(); }, []);
+
+  return (
+    <div className="gt-partner-mobile-screen has-bottom-nav">
+      <PartnerHeader title="Модерація закладу" navigate={navigate} back="partner-info" />
+      <main className="gt-partner-mobile-content gt-partner-form-page">
+        <section className="gt-partner-status-card">
+          <span>{status === "approved" ? <Check size={30} /> : status === "rejected" ? <X size={30} /> : <Clock3 size={30} />}</span>
+          <div>
+            <strong>{status === "approved" ? "Заклад схвалено" : status === "rejected" ? "Потрібне доопрацювання" : status === "error" ? "Не вдалося перевірити статус" : "Заклад на модерації"}</strong>
+            <small>{comment || (status === "approved" ? "Тепер заклад доступний туристам у відповідній категорії." : "Після approve заклад автоматично зʼявиться у каталозі та на карті.")}</small>
+          </div>
+        </section>
+        <button type="button" className="gt-partner-primary-button" onClick={() => status === "approved" ? navigate("partner", "partner-cabinet") : void refresh()}>{status === "approved" ? "Відкрити кабінет" : "Оновити статус"}</button>
+        {status === "rejected" ? <button type="button" className="gt-partner-secondary-button" onClick={() => navigate("partner", "partner-info")}>Виправити дані</button> : null}
+      </main>
+      <PartnerBottomNav active="info" activated={status === "approved"} navigate={navigate} />
+    </div>
   );
 }
 
@@ -2588,7 +2753,20 @@ export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate
   const [activated, setActivated] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     setActivated(readPartnerActivated());
+    void ensureTelegramSession().then(async (session) => {
+      if (!session) return;
+      const places = await stage2Fetch<Array<{ id: string; status: string }>>("/partner/places");
+      if (cancelled) return;
+      const storedId = typeof window !== "undefined" ? window.localStorage.getItem(PARTNER_STAGE2_PLACE_KEY) : null;
+      const place = places.find((item) => item.id === storedId) ?? places[0];
+      const approved = place?.status === "approved";
+      savePartnerActivated(Boolean(approved));
+      setActivated(Boolean(approved));
+      if (place?.id && typeof window !== "undefined") window.localStorage.setItem(PARTNER_STAGE2_PLACE_KEY, place.id);
+    }).catch(() => undefined);
+    return () => { cancelled = true; };
   }, [slug]);
 
   const resolvedSlug = useMemo(() => {
@@ -2618,6 +2796,8 @@ export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate
       return <WifiScreen navigate={navigate} activated={activated} />;
     case "partner-contacts":
       return <ContactsScreen navigate={navigate} activated={activated} onActivate={activatePartner} />;
+    case "partner-pending":
+      return <PartnerPendingScreen navigate={navigate} onActivate={activatePartner} />;
     case "partner-statistics":
       return <StatisticsScreen navigate={navigate} activated={activated} />;
     case "partner-update":

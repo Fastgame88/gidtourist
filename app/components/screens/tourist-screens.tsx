@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Ambulance,
   ArrowDownToLine,
@@ -84,6 +84,9 @@ import {
   type EmergencyService,
 } from "../../lib/emergency-services";
 import type { RoleKey } from "../../lib/navigation";
+import { RealMap } from "../real-map";
+import { stage2Fetch, trackEvent, type Stage2Category, type Stage2Place } from "../../lib/stage2-api";
+import { useTouristRuntime } from "../../lib/tourist-runtime";
 
 type Navigate = (role: RoleKey, slug: string) => void;
 
@@ -124,35 +127,45 @@ function Thumb({ name, className = "" }: { name: PhotoName; className?: string }
   return <span className={`gt-photo gt-photo--${name} ${className}`} aria-hidden="true" />;
 }
 
-function SearchBar({ placeholder }: { placeholder: string }) {
+function SearchBar({ placeholder, value, onChange }: { placeholder: string; value?: string; onChange?: (value: string) => void }) {
   return (
     <label className="gt-search">
       <Search size={19} />
-      <input aria-label={placeholder} placeholder={placeholder} />
+      <input
+        aria-label={placeholder}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange ? (event) => onChange(event.target.value) : undefined}
+      />
     </label>
   );
 }
 
-function Chips({ items }: { items: string[] }) {
+function Chips({ items, selected, onSelect }: { items: string[]; selected?: string; onSelect?: (item: string) => void }) {
   return (
     <div className="gt-chips">
-      {items.map((item, index) => (
-        <button type="button" className={index === 0 ? "is-active" : ""} key={item}>
-          {item}
-        </button>
-      ))}
+      {items.map((item, index) => {
+        const active = selected !== undefined ? selected === item : index === 0;
+        return (
+          <button type="button" className={active ? "is-active" : ""} key={item} onClick={onSelect ? () => onSelect(item) : undefined}>
+            {item}
+          </button>
+        );
+      })}
     </div>
   );
 }
 
 function MapStrip({ real = false }: { real?: boolean } = {}) {
+  const { context, location } = useTouristRuntime();
+  const address = context?.place?.address || context?.region.name || "Татарів";
   return (
     <div className={`gt-map-strip ${real ? "gt-map-strip--real" : ""}`.trim()}>
       <div>
         <MapPin size={21} />
         <span>
-          <small>Ваше місцезнаходження</small>
-          <strong>вул. Незалежності, 35, Татарів</strong>
+          <small>{location?.source === "gps" ? "Ваше місцезнаходження" : "Базова точка з QR"}</small>
+          <strong>{address}</strong>
         </span>
       </div>
       {!real && <i className="gt-map-strip__road" />}
@@ -283,7 +296,8 @@ function CurrentPlaceSticker() {
 }
 
 function PlaceRow({
-  photo,
+  photo = "hotel",
+  imageUrl,
   title,
   subtitle,
   rating,
@@ -294,7 +308,8 @@ function PlaceRow({
   tags = [],
   onClick,
 }: {
-  photo: PhotoName;
+  photo?: PhotoName;
+  imageUrl?: string | null;
   title: string;
   subtitle: string;
   rating: string;
@@ -307,7 +322,7 @@ function PlaceRow({
 }) {
   return (
     <button type="button" className="gt-place-row" onClick={onClick}>
-      <Thumb name={photo} />
+      {imageUrl ? <img src={imageUrl} alt="" className="gt-photo gt-place-row__remote-photo" /> : <Thumb name={photo} />}
       <span className="gt-place-row__body">
         <span className="gt-place-row__title">
           <strong>{title}{verified ? <BadgeCheck className="gt-place-row__verified" size={15} /> : null}</strong>
@@ -335,11 +350,13 @@ function CategoryHeader({
   title,
   subtitle,
   tone,
+  onMap,
 }: {
   icon: LucideIcon;
   title: string;
   subtitle: string;
   tone: string;
+  onMap?: () => void;
 }) {
   return (
     <div className="gt-category-head">
@@ -350,7 +367,7 @@ function CategoryHeader({
         <h1>{title}</h1>
         <p>{subtitle}</p>
       </div>
-      <button type="button">
+      <button type="button" onClick={onMap}>
         <Map size={21} />
         <span>На мапі</span>
       </button>
@@ -391,32 +408,48 @@ const categories: Array<{
 ];
 
 function HomeScreen({ navigate }: { navigate: Navigate }) {
+  const { context, language } = useTouristRuntime();
+  const regionName = language === "en" ? (context?.region.nameEn || context?.region.name || "Tatariv") : language === "pl" ? (context?.region.namePl || context?.region.name || "Tatarów") : (context?.region.name || "Татарові");
+  const contextPlace = context?.place;
+  const localizedCategories = categories.map((item) => {
+    const en: Record<string, [string, string]> = {
+      shop: ["Shopping", "Groceries, goods and souvenirs"], catalog: ["Food", "Cafes, restaurants and kolybas"], available: ["Relax", "Tubs, saunas, pools and massage"],
+      entertainment: ["Entertainment", "Activities and impressions"], nearby: ["Nearby", "Places around your location"], transfer: ["Transfer", "Taxi, transfers and car rental"], emergency: ["Emergency", "Help, pharmacies, police, doctors"],
+    };
+    const pl: Record<string, [string, string]> = {
+      shop: ["Zakupy", "Produkty, towary i pamiątki"], catalog: ["Gdzie zjeść", "Kawiarnie, restauracje i karczmy"], available: ["Wypoczynek", "Banie, sauny, baseny i masaż"],
+      entertainment: ["Rozrywka", "Aktywności i wrażenia"], nearby: ["W pobliżu", "Miejsca wokół twojej lokalizacji"], transfer: ["Transfer", "Taxi, transfery i wynajem auta"], emergency: ["Pomoc", "Apteki, policja, lekarze"],
+    };
+    const copy = language === "en" ? en[item.slug] : language === "pl" ? pl[item.slug] : undefined;
+    return copy ? { ...item, title: copy[0], note: copy[1] } : item;
+  });
+
   return (
     <div className="tourist-screen gt-screen gt-home-screen">
       <section className="gt-home-hero">
         <div className="gt-home-hero__copy">
-          <p>Вітаємо в</p>
-          <h1>Татарові</h1>
+          <p>{language === "en" ? "Welcome to" : language === "pl" ? "Witamy w" : "Вітаємо в"}</p>
+          <h1>{regionName}</h1>
         </div>
 
         <div className="gt-weather gt-weather--reference">
           <div className="gt-weather-item gt-weather-item--sun">
             <WeatherSunIcon className="gt-weather-icon--sun" />
-            <span><strong>24°C</strong><small className="gt-weather-label gt-weather-label--clear">Ясно</small></span>
+            <span><strong>24°C</strong><small className="gt-weather-label gt-weather-label--clear">{language === "en" ? "Clear" : language === "pl" ? "Słonecznie" : "Ясно"}</small></span>
           </div>
           <div className="gt-weather-item gt-weather-item--rain">
             <WeatherRainIcon className="gt-weather-icon--rain" />
-            <span><strong>10%</strong><small className="gt-weather-label gt-weather-label--rain">Імовірність дощу</small></span>
+            <span><strong>10%</strong><small className="gt-weather-label gt-weather-label--rain">{language === "en" ? "Rain chance" : language === "pl" ? "Szansa deszczu" : "Імовірність дощу"}</small></span>
           </div>
           <div className="gt-weather-item gt-weather-item--wind">
             <WeatherWindIcon className="gt-weather-icon--wind" />
-            <span><strong>6 км/год</strong><small className="gt-weather-label gt-weather-label--wind">Вітер</small></span>
+            <span><strong>6 км/год</strong><small className="gt-weather-label gt-weather-label--wind">{language === "en" ? "Wind" : language === "pl" ? "Wiatr" : "Вітер"}</small></span>
           </div>
           <div className="gt-weather-item gt-weather-item--sunset">
             <WeatherSunsetIcon className="gt-weather-icon--sunset" />
-            <span><strong>20:31</strong><small className="gt-weather-label gt-weather-label--sunset">Захід сонця</small></span>
+            <span><strong>20:31</strong><small className="gt-weather-label gt-weather-label--sunset">{language === "en" ? "Sunset" : language === "pl" ? "Zachód" : "Захід сонця"}</small></span>
           </div>
-          <small className="gt-weather-updated">Оновлено 10:30</small>
+          <small className="gt-weather-updated">{language === "en" ? "Updated 10:30" : language === "pl" ? "Aktualizacja 10:30" : "Оновлено 10:30"}</small>
         </div>
       </section>
 
@@ -427,21 +460,21 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
       >
         <span className="gt-current-place-pin" aria-hidden="true"><CurrentPlaceSticker /></span>
         <span className="gt-current-place-copy">
-          <strong>Ви зараз тут</strong>
-          <small>Готель «Гірський затишок»</small>
-          <b><Star size={14} fill="currentColor" /> 4.8 · 125 відгуків</b>
+          <strong>{language === "en" ? "Your QR point" : language === "pl" ? "Punkt z QR" : "Ви зараз тут"}</strong>
+          <small>{contextPlace?.name || "Готель «Гірський затишок»"}</small>
+          <b><Star size={14} fill="currentColor" /> {(contextPlace?.rating ?? 4.8).toFixed(1)} · {contextPlace?.review_count ?? 125} {language === "en" ? "reviews" : language === "pl" ? "opinii" : "відгуків"}</b>
         </span>
-        <Thumb name="hotel" className="gt-current-place-photo" />
-        <i>Деталі</i>
+        {contextPlace?.image_url ? <img src={contextPlace.image_url} alt="" className="gt-photo gt-current-place-photo gt-current-place-photo--remote" /> : <Thumb name="hotel" className="gt-current-place-photo" />}
+        <i>{language === "en" ? "Details" : language === "pl" ? "Szczegóły" : "Деталі"}</i>
       </button>
 
       <div className="gt-category-grid">
-        {categories.map(({ title, note, slug, tone, icon: Icon }) => (
+        {localizedCategories.map(({ title, note, slug, tone, icon: Icon }) => (
           <button
             type="button"
             className="gt-category-card"
-            key={title}
-            onClick={() => navigate("tourist", slug)}
+            key={slug}
+            onClick={() => { void trackEvent("category_opened", { regionId: context?.region.id, payload: { category: slug } }); navigate("tourist", slug); }}
           >
             <span className={`gt-category-card__icon gt-tone--${tone}`}><Icon size={23} /></span>
             <span>
@@ -457,8 +490,8 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
         >
           <span className="gt-category-card__icon"><FlameKindling size={24} /></span>
           <span>
-            <strong>Гаряча пропозиція</strong>
-            <small>Актуальні знижки</small>
+            <strong>{language === "en" ? "Hot offer" : language === "pl" ? "Gorąca oferta" : "Гаряча пропозиція"}</strong>
+            <small>{language === "en" ? "Current discounts" : language === "pl" ? "Aktualne zniżki" : "Актуальні знижки"}</small>
           </span>
           <ChevronRight size={20} />
         </button>
@@ -699,57 +732,54 @@ function HotOfferDetailScreen({ navigate }: { navigate: Navigate }) {
 }
 
 function AboutScreen({ navigate }: { navigate: Navigate }) {
+  const { context } = useTouristRuntime();
+  const place = context?.place;
+  const details = place?.details ?? {};
+  const checkIn = typeof details.check_in === "string" ? details.check_in : "14:00";
+  const checkOut = typeof details.check_out === "string" ? details.check_out : "11:00";
+  const wifiSsid = typeof details.wifi_ssid === "string" ? details.wifi_ssid : "Girskyi_Zatyshok_Guest";
+
   return (
     <div className="tourist-screen gt-screen gt-about-screen">
-      <section className="gt-about-hero">
+      <section className="gt-about-hero" style={place?.image_url ? { backgroundImage: `linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.56)),url(${place.image_url})` } : undefined}>
         <div className="gt-about-logo">
           <MountainSnow size={43} />
           <strong>Гірський<br />затишок</strong>
           <small>готель</small>
         </div>
         <div className="gt-about-hero__copy">
-          <h1>Готель<br />«Гірський затишок»</h1>
-          <p><MapPin size={18} /> Татарів, вул. Незалежності, 15Б</p>
+          <h1>{place?.name || "Готель «Гірський затишок»"}</h1>
+          <p><MapPin size={18} /> {place?.address || "Татарів, вул. Незалежності, 15Б"}</p>
         </div>
         <div className="gt-checkin-card gt-checkin-card--hero">
           <p>
-            <span><Clock3 size={20} /><i>Заїзд<b>14:00</b></i></span>
-            <span><Clock3 size={20} /><i>Виїзд<b>11:00</b></i></span>
+            <span><Clock3 size={20} /><i>Заїзд<b>{checkIn}</b></i></span>
+            <span><Clock3 size={20} /><i>Виїзд<b>{checkOut}</b></i></span>
           </p>
         </div>
       </section>
       <div className="gt-about-content">
-        <button
-          type="button"
-          className="gt-service-card gt-service-card--wide"
-          onClick={() => navigate("tourist", "hotel-services")}
-        >
+        <button type="button" className="gt-service-card gt-service-card--wide" onClick={() => navigate("tourist", "hotel-services")}>
           <span><Hotel size={25} /></span>
           <div><strong>Послуги закладу</strong><small>Доступні зручності та сервіси для гостей</small></div>
           <i>Деталі <ChevronRight size={18} /></i>
         </button>
         <div className="gt-service-grid">
+          <a className="gt-service-card" href={place?.phone ? `tel:${place.phone}` : undefined}>
+            <span><Hotel size={24} /></span><div><strong>Рецепція</strong><small>{place?.phone || "Звʼяжіться з адміністратором"}</small></div><ChevronRight size={19} />
+          </a>
           <button type="button" className="gt-service-card">
-            <span><Hotel size={24} /></span>
-            <div><strong>Рецепція</strong><small>Звʼяжіться з адміністратором</small></div>
-            <ChevronRight size={19} />
-          </button>
-          <button type="button" className="gt-service-card">
-            <span><Wifi size={24} /></span>
-            <div><strong>Wi‑Fi</strong><small>Пароль від мережі</small></div>
-            <ChevronRight size={19} />
+            <span><Wifi size={24} /></span><div><strong>Wi‑Fi</strong><small>{wifiSsid}</small></div><ChevronRight size={19} />
           </button>
         </div>
         <button type="button" className="gt-service-card gt-service-card--wide">
           <span><ReceiptText size={25} /></span>
-          <div><strong>Правила проживання</strong><small>Ознайомтесь з правилами перебування в нашому закладі</small></div>
+          <div><strong>Правила проживання</strong><small>{Array.isArray(details.rules) && details.rules.length ? String(details.rules[0]) : "Ознайомтесь з правилами перебування в нашому закладі"}</small></div>
           <ChevronRight size={19} />
         </button>
-        <button type="button" className="gt-service-card gt-service-card--wide">
-          <span><Phone size={25} /></span>
-          <div><strong>Оперативні контакти</strong><small>Важливі номери телефонів для вашої зручності</small></div>
-          <ChevronRight size={19} />
-        </button>
+        <a className="gt-service-card gt-service-card--wide" href={place?.phone ? `tel:${place.phone}` : undefined}>
+          <span><Phone size={25} /></span><div><strong>Оперативні контакти</strong><small>{place?.phone || "Важливі номери телефонів для вашої зручності"}</small></div><ChevronRight size={19} />
+        </a>
       </div>
     </div>
   );
@@ -967,276 +997,309 @@ function HotelServicesScreen({ navigate }: { navigate: Navigate }) {
   );
 }
 
-function CatalogScreen({ navigate }: { navigate: Navigate }) {
+
+function placePhotoFallback(place: Stage2Place): PhotoName {
+  const value = `${place.category_slug} ${place.subcategory ?? ""} ${place.name}`.toLocaleLowerCase("uk");
+  if (value.includes("аптек")) return "pharmacy";
+  if (value.includes("кава") || value.includes("кавʼ")) return "coffee";
+  if (value.includes("піц")) return "pizza";
+  if (value.includes("магаз") || place.category_slug === "shop") return "store";
+  if (value.includes("чан")) return "tub";
+  if (value.includes("саун")) return "sauna";
+  if (value.includes("басейн")) return "pool";
+  if (value.includes("масаж")) return "massage";
+  if (value.includes("квадро")) return "quad";
+  if (value.includes("рафт")) return "rafting";
+  if (value.includes("зіп")) return "zipline";
+  if (value.includes("джип")) return "jeep";
+  if (place.category_slug === "transfer") return "van";
+  if (place.category_slug === "food") return "restaurant";
+  return "hotel";
+}
+
+function distanceLabel(distance?: number | null) {
+  if (distance == null) return "—";
+  return distance < 1000 ? `${Math.max(1, Math.round(distance / 10) * 10)} м` : `${(distance / 1000).toFixed(1).replace(".", ",")} км`;
+}
+
+function walkLabel(distance?: number | null) {
+  if (distance == null) return "—";
+  return `${Math.max(1, Math.round(distance / 80))} хв`;
+}
+
+type DynamicCategoryConfig = {
+  category: "food" | "shop" | "rest" | "entertainment";
+  className: string;
+  icon: LucideIcon;
+  title: string;
+  titleEn: string;
+  titlePl: string;
+  subtitle: string;
+  subtitleEn: string;
+  subtitlePl: string;
+  tone: string;
+  placeholder: string;
+  sectionTitle: string;
+  fallbackChips: string[];
+  fallbackPlaces: Stage2Place[];
+};
+
+function DynamicCategoryScreen({ navigate, config }: { navigate: Navigate; config: DynamicCategoryConfig }) {
+  const runtime = useTouristRuntime();
+  const [query, setQuery] = useState("");
+  const [selectedChip, setSelectedChip] = useState("Усі");
+  const [places, setPlaces] = useState<Stage2Place[]>(config.fallbackPlaces);
+  const [category, setCategory] = useState<Stage2Category | null>(null);
+  const [openNow, setOpenNow] = useState(false);
+  const [highRating, setHighRating] = useState(false);
+  const [parking, setParking] = useState(false);
+  const [kids, setKids] = useState(false);
+  const [budget, setBudget] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void stage2Fetch<Stage2Category[]>("/categories").then((items) => {
+      if (!cancelled) setCategory(items.find((item) => item.slug === config.category) ?? null);
+    }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [config.category]);
+
+  useEffect(() => {
+    if (!runtime.context) return;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      const params = new URLSearchParams({
+        region_id: runtime.context!.region.id,
+        category: config.category,
+      });
+      if (query.trim()) params.set("q", query.trim());
+      if (selectedChip !== "Усі") params.set("subcategory", selectedChip);
+      if (runtime.location) {
+        params.set("lat", String(runtime.location.lat));
+        params.set("lng", String(runtime.location.lng));
+      }
+      if (openNow) params.set("open_now", "true");
+      if (highRating) params.set("min_rating", "4.5");
+      if (parking) params.set("parking", "true");
+      if (kids) params.set("kids", "true");
+      if (budget) params.set("price_level", "1");
+      void stage2Fetch<Stage2Place[]>(`/places?${params}`).then((items) => {
+        if (!cancelled) setPlaces(items);
+      }).catch(() => undefined);
+      if (query.trim()) void trackEvent("search_used", { regionId: runtime.context?.region.id, payload: { q: query.trim(), category: config.category } });
+    }, 240);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [runtime.context, runtime.location, query, selectedChip, openNow, highRating, parking, kids, budget, config.category]);
+
+  const chips = ["Усі", ...((category?.subcategories?.length ? category.subcategories : config.fallbackChips).filter((item) => item !== "Усі"))];
+  const title = runtime.language === "en" ? config.titleEn : runtime.language === "pl" ? config.titlePl : config.title;
+  const subtitle = runtime.language === "en" ? config.subtitleEn : runtime.language === "pl" ? config.subtitlePl : config.subtitle;
+
+  const openPlace = (place: Stage2Place) => {
+    runtime.setSelectedPlaceId(place.id);
+    void trackEvent("place_viewed", { regionId: runtime.context?.region.id, placeId: place.id, payload: { source: config.category } });
+    navigate("tourist", "place");
+  };
+
   return (
-    <div className="tourist-screen gt-screen gt-reference-list-screen gt-food-screen">
+    <div className={`tourist-screen gt-screen gt-reference-list-screen ${config.className}`}>
       <main className="gt-content">
-        <CategoryHeader icon={Utensils} title="Де поїсти" subtitle="Кафе, ресторани та заклади" tone="orange" />
-        <SearchBar placeholder="Пошук закладу, кухні або страви" />
-        <Chips items={["Усі", "Українська кухня", "Неукраїнська кухня", "Фаст фуд"]} />
-        <MapStrip />
-        <SectionTitle title="Рекомендовані заклади" action="Переглянути всі" />
+        <CategoryHeader icon={config.icon} title={title} subtitle={subtitle} tone={config.tone} onMap={() => navigate("tourist", "nearby")} />
+        <SearchBar placeholder={config.placeholder} value={query} onChange={setQuery} />
+        <Chips items={chips} selected={selectedChip} onSelect={setSelectedChip} />
+        <div className="gt-stage2-filter-pills" aria-label="Фільтри">
+          <button type="button" className={openNow ? "is-active" : ""} onClick={() => setOpenNow((v) => !v)}>Відкрито зараз</button>
+          <button type="button" className={highRating ? "is-active" : ""} onClick={() => setHighRating((v) => !v)}>★ 4.5+</button>
+          <button type="button" className={parking ? "is-active" : ""} onClick={() => setParking((v) => !v)}>Парковка</button>
+          <button type="button" className={kids ? "is-active" : ""} onClick={() => setKids((v) => !v)}>З дітьми</button>
+          <button type="button" className={budget ? "is-active" : ""} onClick={() => setBudget((v) => !v)}>Бюджетно</button>
+        </div>
+        <MapStrip real />
+        <SectionTitle title={config.sectionTitle} action={`${places.length}`} />
         <div className="gt-place-list">
-          <PlaceRow photo="restaurant" title="Ресторан «Гуцульщина»" subtitle="Українська кухня" rating="4.8 (125)" distance="120 м" walk="2 хв" walking verified tags={["Банош", "Бограч", "Грибна юшка", "Деруни"]} onClick={() => navigate("tourist", "place")} />
-          <PlaceRow photo="coffee" title="Кавʼярня «Кедр»" subtitle="Кавʼярня · Десерти" rating="4.6 (89)" distance="180 м" walk="3 хв" walking tags={["Кава", "Десерти", "Сніданки", "Wi‑Fi"]} />
-          <PlaceRow photo="pizza" title="Піцерія «Карпатська піца»" subtitle="Італійська кухня" rating="4.7 (63)" distance="250 м" walk="4 хв" walking tags={["Піца", "Паста", "Салати"]} />
-          <PlaceRow photo="burger" title="Бургерна «Вершина»" subtitle="Фаст фуд" rating="4.5 (47)" distance="300 м" walk="5 хв" walking tags={["Бургери", "Картопля фрі", "Напої"]} />
+          {places.map((place) => (
+            <PlaceRow
+              key={place.id}
+              photo={placePhotoFallback(place)}
+              imageUrl={place.image_url}
+              title={place.name}
+              subtitle={place.subcategory || place.category_name || "Локація"}
+              rating={`${Number(place.rating || 0).toFixed(1)} (${place.review_count || 0})`}
+              distance={distanceLabel(place.distance_m)}
+              walk={walkLabel(place.distance_m)}
+              walking
+              verified={place.attributes?.verified === true}
+              tags={(place.tags ?? []).slice(0, 4)}
+              onClick={() => openPlace(place)}
+            />
+          ))}
+          {!places.length ? <div className="gt-stage2-empty">За цими фільтрами місць не знайдено</div> : null}
         </div>
       </main>
     </div>
   );
 }
 
+function CatalogScreen({ navigate }: { navigate: Navigate }) {
+  return <DynamicCategoryScreen navigate={navigate} config={{
+    category: "food", className: "gt-food-screen", icon: Utensils, title: "Де поїсти", titleEn: "Food", titlePl: "Gdzie zjeść",
+    subtitle: "Кафе, ресторани та заклади", subtitleEn: "Cafes and restaurants", subtitlePl: "Kawiarnie i restauracje", tone: "orange",
+    placeholder: "Пошук закладу, кухні або страви", sectionTitle: "Рекомендовані заклади",
+    fallbackChips: ["Українська кухня", "Неукраїнська кухня", "Фаст фуд", "Кавʼярні"],
+    fallbackPlaces: [
+      { id:"food-hutsulshchyna",region_id:"region-tatariv",category_slug:"food",category_name:"Де поїсти",subcategory:"Українська кухня",name:"Ресторан «Гуцульщина»",description:"Автентична карпатська кухня",address:"Татарів",lat:48.3457,lng:24.5774,rating:4.8,review_count:125,tags:["Банош","Бограч","Деруни"],distance_m:120,attributes:{verified:true} },
+      { id:"food-coffee",region_id:"region-tatariv",category_slug:"food",category_name:"Де поїсти",subcategory:"Кавʼярні",name:"Кавʼярня «Гори & Кава»",description:"Кава та десерти",address:"Татарів",lat:48.3464,lng:24.5802,rating:4.9,review_count:68,tags:["Кава","Сніданки","Wi‑Fi"],distance_m:180 },
+      { id:"food-pizza",region_id:"region-tatariv",category_slug:"food",category_name:"Де поїсти",subcategory:"Неукраїнська кухня",name:"Піцерія «Татаріно»",description:"Піца та паста",address:"Татарів",lat:48.3437,lng:24.5811,rating:4.7,review_count:94,tags:["Піца","Італійська кухня"],distance_m:250 },
+    ],
+  }} />;
+}
+
 function NearbyScreen({ navigate }: { navigate: Navigate }) {
+  const runtime = useTouristRuntime();
   const [activeCategory, setActiveCategory] = useState("Усі");
   const [activeSubcategory, setActiveSubcategory] = useState("");
   const [resultsExpanded, setResultsExpanded] = useState(false);
+  const [query, setQuery] = useState("");
+  const [radius, setRadius] = useState(500);
+  const [nearbyPlaces, setNearbyPlaces] = useState<Stage2Place[]>([]);
   const categoryScrollRef = useRef<HTMLDivElement | null>(null);
   const subcategoryScrollRef = useRef<HTMLDivElement | null>(null);
   const sheetTouchStartY = useRef<number | null>(null);
 
-  const categories: Array<{ label: string; icon: LucideIcon; tone: string }> = [
+  const categories: Array<{ label: string; icon: LucideIcon; tone: string; slug?: string }> = [
     { label: "Усі", icon: Grid2X2, tone: "all" },
-    { label: "Де поїсти", icon: Utensils, tone: "food" },
-    { label: "Де купити", icon: ShoppingBag, tone: "shop" },
+    { label: "Де поїсти", icon: Utensils, tone: "food", slug: "food" },
+    { label: "Де купити", icon: ShoppingBag, tone: "shop", slug: "shop" },
     { label: "Природа", icon: MountainSnow, tone: "nature" },
     { label: "Цікаве", icon: TentTree, tone: "interesting" },
-    { label: "Розваги", icon: Bike, tone: "fun" },
-    { label: "Трансфер", icon: CarFront, tone: "transfer" },
+    { label: "Розваги", icon: Bike, tone: "fun", slug: "entertainment" },
+    { label: "Трансфер", icon: CarFront, tone: "transfer", slug: "transfer" },
     { label: "Корисне", icon: Info, tone: "useful" },
     { label: "Маршрути", icon: Route, tone: "routes" },
   ];
 
   const subcategoryGroups: Record<string, Array<{ label: string; icon: LucideIcon }>> = {
     "Де поїсти": [
-      { label: "Ресторани", icon: Utensils },
-      { label: "Кафе", icon: Sparkles },
-      { label: "Бари", icon: CircleHelp },
-      { label: "Піцерії", icon: Flame },
-      { label: "Кондитерські", icon: Gift },
-      { label: "Фастфуд", icon: FlameKindling },
-      { label: "Їжа з собою", icon: ShoppingBag },
-      { label: "Традиційна кухня", icon: BadgeCheck },
+      { label: "Українська кухня", icon: Utensils }, { label: "Неукраїнська кухня", icon: Sparkles }, { label: "Фаст фуд", icon: FlameKindling }, { label: "Кавʼярні", icon: Gift },
     ],
     "Де купити": [
-      { label: "Продукти", icon: ShoppingBag },
-      { label: "Сувеніри", icon: Gift },
-      { label: "Одяг і взуття", icon: UsersRound },
-      { label: "Товари для дому", icon: Hotel },
-      { label: "Аптеки", icon: Pill },
-      { label: "Техніка", icon: Gauge },
-      { label: "Будівництво", icon: Wrench },
-      { label: "Косметика", icon: Sparkles },
-    ],
-    "Природа": [
-      { label: "Гори", icon: MountainSnow },
-      { label: "Річки", icon: Route },
-      { label: "Водоспади", icon: LifeBuoy },
-      { label: "Джерела", icon: MapPin },
-      { label: "Озера", icon: Flower2 },
-      { label: "Оглядові точки", icon: LocateFixed },
-      { label: "Печери", icon: TentTree },
-      { label: "Ліси", icon: Leaf },
-    ],
-    "Цікаве": [
-      { label: "Пам’ятки", icon: BadgeCheck },
-      { label: "Музеї", icon: Info },
-      { label: "Храми", icon: Cross },
-      { label: "Архітектура", icon: Hotel },
-      { label: "Історичні місця", icon: Clock3 },
-      { label: "Скульптури", icon: UserRound },
-      { label: "Місцеві легенди", icon: MessageSquareMore },
-      { label: "Події", icon: CalendarDays },
+      { label: "Продовольчі", icon: ShoppingBag }, { label: "Сувеніри", icon: Gift }, { label: "Промтовари", icon: Hotel }, { label: "Аптеки", icon: Pill },
     ],
     "Розваги": [
-      { label: "Активний відпочинок", icon: Footprints },
-      { label: "Атракціони", icon: Sparkles },
-      { label: "Екскурсії", icon: Route },
-      { label: "SPA і басейни", icon: Flower2 },
-      { label: "Риболовля", icon: LifeBuoy },
-      { label: "Верхова їзда", icon: PawPrint },
-      { label: "Квадроцикли", icon: Bike },
-      { label: "Польоти", icon: Navigation },
+      { label: "Джипи", icon: CarFront }, { label: "Квадроцикли", icon: Bike }, { label: "Рафтинг", icon: LifeBuoy }, { label: "Зіплайн", icon: Navigation }, { label: "Для дітей", icon: UsersRound },
     ],
     "Трансфер": [
-      { label: "Автобусні зупинки", icon: CarFront },
-      { label: "Залізничні станції", icon: Route },
-      { label: "Автостанції", icon: Hotel },
-      { label: "Таксі", icon: CarFront },
-      { label: "Парковки", icon: MapPin },
-      { label: "Оренда авто", icon: CarFront },
-      { label: "Заправки", icon: Gauge },
-      { label: "Зарядні станції", icon: Plus },
-    ],
-    "Корисне": [
-      { label: "Банкомати", icon: Banknote },
-      { label: "Обмін валют", icon: WalletCards },
-      { label: "Пошта", icon: Send },
-      { label: "Лікарні", icon: Heart },
-      { label: "Туалети", icon: UsersRound },
-      { label: "Wi‑Fi", icon: Wifi },
-      { label: "Поліція", icon: ShieldCheck },
-      { label: "Інформаційні центри", icon: Info },
-    ],
-    "Маршрути": [
-      { label: "Піші маршрути", icon: Footprints },
-      { label: "Веломаршрути", icon: Bike },
-      { label: "Автомаршрути", icon: CarFront },
-      { label: "Верхові маршрути", icon: PawPrint },
-      { label: "Водні маршрути", icon: LifeBuoy },
-      { label: "Популярні маршрути", icon: BadgeCheck },
-      { label: "Складні маршрути", icon: MountainSnow },
-      { label: "Маршрути вихідного дня", icon: SunMedium },
+      { label: "Таксі", icon: CarFront }, { label: "Автостанції", icon: Hotel }, { label: "Парковки", icon: MapPin }, { label: "Оренда авто", icon: CarFront }, { label: "Заправки", icon: Gauge },
     ],
   };
 
   const activeSubcategories = subcategoryGroups[activeCategory] ?? [];
-  const activeTone = categories.find((item) => item.label === activeCategory)?.tone ?? "all";
+  const activeCategoryMeta = categories.find((item) => item.label === activeCategory);
+  const activeTone = activeCategoryMeta?.tone ?? "all";
+  const center = runtime.location ?? (runtime.context ? { lat: runtime.context.region.lat, lng: runtime.context.region.lng, source: "qr" as const } : { lat: 48.34535, lng: 24.57855, source: "qr" as const });
 
-  const nearbyPlaces = [
-    { photo: "pizza" as PhotoName, title: "Піцерія «Татаріно»", subtitle: "Піца, італійська кухня", distance: "250 м", rating: "4.7" },
-    { photo: "rafting" as PhotoName, title: "Водоспад Женецький Гук", subtitle: "Природа", distance: "1.2 км", rating: "4.8" },
-    { photo: "store" as PhotoName, title: "Яремчанський ринок", subtitle: "Фрукти, сувеніри", distance: "1.5 км", rating: "4.6" },
-    { photo: "jeep" as PhotoName, title: "Скелі Довбуша", subtitle: "Природа", distance: "2 км", rating: "4.9" },
-  ];
+  useEffect(() => {
+    if (!runtime.context) return;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      const params = new URLSearchParams({
+        region_id: runtime.context!.region.id,
+        lat: String(center.lat),
+        lng: String(center.lng),
+        radius: String(radius),
+      });
+      if (activeCategoryMeta?.slug) params.set("category", activeCategoryMeta.slug);
+      if (activeSubcategory) params.set("subcategory", activeSubcategory);
+      if (query.trim()) params.set("q", query.trim());
+      void stage2Fetch<Stage2Place[]>(`/places?${params}`).then((items) => {
+        if (!cancelled) setNearbyPlaces(items);
+      }).catch(() => undefined);
+    }, 180);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [runtime.context, center.lat, center.lng, radius, activeCategoryMeta?.slug, activeSubcategory, query]);
+
+  const openPlace = (place: Stage2Place) => {
+    runtime.setSelectedPlaceId(place.id);
+    void trackEvent("place_viewed", { regionId: runtime.context?.region.id, placeId: place.id, payload: { source: "nearby" } });
+    navigate("tourist", "place");
+  };
 
   return (
     <div className={`tourist-screen gt-screen gt-nearby-screen gt-nearby-design gt-nearby-theme--${activeTone}`}>
       <main className={`gt-nearby-design__content ${activeSubcategories.length ? "has-subcategories" : ""}`.trim()}>
         <section className="gt-nearby-design__head">
-          <div className="gt-nearby-design__brand-row">
-            <h1>Gid Tourist</h1>
-          </div>
-
+          <div className="gt-nearby-design__brand-row"><h1>Gid Tourist</h1></div>
           <div className="gt-nearby-design__search-row">
             <label className="gt-nearby-design__search">
               <Search size={21} />
-              <input aria-label="Пошук" placeholder="Пошук місць, маршрутів, активностей..." />
+              <input aria-label="Пошук" placeholder="Пошук місць, маршрутів, активностей..." value={query} onChange={(event) => setQuery(event.target.value)} />
             </label>
-            <button type="button" className="gt-nearby-design__filter" aria-label="Фільтри">
-              <SlidersHorizontal size={23} />
+            <button type="button" className="gt-nearby-design__filter" aria-label="Визначити моє місцезнаходження" onClick={() => void runtime.requestLocation()}>
+              <LocateFixed size={23} />
             </button>
           </div>
 
           <div className="gt-nearby-design__categories-wrap">
             <div ref={categoryScrollRef} className="gt-nearby-design__categories">
               {categories.map(({ label, icon: Icon, tone }) => (
-                <button
-                  type="button"
-                  key={label}
-                  className={activeCategory === label ? "is-active" : ""}
-                  onClick={() => {
-                    setActiveCategory(label);
-                    const firstSubcategory = subcategoryGroups[label]?.[0]?.label ?? "";
-                    setActiveSubcategory(firstSubcategory);
-                    setResultsExpanded(false);
-                  }}
-                >
-                  <span className={`gt-nearby-design__category-icon gt-nearby-category-icon--${tone}`}>
-                    <Icon size={25} />
-                  </span>
+                <button type="button" key={label} className={activeCategory === label ? "is-active" : ""} onClick={() => {
+                  setActiveCategory(label); setActiveSubcategory(""); setResultsExpanded(false);
+                }}>
+                  <span className={`gt-nearby-design__category-icon gt-nearby-category-icon--${tone}`}><Icon size={25} /></span>
                   <strong>{label}</strong>
                 </button>
               ))}
             </div>
-            <button
-              type="button"
-              className="gt-nearby-design__categories-next"
-              aria-label="Наступні категорії"
-              onClick={() => categoryScrollRef.current?.scrollBy({ left: 220, behavior: "smooth" })}
-            >
-              <ChevronRight size={22} />
-            </button>
+            <button type="button" className="gt-nearby-design__categories-next" aria-label="Наступні категорії" onClick={() => categoryScrollRef.current?.scrollBy({ left: 220, behavior: "smooth" })}><ChevronRight size={22} /></button>
           </div>
 
           {activeCategory !== "Усі" && activeSubcategories.length ? (
             <div className="gt-nearby-design__subcategories-wrap">
               <div ref={subcategoryScrollRef} className="gt-nearby-design__subcategories">
                 {activeSubcategories.map(({ label, icon: Icon }) => (
-                  <button
-                    type="button"
-                    key={`${activeCategory}-${label}`}
-                    className={activeSubcategory === label ? "is-active" : ""}
-                    onClick={() => setActiveSubcategory(label)}
-                  >
-                    <span><Icon size={22} /></span>
-                    <strong>{label}</strong>
+                  <button type="button" key={`${activeCategory}-${label}`} className={activeSubcategory === label ? "is-active" : ""} onClick={() => setActiveSubcategory((current) => current === label ? "" : label)}>
+                    <span><Icon size={22} /></span><strong>{label}</strong>
                   </button>
                 ))}
               </div>
-              <button
-                type="button"
-                className="gt-nearby-design__subcategories-next"
-                aria-label="Наступні підкатегорії"
-                onClick={() => subcategoryScrollRef.current?.scrollBy({ left: 250, behavior: "smooth" })}
-              >
-                <ChevronRight size={20} />
-              </button>
+              <button type="button" className="gt-nearby-design__subcategories-next" aria-label="Наступні підкатегорії" onClick={() => subcategoryScrollRef.current?.scrollBy({ left: 250, behavior: "smooth" })}><ChevronRight size={20} /></button>
             </div>
           ) : null}
         </section>
 
-        <section className="gt-nearby-design__map" aria-label="Карта місць поруч">
-          <span className="gt-nearby-design__pin gt-nearby-design__pin--partner gt-nearby-design__pin--p1"><b>12</b></span>
-          <span className="gt-nearby-design__pin gt-nearby-design__pin--fun gt-nearby-design__pin--p2"><Bike size={18} /></span>
-          <span className="gt-nearby-design__pin gt-nearby-design__pin--interesting gt-nearby-design__pin--p3"><TentTree size={18} /></span>
-          <span className="gt-nearby-design__pin gt-nearby-design__pin--nature gt-nearby-design__pin--p4"><MountainSnow size={18} /></span>
-          <span className="gt-nearby-design__pin gt-nearby-design__pin--shop gt-nearby-design__pin--p5"><ShoppingBag size={18} /></span>
-          <span className="gt-nearby-design__pin gt-nearby-design__pin--useful gt-nearby-design__pin--p6"><UsersRound size={18} /></span>
-          <span className="gt-nearby-design__pin gt-nearby-design__pin--partner gt-nearby-design__pin--p7"><b>15</b></span>
-          <span className="gt-nearby-design__pin gt-nearby-design__pin--partner gt-nearby-design__pin--p8"><b>8</b></span>
-          <span className="gt-nearby-design__pin gt-nearby-design__pin--fun gt-nearby-design__pin--p9"><Bike size={18} /></span>
-          <span className="gt-nearby-design__pin gt-nearby-design__pin--partner gt-nearby-design__pin--p10"><b>5</b></span>
-          <span className="gt-nearby-design__user"><i /></span>
-
+        <section className="gt-nearby-design__map gt-nearby-design__map--live" aria-label="Карта місць поруч">
+          <RealMap center={center} places={nearbyPlaces} radius={radius} className="gt-nearby-design__real-map" onSelect={openPlace} />
           <div className="gt-nearby-design__map-controls">
-            <button type="button" aria-label="Моє місцезнаходження"><LocateFixed size={22} /></button>
+            <button type="button" aria-label="Моє місцезнаходження" onClick={() => void runtime.requestLocation()}><LocateFixed size={22} /></button>
           </div>
-
           <div className="gt-nearby-design__radius">
-            {["300 м", "500 м", "1 км", "2 км", "5 км"].map((radius, index) => (
-              <button type="button" key={radius} className={index === 0 ? "is-active" : ""}>{radius}</button>
+            {[300, 500, 1000, 2000, 5000].map((value) => (
+              <button type="button" key={value} className={radius === value ? "is-active" : ""} onClick={() => setRadius(value)}>{value < 1000 ? `${value} м` : `${value / 1000} км`}</button>
             ))}
           </div>
         </section>
 
-        <section
-          className={`gt-nearby-design__sheet ${resultsExpanded ? "is-expanded" : ""}`}
-          onTouchStart={(event) => {
-            sheetTouchStartY.current = event.touches[0]?.clientY ?? null;
-          }}
+        <section className={`gt-nearby-design__sheet ${resultsExpanded ? "is-expanded" : ""}`}
+          onTouchStart={(event) => { sheetTouchStartY.current = event.touches[0]?.clientY ?? null; }}
           onTouchEnd={(event) => {
-            const startY = sheetTouchStartY.current;
-            const endY = event.changedTouches[0]?.clientY;
-            sheetTouchStartY.current = null;
-            if (startY == null || endY == null) return;
-            const deltaY = endY - startY;
-            if (deltaY < -28) setResultsExpanded(true);
-            if (deltaY > 28) setResultsExpanded(false);
-          }}
-        >
-          <button
-            type="button"
-            className="gt-nearby-design__sheet-head"
-            onClick={() => setResultsExpanded((value) => !value)}
-            aria-expanded={resultsExpanded}
-          >
-            <span className="gt-nearby-design__sheet-caret"><ChevronRight size={18} /></span>
-            <strong>Поруч з вами</strong>
-            <span>Дивитись все</span>
+            const startY = sheetTouchStartY.current; const endY = event.changedTouches[0]?.clientY; sheetTouchStartY.current = null;
+            if (startY == null || endY == null) return; const deltaY = endY - startY; if (deltaY < -28) setResultsExpanded(true); if (deltaY > 28) setResultsExpanded(false);
+          }}>
+          <button type="button" className="gt-nearby-design__sheet-head" onClick={() => setResultsExpanded((value) => !value)} aria-expanded={resultsExpanded}>
+            <span className="gt-nearby-design__sheet-caret"><ChevronRight size={18} /></span><strong>Поруч з вами</strong><span>{nearbyPlaces.length} місць</span>
           </button>
           {resultsExpanded ? (
             <div className="gt-nearby-design__cards">
               {nearbyPlaces.map((place) => (
-                <button type="button" className="gt-nearby-design__card" key={place.title} onClick={() => navigate("tourist", "place")}>
-                  <Thumb name={place.photo} />
+                <button type="button" className="gt-nearby-design__card" key={place.id} onClick={() => openPlace(place)}>
+                  {place.image_url ? <img src={place.image_url} alt="" className="gt-photo gt-nearby-design__remote-photo" /> : <Thumb name={placePhotoFallback(place)} />}
                   <span className="gt-nearby-design__card-copy">
-                    <strong>{place.title}</strong>
-                    <small>{place.subtitle}</small>
-                    <span><b><Star size={12} fill="currentColor" /> {place.rating}</b><em>{place.distance}</em></span>
+                    <strong>{place.name}</strong><small>{place.subcategory || place.category_name}</small>
+                    <span><b><Star size={12} fill="currentColor" /> {Number(place.rating || 0).toFixed(1)}</b><em>{distanceLabel(place.distance_m)}</em></span>
                   </span>
                 </button>
               ))}
+              {!nearbyPlaces.length ? <div className="gt-stage2-empty">У цьому радіусі місць не знайдено</div> : null}
             </div>
           ) : null}
         </section>
@@ -1246,100 +1309,121 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
 }
 
 function PlaceScreen({ navigate }: { navigate: Navigate }) {
+  const runtime = useTouristRuntime();
+  const [place, setPlace] = useState<Stage2Place | null>(null);
+  const [favorite, setFavorite] = useState(false);
+  const fallbackId = runtime.selectedPlaceId || runtime.context?.place?.id || "food-hutsulshchyna";
+
+  useEffect(() => {
+    if (!fallbackId) return;
+    let cancelled = false;
+    void stage2Fetch<Stage2Place>(`/places/${encodeURIComponent(fallbackId)}`).then((next) => { if (!cancelled) setPlace(next); }).catch(() => {
+      if (!cancelled && runtime.context?.place?.id === fallbackId) setPlace(runtime.context.place);
+    });
+    void stage2Fetch<Stage2Place[]>("/me/favorites").then((items) => { if (!cancelled) setFavorite(items.some((item) => item.id === fallbackId)); }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [fallbackId, runtime.context?.place]);
+
+  const current = place ?? runtime.context?.place ?? {
+    id: "food-hutsulshchyna", region_id: "region-tatariv", category_slug: "food", name: "Ресторан «Гуцульщина»", description: "Автентична карпатська кухня, локальні продукти та затишна атмосфера з видом на гори.",
+    address: "вул. Незалежності, 42, Татарів", lat: 48.3457, lng: 24.5774, rating: 4.8, review_count: 125, is_open_now: true,
+  } as Stage2Place;
+  const daily = current.work_hours?.daily as { from?: string; to?: string } | undefined;
+  const hours = current.work_hours?.always_open === true ? "Цілодобово" : daily?.from && daily?.to ? `Щодня · ${daily.from}–${daily.to}` : "Графік уточнюється";
+  const distance = runtime.location ? distanceLabel(Math.round((() => {
+    const r=6371000,toRad=(v:number)=>v*Math.PI/180,dLat=toRad(Number(current.lat)-runtime.location!.lat),dLng=toRad(Number(current.lng)-runtime.location!.lng);
+    const a=Math.sin(dLat/2)**2+Math.cos(toRad(runtime.location!.lat))*Math.cos(toRad(Number(current.lat)))*Math.sin(dLng/2)**2; return 2*r*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  })())) : "—";
+
+  const openRoute = () => {
+    void trackEvent("route_clicked", { regionId: current.region_id, placeId: current.id });
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${current.lat},${current.lng}`)}`, "_blank", "noopener,noreferrer");
+  };
+  const toggleFavorite = async () => {
+    try {
+      await stage2Fetch(`/me/favorites/${encodeURIComponent(current.id)}`, { method: favorite ? "DELETE" : "POST" });
+      setFavorite((value) => !value);
+    } catch {
+      // Guest mode: favorites become available after Telegram auth.
+    }
+  };
+
   return (
     <div className="tourist-screen gt-screen">
-      <section className="gt-place-hero">
-        <span className="gt-pill gt-pill--glass"><BadgeCheck size={16} /> Перевірено</span>
+      <section className="gt-place-hero" style={current.image_url ? { backgroundImage: `linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.58)),url(${current.image_url})` } : undefined}>
+        {current.attributes?.verified === true ? <span className="gt-pill gt-pill--glass"><BadgeCheck size={16} /> Перевірено</span> : null}
         <div>
-          <h1>Ресторан «Гуцульщина»</h1>
-          <p><MapPin size={17} /> Татарів · 120 м від вас</p>
+          <h1>{current.name}</h1>
+          <p><MapPin size={17} /> {runtime.context?.region.name || "Татарів"} · {distance}</p>
         </div>
       </section>
       <main className="gt-content gt-content--overlap">
         <div className="gt-place-summary">
-          <span><Star size={19} fill="currentColor" /><strong>4.8</strong><small>125 відгуків</small></span>
-          <span><Clock3 size={19} /><strong>Відкрито</strong><small>до 22:00</small></span>
-          <span><WalletCards size={19} /><strong>5%</strong><small>бонусами</small></span>
+          <span><Star size={19} fill="currentColor" /><strong>{Number(current.rating || 0).toFixed(1)}</strong><small>{current.review_count || 0} відгуків</small></span>
+          <span><Clock3 size={19} /><strong>{current.is_open_now === true ? "Відкрито" : current.is_open_now === false ? "Зачинено" : "Графік"}</strong><small>{daily?.to ? `до ${daily.to}` : "див. нижче"}</small></span>
+          <span><MapPin size={19} /><strong>{distance}</strong><small>від вашої точки</small></span>
         </div>
         <div className="gt-action-grid">
-          <button type="button"><Navigation size={22} /><span>Маршрут</span></button>
-          <button type="button"><Phone size={22} /><span>Дзвінок</span></button>
-          <button type="button" onClick={() => navigate("tourist", "booking")}><CalendarDays size={22} /><span>Бронювати</span></button>
-          <button type="button"><Heart size={22} /><span>Зберегти</span></button>
+          <button type="button" onClick={openRoute}><Navigation size={22} /><span>Маршрут</span></button>
+          <a className="gt-action-grid__link" href={current.phone ? `tel:${current.phone}` : undefined} onClick={() => void trackEvent("call_clicked", { regionId: current.region_id, placeId: current.id })}><Phone size={22} /><span>Дзвінок</span></a>
+          <button type="button" onClick={() => current.telegram ? window.open(current.telegram, "_blank", "noopener,noreferrer") : undefined}><MessageCircle size={22} /><span>Telegram</span></button>
+          <button type="button" className={favorite ? "is-active" : ""} onClick={() => void toggleFavorite()}><Heart size={22} fill={favorite ? "currentColor" : "none"} /><span>{favorite ? "Збережено" : "Зберегти"}</span></button>
         </div>
         <SectionTitle title="Про заклад" />
-        <p className="gt-body-copy">Автентична карпатська кухня, локальні продукти та затишна атмосфера з видом на гори.</p>
+        <p className="gt-body-copy">{current.description || "Інформація про заклад уточнюється."}</p>
         <div className="gt-detail-card">
-          <span><Clock3 size={22} /></span><div><strong>Графік роботи</strong><small>Щодня · 10:00–22:00</small></div><ChevronRight size={19} />
+          <span><Clock3 size={22} /></span><div><strong>Графік роботи</strong><small>{hours}</small></div><ChevronRight size={19} />
         </div>
         <div className="gt-detail-card">
-          <span><MapPin size={22} /></span><div><strong>Адреса</strong><small>вул. Незалежності, 42, Татарів</small></div><ChevronRight size={19} />
+          <span><MapPin size={22} /></span><div><strong>Адреса</strong><small>{current.address}</small></div><ChevronRight size={19} />
         </div>
-        <button type="button" className="gt-primary-button" onClick={() => navigate("tourist", "booking")}>Забронювати столик <ChevronRight size={20} /></button>
+        {current.tags?.length ? <div className="gt-stage2-place-tags">{current.tags.map((tag) => <span key={tag}>{tag}</span>)}</div> : null}
+        <button type="button" className="gt-primary-button" onClick={openRoute}>Побудувати маршрут <Navigation size={20} /></button>
       </main>
     </div>
   );
 }
 
 function AvailableScreen({ navigate }: { navigate: Navigate }) {
-  return (
-    <div className="tourist-screen gt-screen gt-reference-list-screen gt-rest-screen">
-      <main className="gt-content">
-        <CategoryHeader icon={BedDouble} title="Де відпочити" subtitle="Місця для релаксу та відпочинку" tone="purple" />
-        <SearchBar placeholder="Пошук відпочинку та розваг" />
-        <Chips items={["Усі", "Чани", "Сауни", "Басейни", "Масаж", "Походи", "Екскурсії"]} />
-        <MapStrip />
-        <SectionTitle title="Рекомендовані місця для відпочинку" action="Переглянути всі" />
-        <div className="gt-place-list">
-          <PlaceRow photo="tub" title="Чан «Гірське відновлення»" subtitle="Комплекс відпочинку" rating="4.8 (128)" distance="250 м" walk="3 хв" walking tags={["Чани", "Вид на гори", "Парковка"]} onClick={() => navigate("tourist", "booking")} />
-          <PlaceRow photo="sauna" title="Сауна в «Карпатському затишку»" subtitle="Сауна" rating="4.7 (86)" distance="350 м" walk="4 хв" walking tags={["Сауна", "Віники", "Душ"]} />
-          <PlaceRow photo="pool" title="Басейн «Aqua Relax»" subtitle="Басейн" rating="4.6 (93)" distance="450 м" walk="6 хв" walking tags={["Басейн", "Шезлонги", "Бар"]} />
-          <PlaceRow photo="massage" title="Масажний салон «Harmony»" subtitle="Масаж та SPA" rating="4.9 (112)" distance="600 м" walk="7 хв" walking tags={["Масаж", "SPA", "Ароматерапія"]} />
-          <PlaceRow photo="excursion" title="Екскурсія «Озеро Несамовите»" subtitle="Екскурсія та походи" rating="4.8 (74)" distance="1,2 км" walk="15 хв" walking tags={["Екскурсії", "Похід", "Гід"]} />
-        </div>
-      </main>
-    </div>
-  );
+  return <DynamicCategoryScreen navigate={navigate} config={{
+    category: "rest", className: "gt-rest-screen", icon: BedDouble, title: "Де відпочити", titleEn: "Relax", titlePl: "Wypoczynek",
+    subtitle: "Місця для релаксу та відпочинку", subtitleEn: "Relax and wellness places", subtitlePl: "Relaks i wypoczynek", tone: "purple",
+    placeholder: "Пошук відпочинку та розваг", sectionTitle: "Рекомендовані місця для відпочинку",
+    fallbackChips: ["Чани","Сауни","Басейни","Масаж","Походи","Екскурсії"],
+    fallbackPlaces: [
+      { id:"rest-tub",region_id:"region-tatariv",category_slug:"rest",category_name:"Де відпочити",subcategory:"Чани",name:"Чан «Гірське відновлення»",description:"Карпатський чан",address:"Татарів",lat:48.3429,lng:24.5758,rating:4.8,review_count:128,tags:["Чани","Вид на гори","Парковка"],distance_m:250,image_url:"/images/service-tub.webp" },
+      { id:"rest-sauna",region_id:"region-tatariv",category_slug:"rest",category_name:"Де відпочити",subcategory:"Сауни",name:"Сауна в «Карпатському затишку»",description:"Сауна",address:"Татарів",lat:48.34485,lng:24.5791,rating:4.7,review_count:86,tags:["Сауна","Душ"],distance_m:350,image_url:"/images/service-sauna.webp" },
+      { id:"rest-pool",region_id:"region-tatariv",category_slug:"rest",category_name:"Де відпочити",subcategory:"Басейни",name:"Басейн «Aqua Relax»",description:"Басейн",address:"Татарів",lat:48.3477,lng:24.5821,rating:4.6,review_count:93,tags:["Басейн","Шезлонги"],distance_m:450,image_url:"/images/service-pool.webp" },
+    ],
+  }} />;
 }
 
 function ShopScreen({ navigate }: { navigate: Navigate }) {
-  return (
-    <div className="tourist-screen gt-screen gt-reference-list-screen gt-shop-screen">
-      <main className="gt-content">
-        <CategoryHeader icon={ShoppingBag} title="Де купити" subtitle="Магазини та корисні покупки" tone="blue" />
-        <SearchBar placeholder="Пошук магазину або товарів" />
-        <Chips items={["Усі", "Продовольчі", "Промтовари", "Сувеніри"]} />
-        <MapStrip />
-        <SectionTitle title="Магазини поруч" action="Переглянути всі" />
-        <div className="gt-place-list">
-          <PlaceRow photo="store" title="Магазин продуктів «Смак»" subtitle="Продукти харчування" rating="4.8 (126)" distance="120 м" walk="2 хв" walking tags={["Продукти", "Хліб", "Молочні вироби"]} />
-          <PlaceRow photo="hotel" title="Сувеніри «Карпати»" subtitle="Сувеніри та подарунки" rating="4.7 (89)" distance="180 м" walk="3 хв" walking tags={["Сувеніри", "Подарунки", "Кераміка"]} />
-          <PlaceRow photo="pharmacy" title="Аптека «Здоровʼя»" subtitle="Ліки та товари для здоровʼя" rating="4.6 (72)" distance="220 м" walk="4 хв" walking tags={["Ліки", "Вітаміни", "Косметика"]} />
-          <PlaceRow photo="store" title="Госптовари «Все для дому»" subtitle="Господарські товари" rating="4.5 (51)" distance="260 м" walk="4 хв" walking tags={["Побутова хімія", "Інструменти", "Посуд"]} onClick={() => navigate("tourist", "place")} />
-        </div>
-      </main>
-    </div>
-  );
+  return <DynamicCategoryScreen navigate={navigate} config={{
+    category: "shop", className: "gt-shop-screen", icon: ShoppingBag, title: "Де купити", titleEn: "Shopping", titlePl: "Zakupy",
+    subtitle: "Магазини та корисні покупки", subtitleEn: "Shops and useful purchases", subtitlePl: "Sklepy i zakupy", tone: "blue",
+    placeholder: "Пошук магазину або товарів", sectionTitle: "Магазини поруч",
+    fallbackChips: ["Продовольчі","Промтовари","Сувеніри","Аптеки"],
+    fallbackPlaces: [
+      { id:"shop-smak",region_id:"region-tatariv",category_slug:"shop",category_name:"Де купити",subcategory:"Продовольчі",name:"Магазин продуктів «Смак»",description:"Продукти",address:"Татарів",lat:48.34595,lng:24.5797,rating:4.8,review_count:126,tags:["Продукти","Хліб","Молочні вироби"],distance_m:120 },
+      { id:"shop-souvenir",region_id:"region-tatariv",category_slug:"shop",category_name:"Де купити",subcategory:"Сувеніри",name:"Сувеніри «Карпати»",description:"Сувеніри",address:"Татарів",lat:48.3462,lng:24.5779,rating:4.7,review_count:89,tags:["Сувеніри","Кераміка"],distance_m:180 },
+      { id:"shop-pharmacy",region_id:"region-tatariv",category_slug:"shop",category_name:"Де купити",subcategory:"Аптеки",name:"Аптека «Здоровʼя»",description:"Ліки",address:"Татарів",lat:48.3448,lng:24.5765,rating:4.6,review_count:72,tags:["Ліки","Вітаміни"],distance_m:220 },
+    ],
+  }} />;
 }
 
 function EntertainmentScreen({ navigate }: { navigate: Navigate }) {
-  return (
-    <div className="tourist-screen gt-screen gt-entertainment-screen gt-reference-list-screen">
-      <main className="gt-content">
-        <CategoryHeader icon={Bike} title="Розваги" subtitle="Активності та яскраві враження" tone="red" />
-        <SearchBar placeholder="Пошук розваг" />
-        <Chips items={["Усі", "Джипи", "Квадроцикли", "Рафтинг", "Зіплайн", "Для дітей", "Коні"]} />
-        <MapStrip />
-        <SectionTitle title="Активні розваги поруч" action="Переглянути всі" />
-        <div className="gt-place-list">
-          <PlaceRow photo="jeep" title="Джип-тур Гірськими стежками" subtitle="Маршрут на полонини та водоспади" rating="4.9 (128)" distance="2,3 км" walk="5 хв" walking tags={["Джипи", "Природа", "Екстрим"]} onClick={() => navigate("tourist", "booking")} />
-          <PlaceRow photo="quad" title="Квадроцикли в Карпатах" subtitle="Лісові маршрути та драйв" rating="4.8 (96)" distance="3,1 км" walk="6 хв" walking tags={["Квадроцикли", "Екстрим", "Група"]} />
-          <PlaceRow photo="rafting" title="Рафтинг на Пруті" subtitle="Сплави різної складності" rating="4.7 (74)" distance="4,0 км" walk="8 хв" walking tags={["Рафтинг", "Вода", "Пригоди"]} />
-          <PlaceRow photo="zipline" title="Зіплайн над карпатським лісом" subtitle="Політ, що захоплює дух" rating="4.9 (58)" distance="4,6 км" walk="9 хв" walking tags={["Зіплайн", "Екстрим", "Панорами"]} />
-        </div>
-      </main>
-    </div>
-  );
+  return <DynamicCategoryScreen navigate={navigate} config={{
+    category: "entertainment", className: "gt-entertainment-screen", icon: Bike, title: "Розваги", titleEn: "Entertainment", titlePl: "Rozrywka",
+    subtitle: "Активності та яскраві враження", subtitleEn: "Activities and impressions", subtitlePl: "Aktywności i wrażenia", tone: "red",
+    placeholder: "Пошук розваг", sectionTitle: "Активні розваги поруч",
+    fallbackChips: ["Джипи","Квадроцикли","Рафтинг","Зіплайн","Для дітей","Коні"],
+    fallbackPlaces: [
+      { id:"fun-jeep",region_id:"region-tatariv",category_slug:"entertainment",category_name:"Розваги",subcategory:"Джипи",name:"Джип-тур Гірськими стежками",description:"Маршрут на полонини",address:"Татарів",lat:48.3468,lng:24.584,rating:4.9,review_count:128,tags:["Джипи","Природа","Екстрим"],distance_m:2300 },
+      { id:"fun-quad",region_id:"region-tatariv",category_slug:"entertainment",category_name:"Розваги",subcategory:"Квадроцикли",name:"Квадроцикли в Карпатах",description:"Лісові маршрути",address:"Татарів",lat:48.3419,lng:24.586,rating:4.8,review_count:96,tags:["Квадроцикли","Екстрим"],distance_m:3100,image_url:"/images/fun-quad.webp" },
+      { id:"fun-rafting",region_id:"region-tatariv",category_slug:"entertainment",category_name:"Розваги",subcategory:"Рафтинг",name:"Рафтинг на Пруті",description:"Сплави",address:"Татарів",lat:48.3492,lng:24.5728,rating:4.7,review_count:74,tags:["Рафтинг","Вода"],distance_m:4000,image_url:"/images/fun-rafting.webp" },
+    ],
+  }} />;
 }
 
 const transferPartners: Array<{
@@ -1404,9 +1488,9 @@ const transferReferencePlaces = [
   },
 ] as const;
 
-function TransferReferenceRow({ place }: { place: (typeof transferReferencePlaces)[number] }) {
+function TransferReferenceRow({ place, onClick }: { place: (typeof transferReferencePlaces)[number]; onClick?: () => void }) {
   return (
-    <article className="gt-transfer-reference-row">
+    <article className="gt-transfer-reference-row" onClick={onClick} role={onClick ? "button" : undefined} tabIndex={onClick ? 0 : undefined}>
       <img src={place.image} alt="" className="gt-transfer-reference-row__image" />
       <div className="gt-transfer-reference-row__body">
         <div className="gt-transfer-reference-row__title">
@@ -1426,25 +1510,59 @@ function TransferReferenceRow({ place }: { place: (typeof transferReferencePlace
   );
 }
 
-function TransferScreen() {
+function TransferScreen({ navigate }: { navigate: Navigate }) {
+  const runtime = useTouristRuntime();
+  const [query, setQuery] = useState("");
+  const [chip, setChip] = useState("Усі");
+  const [places, setPlaces] = useState<Stage2Place[]>([]);
+  const [apiLoaded, setApiLoaded] = useState(false);
+  const [transferCategory, setTransferCategory] = useState<Stage2Category | null>(null);
+  const [openNow, setOpenNow] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void stage2Fetch<Stage2Category[]>("/categories").then((items) => { if (!cancelled) setTransferCategory(items.find((item) => item.slug === "transfer") ?? null); }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (!runtime.context) return;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      const params = new URLSearchParams({ region_id: runtime.context!.region.id, category: "transfer" });
+      if (runtime.location) { params.set("lat", String(runtime.location.lat)); params.set("lng", String(runtime.location.lng)); }
+      if (query.trim()) params.set("q", query.trim());
+      if (chip !== "Усі") params.set("subcategory", chip);
+      if (openNow) params.set("open_now", "true");
+      void stage2Fetch<Stage2Place[]>(`/places?${params}`).then((items) => { if (!cancelled) { setPlaces(items); setApiLoaded(true); } }).catch(() => undefined);
+    }, 200);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [runtime.context, runtime.location, query, chip, openNow]);
+
+  const display = apiLoaded ? places.map((place) => ({
+    image: place.image_url || "/images/transfer-reference/taxi-card.jpg",
+    title: place.name,
+    subtitle: place.description || place.subcategory || "Транспортна послуга",
+    rating: `${Number(place.rating || 0).toFixed(1)} (${place.review_count || 0})`,
+    distance: distanceLabel(place.distance_m),
+    walk: walkLabel(place.distance_m),
+    walking: false,
+    tags: (place.tags?.length ? place.tags : [place.subcategory || "Трансфер"]).slice(0, 3),
+  })) : transferReferencePlaces;
+
   return (
     <div className="tourist-screen gt-screen gt-transfer-reference-screen">
       <main className="gt-transfer-reference-content">
-        <CategoryHeader
-          icon={CarFront}
-          title="Трансфер"
-          subtitle="Транспортні послуги та перевезення"
-          tone="teal"
-        />
-        <SearchBar placeholder="Пошук трансферу або маршруту" />
-        <div className="gt-transfer-reference-chips">
-          <Chips items={["Усі", "Таксі", "Автобусні зупинки", "Залізничні станції", "Автостанції", "Парковки"]} />
-        </div>
-        <MapStrip />
-        <SectionTitle title="Трансфери поруч" action="Переглянути всі" />
+        <CategoryHeader icon={CarFront} title="Трансфер" subtitle="Транспортні послуги та перевезення" tone="teal" onMap={() => navigate("tourist", "nearby")} />
+        <SearchBar placeholder="Пошук трансферу або маршруту" value={query} onChange={setQuery} />
+        <div className="gt-transfer-reference-chips"><Chips items={["Усі", ...((transferCategory?.subcategories?.length ? transferCategory.subcategories : ["Таксі", "Автостанції", "Парковки", "Оренда авто", "Заправки"]).filter((item) => item !== "Усі"))]} selected={chip} onSelect={setChip} /></div>
+        <div className="gt-stage2-filter-pills"><button type="button" className={openNow ? "is-active" : ""} onClick={() => setOpenNow((value) => !value)}>Відкрито зараз</button></div>
+        <MapStrip real />
+        <SectionTitle title="Трансфери поруч" action={`${display.length}`} />
         <div className="gt-transfer-reference-list">
-          {transferReferencePlaces.map((place) => <TransferReferenceRow key={place.title} place={place} />)}
+          {display.map((place, index) => <TransferReferenceRow key={`${place.title}-${index}`} place={place as (typeof transferReferencePlaces)[number]} onClick={apiLoaded && places[index] ? () => { runtime.setSelectedPlaceId(places[index].id); navigate("tourist", "place"); } : undefined} />)}
         </div>
+        {apiLoaded && !places.length ? <div className="gt-stage2-empty">За цими фільтрами трансферів не знайдено</div> : null}
       </main>
     </div>
   );
@@ -2096,7 +2214,9 @@ const emergencyServiceIcons: Record<EmergencyService["icon"], LucideIcon> = {
 };
 
 function EmergencyScreen() {
+  const runtime = useTouristRuntime();
   const [services, setServices] = useState(DEFAULT_EMERGENCY_SERVICES);
+  const [remoteContacts, setRemoteContacts] = useState<Array<{ id: string; type: string; title: string; note: string; phone?: string | null; tone: string }>>([]);
   const [servicePage, setServicePage] = useState(0);
   const serviceScrollerRef = useRef<HTMLDivElement>(null);
 
@@ -2106,6 +2226,28 @@ function EmergencyScreen() {
     });
     return () => window.cancelAnimationFrame(frame);
   }, []);
+
+  useEffect(() => {
+    if (!runtime.context) return;
+    let cancelled = false;
+    void stage2Fetch<Array<{ id: string; type: string; title: string; note: string; phone?: string | null; tone: string }>>(`/emergency?region_id=${encodeURIComponent(runtime.context.region.id)}`)
+      .then((items) => { if (!cancelled) setRemoteContacts(items); })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [runtime.context]);
+
+  const contactRows = remoteContacts.length ? remoteContacts.map((contact) => ({
+    icon: contact.type === "ambulance" ? Ambulance : contact.type === "police" ? ShieldCheck : contact.type === "rescue" ? MountainSnow : Cross,
+    title: contact.title, note: contact.note, phone: contact.phone || "", tone: contact.tone,
+  })) : emergencyContacts;
+
+  const shareLocation = async () => {
+    const point = await runtime.requestLocation();
+    if (!point) return;
+    const text = `Моя геолокація: https://maps.google.com/?q=${point.lat},${point.lng}`;
+    if (navigator.share) await navigator.share({ title: "Моя геолокація", text });
+    else await navigator.clipboard?.writeText(text);
+  };
 
   const handleServiceScroll = () => {
     const element = serviceScrollerRef.current;
@@ -2133,7 +2275,7 @@ function EmergencyScreen() {
           <span className="gt-help-hero__icon"><LifeBuoy size={39} /></span>
           <div><small>Не хвилюйтеся</small><h2>Знайдемо допомогу</h2><p>Екстрені та перевірені контакти<br />для вашої безпеки.</p></div>
         </section>
-        <button type="button" className="gt-location-button">
+        <button type="button" className="gt-location-button" onClick={() => void shareLocation()}>
           <span className="gt-location-button__icon" aria-hidden="true">
             <svg viewBox="0 0 48 48" role="img">
               <circle cx="24" cy="24" r="18" fill="none" stroke="currentColor" strokeWidth="1.8" />
@@ -2149,7 +2291,7 @@ function EmergencyScreen() {
         </button>
         <SectionTitle title="Екстрені контакти" />
         <div className="gt-contact-list">
-          {emergencyContacts.map(({ icon: Icon, title, note, phone, tone }) => (
+          {contactRows.map(({ icon: Icon, title, note, phone, tone }) => (
             <a
               className={phone.startsWith("+") ? "is-long-number" : undefined}
               href={`tel:${phone.replaceAll(" ", "")}`}
@@ -2315,32 +2457,108 @@ function AddLocationScreen({ navigate }: { navigate: Navigate }) {
 }
 
 function ProfileScreen({ navigate }: { navigate: Navigate }) {
+  const runtime = useTouristRuntime();
+  const name = [runtime.user?.first_name, runtime.user?.last_name].filter(Boolean).join(" ") || "Користувач Telegram";
+  const username = runtime.user?.telegram_username ? `@${runtime.user.telegram_username}` : (runtime.context?.region.name || "Гід туриста");
+  const languageLabel = runtime.language === "en" ? "English" : runtime.language === "pl" ? "Polski" : "Українська";
+
   return (
     <div className="tourist-screen gt-screen gt-profile-screen">
       <main className="gt-content gt-profile-content">
         <h1 className="gt-simple-title">Профіль</h1>
         <section className="gt-profile-card gt-profile-card--reference">
-          <div className="gt-avatar gt-avatar--photo" role="img" aria-label="Олена Ковальчук" />
-          <div><strong>Олена Ковальчук</strong><small><MapPin size={17} /> Львів, Україна</small></div>
+          <div className="gt-avatar gt-avatar--photo" role="img" aria-label={name} />
+          <div><strong>{name}</strong><small><MapPin size={17} /> {username}</small></div>
         </section>
         <div className="gt-profile-list gt-profile-list--reference">
           <button type="button" className="gt-profile-row--reviews" onClick={() => navigate("tourist", "review")}><MessageSquareMore size={27} /><span>Мої відгуки</span><ChevronRight size={20} /></button>
-          <button type="button" className="gt-profile-row--favorites"><Heart size={27} /><span>Улюблені</span><ChevronRight size={20} /></button>
+          <button type="button" className="gt-profile-row--favorites" onClick={() => navigate("tourist", "favorites")}><Heart size={27} /><span>Улюблені</span><ChevronRight size={20} /></button>
+          <button type="button" onClick={() => navigate("tourist", "activity")}><Clock3 size={27} /><span>Історія активності</span><ChevronRight size={20} /></button>
           <button type="button" className="gt-profile-row--bonuses" onClick={() => navigate("tourist", "wallet")}><Gift size={27} /><span>Бонуси</span><ChevronRight size={20} /></button>
         </div>
         <div className="gt-profile-list gt-profile-list--reference">
-          <button type="button" className="gt-profile-row--language"><Globe size={27} /><span>Мова</span><small>Українська</small><ChevronRight size={20} /></button>
+          <button type="button" className="gt-profile-row--language" onClick={() => navigate("tourist", "language")}><Globe size={27} /><span>Мова</span><small>{languageLabel}</small><ChevronRight size={20} /></button>
           <button type="button" className="gt-profile-row--notifications"><Bell size={26} /><span>Сповіщення</span><ChevronRight size={20} /></button>
-          <button type="button" className="gt-profile-row--support"><Headset size={27} /><span>Підтримка</span><ChevronRight size={20} /></button>
+          <button type="button" className="gt-profile-row--support" onClick={() => navigate("tourist", "community")}><Headset size={27} /><span>Підтримка / спільнота</span><ChevronRight size={20} /></button>
         </div>
+        {!runtime.user ? <div className="gt-notice"><Info size={20} /><p>Профіль автоматично активується після відкриття Mini App у Telegram.</p></div> : null}
         <button type="button" className="gt-logout gt-profile-logout"><LogOut size={25} /> Вийти</button>
-        <button type="button" className="gt-outline-button gt-profile-edit"><Pencil size={20} /> Редагувати профіль</button>
+        <button type="button" className="gt-outline-button gt-profile-edit" onClick={() => void runtime.refreshProfile()}><RefreshCcw size={20} /> Оновити профіль</button>
+      </main>
+    </div>
+  );
+}
+
+function FavoritesScreen({ navigate }: { navigate: Navigate }) {
+  const runtime = useTouristRuntime();
+  const [places, setPlaces] = useState<Stage2Place[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    void stage2Fetch<Stage2Place[]>("/me/favorites").then((items) => { if (!cancelled) setPlaces(items); }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, []);
+
+  return (
+    <div className="tourist-screen gt-screen gt-reference-list-screen">
+      <main className="gt-content">
+        <div className="gt-page-heading"><span className="gt-tone--red"><Heart size={23} /></span><div><h1>Улюблені</h1><p>Збережені місця</p></div></div>
+        <div className="gt-place-list">
+          {places.map((place) => <PlaceRow key={place.id} photo={placePhotoFallback(place)} imageUrl={place.image_url} title={place.name} subtitle={place.subcategory || place.category_name || "Локація"} rating={`${Number(place.rating || 0).toFixed(1)} (${place.review_count || 0})`} distance="" walk="" tags={(place.tags ?? []).slice(0,4)} onClick={() => { runtime.setSelectedPlaceId(place.id); navigate("tourist", "place"); }} />)}
+          {!places.length ? <div className="gt-stage2-empty">Ще немає збережених місць. Відкрийте картку закладу та натисніть «Зберегти».</div> : null}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function ActivityScreen({ navigate }: { navigate: Navigate }) {
+  const [events, setEvents] = useState<Array<{ id: string; event_type: string; place_name?: string | null; category_name?: string | null; created_at: string; payload?: Record<string, unknown> }>>([]);
+  useEffect(() => {
+    let cancelled = false;
+    void stage2Fetch<typeof events>("/me/activity").then((items) => { if (!cancelled) setEvents(items); }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, []);
+  const label = (event: string) => ({
+    app_opened: "Відкрито Mini App", qr_scanned: "Відкрито QR-контекст", category_opened: "Відкрито категорію",
+    search_used: "Використано пошук", place_viewed: "Переглянуто місце", route_clicked: "Побудовано маршрут", call_clicked: "Натиснуто дзвінок",
+  } as Record<string,string>)[event] || event.replaceAll("_", " ");
+  return (
+    <div className="tourist-screen gt-screen">
+      <main className="gt-content">
+        <div className="gt-page-heading"><span className="gt-tone--green"><Clock3 size={23} /></span><div><h1>Історія активності</h1><p>Ваші базові дії в гіді</p></div></div>
+        <div className="gt-stage2-activity-list">
+          {events.map((event) => <article key={event.id}><span><Clock3 size={18} /></span><div><strong>{label(event.event_type)}</strong><small>{event.place_name || event.category_name || "Гід туриста"}</small></div><time>{new Date(event.created_at).toLocaleDateString("uk-UA", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" })}</time></article>)}
+          {!events.length ? <div className="gt-stage2-empty">Історія зʼявиться після використання пошуку, категорій і карток місць.</div> : null}
+        </div>
+        <button type="button" className="gt-outline-button" onClick={() => navigate("tourist", "profile")}><ArrowLeft size={18} /> Назад до профілю</button>
+      </main>
+    </div>
+  );
+}
+
+function LanguageScreen({ navigate }: { navigate: Navigate }) {
+  const runtime = useTouristRuntime();
+  const languages = [
+    { code: "uk" as const, title: "Українська", note: "Основна мова" },
+    { code: "en" as const, title: "English", note: "Basic interface translation" },
+    { code: "pl" as const, title: "Polski", note: "Podstawowe tłumaczenie interfejsu" },
+  ];
+  return (
+    <div className="tourist-screen gt-screen">
+      <main className="gt-content">
+        <div className="gt-page-heading"><span className="gt-tone--blue"><Globe size={23} /></span><div><h1>Мова</h1><p>Оберіть мову Mini App</p></div></div>
+        <div className="gt-profile-list gt-stage2-language-list">
+          {languages.map((item) => <button type="button" key={item.code} className={runtime.language === item.code ? "is-selected" : ""} onClick={() => void runtime.setLanguage(item.code)}><Globe size={25} /><span><strong>{item.title}</strong><small>{item.note}</small></span>{runtime.language === item.code ? <Check size={21} /> : <ChevronRight size={20} />}</button>)}
+        </div>
+        <button type="button" className="gt-outline-button" onClick={() => navigate("tourist", "profile")}><ArrowLeft size={18} /> Назад до профілю</button>
       </main>
     </div>
   );
 }
 
 function CommunityScreen() {
+  const { context } = useTouristRuntime();
+  const communityUrl = context?.region.communityUrl || process.env.NEXT_PUBLIC_TELEGRAM_COMMUNITY_URL || "";
   return (
     <div className="tourist-screen gt-screen">
       <main className="gt-content">
@@ -2349,7 +2567,7 @@ function CommunityScreen() {
           <small>Telegram-спільнота Татарова</small>
           <h1>Подорожуйте разом з місцевими</h1>
           <p>Новини, маршрути, події та перевірені рекомендації регіону.</p>
-          <button type="button" className="gt-primary-button">Відкрити спільноту <ExternalLink size={19} /></button>
+          <button type="button" className="gt-primary-button" disabled={!communityUrl} onClick={() => communityUrl ? window.open(communityUrl, "_blank", "noopener,noreferrer") : undefined}>Відкрити спільноту <ExternalLink size={19} /></button>
         </section>
         <SectionTitle title="У спільноті ви знайдете" />
         <div className="gt-community-list">
@@ -2390,7 +2608,7 @@ export function TouristScreen({
     case "entertainment":
       return <EntertainmentScreen navigate={navigate} />;
     case "transfer":
-      return <TransferScreen />;
+      return <TransferScreen navigate={navigate} />;
     case "nearby":
       return <NearbyScreen navigate={navigate} />;
     case "place":
@@ -2413,6 +2631,12 @@ export function TouristScreen({
       return <EmergencyScreen />;
     case "profile":
       return <ProfileScreen navigate={navigate} />;
+    case "favorites":
+      return <FavoritesScreen navigate={navigate} />;
+    case "activity":
+      return <ActivityScreen navigate={navigate} />;
+    case "language":
+      return <LanguageScreen navigate={navigate} />;
     case "add-location":
       return <AddLocationScreen navigate={navigate} />;
     case "community":

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   ArrowLeft,
   BarChart3,
@@ -53,11 +53,12 @@ import {
   Star,
 } from "lucide-react";
 import type { RoleKey } from "../../lib/navigation";
+import { adminStage2Fetch, type Stage2Category } from "../../lib/stage2-api";
 
 type Navigate = (role: RoleKey, slug: string) => void;
 type AdminProps = { navigate: Navigate };
 
-type NavKey = "partners" | "clients" | "settlements" | "bonuses" | "statistics" | "settings";
+type NavKey = "partners" | "content" | "clients" | "settlements" | "bonuses" | "statistics" | "settings";
 
 type TableColumn = {
   label: string;
@@ -66,6 +67,7 @@ type TableColumn = {
 
 const adminNav: Array<{ key: NavKey; label: string; slug: string; icon: typeof UserRound }> = [
   { key: "partners", label: "Партнери", slug: "admin-partners", icon: UserRound },
+  { key: "content", label: "Контент / QR", slug: "admin-stage2", icon: MapPin },
   { key: "clients", label: "Клієнти", slug: "admin-clients", icon: UsersRound },
   { key: "settlements", label: "Взаєморозрахунки", slug: "admin-settlements", icon: FileText },
   { key: "bonuses", label: "Бонуси", slug: "admin-bonuses", icon: Gift },
@@ -909,12 +911,194 @@ function AuditSettingsScreen({ navigate }: AdminProps) {
   );
 }
 
+
+type QrConstructor = new (element: HTMLElement, options: { text: string; width: number; height: number; correctLevel?: number }) => unknown;
+
+declare global {
+  interface Window { QRCode?: QrConstructor & { CorrectLevel?: { M?: number } }; __gidQrCodePromise?: Promise<QrConstructor>; }
+}
+
+function Stage2QrPreview({ value }: { value: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!value || !ref.current) return;
+    let cancelled = false;
+    const load = () => {
+      if (window.QRCode) return Promise.resolve(window.QRCode);
+      if (window.__gidQrCodePromise) return window.__gidQrCodePromise;
+      window.__gidQrCodePromise = new Promise<QrConstructor>((resolve, reject) => {
+        const existing = document.querySelector('script[data-gid-qrcode="1"]') as HTMLScriptElement | null;
+        const script = existing ?? document.createElement("script");
+        if (!existing) {
+          script.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
+          script.async = true;
+          script.dataset.gidQrcode = "1";
+          document.head.appendChild(script);
+        }
+        const done = () => window.QRCode ? resolve(window.QRCode) : reject(new Error("QRCode did not initialize"));
+        if (window.QRCode) done();
+        else {
+          script.addEventListener("load", done, { once: true });
+          script.addEventListener("error", () => reject(new Error("Failed to load QR generator")), { once: true });
+        }
+      });
+      return window.__gidQrCodePromise;
+    };
+    ref.current.innerHTML = "";
+    void load().then((QRCode) => {
+      if (cancelled || !ref.current) return;
+      ref.current.innerHTML = "";
+      new QRCode(ref.current, { text: value, width: 180, height: 180, correctLevel: window.QRCode?.CorrectLevel?.M });
+    }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [value]);
+  return <div className="ad-stage2-qr-preview__code" ref={ref} aria-label="QR-код точки входу" />;
+}
+
+function Stage2ContentScreen({ navigate }: AdminProps) {
+  const [adminKey, setAdminKey] = useState("");
+  const [pending, setPending] = useState<Array<{ id: string; name: string; category_slug: string; address: string; status: string; organization_name?: string; region_name?: string; moderation_comment?: string | null }>>([]);
+  const [qrRows, setQrRows] = useState<Array<{ id: string; start_param: string; type: string; source: string; active: boolean; region_name: string; place_name?: string | null; place_id?: string | null }>>([]);
+  const [approvedPlaces, setApprovedPlaces] = useState<Array<{ id: string; name: string; category_slug: string; region_name: string }>>([]);
+  const [stage2Categories, setStage2Categories] = useState<Stage2Category[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [qrPlaceId, setQrPlaceId] = useState("place-girskyi-zatyshok");
+  const [qrParam, setQrParam] = useState("");
+  const [categorySlug, setCategorySlug] = useState("");
+  const [categoryName, setCategoryName] = useState("");
+  const [categorySubcategories, setCategorySubcategories] = useState("");
+  const [emergencyTitle, setEmergencyTitle] = useState("");
+  const [emergencyPhone, setEmergencyPhone] = useState("");
+  const [communityUrl, setCommunityUrl] = useState("");
+  const [qrPreviewParam, setQrPreviewParam] = useState("");
+
+  useEffect(() => {
+    const stored = window.sessionStorage.getItem("gid-tourist-admin-stage2-key") || "";
+    setAdminKey(stored);
+    if (stored) void load(stored);
+  }, []);
+
+  const load = async (key = adminKey) => {
+    if (!key) return;
+    setLoading(true); setMessage("");
+    try {
+      const [moderation, qr, approved, categories] = await Promise.all([
+        adminStage2Fetch<typeof pending>("/admin/stage2/moderation", key),
+        adminStage2Fetch<typeof qrRows>("/admin/stage2/qr", key),
+        adminStage2Fetch<typeof approvedPlaces>("/admin/stage2/places?status=approved", key),
+        adminStage2Fetch<Stage2Category[]>("/categories", key),
+      ]);
+      setPending(moderation); setQrRows(qr); setApprovedPlaces(approved); setStage2Categories(categories);
+      if (!qrPlaceId && approved[0]?.id) setQrPlaceId(approved[0].id);
+      if (!qrPreviewParam && qr[0]?.start_param) setQrPreviewParam(qr[0].start_param);
+      window.sessionStorage.setItem("gid-tourist-admin-stage2-key", key);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Помилка доступу до Stage 2 API");
+    } finally { setLoading(false); }
+  };
+
+  const moderate = async (id: string, status: "approved" | "rejected") => {
+    const comment = status === "rejected" ? (window.prompt("Причина повернення на доопрацювання:") || "Потрібне доопрацювання") : undefined;
+    await adminStage2Fetch(`/admin/stage2/places/${encodeURIComponent(id)}/status`, adminKey, { method: "PATCH", body: JSON.stringify({ status, comment }) });
+    setMessage(status === "approved" ? "Заклад схвалено і він уже доступний туристам." : "Заклад повернуто на доопрацювання.");
+    await load();
+  };
+
+  const createQr = async () => {
+    const row = await adminStage2Fetch<{ id: string; start_param: string }>("/admin/stage2/qr", adminKey, { method: "POST", body: JSON.stringify({ place_id: qrPlaceId || null, region_id: "region-tatariv", type: "entry_point", source: "hotel", start_param: qrParam || undefined }) });
+    setQrParam(""); setQrPreviewParam(row.start_param); setMessage(`QR-контекст створено: ${row.start_param}`); await load();
+  };
+
+  const toggleQr = async (id: string, active: boolean) => {
+    await adminStage2Fetch(`/admin/stage2/qr/${encodeURIComponent(id)}`, adminKey, { method: "PATCH", body: JSON.stringify({ active }) });
+    setMessage(active ? "QR-контекст активовано" : "QR-контекст деактивовано");
+    await load();
+  };
+
+  const deepLink = (startParam: string) => {
+    const bot = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME?.replace(/^@/, "");
+    const app = process.env.NEXT_PUBLIC_TELEGRAM_APP_SHORT_NAME;
+    if (bot && app) return `https://t.me/${bot}/${app}?startapp=${encodeURIComponent(startParam)}`;
+    if (typeof window !== "undefined") return `${window.location.origin}/tourist/welcome?startapp=${encodeURIComponent(startParam)}`;
+    return startParam;
+  };
+
+  return (
+    <AdminShell active="content" navigate={navigate} contentClassName="ad-main--stage2">
+      <AdminPageHeader title="Контент / QR — Етап 2" subtitle="Модерація закладів, QR-контекст, категорії та локальні контакти" action={<OutlineButton onClick={() => void load()}><RefreshCcw size={17}/> Оновити</OutlineButton>} />
+      <section className="ad-stage2-access">
+        <label><span>ADMIN_API_KEY</span><input type="password" value={adminKey} onChange={(event) => setAdminKey(event.target.value)} placeholder="Ключ із Railway backend Variables" /></label>
+        <PrimaryButton onClick={() => void load(adminKey)}>{loading ? "Підключення…" : "Підключити API"}</PrimaryButton>
+        {message ? <p>{message}</p> : null}
+      </section>
+
+      <section className="ad-stage2-section">
+        <AdminPageHeader title="Модерація нових закладів" subtitle="Після approve заклад автоматично з'являється у своїй категорії та на карті" />
+        <AdminTable columns={[{label:"Заклад",className:"1.4fr"},{label:"Категорія",className:".8fr"},{label:"Адреса",className:"1.3fr"},{label:"Статус",className:".7fr"},{label:"Дії",className:"1fr"}]}>
+          {pending.map((row) => <TableRow key={row.id} columns={["1.4fr",".8fr","1.3fr",".7fr","1fr"]}>
+            <div><strong>{row.name}</strong><small>{row.organization_name || row.region_name}</small></div><span>{row.category_slug}</span><span>{row.address}</span><Status tone={row.status === "rejected" ? "red" : "orange"}>{row.status}</Status>
+            <div className="ad-row-actions"><button className="ad-text-btn" onClick={() => void moderate(row.id,"approved")}>Approve</button><button className="ad-text-btn is-danger" onClick={() => void moderate(row.id,"rejected")}>Reject</button></div>
+          </TableRow>)}
+          {!pending.length ? <div className="ad-stage2-empty-row">Черга модерації порожня</div> : null}
+        </AdminTable>
+      </section>
+
+      <section className="ad-stage2-grid">
+        <div className="ad-stage2-card">
+          <h2>Створити QR точки входу</h2><p>Вкажіть ID схваленого готелю/точки. Backend створить унікальний start_param.</p>
+          <select value={qrPlaceId} onChange={(e)=>setQrPlaceId(e.target.value)}>
+            <option value="">Публічна точка без закладу</option>
+            {approvedPlaces.map((place) => <option key={place.id} value={place.id}>{place.name} · {place.category_slug}</option>)}
+          </select>
+          <small className="ad-stage2-place-id">{qrPlaceId || "QR буде прив'язаний тільки до регіону"}</small>
+          <input value={qrParam} onChange={(e)=>setQrParam(e.target.value)} placeholder="start_param (необов'язково)" />
+          <PrimaryButton onClick={() => void createQr()}><Plus size={16}/> Створити QR-контекст</PrimaryButton>
+        </div>
+        <div className="ad-stage2-card">
+          <h2>Категорії / підкатегорії</h2><p>Редагуйте основні розділи й їх фільтри без змін коду. Партнер побачить ці підкатегорії у формі.</p>
+          <select value={categorySlug} onChange={(e)=>{
+            const slug=e.target.value; const current=stage2Categories.find((item)=>item.slug===slug);
+            setCategorySlug(slug); setCategoryName(current?.name || ""); setCategorySubcategories((current?.subcategories || []).join(", "));
+          }}>
+            <option value="">Оберіть існуючий розділ</option>
+            {stage2Categories.map((item)=><option key={item.slug} value={item.slug}>{item.name}</option>)}
+          </select>
+          <input value={categoryName} onChange={(e)=>setCategoryName(e.target.value)} placeholder="Назва розділу" />
+          <input value={categorySubcategories} onChange={(e)=>setCategorySubcategories(e.target.value)} placeholder="Підкатегорії через кому" />
+          <PrimaryButton onClick={() => void adminStage2Fetch("/admin/stage2/categories", adminKey,{method:"POST",body:JSON.stringify({slug:categorySlug,name:categoryName,subcategories:categorySubcategories.split(",").map((item)=>item.trim()).filter(Boolean)})}).then(()=>{setMessage("Категорію і підкатегорії збережено");return load();})}><Plus size={16}/> Зберегти</PrimaryButton>
+        </div>
+        <div className="ad-stage2-card">
+          <h2>Екстрений контакт регіону</h2><p>Після збереження він з'явиться у «Халепа?» для Татарова.</p>
+          <input value={emergencyTitle} onChange={(e)=>setEmergencyTitle(e.target.value)} placeholder="Назва служби" />
+          <input value={emergencyPhone} onChange={(e)=>setEmergencyPhone(e.target.value)} placeholder="Телефон" />
+          <PrimaryButton onClick={() => void adminStage2Fetch("/admin/stage2/emergency", adminKey,{method:"POST",body:JSON.stringify({region_id:"region-tatariv",title:emergencyTitle,phone:emergencyPhone,type:"custom"})}).then(()=>{setMessage("Контакт збережено");setEmergencyTitle("");setEmergencyPhone("");})}><Plus size={16}/> Додати контакт</PrimaryButton>
+        </div>
+        <div className="ad-stage2-card">
+          <h2>Telegram-спільнота</h2><p>Посилання регіону відкриватиметься туристу на екрані «Спільнота».</p>
+          <input value={communityUrl} onChange={(e)=>setCommunityUrl(e.target.value)} placeholder="https://t.me/..." />
+          <PrimaryButton onClick={() => void adminStage2Fetch("/admin/stage2/regions/region-tatariv", adminKey,{method:"PATCH",body:JSON.stringify({community_url:communityUrl})}).then(()=>{setMessage("Telegram-спільноту регіону збережено");})}><Send size={16}/> Зберегти спільноту</PrimaryButton>
+        </div>
+      </section>
+
+      <section className="ad-stage2-section">
+        <AdminPageHeader title="QR точки" subtitle="Посилання можна перетворити на друкований QR будь-яким QR-генератором; start_param зберігається у БД" />
+        <AdminTable columns={[{label:"Точка",className:"1.2fr"},{label:"start_param",className:"1.25fr"},{label:"Статус",className:".55fr"},{label:"Deep link",className:"2fr"}]}>
+          {qrRows.map((row)=><TableRow key={row.id} columns={["1.2fr","1.25fr",".55fr","2fr"]}><div><strong>{row.place_name || "Публічна точка"}</strong><small>{row.region_name}</small></div><code>{row.start_param}</code><Status tone={row.active?"green":"gray"}>{row.active?"Активний":"Вимкнено"}</Status><div className="ad-stage2-link"><input readOnly value={deepLink(row.start_param)}/><button onClick={() => void navigator.clipboard.writeText(deepLink(row.start_param))}>Копіювати</button><button onClick={() => setQrPreviewParam(row.start_param)}>QR</button><button onClick={() => void toggleQr(row.id,!row.active)}>{row.active?"Вимк.":"Увімк."}</button></div></TableRow>)}
+        </AdminTable>
+        {qrPreviewParam ? <div className="ad-stage2-qr-preview"><Stage2QrPreview value={deepLink(qrPreviewParam)} /><div><strong>QR точки входу</strong><small>{qrPreviewParam}</small><p>Сканування відкриває Telegram Mini App з цим start_param; backend визначає регіон і прив'язаний заклад.</p></div></div> : null}
+      </section>
+    </AdminShell>
+  );
+}
+
 function SettingsScreen({ navigate }: AdminProps) {
   return <GeneralSettingsScreen navigate={navigate} />;
 }
 
 export function AdminDesktopScreen({ slug, navigate }: { slug: string; navigate: Navigate }) {
   switch (slug) {
+    case "admin-stage2": return <Stage2ContentScreen navigate={navigate} />;
     case "admin-partners": return <PartnersScreen navigate={navigate} />;
     case "admin-partner-create": return <PartnerCreateScreen navigate={navigate} />;
     case "admin-partner-details": return <PartnerDetailsScreen navigate={navigate} />;

@@ -1,0 +1,99 @@
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from "@nestjs/common";
+import { AdminKeyGuard, type AuthRequest, SessionGuard } from "../../common/auth.guard.js";
+import { Stage2Service } from "./stage2.service.js";
+
+@Controller()
+export class Stage2Controller {
+  constructor(private readonly service: Stage2Service) {}
+
+  @Get("context/:startParam")
+  context(@Param("startParam") startParam: string) { return this.service.context(startParam); }
+
+  @Get("categories")
+  categories() { return this.service.categories(); }
+
+  @Get("places")
+  places(@Query() query: Record<string, unknown>) { return this.service.places(query); }
+
+  @Get("places/:id")
+  place(@Param("id") id: string) { return this.service.place(id); }
+
+  @Get("emergency")
+  emergency(@Query("region_id") regionId = "region-tatariv") { return this.service.emergency(regionId); }
+
+  @UseGuards(SessionGuard)
+  @Get("me")
+  me(@Req() request: AuthRequest) { return this.service.profile(request.user!); }
+
+  @UseGuards(SessionGuard)
+  @Patch("me")
+  updateMe(@Req() request: AuthRequest, @Body() body: Record<string, unknown>) { return this.service.updateProfile(request.user!, body); }
+
+  @UseGuards(SessionGuard)
+  @Get("me/favorites")
+  favorites(@Req() request: AuthRequest) { return this.service.favorites(request.user!); }
+
+  @UseGuards(SessionGuard)
+  @Post("me/favorites/:placeId")
+  addFavorite(@Req() request: AuthRequest, @Param("placeId") placeId: string) { return this.service.addFavorite(request.user!, placeId); }
+
+  @UseGuards(SessionGuard)
+  @Delete("me/favorites/:placeId")
+  removeFavorite(@Req() request: AuthRequest, @Param("placeId") placeId: string) { return this.service.removeFavorite(request.user!, placeId); }
+
+  @UseGuards(SessionGuard)
+  @Get("me/activity")
+  activity(@Req() request: AuthRequest) { return this.service.recentActivity(request.user!); }
+
+  @UseGuards(SessionGuard)
+  @Post("events")
+  event(@Req() request: AuthRequest, @Body() body: Record<string, unknown>) { return this.service.addEvent(request.user!, body); }
+
+  @UseGuards(SessionGuard)
+  @Get("partner/places")
+  partnerPlaces(@Req() request: AuthRequest) { return this.service.partnerPlaces(request.user!); }
+
+  @UseGuards(SessionGuard)
+  @Post("partner/onboarding")
+  partnerOnboarding(@Req() request: AuthRequest, @Body() body: Record<string, unknown>) { return this.service.createPartnerPlace(request.user!, body); }
+
+  @UseGuards(SessionGuard)
+  @Patch("partner/places/:id")
+  partnerUpdate(@Req() request: AuthRequest, @Param("id") id: string, @Body() body: Record<string, unknown>) { return this.service.updatePartnerPlace(request.user!, id, body); }
+
+  @UseGuards(AdminKeyGuard)
+  @Get("admin/stage2/places")
+  adminPlaces(@Query("status") status = "approved") { return this.service.adminPlaces(status); }
+
+  @UseGuards(AdminKeyGuard)
+  @Patch("admin/stage2/regions/:id")
+  adminRegion(@Param("id") id: string, @Body() body: Record<string, unknown>) { return this.service.adminUpdateRegion(id, body); }
+
+  @UseGuards(AdminKeyGuard)
+  @Get("admin/stage2/moderation")
+  adminModeration() { return this.service.adminPending(); }
+
+  @UseGuards(AdminKeyGuard)
+  @Patch("admin/stage2/places/:id/status")
+  adminStatus(@Param("id") id: string, @Body() body: { status: string; comment?: string }) { return this.service.adminStatus(id, body.status, body.comment); }
+
+  @UseGuards(AdminKeyGuard)
+  @Get("admin/stage2/qr")
+  adminQr() { return this.service.adminQrList(); }
+
+  @UseGuards(AdminKeyGuard)
+  @Post("admin/stage2/qr")
+  adminCreateQr(@Body() body: Record<string, unknown>) { return this.service.adminCreateQr(body); }
+
+  @UseGuards(AdminKeyGuard)
+  @Patch("admin/stage2/qr/:id")
+  adminToggleQr(@Param("id") id: string, @Body() body: { active: boolean }) { return this.service.adminToggleQr(id, Boolean(body.active)); }
+
+  @UseGuards(AdminKeyGuard)
+  @Post("admin/stage2/categories")
+  adminCategory(@Body() body: Record<string, unknown>) { return this.service.adminCreateCategory(body); }
+
+  @UseGuards(AdminKeyGuard)
+  @Post("admin/stage2/emergency")
+  adminEmergency(@Body() body: Record<string, unknown>) { return this.service.adminEmergency(body); }
+}

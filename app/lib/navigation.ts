@@ -182,6 +182,30 @@ export const screens: ScreenDefinition[] = [
     role: "tourist",
   },
   {
+    id: "C15B",
+    slug: "favorites",
+    title: "Улюблені",
+    shortTitle: "Улюблені",
+    description: "Збережені користувачем заклади та локації",
+    role: "tourist",
+  },
+  {
+    id: "C15C",
+    slug: "language",
+    title: "Мова",
+    shortTitle: "Мова",
+    description: "Базове перемикання української, English та Polski",
+    role: "tourist",
+  },
+  {
+    id: "C15D",
+    slug: "activity",
+    title: "Історія активності",
+    shortTitle: "Історія",
+    description: "Перегляди місць, пошук, маршрути та інші базові дії користувача",
+    role: "tourist",
+  },
+  {
     id: "C15A",
     slug: "add-location",
     title: "Додати локацію",
@@ -284,6 +308,14 @@ export const screens: ScreenDefinition[] = [
     title: "Контакти",
     shortTitle: "Контакти",
     description: "Телефони, месенджери, email, сайт і соціальні мережі",
+    role: "partner",
+  },
+  {
+    id: "P01E2",
+    slug: "partner-pending",
+    title: "Модерація закладу",
+    shortTitle: "Модерація",
+    description: "Статус перевірки закладу перед публікацією",
     role: "partner",
   },
   {
@@ -498,6 +530,14 @@ export const screens: ScreenDefinition[] = [
     role: "regional",
   },
 
+  {
+    id: "AD00-S2",
+    slug: "admin-stage2",
+    title: "Контент / QR — Етап 2",
+    shortTitle: "Контент / QR",
+    description: "Модерація закладів, QR-контекст, категорії та екстрені контакти",
+    role: "admin",
+  },
   {
     id: "AD01",
     slug: "admin-partners",

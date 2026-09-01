@@ -27,7 +27,7 @@ async function bootstrap() {
   app.enableCors({
     origin: allowedOrigins,
     credentials: true,
-    methods: ["GET", "HEAD", "OPTIONS"],
+    methods: ["GET", "POST", "PATCH", "DELETE", "HEAD", "OPTIONS"],
   });
 
   const port = Number(process.env.PORT ?? 3000);
