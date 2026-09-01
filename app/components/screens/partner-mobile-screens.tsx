@@ -57,6 +57,9 @@ import { ensureTelegramSession, setSessionToken, stage2Fetch, type Stage2Categor
 type Navigate = (role: RoleKey, slug: string) => void;
 type PartnerProps = { navigate: Navigate; activated: boolean };
 
+type PartnerRuleIcon = "no-smoking" | "quiet" | "pets" | "clock" | "security" | "people" | "info" | "sparkles" | "energy" | "lock";
+type PartnerRule = { id: string; text: string; icon: PartnerRuleIcon };
+
 type PartnerProfile = {
   placeName: string;
   placeType: string;
@@ -65,6 +68,9 @@ type PartnerProfile = {
   regionName: string;
   street: string;
   house: string;
+  cityPlaceId: string;
+  streetPlaceId: string;
+  housePlaceId: string;
   address: string;
   lat: string;
   lng: string;
@@ -74,8 +80,11 @@ type PartnerProfile = {
   openedYear: string;
   languages: string;
   accommodationType: string;
+  hasWifi: boolean;
   wifiSsid: string;
   wifiPassword: string;
+  amenities: string[];
+  generalRules: PartnerRule[];
   phone: string;
   messenger: string;
   email: string;
@@ -409,6 +418,9 @@ const defaultProfile: PartnerProfile = {
   regionName: "Івано-Франківська область",
   street: "вул. Незалежності",
   house: "155",
+  cityPlaceId: "",
+  streetPlaceId: "",
+  housePlaceId: "",
   address: "вул. Незалежності, 155, Татарів, Івано-Франківська область",
   lat: "48.34490",
   lng: "24.57920",
@@ -419,8 +431,15 @@ const defaultProfile: PartnerProfile = {
   openedYear: "2018",
   languages: "Українська, English, Polski",
   accommodationType: "Готель",
+  hasWifi: true,
   wifiSsid: "Girskyi_Zatyshok_Guest",
   wifiPassword: "zatyshok155",
+  amenities: ["Номери", "Паркінг", "Wi‑Fi", "Сніданок"],
+  generalRules: [
+    { id: "rule-smoking", text: "Куріння заборонено в приміщеннях готелю", icon: "no-smoking" },
+    { id: "rule-quiet", text: "Тихий час з 22:00 до 08:00", icon: "quiet" },
+    { id: "rule-pets", text: "Розміщення з домашніми тваринами за попереднім погодженням", icon: "pets" },
+  ],
   phone: "+38 067 123 45 67",
   messenger: "+38 067 123 45 67",
   email: "info@girskiy-zatyshok.ua",
@@ -447,7 +466,19 @@ function readPartnerProfile(): PartnerProfile {
   try {
     const raw = window.localStorage.getItem(PROFILE_STORAGE_KEY);
     if (!raw) return defaultProfile;
-    return { ...defaultProfile, ...(JSON.parse(raw) as Partial<PartnerProfile>) };
+    const parsed = JSON.parse(raw) as Partial<PartnerProfile>;
+    const merged: PartnerProfile = { ...defaultProfile, ...parsed };
+    if (!Array.isArray(parsed.generalRules)) {
+      merged.generalRules = [
+        { id: "rule-smoking", text: "Куріння заборонено в приміщеннях готелю", icon: "no-smoking" },
+        { id: "rule-quiet", text: parsed.quietHours || defaultProfile.quietHours, icon: "quiet" },
+        { id: "rule-pets", text: parsed.petPolicy || defaultProfile.petPolicy, icon: "pets" },
+      ];
+    }
+    if (!Array.isArray(parsed.amenities)) merged.amenities = defaultProfile.amenities;
+    if (typeof parsed.hasWifi !== "boolean") merged.hasWifi = Boolean(parsed.wifiSsid ?? defaultProfile.wifiSsid);
+    if (!merged.hasWifi) merged.amenities = merged.amenities.filter((item) => item !== "Wi‑Fi");
+    return merged;
   } catch {
     return defaultProfile;
   }
@@ -495,6 +526,49 @@ function categoryFromPlaceType(placeType: string) {
   return "hotel";
 }
 
+const FALLBACK_STAGE2_CATEGORIES: Stage2Category[] = [
+  { slug: "hotel", name: "Готель / точка входу", subcategories: ["Готель", "Садиба"] },
+  { slug: "food", name: "Де поїсти", subcategories: ["Ресторан", "Кафе", "Бар"] },
+  { slug: "shop", name: "Де купити", subcategories: ["Магазин", "Сувенірна крамниця", "Аптека"] },
+  { slug: "rest", name: "Де відпочити", subcategories: ["SPA / сауна", "Екскурсії"] },
+  { slug: "entertainment", name: "Розваги", subcategories: ["Активний відпочинок"] },
+  { slug: "transfer", name: "Трансфер", subcategories: ["Трансфер / таксі"] },
+];
+
+const FALLBACK_PLACE_TEMPLATES: Stage2PlaceTypeTemplate[] = [
+  { id: "tpl-hotel", category_slug: "hotel", place_type: "Готель", label: "Готель", default_title: "Новий готель", default_description: "Комфортний готель для відпочинку гостей. Додайте короткий опис розташування, номерів та головних переваг.", default_services: ["Сніданок","Прибирання","Сауна","Басейн","Трансфер"], default_amenities: ["Номери","Паркінг","Wi‑Fi","Сніданок"], fields: { room_count: "Кількість номерів", opened_year: "Рік відкриття", languages: "Мови обслуговування", accommodation_type: "Тип розміщення" }, sort_order: 10 },
+  { id: "tpl-guesthouse", category_slug: "hotel", place_type: "Садиба", label: "Садиба", default_title: "Нова садиба", default_description: "Затишна садиба для відпочинку. Опишіть умови проживання, територію та головні переваги.", default_services: ["Сніданок","Мангал","Чан","Трансфер"], default_amenities: ["Номери","Паркінг","Wi‑Fi","Мангал"], fields: { room_count: "Кількість кімнат", opened_year: "Рік відкриття", languages: "Мови обслуговування", accommodation_type: "Тип розміщення" }, sort_order: 20 },
+  { id: "tpl-restaurant", category_slug: "food", place_type: "Ресторан", label: "Ресторан", default_title: "Новий ресторан", default_description: "Ресторан із власною кухнею та атмосферою. Опишіть кухню, формат закладу й особливі пропозиції.", default_services: ["Основне меню","Сніданки","Доставка","Їжа з собою","Дитяче меню"], default_amenities: ["Меню","Паркінг","Wi‑Fi","Дитяче меню"], fields: { capacity: "Кількість посадкових місць", average_check: "Середній чек", cuisine: "Кухня", languages: "Мови обслуговування" }, sort_order: 10 },
+  { id: "tpl-cafe", category_slug: "food", place_type: "Кафе", label: "Кафе", default_title: "Нове кафе", default_description: "Кафе для сніданків, кави та зустрічей. Додайте інформацію про меню, формат і особливості.", default_services: ["Кава","Десерти","Сніданки","Їжа з собою"], default_amenities: ["Кава","Wi‑Fi","Їжа з собою","Десерти"], fields: { capacity: "Кількість посадкових місць", average_check: "Середній чек", cuisine: "Тип кухні", languages: "Мови обслуговування" }, sort_order: 20 },
+  { id: "tpl-bar", category_slug: "food", place_type: "Бар", label: "Бар", default_title: "Новий бар", default_description: "Бар із напоями та закусками. Опишіть формат, атмосферу, кухню або події.", default_services: ["Напої","Закуски","Жива музика"], default_amenities: ["Напої","Wi‑Fi","Жива музика"], fields: { capacity: "Кількість місць", average_check: "Середній чек", format: "Формат закладу", languages: "Мови обслуговування" }, sort_order: 30 },
+  { id: "tpl-shop", category_slug: "shop", place_type: "Магазин", label: "Магазин", default_title: "Новий магазин", default_description: "Магазин товарів для туристів і місцевих мешканців. Вкажіть основний асортимент та умови покупки.", default_services: ["Продаж у магазині","Самовивіз"], default_amenities: ["Оплата карткою","Паркінг","Самовивіз"], fields: { store_format: "Формат магазину", assortment: "Основний асортимент", delivery: "Доставка / самовивіз", payment_methods: "Способи оплати" }, sort_order: 10 },
+  { id: "tpl-souvenir", category_slug: "shop", place_type: "Сувенірна крамниця", label: "Сувенірна крамниця", default_title: "Нова сувенірна крамниця", default_description: "Сувеніри, подарунки та локальні товари. Опишіть асортимент і особливі вироби.", default_services: ["Сувеніри","Подарунки","Локальні товари"], default_amenities: ["Подарунки","Локальні товари","Оплата карткою"], fields: { assortment: "Основний асортимент", local_goods: "Локальні товари", delivery: "Доставка / самовивіз", payment_methods: "Способи оплати" }, sort_order: 20 },
+  { id: "tpl-pharmacy", category_slug: "shop", place_type: "Аптека", label: "Аптека", default_title: "Нова аптека", default_description: "Аптека та товари для здоровʼя. Додайте графік, формат роботи й доступні сервіси.", default_services: ["Ліки","Товари для здоровʼя"], default_amenities: ["Ліки","Оплата карткою","Самовивіз"], fields: { format: "Формат аптеки", delivery: "Доставка / самовивіз", payment_methods: "Способи оплати", languages: "Мови обслуговування" }, sort_order: 30 },
+  { id: "tpl-spa", category_slug: "rest", place_type: "SPA / сауна", label: "SPA / сауна", default_title: "Новий SPA / сауна", default_description: "Місце для відпочинку й відновлення. Опишіть формати процедур, місткість і умови відвідування.", default_services: ["Сауна","Чан","Масаж","Басейн"], default_amenities: ["SPA","Паркінг","Рушники","Душ"], fields: { capacity: "Місткість", duration: "Тривалість сеансу", price_info: "Вартість", languages: "Мови обслуговування" }, sort_order: 10 },
+  { id: "tpl-excursion", category_slug: "rest", place_type: "Екскурсії", label: "Екскурсії", default_title: "Нова екскурсія", default_description: "Екскурсійна послуга для туристів. Опишіть маршрут, тривалість, складність та формат групи.", default_services: ["Екскурсія","Гід","Трансфер"], default_amenities: ["Гід","Трансфер","Групи"], fields: { duration: "Тривалість", group_size: "Розмір групи", difficulty: "Складність", languages: "Мови проведення" }, sort_order: 20 },
+  { id: "tpl-entertainment", category_slug: "entertainment", place_type: "Активний відпочинок", label: "Активний відпочинок", default_title: "Нова активність", default_description: "Активний відпочинок та враження. Опишіть формат, рівень складності, сезонність і вимоги до гостей.", default_services: ["Квадроцикли","Рафтинг","Зіплайн","Джип-тур"], default_amenities: ["Активності","Паркінг","Інструктор"], fields: { age_limit: "Вікові обмеження", duration: "Тривалість", difficulty: "Рівень складності", season: "Сезонність" }, sort_order: 10 },
+  { id: "tpl-transfer", category_slug: "transfer", place_type: "Трансфер / таксі", label: "Трансфер / таксі", default_title: "Новий трансфер", default_description: "Трансфер або таксі для гостей регіону. Вкажіть тип транспорту, місткість і зону роботи.", default_services: ["Трансфер","Таксі","Оренда авто"], default_amenities: ["Трансфер","Багаж","Дитяче крісло"], fields: { vehicle_type: "Тип транспорту", capacity: "Місткість", service_area: "Зона роботи", languages: "Мови водія" }, sort_order: 10 },
+];
+
+function mergedTemplates(remote: Stage2PlaceTypeTemplate[]) {
+  if (!remote.length) return FALLBACK_PLACE_TEMPLATES;
+  const byKey = new Map(FALLBACK_PLACE_TEMPLATES.map((item) => [`${item.category_slug}:${item.place_type}`, item]));
+  remote.forEach((item) => {
+    const key = `${item.category_slug}:${item.place_type}`;
+    const base = byKey.get(key);
+    byKey.set(key, {
+      ...base,
+      ...item,
+      default_title: item.default_title || base?.default_title || null,
+      default_description: item.default_description || base?.default_description || null,
+      default_services: item.default_services?.length ? item.default_services : (base?.default_services || []),
+      default_amenities: item.default_amenities?.length ? item.default_amenities : (base?.default_amenities || []),
+      fields: Object.keys(item.fields || {}).length ? item.fields : (base?.fields || {}),
+    });
+  });
+  return Array.from(byKey.values()).sort((a, b) => (a.category_slug.localeCompare(b.category_slug) || Number(a.sort_order ?? 100) - Number(b.sort_order ?? 100)));
+}
+
 async function submitPartnerProfile(profile: PartnerProfile) {
   await ensureTelegramSession();
   const existingId = typeof window !== "undefined" ? window.localStorage.getItem(PARTNER_STAGE2_PLACE_KEY) : null;
@@ -515,13 +589,19 @@ async function submitPartnerProfile(profile: PartnerProfile) {
     website: profile.website.startsWith("http") ? profile.website : profile.website ? `https://${profile.website}` : undefined,
     image_url: profile.imageUrl || heroImage,
     work_hours: profile.workMode.toLocaleLowerCase("uk").includes("цілодоб") ? { always_open: true } : hours ? { daily: { from: hours[1], to: hours[2] } } : {},
-    attributes: { partner: true, parking: true, wifi: Boolean(profile.wifiSsid) },
+    attributes: {
+      partner: true,
+      parking: profile.amenities.some((item) => /паркін|парков/i.test(item)),
+      wifi: profile.hasWifi,
+      amenities: profile.amenities.filter((item) => profile.hasWifi || item !== "Wi‑Fi"),
+    },
     details: {
       check_in: profile.checkIn.match(/\d{2}:\d{2}/)?.[0] || "14:00",
       check_out: profile.checkOut.match(/\d{2}:\d{2}/)?.[0] || "11:00",
-      wifi_ssid: profile.wifiSsid,
-      wifi_password: profile.wifiPassword,
-      rules: [profile.quietHours, profile.petPolicy, profile.cancellation, profile.payment, profile.otherRules].filter(Boolean),
+      wifi_ssid: profile.hasWifi ? profile.wifiSsid : "",
+      wifi_password: profile.hasWifi ? profile.wifiPassword : "",
+      rules: [...profile.generalRules.map((item) => item.text), profile.cancellation, profile.payment, profile.otherRules].filter(Boolean),
+      rule_items: profile.generalRules,
       room_count: profile.roomCount,
       opened_year: profile.openedYear,
       languages: profile.languages,
@@ -533,6 +613,8 @@ async function submitPartnerProfile(profile: PartnerProfile) {
       region_name: profile.regionName,
       street: profile.street,
       house: profile.house,
+      address_verified: Boolean(profile.cityPlaceId && profile.streetPlaceId && profile.housePlaceId),
+      geo_place_ids: { city: profile.cityPlaceId, street: profile.streetPlaceId, house: profile.housePlaceId },
       services: readPartnerServices(),
       template_fields: profile.templateFields,
     },
@@ -852,6 +934,8 @@ function AddressAutocompleteRow({
   mode,
   city,
   street,
+  disabled = false,
+  verified = false,
   onText,
   onSelect,
 }: {
@@ -860,6 +944,8 @@ function AddressAutocompleteRow({
   mode: "city" | "street" | "house";
   city?: string;
   street?: string;
+  disabled?: boolean;
+  verified?: boolean;
   onText: (value: string) => void;
   onSelect: (details: Stage2GeoDetails, suggestion: Stage2GeoSuggestion) => void;
 }) {
@@ -868,7 +954,7 @@ function AddressAutocompleteRow({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (value.trim().length < 2 || (mode !== "city" && !city)) { setSuggestions([]); return; }
+    if (disabled || value.trim().length < 1 || (mode !== "city" && !city)) { setSuggestions([]); setOpen(false); return; }
     let cancelled = false;
     const timer = window.setTimeout(() => {
       setLoading(true);
@@ -880,7 +966,7 @@ function AddressAutocompleteRow({
       }).catch(() => { if (!cancelled) setSuggestions([]); }).finally(() => { if (!cancelled) setLoading(false); });
     }, 260);
     return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [value, mode, city, street]);
+  }, [value, mode, city, street, disabled]);
 
   const choose = async (suggestion: Stage2GeoSuggestion) => {
     setOpen(false);
@@ -893,10 +979,17 @@ function AddressAutocompleteRow({
   };
 
   return (
-    <label className="gt-partner-input-row gt-partner-address-autocomplete">
+    <label className={`gt-partner-input-row gt-partner-address-autocomplete ${verified ? "is-verified" : ""} ${disabled ? "is-disabled" : ""}`}>
       <span className="gt-partner-input-row__content">
         <small>{label}</small>
-        <input value={value} autoComplete="off" onFocus={() => suggestions.length && setOpen(true)} onChange={(event) => onText(event.target.value)} />
+        <input
+          value={value}
+          disabled={disabled}
+          autoComplete="off"
+          placeholder={disabled ? (mode === "street" ? "Спочатку виберіть місто" : "Спочатку виберіть вулицю") : "Почніть вводити — оберіть зі списку"}
+          onFocus={() => suggestions.length && setOpen(true)}
+          onChange={(event) => onText(event.target.value)}
+        />
         {open && suggestions.length ? (
           <span className="gt-partner-address-suggestions">
             {suggestions.map((item) => (
@@ -907,7 +1000,7 @@ function AddressAutocompleteRow({
           </span>
         ) : null}
       </span>
-      <i>{loading ? <RefreshCcw size={15} className="gt-spin" /> : <MapPin size={16} />}</i>
+      <i>{loading ? <RefreshCcw size={15} className="gt-spin" /> : verified ? <Check size={16} /> : <MapPin size={16} />}</i>
     </label>
   );
 }
@@ -926,39 +1019,53 @@ function serviceFromTemplate(name: string, index: number): PartnerService {
 
 function applyTemplateServices(template?: Stage2PlaceTypeTemplate) {
   if (!template?.default_services?.length) return;
-  savePartnerServices(template.default_services.map(serviceFromTemplate));
+  const serviceNames = template.default_services.filter((item) => !/^wi[\s‑-]*fi$/i.test(item.trim()));
+  savePartnerServices(serviceNames.map(serviceFromTemplate));
 }
 
-function AmenitiesRow({ onClick }: { onClick?: () => void }) {
-  const amenities = [
-    { icon: Hotel, label: "Готель" },
-    { icon: BedDouble, label: "Номери" },
-    { icon: ShieldCheck, label: "Сауна" },
-    { icon: MapPin, label: "Паркінг" },
-    { icon: Wifi, label: "Wi‑Fi" },
-  ];
+function amenityIcon(label: string) {
+  if (/wi[\s‑-]*fi/i.test(label)) return Wifi;
+  if (/номер|кімнат|ліж/i.test(label)) return BedDouble;
+  if (/паркін|парков/i.test(label)) return CircleParking;
+  if (/меню|снідан|кава|десерт|напої/i.test(label)) return UtensilsCrossed;
+  if (/spa|саун|душ|рушник|басейн/i.test(label)) return Waves;
+  if (/трансфер|багаж|авто|таксі/i.test(label)) return MapPin;
+  if (/гід|груп|інструктор|дитяч/i.test(label)) return Users;
+  if (/актив|подар|локаль|ліки/i.test(label)) return Sparkles;
+  return Building2;
+}
 
+function AmenitiesRow({ amenities, hasWifi, onClick }: { amenities: string[]; hasWifi: boolean; onClick?: () => void }) {
+  const visibleAmenities = amenities.filter((item) => hasWifi || !/wi[\s‑-]*fi/i.test(item)).slice(0, 6);
   return (
     <button type="button" className="gt-amenities-row" onClick={onClick}>
-      <span>Послуги</span>
+      <span>Послуги / зручності</span>
       <div>
-        {amenities.map(({ icon: Icon, label }) => (
-          <small key={label} title={label}>
-            <Icon size={15} />
-          </small>
-        ))}
+        {visibleAmenities.map((label) => {
+          const Icon = amenityIcon(label);
+          return <small key={label} title={label}><Icon size={15} /></small>;
+        })}
       </div>
-      <i>
-        <Edit3 size={16} />
-      </i>
+      <i><Edit3 size={16} /></i>
     </button>
+  );
+}
+
+function WifiAvailabilityRow({ enabled, onChange }: { enabled: boolean; onChange: (enabled: boolean) => void }) {
+  return (
+    <div className="gt-partner-wifi-toggle-row">
+      <span><Wifi size={18} /><span><strong>Wi‑Fi у закладі</strong><small>{enabled ? "Є — сторінка Wi‑Fi буде доступна" : "Немає — крок Wi‑Fi буде пропущено"}</small></span></span>
+      <button type="button" className={`gt-switch ${enabled ? "is-on" : ""}`} onClick={() => onChange(!enabled)} aria-label="Wi-Fi у закладі"><i /></button>
+    </div>
   );
 }
 
 function PartnerInfoScreen({ navigate, activated }: PartnerProps) {
   const { profile, setProfile } = usePartnerProfile();
-  const [stage2Categories, setStage2Categories] = useState<Stage2Category[]>([]);
-  const [placeTemplates, setPlaceTemplates] = useState<Stage2PlaceTypeTemplate[]>([]);
+  const [stage2Categories, setStage2Categories] = useState<Stage2Category[]>(FALLBACK_STAGE2_CATEGORIES);
+  const [placeTemplates, setPlaceTemplates] = useState<Stage2PlaceTypeTemplate[]>(FALLBACK_PLACE_TEMPLATES);
+  const [addressError, setAddressError] = useState("");
+  const [showAmenityEditor, setShowAmenityEditor] = useState(false);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const goBack = activated ? "partner-cabinet" : "partner-dashboard";
 
@@ -969,12 +1076,37 @@ function PartnerInfoScreen({ navigate, activated }: PartnerProps) {
       stage2Fetch<Stage2PlaceTypeTemplate[]>("/place-type-templates"),
     ]).then(([items, templates]) => {
       if (!cancelled) {
-        setStage2Categories(items.filter((item) => item.slug !== "emergency"));
-        setPlaceTemplates(templates);
+        setStage2Categories(items.filter((item) => item.slug !== "emergency").length ? items.filter((item) => item.slug !== "emergency") : FALLBACK_STAGE2_CATEGORIES);
+        setPlaceTemplates(mergedTemplates(templates));
       }
-    }).catch(() => undefined);
+    }).catch(() => {
+      if (!cancelled) {
+        setStage2Categories(FALLBACK_STAGE2_CATEGORIES);
+        setPlaceTemplates(FALLBACK_PLACE_TEMPLATES);
+      }
+    });
     return () => { cancelled = true; };
   }, []);
+
+  const applyPlaceTemplate = (template: Stage2PlaceTypeTemplate | undefined, categorySlug: string, placeType: string) => {
+    applyTemplateServices(template);
+    setProfile((prev) => {
+      const amenities = template?.default_amenities?.length ? [...template.default_amenities] : prev.amenities;
+      const hasWifi = amenities.some((item) => /wi[\s‑-]*fi/i.test(item));
+      return {
+        ...prev,
+        categorySlug,
+        placeType,
+        placeName: template?.default_title || prev.placeName,
+        description: template?.default_description || prev.description,
+        amenities,
+        hasWifi,
+        wifiSsid: hasWifi ? prev.wifiSsid : "",
+        wifiPassword: hasWifi ? prev.wifiPassword : "",
+        templateFields: {},
+      };
+    });
+  };
 
   const activeTemplate = placeTemplates.find((item) => item.category_slug === profile.categorySlug && item.place_type === profile.placeType);
   const activeTemplateFields = Object.entries(activeTemplate?.fields ?? {}).filter(([, label]) => typeof label === "string" && String(label).trim());
@@ -986,7 +1118,14 @@ function PartnerInfoScreen({ navigate, activated }: PartnerProps) {
         navigate={navigate}
         back={goBack}
         nextLabel="Далі"
-        onNext={() => navigate("partner", "partner-rules")}
+        onNext={() => {
+          if (!profile.cityPlaceId || !profile.streetPlaceId || !profile.housePlaceId) {
+            setAddressError("Оберіть місто, вулицю та будинок саме з випадаючих підказок Google — довільну адресу зберегти не можна.");
+            return;
+          }
+          setAddressError("");
+          navigate("partner", "partner-rules");
+        }}
       />
       <main className="gt-partner-mobile-content gt-partner-form-page">
         <section className="gt-partner-photo-editor">
@@ -1019,8 +1158,7 @@ function PartnerInfoScreen({ navigate, activated }: PartnerProps) {
                     const category = stage2Categories.find((item) => item.slug === slug);
                     const fallback = category?.subcategories?.[0];
                     const placeType = template?.place_type || fallback || (slug === "hotel" ? "Готель" : profile.placeType);
-                    applyTemplateServices(template);
-                    setProfile((prev) => ({ ...prev, categorySlug: slug, placeType }));
+                    applyPlaceTemplate(template, slug, placeType);
                   }}>
                     {stage2Categories.map((item) => <option key={item.slug} value={item.slug}>{item.slug === "hotel" ? "Готель / точка входу" : item.name}</option>)}
                   </select>
@@ -1033,14 +1171,13 @@ function PartnerInfoScreen({ navigate, activated }: PartnerProps) {
                     <small>Тип закладу</small>
                     <select value={profile.placeType} onChange={(event) => {
                       const placeType = event.target.value;
-                      const template = placeTemplates.find((item) => item.category_slug === profile.categorySlug && item.place_type === placeType);
-                      applyTemplateServices(template);
-                      setProfile((prev) => ({ ...prev, placeType }));
+                      const template = placeTemplates.find((item) => item.place_type === placeType);
+                      applyPlaceTemplate(template, template?.category_slug || categoryFromPlaceType(placeType), placeType);
                     }}>
-                      {(placeTemplates.filter((item) => item.category_slug === profile.categorySlug).length
-                        ? placeTemplates.filter((item) => item.category_slug === profile.categorySlug).map((item) => ({ value: item.place_type, label: item.label }))
-                        : (stage2Categories.find((item) => item.slug === profile.categorySlug)?.subcategories || []).map((item) => ({ value: item, label: item })))
-                        .map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+                      {placeTemplates.map((item) => {
+                        const sectionName = stage2Categories.find((category) => category.slug === item.category_slug)?.name || item.category_slug;
+                        return <option key={item.id} value={item.place_type}>{item.label} · {sectionName}</option>;
+                      })}
                     </select>
                   </span>
                   <i><ChevronRight size={16} /></i>
@@ -1058,27 +1195,98 @@ function PartnerInfoScreen({ navigate, activated }: PartnerProps) {
             />
           )}
           <AddressAutocompleteRow
-            label="Місто" mode="city" value={profile.city}
-            onText={(city) => setProfile((prev) => ({ ...prev, city, address: buildAddress({ ...prev, city }) }))}
-            onSelect={(details, suggestion) => setProfile((prev) => { const city = details.city || suggestion.main_text; const regionName = details.region || prev.regionName; return { ...prev, city, regionName, street: "", house: "", lat: String(details.lat || prev.lat), lng: String(details.lng || prev.lng), address: buildAddress({ ...prev, city, regionName, street: "", house: "" }) }; })}
+            label="Місто" mode="city" value={profile.city} verified={Boolean(profile.cityPlaceId)}
+            onText={(city) => {
+              setAddressError("");
+              setProfile((prev) => ({ ...prev, city, cityPlaceId: "", street: "", streetPlaceId: "", house: "", housePlaceId: "", address: buildAddress({ ...prev, city, street: "", house: "" }) }));
+            }}
+            onSelect={(details, suggestion) => setProfile((prev) => {
+              const city = details.city || suggestion.main_text;
+              const regionName = details.region || prev.regionName;
+              return { ...prev, city, regionName, cityPlaceId: suggestion.place_id, street: "", streetPlaceId: "", house: "", housePlaceId: "", lat: String(details.lat || prev.lat), lng: String(details.lng || prev.lng), address: buildAddress({ ...prev, city, regionName, street: "", house: "" }) };
+            })}
           />
           <AddressAutocompleteRow
-            label="Вулиця" mode="street" value={profile.street} city={profile.city}
-            onText={(street) => setProfile((prev) => ({ ...prev, street, address: buildAddress({ ...prev, street }) }))}
-            onSelect={(details, suggestion) => setProfile((prev) => { const street = details.street || suggestion.main_text; return { ...prev, street, house: "", lat: String(details.lat || prev.lat), lng: String(details.lng || prev.lng), address: buildAddress({ ...prev, street, house: "" }) }; })}
+            label="Вулиця" mode="street" value={profile.street} city={profile.city} disabled={!profile.cityPlaceId} verified={Boolean(profile.streetPlaceId)}
+            onText={(street) => {
+              setAddressError("");
+              setProfile((prev) => ({ ...prev, street, streetPlaceId: "", house: "", housePlaceId: "", address: buildAddress({ ...prev, street, house: "" }) }));
+            }}
+            onSelect={(details, suggestion) => setProfile((prev) => {
+              const street = details.street || suggestion.main_text;
+              return { ...prev, street, streetPlaceId: suggestion.place_id, house: "", housePlaceId: "", lat: String(details.lat || prev.lat), lng: String(details.lng || prev.lng), address: buildAddress({ ...prev, street, house: "" }) };
+            })}
           />
           <AddressAutocompleteRow
-            label="Будинок" mode="house" value={profile.house} city={profile.city} street={profile.street}
-            onText={(house) => setProfile((prev) => ({ ...prev, house, address: buildAddress({ ...prev, house }) }))}
-            onSelect={(details, suggestion) => setProfile((prev) => { const house = details.house || suggestion.main_text; const city = details.city || prev.city; const regionName = details.region || prev.regionName; const street = details.street || prev.street; return { ...prev, city, regionName, street, house, lat: String(details.lat || prev.lat), lng: String(details.lng || prev.lng), address: details.formatted_address || buildAddress({ ...prev, city, regionName, street, house }) }; })}
+            label="Будинок" mode="house" value={profile.house} city={profile.city} street={profile.street} disabled={!profile.streetPlaceId} verified={Boolean(profile.housePlaceId)}
+            onText={(house) => {
+              setAddressError("");
+              setProfile((prev) => ({ ...prev, house, housePlaceId: "", address: buildAddress({ ...prev, house }) }));
+            }}
+            onSelect={(details, suggestion) => setProfile((prev) => {
+              const house = details.house || suggestion.main_text;
+              const city = details.city || prev.city;
+              const regionName = details.region || prev.regionName;
+              const street = details.street || prev.street;
+              return { ...prev, city, regionName, street, house, housePlaceId: suggestion.place_id, lat: String(details.lat || prev.lat), lng: String(details.lng || prev.lng), address: details.formatted_address || buildAddress({ ...prev, city, regionName, street, house }) };
+            })}
           />
+          {addressError ? <p className="gt-partner-address-error">{addressError}</p> : null}
           <InputRow
             label="Опис"
             value={profile.description}
             onChange={(description) => setProfile((prev) => ({ ...prev, description }))}
             multiline
           />
-          <AmenitiesRow onClick={() => navigate("partner", "partner-services")} />
+          <AmenitiesRow amenities={profile.amenities} hasWifi={profile.hasWifi} onClick={() => setShowAmenityEditor((value) => !value)} />
+          {showAmenityEditor ? (
+            <div className="gt-partner-amenity-editor">
+              <strong>Іконки / зручності закладу</strong>
+              <div>
+                {Array.from(new Set([
+                  ...(activeTemplate?.default_amenities || []),
+                  "Wi‑Fi", "Паркінг", "Номери", "Сніданок", "Меню", "Оплата карткою", "Дитяче меню", "Самовивіз", "Доставка", "Трансфер", "Доступність", "Домашні тварини",
+                ])).map((amenity) => {
+                  const active = profile.amenities.includes(amenity) && (amenity !== "Wi‑Fi" || profile.hasWifi);
+                  const Icon = amenityIcon(amenity);
+                  return (
+                    <button
+                      type="button"
+                      key={amenity}
+                      className={active ? "is-active" : ""}
+                      onClick={() => setProfile((prev) => {
+                        const exists = prev.amenities.includes(amenity);
+                        const nextAmenities = exists ? prev.amenities.filter((item) => item !== amenity) : [...prev.amenities, amenity];
+                        const togglesWifi = /wi[\s‑-]*fi/i.test(amenity);
+                        const hasWifi = togglesWifi ? !exists : prev.hasWifi;
+                        return {
+                          ...prev,
+                          amenities: nextAmenities,
+                          hasWifi,
+                          wifiSsid: hasWifi ? prev.wifiSsid : "",
+                          wifiPassword: hasWifi ? prev.wifiPassword : "",
+                        };
+                      })}
+                    >
+                      <Icon size={15} /><span>{amenity}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <button type="button" className="gt-partner-detailed-services-link" onClick={() => navigate("partner", "partner-services")}>
+                <Edit3 size={15} /> Детальні послуги (сауна, чан, трансфер тощо)
+              </button>
+            </div>
+          ) : null}
+          <WifiAvailabilityRow enabled={profile.hasWifi} onChange={(hasWifi) => setProfile((prev) => ({
+            ...prev,
+            hasWifi,
+            wifiSsid: hasWifi ? prev.wifiSsid : "",
+            wifiPassword: hasWifi ? prev.wifiPassword : "",
+            amenities: hasWifi
+              ? (prev.amenities.some((item) => /wi[\s‑-]*fi/i.test(item)) ? prev.amenities : [...prev.amenities, "Wi‑Fi"])
+              : prev.amenities.filter((item) => !/wi[\s‑-]*fi/i.test(item)),
+          }))} />
           {activeTemplateFields.length ? activeTemplateFields.map(([key, label]) => (
             <InputRow
               key={`${profile.categorySlug}-${profile.placeType}-${key}`}
@@ -1123,6 +1331,60 @@ function RuleLine({
   );
 }
 
+const RULE_ICON_OPTIONS: Array<{ key: PartnerRuleIcon; label: string; icon: typeof Clock3 }> = [
+  { key: "no-smoking", label: "Без куріння", icon: CigaretteOff },
+  { key: "quiet", label: "Тиша", icon: Moon },
+  { key: "pets", label: "Тварини", icon: PawPrint },
+  { key: "clock", label: "Час", icon: Clock3 },
+  { key: "security", label: "Безпека", icon: ShieldCheck },
+  { key: "people", label: "Гості", icon: Users },
+  { key: "info", label: "Інформація", icon: Info },
+  { key: "sparkles", label: "Чистота", icon: Sparkles },
+  { key: "energy", label: "Важливо", icon: Zap },
+  { key: "lock", label: "Обмеження", icon: LockKeyhole },
+];
+
+function ruleIconComponent(icon: PartnerRuleIcon) {
+  return RULE_ICON_OPTIONS.find((item) => item.key === icon)?.icon || Info;
+}
+
+function EditableGeneralRule({
+  rule,
+  onChange,
+  onDelete,
+}: {
+  rule: PartnerRule;
+  onChange: (rule: PartnerRule) => void;
+  onDelete: () => void;
+}) {
+  const [showIcons, setShowIcons] = useState(false);
+  const Icon = ruleIconComponent(rule.icon);
+  return (
+    <div className="gt-partner-rule-line gt-partner-rule-line--editable">
+      <button type="button" className="gt-partner-rule-icon-button" onClick={() => setShowIcons((value) => !value)} aria-label="Змінити іконку правила">
+        <Icon size={18} />
+      </button>
+      <textarea value={rule.text} onChange={(event) => onChange({ ...rule, text: event.target.value })} rows={rule.text.length > 45 ? 2 : 1} />
+      <button type="button" className="gt-partner-rule-delete" onClick={onDelete} aria-label="Видалити правило"><Trash2 size={16} /></button>
+      {showIcons ? (
+        <div className="gt-partner-rule-icon-picker">
+          {RULE_ICON_OPTIONS.map(({ key, label, icon: OptionIcon }) => (
+            <button
+              key={key}
+              type="button"
+              className={rule.icon === key ? "is-active" : ""}
+              title={label}
+              onClick={() => { onChange({ ...rule, icon: key }); setShowIcons(false); }}
+            >
+              <OptionIcon size={17} />
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function PaymentLogos() {
   return (
     <div className="gt-payment-logos" aria-label="Підтримувані способи оплати">
@@ -1160,7 +1422,7 @@ function RulesScreen({ navigate, activated }: PartnerProps) {
         navigate={navigate}
         back={goBack}
         nextLabel="Далі"
-        onNext={() => navigate("partner", "partner-wifi")}
+        onNext={() => navigate("partner", profile.hasWifi ? "partner-wifi" : "partner-contacts")}
       />
       <main className="gt-partner-mobile-content gt-partner-form-page">
         <h3 className="gt-partner-section-title">Загальні правила</h3>
@@ -1175,21 +1437,27 @@ function RulesScreen({ navigate, activated }: PartnerProps) {
             value={profile.checkOut}
             onChange={(checkOut) => setProfile((prev) => ({ ...prev, checkOut }))}
           />
-          <RuleLine
-            icon={CigaretteOff}
-            value="Куріння заборонено в приміщеннях готелю"
-            onChange={() => undefined}
-          />
-          <RuleLine
-            icon={Moon}
-            value={profile.quietHours}
-            onChange={(quietHours) => setProfile((prev) => ({ ...prev, quietHours }))}
-          />
-          <RuleLine
-            icon={PawPrint}
-            value={profile.petPolicy}
-            onChange={(petPolicy) => setProfile((prev) => ({ ...prev, petPolicy }))}
-          />
+          {profile.generalRules.map((rule) => (
+            <EditableGeneralRule
+              key={rule.id}
+              rule={rule}
+              onChange={(updated) => setProfile((prev) => ({ ...prev, generalRules: prev.generalRules.map((item) => item.id === updated.id ? updated : item) }))}
+              onDelete={() => setProfile((prev) => ({ ...prev, generalRules: prev.generalRules.filter((item) => item.id !== rule.id) }))}
+            />
+          ))}
+          <button
+            type="button"
+            className="gt-partner-add-rule"
+            onClick={() => {
+              const icon = RULE_ICON_OPTIONS[Math.floor(Math.random() * RULE_ICON_OPTIONS.length)]?.key || "info";
+              setProfile((prev) => ({
+                ...prev,
+                generalRules: [...prev.generalRules, { id: `rule-${Date.now()}`, text: "Нове правило — натисніть і відредагуйте", icon }],
+              }));
+            }}
+          >
+            <Plus size={16} /> Додати правило
+          </button>
         </FormCard>
 
         <section className="gt-partner-text-section">
@@ -1228,6 +1496,12 @@ function RulesScreen({ navigate, activated }: PartnerProps) {
 function WifiScreen({ navigate, activated }: PartnerProps) {
   const { profile, setProfile } = usePartnerProfile();
   const [showPassword, setShowPassword] = useState(true);
+
+  useEffect(() => {
+    if (!profile.hasWifi) navigate("partner", "partner-contacts");
+  }, [profile.hasWifi, navigate]);
+
+  if (!profile.hasWifi) return null;
 
   return (
     <div className="gt-partner-mobile-screen has-bottom-nav is-wifi-screen">
@@ -1291,6 +1565,7 @@ function ContactRow({
   value,
   onChange,
   iconClassName,
+  readOnly = false,
 }: {
   icon?: typeof Phone;
   brandIcons?: Array<{ src: string; alt: string }>;
@@ -1298,6 +1573,7 @@ function ContactRow({
   value: string;
   onChange: (next: string) => void;
   iconClassName?: string;
+  readOnly?: boolean;
 }) {
   return (
     <label className="gt-contact-edit-row">
@@ -1314,10 +1590,10 @@ function ContactRow({
       </span>
       <span className="gt-contact-edit-row__copy">
         <small>{label}</small>
-        <input value={value} onChange={(event) => onChange(event.target.value)} />
+        <input value={value} readOnly={readOnly} onChange={(event) => onChange(event.target.value)} />
       </span>
       <i>
-        <Edit3 size={20} />
+        {readOnly ? <MapPin size={20} /> : <Edit3 size={20} />}
       </i>
     </label>
   );
@@ -1331,7 +1607,7 @@ function ContactsScreen({ navigate, activated, onActivate }: PartnerProps & { on
       <PartnerHeader
         title="Контакти"
         navigate={navigate}
-        back="partner-wifi"
+        back={profile.hasWifi ? "partner-wifi" : "partner-rules"}
         nextLabel="Зберегти"
         onNext={() => {
           void submitPartnerProfile(profile).then((place) => {
@@ -1385,8 +1661,9 @@ function ContactsScreen({ navigate, activated, onActivate }: PartnerProps & { on
             icon={MapPin}
             label="Адреса"
             value={profile.address}
-            onChange={(address) => setProfile((prev) => ({ ...prev, address }))}
+            onChange={() => undefined}
             iconClassName="is-green"
+            readOnly
           />
         </section>
 

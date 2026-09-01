@@ -55,7 +55,10 @@ export type Stage2PlaceTypeTemplate = {
   category_slug: string;
   place_type: string;
   label: string;
+  default_title?: string | null;
+  default_description?: string | null;
   default_services: string[];
+  default_amenities?: string[];
   fields?: Record<string, unknown>;
   sort_order?: number;
 };

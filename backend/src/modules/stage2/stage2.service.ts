@@ -79,6 +79,23 @@ function partnerMatchesSubcategory(place: PlaceRow, label: string) {
 export class Stage2Service {
   constructor(private readonly db: DatabaseService, private readonly google: GooglePlacesService) {}
 
+  private async verifiedAddressFromBody(body: Record<string, unknown>) {
+    const details = body.details && typeof body.details === "object" ? body.details as Record<string, unknown> : {};
+    const ids = details.geo_place_ids && typeof details.geo_place_ids === "object" ? details.geo_place_ids as Record<string, unknown> : {};
+    const isVerified = details.address_verified === true;
+    const cityId = String(ids.city ?? "").trim();
+    const streetId = String(ids.street ?? "").trim();
+    const houseId = String(ids.house ?? "").trim();
+    if (!isVerified || !cityId || !streetId || !houseId) {
+      throw new BadRequestException("Оберіть місто, вулицю та будинок з підказок Google Maps");
+    }
+    const verified = await this.geoDetails(houseId);
+    if (!verified.city || !verified.street || !verified.house || !verified.lat || !verified.lng) {
+      throw new BadRequestException("Google Maps не підтвердив повну адресу");
+    }
+    return verified;
+  }
+
   private async ensureRegionForPlace(city: string, regionName: string, lat: number, lng: number, fallback = "region-tatariv") {
     const name = city.trim();
     if (!name) return fallback;
@@ -178,7 +195,7 @@ export class Stage2Service {
 
   async placeTypeTemplates(category?: string) {
     const result = await this.db.query(
-      `SELECT id,category_slug,place_type,label,default_services,fields,sort_order,active
+      `SELECT id,category_slug,place_type,label,default_title,default_description,default_services,default_amenities,fields,sort_order,active
        FROM place_type_templates WHERE active=true AND ($1::text IS NULL OR category_slug=$1) ORDER BY category_slug,sort_order,label`,
       [category || null],
     );
@@ -340,10 +357,11 @@ export class Stage2Service {
     const name = String(body.name ?? "").trim();
     if (!name) throw new BadRequestException("name is required");
     const category = String(body.category_slug ?? "hotel");
-    const lat = num(body.lat, 48.34535)!;
-    const lng = num(body.lng, 24.57855)!;
+    const verifiedAddress = await this.verifiedAddressFromBody(body);
+    const lat = verifiedAddress.lat;
+    const lng = verifiedAddress.lng;
     const requestedRegion = body.region_id ? String(body.region_id) : "region-tatariv";
-    const regionId = await this.ensureRegionForPlace(String(body.city ?? ""), String(body.region_name ?? ""), lat, lng, requestedRegion);
+    const regionId = await this.ensureRegionForPlace(verifiedAddress.city, verifiedAddress.region, lat, lng, requestedRegion);
     const organizationId = makeId("org");
     const placeId = makeId("place");
 
@@ -355,7 +373,7 @@ export class Stage2Service {
       await client.query(
         `INSERT INTO places(id,organization_id,region_id,category_slug,subcategory,name,description,address,lat,lng,phone,telegram,website,image_url,price_level,work_hours,attributes,details,status,created_by_user_id)
          VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16::jsonb,$17::jsonb,$18::jsonb,'pending',$19)`,
-        [placeId, organizationId, regionId, category, body.subcategory ?? null, name, body.description ?? "", body.address ?? "", lat, lng, body.phone ?? null, body.telegram ?? null, body.website ?? null, body.image_url ?? null, num(body.price_level), JSON.stringify(body.work_hours ?? {}), JSON.stringify(body.attributes ?? {}), JSON.stringify(body.details ?? {}), user.id],
+        [placeId, organizationId, regionId, category, body.subcategory ?? null, name, body.description ?? "", verifiedAddress.formatted_address || body.address || "", lat, lng, body.phone ?? null, body.telegram ?? null, body.website ?? null, body.image_url ?? null, num(body.price_level), JSON.stringify(body.work_hours ?? {}), JSON.stringify(body.attributes ?? {}), JSON.stringify(body.details ?? {}), user.id],
       );
       await client.query("UPDATE users SET role=CASE WHEN role='tourist' THEN 'partner' ELSE role END, updated_at=now() WHERE id=$1", [user.id]);
     });
@@ -458,11 +476,13 @@ export class Stage2Service {
     const label = String(body.label ?? placeType).trim();
     if (!categorySlug || !placeType || !label) throw new BadRequestException("category_slug, place_type and label are required");
     const id = String(body.id ?? makeId("tpl"));
+    const defaultTitle = String(body.default_title ?? "").trim() || null;
+    const defaultDescription = String(body.default_description ?? "").trim() || null;
     await this.db.query(
-      `INSERT INTO place_type_templates(id,category_slug,place_type,label,default_services,fields,sort_order,active)
-       VALUES($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7,true)
-       ON CONFLICT (category_slug,place_type) DO UPDATE SET label=EXCLUDED.label,default_services=EXCLUDED.default_services,fields=EXCLUDED.fields,sort_order=EXCLUDED.sort_order,active=true,updated_at=now()`,
-      [id,categorySlug,placeType,label,JSON.stringify(body.default_services ?? []),JSON.stringify(body.fields ?? {}),num(body.sort_order,100)],
+      `INSERT INTO place_type_templates(id,category_slug,place_type,label,default_title,default_description,default_services,default_amenities,fields,sort_order,active)
+       VALUES($1,$2,$3,$4,$5,$6,$7::jsonb,$8::jsonb,$9::jsonb,$10,true)
+       ON CONFLICT (category_slug,place_type) DO UPDATE SET label=EXCLUDED.label,default_title=EXCLUDED.default_title,default_description=EXCLUDED.default_description,default_services=EXCLUDED.default_services,default_amenities=EXCLUDED.default_amenities,fields=EXCLUDED.fields,sort_order=EXCLUDED.sort_order,active=true,updated_at=now()`,
+      [id,categorySlug,placeType,label,defaultTitle,defaultDescription,JSON.stringify(body.default_services ?? []),JSON.stringify(body.default_amenities ?? []),JSON.stringify(body.fields ?? {}),num(body.sort_order,100)],
     );
     return { ok: true, id, category_slug: categorySlug, place_type: placeType };
   }

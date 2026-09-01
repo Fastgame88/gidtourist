@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 function backendBase() {
-  const raw = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
-  return raw.replace(/\/$/, "");
+  const raw = (process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1").trim().replace(/\/$/, "");
+  return /\/api\/v1$/i.test(raw) ? raw : `${raw}/api/v1`;
 }
 
 async function proxy(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {

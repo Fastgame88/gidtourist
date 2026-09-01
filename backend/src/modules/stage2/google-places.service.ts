@@ -121,7 +121,7 @@ export class GooglePlacesService {
 
   async autocomplete(input: string, mode: "city" | "street" | "house", city = "", street = ""): Promise<GoogleSuggestion[]> {
     const clean = input.trim();
-    if (clean.length < 2) return [];
+    if (clean.length < 1) return [];
     const query = mode === "city" ? clean : mode === "street" ? `${clean}, ${city}, Україна` : `${street} ${clean}, ${city}, Україна`;
     const body: Record<string, unknown> = {
       input: query,

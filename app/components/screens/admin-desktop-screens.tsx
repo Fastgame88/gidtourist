@@ -964,7 +964,10 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
   const [placeTemplates, setPlaceTemplates] = useState<Stage2PlaceTypeTemplate[]>([]);
   const [templateCategory, setTemplateCategory] = useState("hotel");
   const [templateType, setTemplateType] = useState("Готель");
-  const [templateServices, setTemplateServices] = useState("Wi‑Fi, Паркінг, Сніданок");
+  const [templateTitle, setTemplateTitle] = useState("Новий готель");
+  const [templateDescription, setTemplateDescription] = useState("Комфортний готель для відпочинку гостей.");
+  const [templateAmenities, setTemplateAmenities] = useState("Номери, Паркінг, Wi‑Fi, Сніданок");
+  const [templateServices, setTemplateServices] = useState("Сніданок, Прибирання, Сауна, Басейн, Трансфер");
   const [templateFields, setTemplateFields] = useState("room_count=Кількість номерів; opened_year=Рік відкриття");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -1033,8 +1036,9 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
     <AdminShell active="content" navigate={navigate} contentClassName="ad-main--stage2">
       <AdminPageHeader title="Контент / QR — Етап 2" subtitle="Модерація закладів, QR-контекст, категорії та локальні контакти" action={<OutlineButton onClick={() => void load()}><RefreshCcw size={17}/> Оновити</OutlineButton>} />
       <section className="ad-stage2-access">
-        <label><span>ADMIN_API_KEY</span><input type="password" value={adminKey} onChange={(event) => setAdminKey(event.target.value)} placeholder="Можна залишити порожнім, якщо STAGE2_ADMIN_API_KEY заданий у frontend Railway" /></label>
+        <label><span>ADMIN_API_KEY</span><input type="password" value={adminKey} onChange={(event) => setAdminKey(event.target.value)} placeholder="Секрет ADMIN_API_KEY з backend Railway; можна лишити порожнім, якщо STAGE2_ADMIN_API_KEY заданий у frontend" /></label>
         <PrimaryButton onClick={() => void load(adminKey)}>{loading ? "Підключення…" : "Перевірити API"}</PrimaryButton>
+        <small className="ad-stage2-api-help">Це не URL API. Ключ лише підтверджує права адміністратора; URL backend береться з BACKEND_API_URL / NEXT_PUBLIC_API_URL.</small>
         {message ? <p>{message}</p> : null}
       </section>
 
@@ -1074,17 +1078,20 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
           <PrimaryButton onClick={() => void adminStage2Fetch("/admin/stage2/categories", adminKey,{method:"POST",body:JSON.stringify({slug:categorySlug,name:categoryName,subcategories:categorySubcategories.split(",").map((item)=>item.trim()).filter(Boolean)})}).then(()=>{setMessage("Категорію і підкатегорії збережено");return load();})}><Plus size={16}/> Зберегти</PrimaryButton>
           <div className="ad-stage2-template-editor">
             <strong>Шаблон типу закладу</strong>
-            <select value={templateCategory} onChange={(e)=>{ const value=e.target.value; setTemplateCategory(value); const first=placeTemplates.find((item)=>item.category_slug===value); if(first){setTemplateType(first.place_type);setTemplateServices(first.default_services.join(", "));setTemplateFields(Object.entries(first.fields ?? {}).map(([key,label])=>`${key}=${String(label)}`).join("; "));} }}>
+            <select value={templateCategory} onChange={(e)=>{ const value=e.target.value; setTemplateCategory(value); const first=placeTemplates.find((item)=>item.category_slug===value); if(first){setTemplateType(first.place_type);setTemplateTitle(first.default_title || "");setTemplateDescription(first.default_description || "");setTemplateAmenities((first.default_amenities || []).join(", "));setTemplateServices(first.default_services.join(", "));setTemplateFields(Object.entries(first.fields ?? {}).map(([key,label])=>`${key}=${String(label)}`).join("; "));} }}>
               {stage2Categories.filter((item)=>item.slug!=="emergency").map((item)=><option key={item.slug} value={item.slug}>{item.name}</option>)}
             </select>
-            <select value={templateType} onChange={(e)=>{ const value=e.target.value; setTemplateType(value); const current=placeTemplates.find((item)=>item.category_slug===templateCategory&&item.place_type===value); if(current){setTemplateServices(current.default_services.join(", "));setTemplateFields(Object.entries(current.fields ?? {}).map(([key,label])=>`${key}=${String(label)}`).join("; "));} }}>
+            <select value={templateType} onChange={(e)=>{ const value=e.target.value; setTemplateType(value); const current=placeTemplates.find((item)=>item.category_slug===templateCategory&&item.place_type===value); if(current){setTemplateTitle(current.default_title || "");setTemplateDescription(current.default_description || "");setTemplateAmenities((current.default_amenities || []).join(", "));setTemplateServices(current.default_services.join(", "));setTemplateFields(Object.entries(current.fields ?? {}).map(([key,label])=>`${key}=${String(label)}`).join("; "));} }}>
               <option value="">Новий тип закладу</option>
               {placeTemplates.filter((item)=>item.category_slug===templateCategory).map((item)=><option key={item.id} value={item.place_type}>{item.label}</option>)}
             </select>
             <input value={templateType} onChange={(e)=>setTemplateType(e.target.value)} placeholder="Тип / новий тип: Ресторан, Кафе, Магазин" />
-            <input value={templateServices} onChange={(e)=>setTemplateServices(e.target.value)} placeholder="Послуги шаблону через кому" />
+            <input value={templateTitle} onChange={(e)=>setTemplateTitle(e.target.value)} placeholder="Шаблон заголовка: Новий ресторан" />
+            <textarea value={templateDescription} onChange={(e)=>setTemplateDescription(e.target.value)} placeholder="Шаблон опису закладу" rows={3} />
+            <input value={templateAmenities} onChange={(e)=>setTemplateAmenities(e.target.value)} placeholder="Іконки / зручності через кому: Wi‑Fi, Паркінг, Меню" />
+            <input value={templateServices} onChange={(e)=>setTemplateServices(e.target.value)} placeholder="Детальні послуги через кому: Сніданок, Сауна, Трансфер" />
             <input value={templateFields} onChange={(e)=>setTemplateFields(e.target.value)} placeholder="Поля: capacity=Кількість місць; cuisine=Кухня" />
-            <PrimaryButton onClick={() => void adminStage2Fetch("/admin/stage2/place-type-templates", adminKey,{method:"POST",body:JSON.stringify({category_slug:templateCategory,place_type:templateType,label:templateType,default_services:templateServices.split(",").map((item)=>item.trim()).filter(Boolean),fields:Object.fromEntries(templateFields.split(";").map((item)=>item.trim()).filter(Boolean).map((item)=>{const [key,...rest]=item.split("=");return [key.trim(),rest.join("=").trim()]}).filter(([key,label])=>key&&label))})}).then(()=>{setMessage("Шаблон типу закладу збережено");return load();})}><Plus size={16}/> Зберегти шаблон</PrimaryButton>
+            <PrimaryButton onClick={() => void adminStage2Fetch("/admin/stage2/place-type-templates", adminKey,{method:"POST",body:JSON.stringify({category_slug:templateCategory,place_type:templateType,label:templateType,default_title:templateTitle,default_description:templateDescription,default_amenities:templateAmenities.split(",").map((item)=>item.trim()).filter(Boolean),default_services:templateServices.split(",").map((item)=>item.trim()).filter(Boolean),fields:Object.fromEntries(templateFields.split(";").map((item)=>item.trim()).filter(Boolean).map((item)=>{const [key,...rest]=item.split("=");return [key.trim(),rest.join("=").trim()]}).filter(([key,label])=>key&&label))})}).then(()=>{setMessage("Шаблон типу закладу збережено");return load();})}><Plus size={16}/> Зберегти шаблон</PrimaryButton>
           </div>
         </div>
         <div className="ad-stage2-card">

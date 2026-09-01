@@ -27914,3 +27914,156 @@ button.gt-amenities-row {
   border-top: 1px solid #e8ece9;
 }
 .ad-stage2-template-editor > strong { font-size: 13px; }
+
+/* ===== Stage 2.2: strict address, editable rules, optional Wi-Fi, template amenities ===== */
+.gt-partner-address-autocomplete.is-verified > i { color: #0a9a55 !important; }
+.gt-partner-address-autocomplete.is-disabled { opacity: .62; }
+.gt-partner-address-autocomplete.is-disabled input { cursor: not-allowed; }
+.gt-partner-address-error {
+  margin: -2px 14px 10px;
+  color: #b83a31;
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+
+.gt-partner-wifi-toggle-row {
+  display: flex;
+  min-height: 66px;
+  padding: 10px 14px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #edf1ee;
+  background: #fff;
+}
+.gt-partner-wifi-toggle-row > span {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+.gt-partner-wifi-toggle-row > span > svg { flex: 0 0 auto; color: #0b8d51; }
+.gt-partner-wifi-toggle-row > span > span { min-width: 0; }
+.gt-partner-wifi-toggle-row strong,
+.gt-partner-wifi-toggle-row small { display: block; }
+.gt-partner-wifi-toggle-row strong { color: #18221b; font-size: 12px; }
+.gt-partner-wifi-toggle-row small { margin-top: 3px; color: #7a857e; font-size: 9.5px; line-height: 1.25; }
+
+.gt-partner-rule-line--editable {
+  position: relative;
+  grid-template-columns: 26px minmax(0, 1fr) 28px !important;
+  overflow: visible !important;
+}
+.gt-partner-rule-icon-button,
+.gt-partner-rule-delete {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #465149;
+}
+.gt-partner-rule-icon-button { background: #eef8f2; color: #0b8d51; }
+.gt-partner-rule-delete { color: #a24b45; }
+.gt-partner-rule-icon-picker {
+  position: absolute;
+  z-index: 30;
+  top: 42px;
+  left: 8px;
+  display: grid;
+  grid-template-columns: repeat(5, 34px);
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid #dfe8e2;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(25,54,36,.15);
+}
+.gt-partner-rule-icon-picker button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid #e4ebe6;
+  border-radius: 9px;
+  background: #fff;
+  color: #566159;
+}
+.gt-partner-rule-icon-picker button.is-active { border-color: #0a9a55; background: #edf9f2; color: #0a8b50; }
+.gt-partner-add-rule {
+  display: flex;
+  width: 100%;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 0;
+  border-top: 1px solid #edf1ee;
+  background: #fff;
+  color: #0b8d51;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 800;
+}
+
+.ad-stage2-access .ad-stage2-api-help {
+  grid-column: 1 / -1;
+  margin-top: -4px;
+  color: #7c8780;
+  font-size: 10px;
+  line-height: 1.35;
+}
+.ad-stage2-template-editor textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 74px;
+  padding: 11px 12px;
+  border: 1px solid #dfe5e1;
+  border-radius: 10px;
+  background: #fff;
+  color: #1d2520;
+  font: inherit;
+  font-size: 12px;
+  resize: vertical;
+}
+.gt-partner-amenity-editor {
+  padding: 11px 12px 12px;
+  border-bottom: 1px solid #edf1ee;
+  background: #fbfdfb;
+}
+.gt-partner-amenity-editor > strong { display:block; margin-bottom:8px; color:#26312a; font-size:10.5px; }
+.gt-partner-amenity-editor > div { display:flex; flex-wrap:wrap; gap:6px; }
+.gt-partner-amenity-editor > div > button {
+  display:inline-flex;
+  min-height:31px;
+  padding:6px 9px;
+  align-items:center;
+  gap:5px;
+  border:1px solid #dfe8e2;
+  border-radius:999px;
+  background:#fff;
+  color:#66716a;
+  font-family:inherit;
+  font-size:9.5px;
+}
+.gt-partner-amenity-editor > div > button.is-active { border-color:#0a9955; background:#edf9f2; color:#0a8c50; font-weight:800; }
+.gt-partner-detailed-services-link {
+  display:flex;
+  width:100%;
+  min-height:37px;
+  margin-top:10px;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  border:1px solid #dce7e0;
+  border-radius:10px;
+  background:#fff;
+  color:#0a8d51;
+  font-family:inherit;
+  font-size:10px;
+  font-weight:800;
+}
