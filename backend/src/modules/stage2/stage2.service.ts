@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from "@nestjs/comm
 import { DatabaseService } from "../../database/database.service.js";
 import { makeId } from "../../common/id.js";
 import type { AuthUser } from "../../common/auth.guard.js";
+import { GooglePlacesService, type GoogleNearbyPlace } from "./google-places.service.js";
 
 function num(value: unknown, fallback?: number) {
   const parsed = Number(value);
@@ -53,9 +54,102 @@ type PlaceRow = {
   tags: string[];
 };
 
+const PARTNER_SUBCATEGORY_ALIASES: Record<string, string[]> = {
+  "Ресторани": ["ресторан", "кухн"], "Кафе": ["кафе", "кавʼ", "кав'", "coffee"], "Бари": ["бар"], "Піцерії": ["піц", "pizza"],
+  "Кондитерські": ["кондитер", "десерт", "торт"], "Фастфуд": ["фаст", "fast food"], "Їжа з собою": ["з собою", "доставка"], "Традиційна кухня": ["україн", "гуцул", "традиц"],
+  "Продукти": ["продукт", "grocery", "супермаркет"], "Сувеніри": ["сувен"], "Одяг і взуття": ["одяг", "взут"], "Товари для дому": ["для дому", "госптов", "мебл", "будмат"],
+  "Аптеки": ["аптек", "фарма"], "Техніка": ["технік", "електрон"], "Будівництво": ["будів", "будмат", "інструмент"], "Косметика": ["космет", "beauty"],
+  "Гори": ["гора", "гір", "полонин"], "Річки": ["річк", "river"], "Водоспади": ["водоспад"], "Озера": ["озер"], "Оглядові точки": ["огляд", "панорам"], "Печери": ["печер"], "Ліси": ["ліс"],
+  "Пам’ятки": ["памʼят", "пам'ят", "визначн"], "Музеї": ["музе"], "Храми": ["храм", "церк", "монаст"], "Архітектура": ["архітект", "замок"], "Історичні місця": ["істор"], "Скульптури": ["скульп", "памʼятник", "пам'ятник"], "Події": ["поді", "концерт", "фестиваль"],
+  "Активний відпочинок": ["актив", "джип", "рафт", "зіп", "похід"], "Атракціони": ["атракц", "парк розваг"], "Екскурсії": ["екскурс"], "SPA і басейни": ["spa", "спа", "саун", "басейн", "масаж", "чан"], "Риболовля": ["рибол"], "Верхова їзда": ["кін", "верхов"], "Квадроцикли": ["квадро"], "Польоти": ["політ", "параплан", "авіа"],
+  "Автобусні зупинки": ["зупин", "bus stop"], "Залізничні станції": ["залізнич", "вокзал", "станц"], "Автостанції": ["автостан", "автовокзал"], "Таксі": ["таксі", "трансфер"], "Парковки": ["парков"], "Оренда авто": ["оренда авто", "прокат авто"], "Заправки": ["азс", "заправ"], "Зарядні станції": ["заряд", "charging"],
+  "Банкомати": ["банкомат", "atm"], "Обмін валют": ["обмін валют"], "Пошта": ["пошта"], "Лікарні": ["лікарн", "медич"], "Туалети": ["туалет"], "Wi‑Fi": ["wi-fi", "wifi"], "Поліція": ["поліц"], "Інформаційні центри": ["інформаційн", "туристичний центр"],
+  "Піші маршрути": ["піш", "hiking"], "Веломаршрути": ["вело", "bike"], "Автомаршрути": ["автомаршрут"], "Верхові маршрути": ["верхов", "кінн"], "Водні маршрути": ["водн", "рафт", "сплав"], "Популярні маршрути": ["популярн маршрут"], "Складні маршрути": ["складн маршрут"], "Маршрути вихідного дня": ["вихідного дня"],
+};
+
+function partnerMatchesSubcategory(place: PlaceRow, label: string) {
+  if (!label) return true;
+  if (place.subcategory === label || place.tags.includes(label)) return true;
+  const haystack = [place.name, place.description, place.subcategory ?? "", ...place.tags].join(" ").toLocaleLowerCase("uk");
+  return (PARTNER_SUBCATEGORY_ALIASES[label] ?? []).some((token) => haystack.includes(token.toLocaleLowerCase("uk")));
+}
+
+
 @Injectable()
 export class Stage2Service {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService, private readonly google: GooglePlacesService) {}
+
+  private async ensureRegionForPlace(city: string, regionName: string, lat: number, lng: number, fallback = "region-tatariv") {
+    const name = city.trim();
+    if (!name) return fallback;
+    const existing = await this.db.query("SELECT id FROM regions WHERE lower(name)=lower($1) LIMIT 1", [name]);
+    if (existing.rows[0]?.id) return String(existing.rows[0].id);
+    const slugBase = name.toLocaleLowerCase("uk").normalize("NFKD").replace(/[^a-zа-яіїєґ0-9]+/giu, "-").replace(/^-+|-+$/g, "").slice(0, 48) || makeId("region");
+    const id = `region-${slugBase}`;
+    await this.db.query(
+      `INSERT INTO regions(id,slug,name,center_lat,center_lng,active) VALUES($1,$2,$3,$4,$5,true)
+       ON CONFLICT (id) DO UPDATE SET center_lat=EXCLUDED.center_lat,center_lng=EXCLUDED.center_lng,updated_at=now()`,
+      [id, slugBase, name + (regionName ? "" : ""), lat, lng],
+    );
+    return id;
+  }
+
+  private googlePlaceToStage2(place: GoogleNearbyPlace, lat?: number, lng?: number) {
+    const location = place.location;
+    const placeLat = Number(location?.latitude ?? 0);
+    const placeLng = Number(location?.longitude ?? 0);
+    const section = this.google.mapSection(place.primaryType ?? "", place.types ?? []);
+    const distance = lat != null && lng != null && placeLat && placeLng ? distanceMeters(lat, lng, placeLat, placeLng) : null;
+    return {
+      id: `google_${place.id}`,
+      region_id: "google",
+      category_slug: section,
+      category_name: section,
+      subcategory: this.google.subcategory(place.primaryType ?? "", place.primaryTypeDisplayName?.text ?? ""),
+      name: place.displayName?.text ?? "Google Maps place",
+      description: place.primaryTypeDisplayName?.text ?? "Google Maps",
+      address: place.formattedAddress ?? "",
+      lat: placeLat,
+      lng: placeLng,
+      phone: place.nationalPhoneNumber ?? null,
+      telegram: null,
+      website: place.websiteUri ?? null,
+      image_url: null,
+      rating: Number(place.rating ?? 0),
+      review_count: Number(place.userRatingCount ?? 0),
+      price_level: null,
+      work_hours: place.regularOpeningHours ?? {},
+      attributes: { partner: false, google: true, google_maps_uri: place.googleMapsUri ?? null },
+      details: { google_place_id: place.id, google_maps_uri: place.googleMapsUri ?? null },
+      translations: {},
+      tags: place.types ?? [],
+      distance_m: distance == null ? null : Math.round(distance),
+      is_open_now: place.regularOpeningHours?.openNow ?? null,
+      status: "external",
+      source: "google" as const,
+      is_partner: false,
+    };
+  }
+
+  async geoAutocomplete(input: string, mode: "city" | "street" | "house", city = "", street = "") {
+    return this.google.autocomplete(input, mode, city, street);
+  }
+
+  async geoDetails(placeId: string) {
+    const place = await this.google.details(placeId);
+    const components = place.addressComponents ?? [];
+    const pick = (...types: string[]) => components.find((item) => types.some((type) => item.types?.includes(type)))?.longText ?? "";
+    return {
+      place_id: place.id,
+      formatted_address: place.formattedAddress ?? "",
+      lat: Number(place.location?.latitude ?? 0),
+      lng: Number(place.location?.longitude ?? 0),
+      city: pick("locality", "postal_town", "administrative_area_level_3"),
+      region: pick("administrative_area_level_1"),
+      street: pick("route"),
+      house: pick("street_number"),
+    };
+  }
 
   async context(startParam: string) {
     const qr = await this.db.query(
@@ -78,6 +172,15 @@ export class Stage2Service {
   async categories() {
     const result = await this.db.query(
       "SELECT slug,name,name_en,name_pl,sort_order,subcategories,filter_config FROM categories WHERE active=true ORDER BY sort_order,name",
+    );
+    return result.rows;
+  }
+
+  async placeTypeTemplates(category?: string) {
+    const result = await this.db.query(
+      `SELECT id,category_slug,place_type,label,default_services,fields,sort_order,active
+       FROM place_type_templates WHERE active=true AND ($1::text IS NULL OR category_slug=$1) ORDER BY category_slug,sort_order,label`,
+      [category || null],
     );
     return result.rows;
   }
@@ -111,7 +214,7 @@ export class Stage2Service {
 
     let rows = await this.rawPlaces(regionId);
     rows = rows.filter((p) => !category || p.category_slug === category);
-    rows = rows.filter((p) => !subcategory || p.subcategory === subcategory || p.tags.includes(subcategory));
+    rows = rows.filter((p) => partnerMatchesSubcategory(p, subcategory));
     rows = rows.filter((p) => !q || [p.name,p.description,p.address,p.subcategory ?? "",...p.tags].join(" ").toLocaleLowerCase("uk").includes(q));
     rows = rows.filter((p) => minRating == null || Number(p.rating) >= minRating);
     rows = rows.filter((p) => priceLevel == null || p.price_level === priceLevel);
@@ -125,11 +228,34 @@ export class Stage2Service {
       return { ...p, rating: Number(p.rating), distance_m: distance == null ? null : Math.round(distance), is_open_now: isOpenNow(p.work_hours) };
     });
     const filtered = radius != null ? mapped.filter((p) => p.distance_m != null && p.distance_m <= radius) : mapped;
-    filtered.sort((a, b) => (a.distance_m ?? 1e12) - (b.distance_m ?? 1e12) || b.rating - a.rating);
-    return filtered;
+    const partnerRows = filtered.map((p) => ({ ...p, source: "partner" as const, is_partner: p.attributes?.partner === true }));
+    const includeGoogle = String(params.include_google ?? "") === "true" && lat != null && lng != null && radius != null && this.google.enabled();
+    if (includeGoogle) {
+      const googleSection = String(params.google_section ?? (category || "all"));
+      try {
+        const googlePlaces = await this.google.nearby(lat!, lng!, radius!, googleSection, subcategory);
+        const external = googlePlaces.map((item) => this.googlePlaceToStage2(item, lat!, lng!));
+        const selectedQuery = q.toLocaleLowerCase("uk");
+        const filteredExternal = external.filter((place) => !subcategory || this.google.matchesSubcategory(subcategory, String(place.tags[0] ?? ""), place.tags))
+          .filter((place) => !selectedQuery || [place.name, place.description, place.address, place.subcategory, ...place.tags].join(" ").toLocaleLowerCase("uk").includes(selectedQuery));
+        const deduped = filteredExternal.filter((googlePlace) => !partnerRows.some((partnerPlace) => distanceMeters(Number(partnerPlace.lat), Number(partnerPlace.lng), googlePlace.lat, googlePlace.lng) < 35 && partnerPlace.name.toLocaleLowerCase("uk").includes(googlePlace.name.toLocaleLowerCase("uk").split(" ")[0] || "___")));
+        const combined = [...partnerRows, ...deduped];
+        combined.sort((a, b) => (a.distance_m ?? 1e12) - (b.distance_m ?? 1e12) || Number(b.rating) - Number(a.rating));
+        return combined;
+      } catch {
+        // Google Places is optional; partner catalog must remain available if quota/key is unavailable.
+      }
+    }
+    partnerRows.sort((a, b) => (a.distance_m ?? 1e12) - (b.distance_m ?? 1e12) || Number(b.rating) - Number(a.rating));
+    return partnerRows;
   }
 
   async place(id: string, publicOnly = true) {
+    if (id.startsWith("google_")) {
+      const googleId = id.slice("google_".length);
+      const result = await this.google.details(googleId);
+      return this.googlePlaceToStage2(result);
+    }
     const rows = await this.rawPlaces(undefined, !publicOnly);
     const place = rows.find((row) => row.id === id && (!publicOnly || row.status === "approved"));
     if (!place) throw new NotFoundException("Place not found");
@@ -213,10 +339,11 @@ export class Stage2Service {
   async createPartnerPlace(user: AuthUser, body: Record<string, unknown>) {
     const name = String(body.name ?? "").trim();
     if (!name) throw new BadRequestException("name is required");
-    const regionId = String(body.region_id ?? "region-tatariv");
     const category = String(body.category_slug ?? "hotel");
     const lat = num(body.lat, 48.34535)!;
     const lng = num(body.lng, 24.57855)!;
+    const requestedRegion = body.region_id ? String(body.region_id) : "region-tatariv";
+    const regionId = await this.ensureRegionForPlace(String(body.city ?? ""), String(body.region_name ?? ""), lat, lng, requestedRegion);
     const organizationId = makeId("org");
     const placeId = makeId("place");
 
@@ -239,10 +366,13 @@ export class Stage2Service {
     const owned = await this.db.query("SELECT p.id FROM places p JOIN organizations o ON o.id=p.organization_id WHERE p.id=$1 AND o.owner_user_id=$2", [placeId, user.id]);
     if (!owned.rows[0]) throw new NotFoundException("Partner place not found");
     const current = await this.place(placeId, false) as PlaceRow;
+    const nextLat = num(body.lat, Number(current.lat))!;
+    const nextLng = num(body.lng, Number(current.lng))!;
+    const nextRegionId = await this.ensureRegionForPlace(String(body.city ?? ""), String(body.region_name ?? ""), nextLat, nextLng, current.region_id);
     await this.db.query(
-      `UPDATE places SET category_slug=$2,subcategory=$3,name=$4,description=$5,address=$6,lat=$7,lng=$8,phone=$9,telegram=$10,website=$11,image_url=$12,
-       price_level=$13,work_hours=$14::jsonb,attributes=$15::jsonb,details=$16::jsonb,status=CASE WHEN status='approved' THEN 'approved' ELSE 'pending' END,updated_at=now() WHERE id=$1`,
-      [placeId, body.category_slug ?? current.category_slug, body.subcategory ?? current.subcategory, body.name ?? current.name, body.description ?? current.description, body.address ?? current.address, num(body.lat, Number(current.lat)), num(body.lng, Number(current.lng)), body.phone ?? current.phone, body.telegram ?? current.telegram, body.website ?? current.website, body.image_url ?? current.image_url, num(body.price_level, current.price_level ?? undefined) ?? null, JSON.stringify(body.work_hours ?? current.work_hours ?? {}), JSON.stringify(body.attributes ?? current.attributes ?? {}), JSON.stringify(body.details ?? current.details ?? {})],
+      `UPDATE places SET region_id=$2,category_slug=$3,subcategory=$4,name=$5,description=$6,address=$7,lat=$8,lng=$9,phone=$10,telegram=$11,website=$12,image_url=$13,
+       price_level=$14,work_hours=$15::jsonb,attributes=$16::jsonb,details=$17::jsonb,status=CASE WHEN status='approved' THEN 'approved' ELSE 'pending' END,updated_at=now() WHERE id=$1`,
+      [placeId, nextRegionId, body.category_slug ?? current.category_slug, body.subcategory ?? current.subcategory, body.name ?? current.name, body.description ?? current.description, body.address ?? current.address, nextLat, nextLng, body.phone ?? current.phone, body.telegram ?? current.telegram, body.website ?? current.website, body.image_url ?? current.image_url, num(body.price_level, current.price_level ?? undefined) ?? null, JSON.stringify(body.work_hours ?? current.work_hours ?? {}), JSON.stringify(body.attributes ?? current.attributes ?? {}), JSON.stringify(body.details ?? current.details ?? {})],
     );
     return this.place(placeId, false);
   }
@@ -292,8 +422,11 @@ export class Stage2Service {
 
   async adminCreateQr(body: Record<string, unknown>) {
     const placeId = body.place_id ? String(body.place_id) : null;
-    const regionId = String(body.region_id ?? "region-tatariv");
-    if (placeId) await this.place(placeId);
+    let regionId = String(body.region_id ?? "region-tatariv");
+    if (placeId) {
+      const place = await this.place(placeId);
+      regionId = String((place as { region_id?: string }).region_id || regionId);
+    }
     const startParam = String(body.start_param ?? makeId("qr").replaceAll("-", "").slice(0, 48)).trim();
     if (!/^[A-Za-z0-9_-]{1,64}$/.test(startParam)) throw new BadRequestException("start_param must contain only A-Z, a-z, 0-9, _ or - and be up to 64 characters");
     const id = makeId("qr");
@@ -317,6 +450,21 @@ export class Stage2Service {
     const result = await this.db.query("UPDATE qr_points SET active=$2,updated_at=now() WHERE id=$1 RETURNING id,start_param,active", [id, active]);
     if (!result.rows[0]) throw new NotFoundException("QR point not found");
     return result.rows[0];
+  }
+
+  async adminSaveTemplate(body: Record<string, unknown>) {
+    const categorySlug = String(body.category_slug ?? "").trim();
+    const placeType = String(body.place_type ?? "").trim();
+    const label = String(body.label ?? placeType).trim();
+    if (!categorySlug || !placeType || !label) throw new BadRequestException("category_slug, place_type and label are required");
+    const id = String(body.id ?? makeId("tpl"));
+    await this.db.query(
+      `INSERT INTO place_type_templates(id,category_slug,place_type,label,default_services,fields,sort_order,active)
+       VALUES($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7,true)
+       ON CONFLICT (category_slug,place_type) DO UPDATE SET label=EXCLUDED.label,default_services=EXCLUDED.default_services,fields=EXCLUDED.fields,sort_order=EXCLUDED.sort_order,active=true,updated_at=now()`,
+      [id,categorySlug,placeType,label,JSON.stringify(body.default_services ?? []),JSON.stringify(body.fields ?? {}),num(body.sort_order,100)],
+    );
+    return { ok: true, id, category_slug: categorySlug, place_type: placeType };
   }
 
   async adminCreateCategory(body: Record<string, unknown>) {

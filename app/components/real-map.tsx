@@ -11,7 +11,38 @@ type LeafletApi = {
 };
 
 declare global {
-  interface Window { L?: LeafletApi; __gidLeafletPromise?: Promise<LeafletApi>; }
+  interface Window {
+    L?: LeafletApi;
+    __gidLeafletPromise?: Promise<LeafletApi>;
+    google?: any;
+    __gidGoogleMapsPromise?: Promise<any>;
+  }
+}
+
+function browserMapsKey() {
+  return (process.env.NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "").trim();
+}
+
+function loadGoogleMaps(): Promise<any> {
+  if (window.google?.maps) return Promise.resolve(window.google.maps);
+  if (window.__gidGoogleMapsPromise) return window.__gidGoogleMapsPromise;
+  const key = browserMapsKey();
+  if (!key) return Promise.reject(new Error("Google Maps browser key is not configured"));
+  window.__gidGoogleMapsPromise = new Promise((resolve, reject) => {
+    const callback = `__gidGoogleMapsReady_${Date.now()}`;
+    (window as any)[callback] = () => {
+      delete (window as any)[callback];
+      window.google?.maps ? resolve(window.google.maps) : reject(new Error("Google Maps did not initialize"));
+    };
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=places&v=weekly&loading=async&callback=${callback}`;
+    script.async = true;
+    script.defer = true;
+    script.dataset.gidGoogleMaps = "1";
+    script.onerror = () => reject(new Error("Failed to load Google Maps"));
+    document.head.appendChild(script);
+  });
+  return window.__gidGoogleMapsPromise;
 }
 
 function loadLeaflet(): Promise<LeafletApi> {
@@ -43,53 +74,96 @@ function loadLeaflet(): Promise<LeafletApi> {
   return window.__gidLeafletPromise;
 }
 
+function partnerMarkerSvg(partner: boolean) {
+  const fill = partner ? "%2306a85a" : "%234285f4";
+  const ring = partner ? "%23ffffff" : "%23ffffff";
+  const star = partner ? `<path d='M16 7l2.4 4.8 5.3.8-3.9 3.8.9 5.3-4.7-2.5-4.7 2.5.9-5.3-3.9-3.8 5.3-.8z' fill='white'/>` : `<circle cx='16' cy='16' r='4.5' fill='white'/>`;
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='32' height='38' viewBox='0 0 32 38'><path d='M16 1C8.3 1 2 7.2 2 15c0 10.4 14 22 14 22s14-11.6 14-22C30 7.2 23.7 1 16 1z' fill='${fill.replace("%23", "#")}' stroke='${ring.replace("%23", "#")}' stroke-width='2'/>${star}</svg>`;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
 export function RealMap({
   center,
   places,
   radius = 500,
   className = "",
   onSelect,
+  compact = false,
 }: {
   center: { lat: number; lng: number };
   places: Stage2Place[];
   radius?: number;
   className?: string;
   onSelect?: (place: Stage2Place) => void;
+  compact?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<any>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    let cleanup: (() => void) | undefined;
-    void loadLeaflet().then((L) => {
+    cleanupRef.current?.();
+    cleanupRef.current = null;
+
+    const renderGoogle = async () => {
+      const maps = await loadGoogleMaps();
       if (cancelled || !ref.current) return;
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-      const map = L.map(ref.current, { zoomControl: false, attributionControl: true }).setView([center.lat, center.lng], radius <= 500 ? 16 : radius <= 1000 ? 15 : 14);
-      mapRef.current = map;
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution: "© OpenStreetMap contributors",
-      }).addTo(map);
-      L.circle([center.lat, center.lng], { radius, color: "#20b364", weight: 1, opacity: 0.35, fillOpacity: 0.04 }).addTo(map);
-      L.circleMarker([center.lat, center.lng], { radius: 8, color: "#ffffff", weight: 3, fillColor: "#20b364", fillOpacity: 1 }).addTo(map).bindTooltip("Ваша точка");
-      for (const place of places) {
-        const marker = L.circleMarker([Number(place.lat), Number(place.lng)], { radius: 7, color: "#ffffff", weight: 2, fillColor: "#1d8f56", fillOpacity: 1 }).addTo(map);
-        marker.bindTooltip(place.name);
-        marker.on("click", () => onSelect?.(place));
+      const zoom = compact ? 15 : radius <= 500 ? 16 : radius <= 1000 ? 15 : radius <= 2000 ? 14 : 13;
+      const map = new maps.Map(ref.current, {
+        center: { lat: center.lat, lng: center.lng },
+        zoom,
+        disableDefaultUI: true,
+        gestureHandling: compact ? "none" : "greedy",
+        clickableIcons: false,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+      });
+      const circle = compact ? null : new maps.Circle({ map, center, radius, strokeColor: "#13a55b", strokeOpacity: .38, strokeWeight: 1, fillColor: "#13a55b", fillOpacity: .04 });
+      const user = new maps.Marker({
+        map,
+        position: center,
+        title: "Ваше місцезнаходження",
+        zIndex: 1000,
+        icon: { path: maps.SymbolPath.CIRCLE, scale: compact ? 5 : 7, fillColor: "#1677ff", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 3 },
+      });
+      const markers = places.slice(0, compact ? 8 : 40).map((place) => {
+        const partner = place.is_partner === true || place.source === "partner" || place.attributes?.partner === true;
+        const marker = new maps.Marker({
+          map,
+          position: { lat: Number(place.lat), lng: Number(place.lng) },
+          title: partner ? `Партнер · ${place.name}` : place.name,
+          zIndex: partner ? 500 : 100,
+          icon: { url: partnerMarkerSvg(partner), scaledSize: new maps.Size(compact ? 21 : 28, compact ? 25 : 33), anchor: new maps.Point(compact ? 10 : 14, compact ? 24 : 32) },
+        });
+        if (!compact) marker.addListener("click", () => onSelect?.(place));
+        return marker;
+      });
+      cleanupRef.current = () => {
+        user.setMap(null); markers.forEach((marker: any) => marker.setMap(null)); circle?.setMap(null);
+      };
+    };
+
+    const renderFallback = async () => {
+      const L = await loadLeaflet();
+      if (cancelled || !ref.current) return;
+      const map = L.map(ref.current, { zoomControl: false, attributionControl: !compact, dragging: !compact, scrollWheelZoom: !compact }).setView([center.lat, center.lng], compact ? 15 : radius <= 500 ? 16 : radius <= 1000 ? 15 : 14);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap contributors" }).addTo(map);
+      if (!compact) L.circle([center.lat, center.lng], { radius, color: "#20b364", weight: 1, opacity: 0.35, fillOpacity: 0.04 }).addTo(map);
+      L.circleMarker([center.lat, center.lng], { radius: compact ? 5 : 8, color: "#ffffff", weight: 3, fillColor: "#1677ff", fillOpacity: 1 }).addTo(map).bindTooltip("Ваше місцезнаходження");
+      for (const place of places.slice(0, compact ? 8 : 40)) {
+        const partner = place.is_partner === true || place.source === "partner" || place.attributes?.partner === true;
+        const marker = L.circleMarker([Number(place.lat), Number(place.lng)], { radius: partner ? 8 : 6, color: "#ffffff", weight: partner ? 3 : 2, fillColor: partner ? "#06a85a" : "#4285f4", fillOpacity: 1 }).addTo(map);
+        marker.bindTooltip(partner ? `★ Партнер · ${place.name}` : place.name);
+        if (!compact) marker.on("click", () => onSelect?.(place));
       }
       setTimeout(() => map.invalidateSize(), 50);
-      cleanup = () => map.remove();
-    }).catch(() => undefined);
-    return () => {
-      cancelled = true;
-      cleanup?.();
-      mapRef.current = null;
+      cleanupRef.current = () => map.remove();
     };
-  }, [center.lat, center.lng, radius, places, onSelect]);
 
-  return <div ref={ref} className={`gt-real-map ${className}`.trim()} aria-label="Інтерактивна карта OpenStreetMap" />;
+    void renderGoogle().catch(() => renderFallback().catch(() => undefined));
+    return () => { cancelled = true; cleanupRef.current?.(); cleanupRef.current = null; };
+  }, [center.lat, center.lng, radius, places, onSelect, compact]);
+
+  return <div ref={ref} className={`gt-real-map ${className}`.trim()} aria-label="Інтерактивна карта Google Maps" />;
 }

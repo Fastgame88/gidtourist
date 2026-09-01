@@ -27785,3 +27785,132 @@ html.gt-platform-android body,
 .gt-stage2-activity-list small { margin-top:3px; color:#78837c; font-size:10px; }
 .gt-stage2-activity-list time { color:#87918b; font-size:9px; white-space:nowrap; }
 .ad-stage2-link { grid-template-columns: minmax(0, 1fr) auto auto auto; }
+
+/* ===== Stage 2.1: real maps + partner creation logic, 2026-09-01 ===== */
+.gt-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.gt-partner-address-autocomplete {
+  overflow: visible !important;
+  z-index: 4;
+}
+.gt-partner-address-autocomplete:focus-within { z-index: 20; }
+.gt-partner-address-autocomplete .gt-partner-input-row__content { position: relative; min-width: 0; }
+.gt-partner-address-suggestions {
+  position: absolute !important;
+  z-index: 80;
+  top: calc(100% + 9px);
+  left: -2px;
+  right: -32px;
+  display: block !important;
+  max-height: 228px;
+  overflow-y: auto;
+  margin: 0 !important;
+  border: 1px solid #dfe8e2;
+  border-radius: 13px;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(25, 54, 36, .16);
+}
+.gt-partner-address-suggestions button {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  padding: 9px 12px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  border: 0;
+  border-bottom: 1px solid #edf1ee;
+  background: #fff;
+  text-align: left;
+}
+.gt-partner-address-suggestions button:last-child { border-bottom: 0; }
+.gt-partner-address-suggestions button:active { background: #f2faf5; }
+.gt-partner-address-suggestions strong { color: #172019; font-size: 12px; line-height: 1.2; }
+.gt-partner-address-suggestions small { margin-top: 3px; color: #7b867f; font-size: 10px; line-height: 1.25; }
+.gt-spin { animation: gt-spin .8s linear infinite; }
+@keyframes gt-spin { to { transform: rotate(360deg); } }
+
+button.gt-amenities-row {
+  width: 100%;
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+  background: #fff;
+  text-align: left;
+  font-family: inherit;
+}
+
+.gt-map-strip--real {
+  position: relative !important;
+  isolation: isolate;
+  overflow: hidden !important;
+  background: #e9f0eb !important;
+}
+.gt-map-strip--real .gt-map-strip__map-layer {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  display: block;
+  margin: 0;
+}
+.gt-map-strip--real .gt-map-strip__live-map,
+.gt-map-strip--real .gt-real-map {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 54px !important;
+  border-radius: inherit;
+}
+.gt-map-strip--real::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(255,255,255,.94) 0 51%, rgba(255,255,255,.42) 75%, rgba(255,255,255,.08) 100%);
+}
+.gt-map-strip--real > .gt-map-strip__copy {
+  position: absolute !important;
+  z-index: 2 !important;
+  top: 8px !important;
+  left: 12px !important;
+  display: flex !important;
+  max-width: 70%;
+  align-items: center;
+}
+.gt-map-strip--real > .gt-map-strip__copy strong {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.gt-nearby-partner-badge {
+  display: inline-flex;
+  margin-left: 6px;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: #0aa85b;
+  color: #fff;
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 850;
+  vertical-align: 2px;
+}
+
+.ad-stage2-template-editor {
+  display: grid;
+  gap: 8px;
+  margin-top: 15px;
+  padding-top: 14px;
+  border-top: 1px solid #e8ece9;
+}
+.ad-stage2-template-editor > strong { font-size: 13px; }

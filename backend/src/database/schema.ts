@@ -149,6 +149,20 @@ CREATE TABLE IF NOT EXISTS emergency_contacts (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_emergency_region ON emergency_contacts(region_id, active, sort_order);
+
+CREATE TABLE IF NOT EXISTS place_type_templates (
+  id text PRIMARY KEY,
+  category_slug text NOT NULL REFERENCES categories(slug) ON DELETE CASCADE,
+  place_type text NOT NULL,
+  label text NOT NULL,
+  default_services jsonb NOT NULL DEFAULT '[]'::jsonb,
+  fields jsonb NOT NULL DEFAULT '{}'::jsonb,
+  sort_order integer NOT NULL DEFAULT 100,
+  active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(category_slug, place_type)
+);
 `;
 
 export const SEED_SQL = `
@@ -165,6 +179,21 @@ INSERT INTO categories (slug, name, name_en, name_pl, sort_order, subcategories,
 ('transfer','Трансфер','Transfer','Transfer',60,'["Таксі","Автостанції","Парковки","Оренда авто","Заправки"]'::jsonb,'{"distance":true,"open_now":true}'::jsonb),
 ('emergency','Халепа?','Emergency','Pomoc',70,'[]'::jsonb,'{}'::jsonb)
 ON CONFLICT (slug) DO UPDATE SET name=EXCLUDED.name, name_en=EXCLUDED.name_en, name_pl=EXCLUDED.name_pl, subcategories=EXCLUDED.subcategories, filter_config=EXCLUDED.filter_config;
+
+INSERT INTO place_type_templates (id,category_slug,place_type,label,default_services,fields,sort_order) VALUES
+('tpl-hotel','hotel','Готель','Готель','["Wi‑Fi","Паркінг","Сніданок","Прибирання","Сауна","Басейн","Трансфер"]'::jsonb,'{"room_count":"Кількість номерів","opened_year":"Рік відкриття","languages":"Мови обслуговування","accommodation_type":"Тип розміщення"}'::jsonb,10),
+('tpl-guesthouse','hotel','Садиба','Садиба','["Wi‑Fi","Паркінг","Сніданок","Мангал","Чан","Трансфер"]'::jsonb,'{"room_count":"Кількість кімнат","opened_year":"Рік відкриття","languages":"Мови обслуговування","accommodation_type":"Тип розміщення"}'::jsonb,20),
+('tpl-restaurant','food','Ресторан','Ресторан','["Основне меню","Сніданки","Доставка","Їжа з собою","Дитяче меню"]'::jsonb,'{"capacity":"Кількість посадкових місць","average_check":"Середній чек","cuisine":"Кухня","languages":"Мови обслуговування"}'::jsonb,10),
+('tpl-cafe','food','Кафе','Кафе','["Кава","Десерти","Сніданки","Їжа з собою"]'::jsonb,'{"capacity":"Кількість посадкових місць","average_check":"Середній чек","cuisine":"Тип кухні","languages":"Мови обслуговування"}'::jsonb,20),
+('tpl-bar','food','Бар','Бар','["Напої","Закуски","Жива музика"]'::jsonb,'{"capacity":"Кількість місць","average_check":"Середній чек","format":"Формат закладу","languages":"Мови обслуговування"}'::jsonb,30),
+('tpl-shop','shop','Магазин','Магазин','["Продаж у магазині","Самовивіз"]'::jsonb,'{"store_format":"Формат магазину","assortment":"Основний асортимент","delivery":"Доставка / самовивіз","payment_methods":"Способи оплати"}'::jsonb,10),
+('tpl-souvenir','shop','Сувенірна крамниця','Сувенірна крамниця','["Сувеніри","Подарунки","Локальні товари"]'::jsonb,'{"assortment":"Основний асортимент","local_goods":"Локальні товари","delivery":"Доставка / самовивіз","payment_methods":"Способи оплати"}'::jsonb,20),
+('tpl-pharmacy','shop','Аптека','Аптека','["Ліки","Товари для здоровʼя"]'::jsonb,'{"format":"Формат аптеки","delivery":"Доставка / самовивіз","payment_methods":"Способи оплати","languages":"Мови обслуговування"}'::jsonb,30),
+('tpl-spa','rest','SPA / сауна','SPA / сауна','["Сауна","Чан","Масаж","Басейн"]'::jsonb,'{"capacity":"Місткість","duration":"Тривалість сеансу","price_info":"Вартість","languages":"Мови обслуговування"}'::jsonb,10),
+('tpl-excursion','rest','Екскурсії','Екскурсії','["Екскурсія","Гід","Трансфер"]'::jsonb,'{"duration":"Тривалість","group_size":"Розмір групи","difficulty":"Складність","languages":"Мови проведення"}'::jsonb,20),
+('tpl-entertainment','entertainment','Активний відпочинок','Активний відпочинок','["Квадроцикли","Рафтинг","Зіплайн","Джип-тур"]'::jsonb,'{"age_limit":"Вікові обмеження","duration":"Тривалість","difficulty":"Рівень складності","season":"Сезонність"}'::jsonb,10),
+('tpl-transfer','transfer','Трансфер / таксі','Трансфер / таксі','["Трансфер","Таксі","Оренда авто"]'::jsonb,'{"vehicle_type":"Тип транспорту","capacity":"Місткість","service_area":"Зона роботи","languages":"Мови водія"}'::jsonb,10)
+ON CONFLICT (category_slug,place_type) DO UPDATE SET label=EXCLUDED.label,default_services=EXCLUDED.default_services,fields=EXCLUDED.fields,sort_order=EXCLUDED.sort_order,updated_at=now();
 
 INSERT INTO places (id, region_id, category_slug, subcategory, name, description, address, lat, lng, phone, telegram, website, image_url, rating, review_count, price_level, work_hours, attributes, details, status, approved_at)
 VALUES

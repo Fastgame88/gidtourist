@@ -93,6 +93,26 @@ export function TouristRuntimeProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof navigator === "undefined" || !navigator.geolocation) return;
+    let cancelled = false;
+    const syncLocation = async () => {
+      try {
+        const permission = navigator.permissions?.query ? await navigator.permissions.query({ name: "geolocation" as PermissionName }) : null;
+        if (cancelled || permission?.state === "denied") return;
+        const point = await requestLocation();
+        if (point && !cancelled) window.localStorage.setItem("gid-tourist-geolocation-approved", "1");
+      } catch {
+        if (!cancelled) {
+          const point = await requestLocation();
+          if (point) window.localStorage.setItem("gid-tourist-geolocation-approved", "1");
+        }
+      }
+    };
+    void syncLocation();
+    return () => { cancelled = true; };
+  }, []);
+
   const refreshProfile = async () => {
     try {
       const next = await stage2Fetch<Stage2User>("/me");

@@ -53,7 +53,7 @@ import {
   Star,
 } from "lucide-react";
 import type { RoleKey } from "../../lib/navigation";
-import { adminStage2Fetch, type Stage2Category } from "../../lib/stage2-api";
+import { adminStage2Fetch, type Stage2Category, type Stage2PlaceTypeTemplate } from "../../lib/stage2-api";
 
 type Navigate = (role: RoleKey, slug: string) => void;
 type AdminProps = { navigate: Navigate };
@@ -961,6 +961,11 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
   const [qrRows, setQrRows] = useState<Array<{ id: string; start_param: string; type: string; source: string; active: boolean; region_name: string; place_name?: string | null; place_id?: string | null }>>([]);
   const [approvedPlaces, setApprovedPlaces] = useState<Array<{ id: string; name: string; category_slug: string; region_name: string }>>([]);
   const [stage2Categories, setStage2Categories] = useState<Stage2Category[]>([]);
+  const [placeTemplates, setPlaceTemplates] = useState<Stage2PlaceTypeTemplate[]>([]);
+  const [templateCategory, setTemplateCategory] = useState("hotel");
+  const [templateType, setTemplateType] = useState("Готель");
+  const [templateServices, setTemplateServices] = useState("Wi‑Fi, Паркінг, Сніданок");
+  const [templateFields, setTemplateFields] = useState("room_count=Кількість номерів; opened_year=Рік відкриття");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [qrPlaceId, setQrPlaceId] = useState("place-girskyi-zatyshok");
@@ -976,23 +981,23 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
   useEffect(() => {
     const stored = window.sessionStorage.getItem("gid-tourist-admin-stage2-key") || "";
     setAdminKey(stored);
-    if (stored) void load(stored);
+    void load(stored);
   }, []);
 
   const load = async (key = adminKey) => {
-    if (!key) return;
     setLoading(true); setMessage("");
     try {
-      const [moderation, qr, approved, categories] = await Promise.all([
+      const [moderation, qr, approved, categories, templates] = await Promise.all([
         adminStage2Fetch<typeof pending>("/admin/stage2/moderation", key),
         adminStage2Fetch<typeof qrRows>("/admin/stage2/qr", key),
         adminStage2Fetch<typeof approvedPlaces>("/admin/stage2/places?status=approved", key),
         adminStage2Fetch<Stage2Category[]>("/categories", key),
+        adminStage2Fetch<Stage2PlaceTypeTemplate[]>("/place-type-templates", key),
       ]);
-      setPending(moderation); setQrRows(qr); setApprovedPlaces(approved); setStage2Categories(categories);
+      setPending(moderation); setQrRows(qr); setApprovedPlaces(approved); setStage2Categories(categories); setPlaceTemplates(templates);
       if (!qrPlaceId && approved[0]?.id) setQrPlaceId(approved[0].id);
       if (!qrPreviewParam && qr[0]?.start_param) setQrPreviewParam(qr[0].start_param);
-      window.sessionStorage.setItem("gid-tourist-admin-stage2-key", key);
+      if (key) window.sessionStorage.setItem("gid-tourist-admin-stage2-key", key);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Помилка доступу до Stage 2 API");
     } finally { setLoading(false); }
@@ -1006,7 +1011,7 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
   };
 
   const createQr = async () => {
-    const row = await adminStage2Fetch<{ id: string; start_param: string }>("/admin/stage2/qr", adminKey, { method: "POST", body: JSON.stringify({ place_id: qrPlaceId || null, region_id: "region-tatariv", type: "entry_point", source: "hotel", start_param: qrParam || undefined }) });
+    const row = await adminStage2Fetch<{ id: string; start_param: string }>("/admin/stage2/qr", adminKey, { method: "POST", body: JSON.stringify({ place_id: qrPlaceId || null, type: "entry_point", source: "hotel", start_param: qrParam || undefined }) });
     setQrParam(""); setQrPreviewParam(row.start_param); setMessage(`QR-контекст створено: ${row.start_param}`); await load();
   };
 
@@ -1028,13 +1033,13 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
     <AdminShell active="content" navigate={navigate} contentClassName="ad-main--stage2">
       <AdminPageHeader title="Контент / QR — Етап 2" subtitle="Модерація закладів, QR-контекст, категорії та локальні контакти" action={<OutlineButton onClick={() => void load()}><RefreshCcw size={17}/> Оновити</OutlineButton>} />
       <section className="ad-stage2-access">
-        <label><span>ADMIN_API_KEY</span><input type="password" value={adminKey} onChange={(event) => setAdminKey(event.target.value)} placeholder="Ключ із Railway backend Variables" /></label>
-        <PrimaryButton onClick={() => void load(adminKey)}>{loading ? "Підключення…" : "Підключити API"}</PrimaryButton>
+        <label><span>ADMIN_API_KEY</span><input type="password" value={adminKey} onChange={(event) => setAdminKey(event.target.value)} placeholder="Можна залишити порожнім, якщо STAGE2_ADMIN_API_KEY заданий у frontend Railway" /></label>
+        <PrimaryButton onClick={() => void load(adminKey)}>{loading ? "Підключення…" : "Перевірити API"}</PrimaryButton>
         {message ? <p>{message}</p> : null}
       </section>
 
       <section className="ad-stage2-section">
-        <AdminPageHeader title="Модерація нових закладів" subtitle="Після approve заклад автоматично з'являється у своїй категорії та на карті" />
+        <AdminPageHeader title="Модерація нових закладів" subtitle="Після підтвердження заклад автоматично з’являється у своїй категорії та на карті" />
         <AdminTable columns={[{label:"Заклад",className:"1.4fr"},{label:"Категорія",className:".8fr"},{label:"Адреса",className:"1.3fr"},{label:"Статус",className:".7fr"},{label:"Дії",className:"1fr"}]}>
           {pending.map((row) => <TableRow key={row.id} columns={["1.4fr",".8fr","1.3fr",".7fr","1fr"]}>
             <div><strong>{row.name}</strong><small>{row.organization_name || row.region_name}</small></div><span>{row.category_slug}</span><span>{row.address}</span><Status tone={row.status === "rejected" ? "red" : "orange"}>{row.status}</Status>
@@ -1067,6 +1072,20 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
           <input value={categoryName} onChange={(e)=>setCategoryName(e.target.value)} placeholder="Назва розділу" />
           <input value={categorySubcategories} onChange={(e)=>setCategorySubcategories(e.target.value)} placeholder="Підкатегорії через кому" />
           <PrimaryButton onClick={() => void adminStage2Fetch("/admin/stage2/categories", adminKey,{method:"POST",body:JSON.stringify({slug:categorySlug,name:categoryName,subcategories:categorySubcategories.split(",").map((item)=>item.trim()).filter(Boolean)})}).then(()=>{setMessage("Категорію і підкатегорії збережено");return load();})}><Plus size={16}/> Зберегти</PrimaryButton>
+          <div className="ad-stage2-template-editor">
+            <strong>Шаблон типу закладу</strong>
+            <select value={templateCategory} onChange={(e)=>{ const value=e.target.value; setTemplateCategory(value); const first=placeTemplates.find((item)=>item.category_slug===value); if(first){setTemplateType(first.place_type);setTemplateServices(first.default_services.join(", "));setTemplateFields(Object.entries(first.fields ?? {}).map(([key,label])=>`${key}=${String(label)}`).join("; "));} }}>
+              {stage2Categories.filter((item)=>item.slug!=="emergency").map((item)=><option key={item.slug} value={item.slug}>{item.name}</option>)}
+            </select>
+            <select value={templateType} onChange={(e)=>{ const value=e.target.value; setTemplateType(value); const current=placeTemplates.find((item)=>item.category_slug===templateCategory&&item.place_type===value); if(current){setTemplateServices(current.default_services.join(", "));setTemplateFields(Object.entries(current.fields ?? {}).map(([key,label])=>`${key}=${String(label)}`).join("; "));} }}>
+              <option value="">Новий тип закладу</option>
+              {placeTemplates.filter((item)=>item.category_slug===templateCategory).map((item)=><option key={item.id} value={item.place_type}>{item.label}</option>)}
+            </select>
+            <input value={templateType} onChange={(e)=>setTemplateType(e.target.value)} placeholder="Тип / новий тип: Ресторан, Кафе, Магазин" />
+            <input value={templateServices} onChange={(e)=>setTemplateServices(e.target.value)} placeholder="Послуги шаблону через кому" />
+            <input value={templateFields} onChange={(e)=>setTemplateFields(e.target.value)} placeholder="Поля: capacity=Кількість місць; cuisine=Кухня" />
+            <PrimaryButton onClick={() => void adminStage2Fetch("/admin/stage2/place-type-templates", adminKey,{method:"POST",body:JSON.stringify({category_slug:templateCategory,place_type:templateType,label:templateType,default_services:templateServices.split(",").map((item)=>item.trim()).filter(Boolean),fields:Object.fromEntries(templateFields.split(";").map((item)=>item.trim()).filter(Boolean).map((item)=>{const [key,...rest]=item.split("=");return [key.trim(),rest.join("=").trim()]}).filter(([key,label])=>key&&label))})}).then(()=>{setMessage("Шаблон типу закладу збережено");return load();})}><Plus size={16}/> Зберегти шаблон</PrimaryButton>
+          </div>
         </div>
         <div className="ad-stage2-card">
           <h2>Екстрений контакт регіону</h2><p>Після збереження він з'явиться у «Халепа?» для Татарова.</p>

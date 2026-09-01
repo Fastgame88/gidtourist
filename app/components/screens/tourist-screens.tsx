@@ -157,12 +157,14 @@ function Chips({ items, selected, onSelect }: { items: string[]; selected?: stri
   );
 }
 
-function MapStrip({ real = false }: { real?: boolean } = {}) {
+function MapStrip({ real = false, places = [] }: { real?: boolean; places?: Stage2Place[] } = {}) {
   const { context, location } = useTouristRuntime();
-  const address = context?.place?.address || context?.region.name || "Татарів";
+  const address = location?.source === "gps" ? "Ваше поточне місцезнаходження" : (context?.place?.address || context?.region.name || "Татарів");
+  const center = location ?? (context ? { lat: Number(context.place?.lat ?? context.region.lat), lng: Number(context.place?.lng ?? context.region.lng), source: "qr" as const } : null);
   return (
     <div className={`gt-map-strip ${real ? "gt-map-strip--real" : ""}`.trim()}>
-      <div>
+      {real && center ? <span className="gt-map-strip__map-layer"><RealMap center={center} places={places} radius={500} compact className="gt-map-strip__live-map" /></span> : null}
+      <div className="gt-map-strip__copy">
         <MapPin size={21} />
         <span>
           <small>{location?.source === "gps" ? "Ваше місцезнаходження" : "Базова точка з QR"}</small>
@@ -171,7 +173,7 @@ function MapStrip({ real = false }: { real?: boolean } = {}) {
       </div>
       {!real && <i className="gt-map-strip__road" />}
       {!real && <i className="gt-map-strip__river" />}
-      <i className="gt-map-strip__dot" />
+      {!real && <i className="gt-map-strip__dot" />}
     </div>
   );
 }
@@ -1115,7 +1117,7 @@ function DynamicCategoryScreen({ navigate, config }: { navigate: Navigate; confi
           <button type="button" className={kids ? "is-active" : ""} onClick={() => setKids((v) => !v)}>З дітьми</button>
           <button type="button" className={budget ? "is-active" : ""} onClick={() => setBudget((v) => !v)}>Бюджетно</button>
         </div>
-        <MapStrip real />
+        <MapStrip real places={places} />
         <SectionTitle title={config.sectionTitle} action={`${places.length}`} />
         <div className="gt-place-list">
           {places.map((place) => (
@@ -1181,16 +1183,36 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
 
   const subcategoryGroups: Record<string, Array<{ label: string; icon: LucideIcon }>> = {
     "Де поїсти": [
-      { label: "Українська кухня", icon: Utensils }, { label: "Неукраїнська кухня", icon: Sparkles }, { label: "Фаст фуд", icon: FlameKindling }, { label: "Кавʼярні", icon: Gift },
+      { label: "Ресторани", icon: Utensils }, { label: "Кафе", icon: Sparkles }, { label: "Бари", icon: CircleHelp }, { label: "Піцерії", icon: Flame },
+      { label: "Кондитерські", icon: Gift }, { label: "Фастфуд", icon: FlameKindling }, { label: "Їжа з собою", icon: ShoppingBag }, { label: "Традиційна кухня", icon: BadgeCheck },
     ],
     "Де купити": [
-      { label: "Продовольчі", icon: ShoppingBag }, { label: "Сувеніри", icon: Gift }, { label: "Промтовари", icon: Hotel }, { label: "Аптеки", icon: Pill },
+      { label: "Продукти", icon: ShoppingBag }, { label: "Сувеніри", icon: Gift }, { label: "Одяг і взуття", icon: UsersRound }, { label: "Товари для дому", icon: Hotel },
+      { label: "Аптеки", icon: Pill }, { label: "Техніка", icon: Gauge }, { label: "Будівництво", icon: Wrench }, { label: "Косметика", icon: Sparkles },
+    ],
+    "Природа": [
+      { label: "Гори", icon: MountainSnow }, { label: "Річки", icon: Route }, { label: "Водоспади", icon: LifeBuoy }, { label: "Джерела", icon: MapPin },
+      { label: "Озера", icon: Flower2 }, { label: "Оглядові точки", icon: LocateFixed }, { label: "Печери", icon: TentTree }, { label: "Ліси", icon: Leaf },
+    ],
+    "Цікаве": [
+      { label: "Пам’ятки", icon: BadgeCheck }, { label: "Музеї", icon: Info }, { label: "Храми", icon: Cross }, { label: "Архітектура", icon: Hotel },
+      { label: "Історичні місця", icon: Clock3 }, { label: "Скульптури", icon: UserRound }, { label: "Місцеві легенди", icon: MessageSquareMore }, { label: "Події", icon: CalendarDays },
     ],
     "Розваги": [
-      { label: "Джипи", icon: CarFront }, { label: "Квадроцикли", icon: Bike }, { label: "Рафтинг", icon: LifeBuoy }, { label: "Зіплайн", icon: Navigation }, { label: "Для дітей", icon: UsersRound },
+      { label: "Активний відпочинок", icon: Footprints }, { label: "Атракціони", icon: Sparkles }, { label: "Екскурсії", icon: Route }, { label: "SPA і басейни", icon: Flower2 },
+      { label: "Риболовля", icon: LifeBuoy }, { label: "Верхова їзда", icon: PawPrint }, { label: "Квадроцикли", icon: Bike }, { label: "Польоти", icon: Navigation },
     ],
     "Трансфер": [
-      { label: "Таксі", icon: CarFront }, { label: "Автостанції", icon: Hotel }, { label: "Парковки", icon: MapPin }, { label: "Оренда авто", icon: CarFront }, { label: "Заправки", icon: Gauge },
+      { label: "Автобусні зупинки", icon: CarFront }, { label: "Залізничні станції", icon: Route }, { label: "Автостанції", icon: Hotel }, { label: "Таксі", icon: CarFront },
+      { label: "Парковки", icon: MapPin }, { label: "Оренда авто", icon: CarFront }, { label: "Заправки", icon: Gauge }, { label: "Зарядні станції", icon: Plus },
+    ],
+    "Корисне": [
+      { label: "Банкомати", icon: Banknote }, { label: "Обмін валют", icon: WalletCards }, { label: "Пошта", icon: Send }, { label: "Лікарні", icon: Heart },
+      { label: "Туалети", icon: UsersRound }, { label: "Wi‑Fi", icon: Wifi }, { label: "Поліція", icon: ShieldCheck }, { label: "Інформаційні центри", icon: Info },
+    ],
+    "Маршрути": [
+      { label: "Піші маршрути", icon: Footprints }, { label: "Веломаршрути", icon: Bike }, { label: "Автомаршрути", icon: CarFront }, { label: "Верхові маршрути", icon: PawPrint },
+      { label: "Водні маршрути", icon: LifeBuoy }, { label: "Популярні маршрути", icon: BadgeCheck }, { label: "Складні маршрути", icon: MountainSnow }, { label: "Маршрути вихідного дня", icon: SunMedium },
     ],
   };
 
@@ -1209,7 +1231,11 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
         lng: String(center.lng),
         radius: String(radius),
       });
+      const googleSection = activeTone === "fun" ? "entertainment" : activeTone === "all" ? "all" : activeTone;
+      params.set("include_google", "true");
+      params.set("google_section", googleSection);
       if (activeCategoryMeta?.slug) params.set("category", activeCategoryMeta.slug);
+      else if (activeCategory !== "Усі") params.set("category", "__google__");
       if (activeSubcategory) params.set("subcategory", activeSubcategory);
       if (query.trim()) params.set("q", query.trim());
       void stage2Fetch<Stage2Place[]>(`/places?${params}`).then((items) => {
@@ -1217,7 +1243,7 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
       }).catch(() => undefined);
     }, 180);
     return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [runtime.context, center.lat, center.lng, radius, activeCategoryMeta?.slug, activeSubcategory, query]);
+  }, [runtime.context, center.lat, center.lng, radius, activeCategoryMeta?.slug, activeCategory, activeTone, activeSubcategory, query]);
 
   const openPlace = (place: Stage2Place) => {
     runtime.setSelectedPlaceId(place.id);
@@ -1295,7 +1321,7 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
                 <button type="button" className="gt-nearby-design__card" key={place.id} onClick={() => openPlace(place)}>
                   {place.image_url ? <img src={place.image_url} alt="" className="gt-photo gt-nearby-design__remote-photo" /> : <Thumb name={placePhotoFallback(place)} />}
                   <span className="gt-nearby-design__card-copy">
-                    <strong>{place.name}</strong><small>{place.subcategory || place.category_name}</small>
+                    <strong>{place.name}{place.is_partner || place.attributes?.partner === true ? <i className="gt-nearby-partner-badge">Партнер</i> : null}</strong><small>{place.subcategory || place.category_name}</small>
                     <span><b><Star size={12} fill="currentColor" /> {Number(place.rating || 0).toFixed(1)}</b><em>{distanceLabel(place.distance_m)}</em></span>
                   </span>
                 </button>
@@ -1558,7 +1584,7 @@ function TransferScreen({ navigate }: { navigate: Navigate }) {
         <SearchBar placeholder="Пошук трансферу або маршруту" value={query} onChange={setQuery} />
         <div className="gt-transfer-reference-chips"><Chips items={["Усі", ...((transferCategory?.subcategories?.length ? transferCategory.subcategories : ["Таксі", "Автостанції", "Парковки", "Оренда авто", "Заправки"]).filter((item) => item !== "Усі"))]} selected={chip} onSelect={setChip} /></div>
         <div className="gt-stage2-filter-pills"><button type="button" className={openNow ? "is-active" : ""} onClick={() => setOpenNow((value) => !value)}>Відкрито зараз</button></div>
-        <MapStrip real />
+        <MapStrip real places={places} />
         <SectionTitle title="Трансфери поруч" action={`${display.length}`} />
         <div className="gt-transfer-reference-list">
           {display.map((place, index) => <TransferReferenceRow key={`${place.title}-${index}`} place={place as (typeof transferReferencePlaces)[number]} onClick={apiLoaded && places[index] ? () => { runtime.setSelectedPlaceId(places[index].id); navigate("tourist", "place"); } : undefined} />)}

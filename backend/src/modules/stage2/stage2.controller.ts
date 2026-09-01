@@ -12,6 +12,18 @@ export class Stage2Controller {
   @Get("categories")
   categories() { return this.service.categories(); }
 
+  @Get("place-type-templates")
+  placeTypeTemplates(@Query("category") category = "") { return this.service.placeTypeTemplates(category); }
+
+  @Get("geo/autocomplete")
+  geoAutocomplete(@Query("input") input = "", @Query("mode") mode = "city", @Query("city") city = "", @Query("street") street = "") {
+    const resolved = mode === "street" || mode === "house" ? mode : "city";
+    return this.service.geoAutocomplete(input, resolved, city, street);
+  }
+
+  @Get("geo/place/:placeId")
+  geoDetails(@Param("placeId") placeId: string) { return this.service.geoDetails(placeId); }
+
   @Get("places")
   places(@Query() query: Record<string, unknown>) { return this.service.places(query); }
 
@@ -92,6 +104,10 @@ export class Stage2Controller {
   @UseGuards(AdminKeyGuard)
   @Post("admin/stage2/categories")
   adminCategory(@Body() body: Record<string, unknown>) { return this.service.adminCreateCategory(body); }
+
+  @UseGuards(AdminKeyGuard)
+  @Post("admin/stage2/place-type-templates")
+  adminTemplate(@Body() body: Record<string, unknown>) { return this.service.adminSaveTemplate(body); }
 
   @UseGuards(AdminKeyGuard)
   @Post("admin/stage2/emergency")

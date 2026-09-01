@@ -37,6 +37,8 @@ export type Stage2Place = {
   distance_m?: number | null;
   is_open_now?: boolean | null;
   status?: string;
+  source?: "partner" | "google";
+  is_partner?: boolean;
 };
 
 export type Stage2Category = {
@@ -47,6 +49,19 @@ export type Stage2Category = {
   subcategories?: string[];
   filter_config?: Record<string, boolean>;
 };
+
+export type Stage2PlaceTypeTemplate = {
+  id: string;
+  category_slug: string;
+  place_type: string;
+  label: string;
+  default_services: string[];
+  fields?: Record<string, unknown>;
+  sort_order?: number;
+};
+
+export type Stage2GeoSuggestion = { place_id: string; text: string; main_text: string; secondary_text: string };
+export type Stage2GeoDetails = { place_id: string; formatted_address: string; lat: number; lng: number; city: string; region: string; street: string; house: string };
 
 export type Stage2Context = {
   qr: { id: string; startParam: string; type: string; source: string };
@@ -65,7 +80,8 @@ const TOKEN_KEY = "gid-tourist-stage2-session";
 const SELECTED_PLACE_KEY = "gid-tourist-selected-place";
 
 export function apiBase() {
-  return (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1").replace(/\/$/, "");
+  // Use the same-origin Next.js proxy so Telegram WebView/browser requests do not depend on CORS.
+  return "/api/stage2";
 }
 
 export function sessionToken() {
@@ -168,11 +184,21 @@ export async function trackEvent(eventType: string, data: { regionId?: string; p
   }
 }
 
-export async function adminStage2Fetch<T>(path: string, adminKey: string, init: RequestInit = {}): Promise<T> {
+export async function adminStage2Fetch<T>(path: string, adminKey = "", init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
-  headers.set("x-admin-key", adminKey);
+  if (adminKey) headers.set("x-admin-key", adminKey);
   if (!headers.has("Content-Type") && init.body) headers.set("Content-Type", "application/json");
-  const response = await fetch(`${apiBase()}${path.startsWith("/") ? path : `/${path}`}`, { ...init, headers, cache: "no-store" });
-  if (!response.ok) throw new Error(await response.text().catch(() => `API ${response.status}`));
+  const cleanPath = path.startsWith("/") ? path.slice(1) : path;
+  const response = await fetch(`/api/stage2-admin/${cleanPath}`, { ...init, headers, cache: "no-store" });
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    try {
+      const parsed = JSON.parse(text) as { message?: string };
+      throw new Error(parsed.message || `API ${response.status}`);
+    } catch (error) {
+      if (error instanceof Error && error.message !== `Unexpected end of JSON input`) throw error;
+      throw new Error(text || `API ${response.status}`);
+    }
+  }
   return response.json() as Promise<T>;
 }
