@@ -1,5 +1,4 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
-import type { Request } from "express";
 import { createHash } from "node:crypto";
 import { DatabaseService } from "../database/database.service.js";
 
@@ -13,7 +12,11 @@ export type AuthUser = {
   role: string;
 };
 
-export type AuthRequest = Request & { user?: AuthUser };
+type RequestLike = {
+  headers: Record<string, string | string[] | undefined>;
+};
+
+export type AuthRequest = RequestLike & { user?: AuthUser };
 
 @Injectable()
 export class SessionGuard implements CanActivate {
@@ -21,7 +24,7 @@ export class SessionGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest<AuthRequest>();
-    const header = request.headers.authorization ?? "";
+    const header = String(request.headers.authorization ?? "");
     const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
     if (!token) throw new UnauthorizedException("Missing session token");
 
@@ -43,7 +46,7 @@ export class SessionGuard implements CanActivate {
 @Injectable()
 export class AdminKeyGuard implements CanActivate {
   canActivate(context: ExecutionContext) {
-    const request = context.switchToHttp().getRequest<Request>();
+    const request = context.switchToHttp().getRequest<RequestLike>();
     const configured = process.env.ADMIN_API_KEY;
     if (!configured) throw new UnauthorizedException("ADMIN_API_KEY is not configured");
     const provided = String(request.headers["x-admin-key"] ?? "");

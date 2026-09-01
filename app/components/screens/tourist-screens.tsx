@@ -55,6 +55,7 @@ import {
   Plus,
   QrCode,
   ReceiptText,
+  RefreshCcw,
   Route,
   Save,
   Search,
