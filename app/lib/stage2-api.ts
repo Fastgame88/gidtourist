@@ -82,6 +82,53 @@ type TelegramWindow = Window & { Telegram?: { WebApp?: TelegramWebApp } };
 const TOKEN_KEY = "gid-tourist-stage2-session";
 const SELECTED_PLACE_KEY = "gid-tourist-selected-place";
 
+let lastTelegramAuthError = "";
+
+function telegramLaunchParams() {
+  if (typeof window === "undefined") return [] as URLSearchParams[];
+  const values: URLSearchParams[] = [];
+  if (window.location.search) values.push(new URLSearchParams(window.location.search));
+  if (window.location.hash) values.push(new URLSearchParams(window.location.hash.replace(/^#/, "")));
+  return values;
+}
+
+function rawTelegramInitData() {
+  for (const params of telegramLaunchParams()) {
+    const value = params.get("tgWebAppData");
+    if (value) return value;
+  }
+  return "";
+}
+
+function rawTelegramUser(initData: string) {
+  if (!initData) return undefined;
+  try {
+    const raw = new URLSearchParams(initData).get("user");
+    if (!raw) return undefined;
+    return JSON.parse(raw) as { id?: number; first_name?: string; last_name?: string; username?: string; language_code?: string };
+  } catch {
+    return undefined;
+  }
+}
+
+export function telegramAuthLastError() {
+  return lastTelegramAuthError;
+}
+
+export function telegramLaunchDiagnostic() {
+  if (typeof window === "undefined") return { webApp: false, initDataLength: 0, telegramId: "", startParam: "", authError: lastTelegramAuthError };
+  const webApp = (window as TelegramWindow).Telegram?.WebApp;
+  const rawInit = webApp?.initData || rawTelegramInitData();
+  const rawUser = webApp?.initDataUnsafe?.user || rawTelegramUser(rawInit);
+  return {
+    webApp: Boolean(webApp),
+    initDataLength: rawInit.length,
+    telegramId: rawUser?.id ? String(rawUser.id) : "",
+    startParam: telegramStartParam(),
+    authError: lastTelegramAuthError,
+  };
+}
+
 export function apiBase() {
   // Use the same-origin Next.js proxy so Telegram WebView/browser requests do not depend on CORS.
   return "/api/stage2";
@@ -150,15 +197,22 @@ export function telegramStartParam() {
   if (typeof window === "undefined") return process.env.NEXT_PUBLIC_DEFAULT_QR_START_PARAM || "";
   const webApp = (window as TelegramWindow).Telegram?.WebApp;
   const fromTelegram = webApp?.initDataUnsafe?.start_param;
-  const params = new URLSearchParams(window.location.search);
-  return fromTelegram || params.get("tgWebAppStartParam") || params.get("startapp") || params.get("start") || process.env.NEXT_PUBLIC_DEFAULT_QR_START_PARAM || "";
+  let fromLaunch = "";
+  let fromFallback = "";
+  for (const params of telegramLaunchParams()) {
+    fromLaunch ||= params.get("tgWebAppStartParam") || "";
+    fromFallback ||= params.get("startapp") || params.get("start") || "";
+  }
+  return fromTelegram || fromLaunch || fromFallback || process.env.NEXT_PUBLIC_DEFAULT_QR_START_PARAM || "";
 }
 
 export async function ensureTelegramSession(): Promise<{ token: string; user: Stage2User } | null> {
   if (typeof window === "undefined") return null;
 
   const webApp = await waitForTelegramWebApp();
-  const currentTelegramId = webApp?.initDataUnsafe?.user?.id ? String(webApp.initDataUnsafe.user.id) : "";
+  const rawInitAtLaunch = webApp?.initData || rawTelegramInitData();
+  const launchUser = webApp?.initDataUnsafe?.user || rawTelegramUser(rawInitAtLaunch);
+  const currentTelegramId = launchUser?.id ? String(launchUser.id) : "";
   const existing = sessionToken();
   if (existing) {
     try {
@@ -175,8 +229,9 @@ export async function ensureTelegramSession(): Promise<{ token: string; user: St
     }
   }
 
-  const initData = webApp?.initData ?? "";
-  const fallbackUser = webApp?.initDataUnsafe?.user ?? {
+  const initData = rawInitAtLaunch;
+  const parsedRawUser = rawTelegramUser(initData);
+  const fallbackUser = webApp?.initDataUnsafe?.user ?? parsedRawUser ?? {
     id: 900000001,
     first_name: "Тестовий",
     last_name: "Користувач",
@@ -184,6 +239,7 @@ export async function ensureTelegramSession(): Promise<{ token: string; user: St
     language_code: "uk",
   };
   try {
+    lastTelegramAuthError = "";
     const response = await stage2Request("/auth/telegram", {
       method: "POST",
       body: JSON.stringify({ initData, devUser: fallbackUser }),
@@ -192,7 +248,8 @@ export async function ensureTelegramSession(): Promise<{ token: string; user: St
     const result = await response.json() as { token: string; user: Stage2User };
     setSessionToken(result.token);
     return result;
-  } catch {
+  } catch (error) {
+    lastTelegramAuthError = error instanceof Error ? error.message : "Невідома помилка Telegram авторизації";
     return null;
   }
 }

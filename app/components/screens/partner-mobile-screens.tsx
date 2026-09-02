@@ -52,7 +52,7 @@ import {
   LockKeyhole,
 } from "lucide-react";
 import type { RoleKey } from "../../lib/navigation";
-import { ensureTelegramSession, setSessionToken, stage2Fetch, telegramStartParam, type Stage2Category, type Stage2GeoDetails, type Stage2GeoSuggestion, type Stage2PlaceTypeTemplate } from "../../lib/stage2-api";
+import { ensureTelegramSession, setSessionToken, stage2Fetch, telegramAuthLastError, telegramLaunchDiagnostic, telegramStartParam, type Stage2Category, type Stage2GeoDetails, type Stage2GeoSuggestion, type Stage2PlaceTypeTemplate } from "../../lib/stage2-api";
 
 type Navigate = (role: RoleKey, slug: string) => void;
 type PartnerProps = { navigate: Navigate; activated: boolean };
@@ -3050,7 +3050,11 @@ export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate
     setActivated(readPartnerActivated());
     void ensureTelegramSession().then(async (session) => {
       if (!session) {
-        if (!cancelled) { setInviteState("denied"); setInviteError("Не вдалося авторизуватися через Telegram"); }
+        if (!cancelled) {
+          const authReason = telegramAuthLastError();
+          setInviteState("denied");
+          setInviteError(authReason ? `Не вдалося авторизуватися через Telegram: ${authReason}` : "Не вдалося авторизуватися через Telegram");
+        }
         return;
       }
       const startParam = telegramStartParam();
@@ -3123,7 +3127,12 @@ export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate
   }
   if (inviteState === "denied") {
     const startParam = telegramStartParam();
+    const launchDiagnostic = telegramLaunchDiagnostic();
     const diagnosticText = [
+      `Telegram SDK: ${launchDiagnostic.webApp ? "так" : "ні"}`,
+      `initData length: ${launchDiagnostic.initDataLength}`,
+      `Telegram ID launch: ${launchDiagnostic.telegramId || "не визначено"}`,
+      `Auth error: ${launchDiagnostic.authError || "немає"}`,
       `Причина: ${inviteDiagnostic?.reason || inviteError || "невідома"}`,
       `Telegram ID сесії: ${inviteDiagnostic?.telegram_id || sessionTelegramId || "не визначено"}`,
       `start_param: ${inviteDiagnostic?.start_param || startParam || "не визначено"}`,
@@ -3133,7 +3142,7 @@ export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate
       `Заклад: ${inviteDiagnostic?.place_name || inviteDiagnostic?.place_id || "не визначено"}`,
       `Дозволені Telegram ID: ${inviteDiagnostic?.allowed_telegram_ids?.length ? inviteDiagnostic.allowed_telegram_ids.join(", ") : "список порожній / не отримано"}`,
     ].join("\n");
-    return <div className="gt-partner-mobile-screen"><main className="gt-partner-mobile-content gt-partner-form-page"><div className="gt-simple-partner-section"><LockKeyhole size={42} /><h2>Доступ заборонено</h2><p>{inviteError || "Ваш Telegram ID не доданий до цього партнера."}</p><div className="gt-partner-access-diagnostics"><strong>Діагностика доступу</strong><small>Telegram ID сесії: {inviteDiagnostic?.telegram_id || sessionTelegramId || "не визначено"}</small><small>start_param: {inviteDiagnostic?.start_param || startParam || "не визначено"}</small><small>QR: {inviteDiagnostic?.qr_found == null ? "невідомо" : inviteDiagnostic.qr_found ? `${inviteDiagnostic.qr_type || "тип не визначено"} · ${inviteDiagnostic.qr_active ? "активний" : "вимкнений"}` : "не знайдено"}</small><small>Заклад: {inviteDiagnostic?.place_name || inviteDiagnostic?.place_id || "не визначено"}</small><small>Дозволені ID: {inviteDiagnostic?.allowed_telegram_ids?.length ? inviteDiagnostic.allowed_telegram_ids.join(", ") : "список порожній / не отримано"}</small><small>Код причини: {inviteDiagnostic?.reason || "немає відповіді diagnostic endpoint"}</small></div><button type="button" className="gt-partner-secondary-button" onClick={() => void navigator.clipboard?.writeText(diagnosticText)}>Скопіювати діагностику</button></div></main></div>;
+    return <div className="gt-partner-mobile-screen"><main className="gt-partner-mobile-content gt-partner-form-page"><div className="gt-simple-partner-section"><LockKeyhole size={42} /><h2>Доступ заборонено</h2><p>{inviteError || "Ваш Telegram ID не доданий до цього партнера."}</p><div className="gt-partner-access-diagnostics"><strong>Діагностика доступу</strong><small>Telegram SDK: {launchDiagnostic.webApp ? "підключений" : "не підключений"}</small><small>initData: {launchDiagnostic.initDataLength ? `${launchDiagnostic.initDataLength} символів` : "порожній"}</small><small>Telegram ID запуску: {launchDiagnostic.telegramId || "не визначено"}</small><small>Помилка авторизації: {launchDiagnostic.authError || "немає"}</small><small>Telegram ID сесії: {inviteDiagnostic?.telegram_id || sessionTelegramId || "не визначено"}</small><small>start_param: {inviteDiagnostic?.start_param || startParam || "не визначено"}</small><small>QR: {inviteDiagnostic?.qr_found == null ? "невідомо" : inviteDiagnostic.qr_found ? `${inviteDiagnostic.qr_type || "тип не визначено"} · ${inviteDiagnostic.qr_active ? "активний" : "вимкнений"}` : "не знайдено"}</small><small>Заклад: {inviteDiagnostic?.place_name || inviteDiagnostic?.place_id || "не визначено"}</small><small>Дозволені ID: {inviteDiagnostic?.allowed_telegram_ids?.length ? inviteDiagnostic.allowed_telegram_ids.join(", ") : "список порожній / не отримано"}</small><small>Код причини: {inviteDiagnostic?.reason || "немає відповіді diagnostic endpoint"}</small></div><button type="button" className="gt-partner-secondary-button" onClick={() => void navigator.clipboard?.writeText(diagnosticText)}>Скопіювати діагностику</button></div></main></div>;
   }
 
   switch (resolvedSlug) {
