@@ -389,33 +389,95 @@ export class Stage2Service {
     return result.rows;
   }
 
-  async partnerAccess(user: AuthUser, startParam: string) {
+  async partnerAccessDiagnostic(user: AuthUser, startParam: string) {
     const telegramId = String(user.telegram_id ?? "").trim();
-    if (!/^\d{5,20}$/.test(telegramId)) throw new UnauthorizedException("Telegram ID is required");
     const result = await this.db.query(
-      `SELECT q.id qr_id,q.start_param,q.active,p.id place_id,p.status,p.organization_id,p.name,p.details,o.owner_user_id,
+      `SELECT q.id qr_id,q.start_param,q.active,q.type,q.source,q.place_id,
+              p.status,p.organization_id,p.name,p.details,o.owner_user_id,
               EXISTS(
                 SELECT 1 FROM organization_telegram_access a
-                WHERE a.organization_id=p.organization_id AND a.telegram_id=$2::bigint AND a.active=true
-              ) OR o.owner_user_id=$3 AS allowed,
-              COALESCE((SELECT json_agg(a.telegram_id::text ORDER BY a.telegram_id) FROM organization_telegram_access a WHERE a.organization_id=p.organization_id AND a.active=true),'[]'::json) allowed_telegram_ids
+                WHERE a.organization_id=p.organization_id AND a.telegram_id::text=$2 AND a.active=true
+              ) AS table_allowed,
+              EXISTS(
+                SELECT 1 FROM jsonb_array_elements_text(COALESCE(p.details->'allowed_telegram_ids','[]'::jsonb)) item(value)
+                WHERE item.value=$2
+              ) AS details_allowed,
+              COALESCE((SELECT json_agg(a.telegram_id::text ORDER BY a.telegram_id) FROM organization_telegram_access a WHERE a.organization_id=p.organization_id AND a.active=true),'[]'::json) table_telegram_ids,
+              COALESCE(p.details->'allowed_telegram_ids','[]'::jsonb) details_telegram_ids
        FROM qr_points q
-       JOIN places p ON p.id=q.place_id
-       JOIN organizations o ON o.id=p.organization_id
-       WHERE q.start_param=$1 AND q.active=true AND q.type='partner_access' LIMIT 1`,
-      [startParam, telegramId, user.id],
+       LEFT JOIN places p ON p.id=q.place_id
+       LEFT JOIN organizations o ON o.id=p.organization_id
+       WHERE q.start_param=$1
+       ORDER BY q.created_at DESC
+       LIMIT 1`,
+      [startParam, telegramId],
     );
     const row = result.rows[0] as Record<string, unknown> | undefined;
-    if (!row) throw new NotFoundException("Partner QR not found or inactive");
-    if (row.allowed !== true) {
-      const allowed = Array.isArray(row.allowed_telegram_ids) ? row.allowed_telegram_ids.map(String).join(", ") : "";
-      throw new UnauthorizedException(`Цей Telegram ID (${telegramId}) не має доступу до кабінету цього партнера${allowed ? `. Дозволені ID: ${allowed}` : ""}`);
+    const tableIds = row && Array.isArray(row.table_telegram_ids) ? row.table_telegram_ids.map(String) : [];
+    const detailIds = row && Array.isArray(row.details_telegram_ids) ? row.details_telegram_ids.map(String) : [];
+    const allowedTelegramIds = Array.from(new Set([...tableIds, ...detailIds]));
+    const hasTelegramId = /^\d{5,20}$/.test(telegramId);
+    let reason = "ok";
+    if (!hasTelegramId) reason = "telegram_id_missing";
+    else if (!row) reason = "qr_not_found";
+    else if (row.active !== true) reason = "qr_inactive";
+    else if (row.type !== "partner_access") reason = "qr_wrong_type";
+    else if (!row.place_id) reason = "qr_without_place";
+    else if (!row.organization_id) reason = "organization_missing";
+    const ownerAllowed = row ? String(row.owner_user_id ?? "") === user.id : false;
+    const telegramAllowed = row ? row.table_allowed === true || row.details_allowed === true : false;
+    const allowed = reason === "ok" && (ownerAllowed || telegramAllowed);
+    if (reason === "ok" && !allowed) reason = "telegram_id_not_allowed";
+    return {
+      ok: allowed,
+      reason,
+      start_param: startParam,
+      session_user_id: user.id,
+      telegram_id: telegramId || null,
+      telegram_username: user.telegram_username ?? null,
+      qr_found: Boolean(row),
+      qr_id: row?.qr_id ?? null,
+      qr_active: row?.active ?? null,
+      qr_type: row?.type ?? null,
+      place_id: row?.place_id ?? null,
+      place_name: row?.name ?? null,
+      place_status: row?.status ?? null,
+      organization_id: row?.organization_id ?? null,
+      allowed_telegram_ids: allowedTelegramIds,
+      access_from_table: row?.table_allowed === true,
+      access_from_place_details: row?.details_allowed === true,
+      access_as_owner: ownerAllowed,
+    };
+  }
+
+  async partnerAccess(user: AuthUser, startParam: string) {
+    const diagnostic = await this.partnerAccessDiagnostic(user, startParam);
+    if (!diagnostic.ok) {
+      const reasonText: Record<string, string> = {
+        telegram_id_missing: "Telegram не передав ID користувача",
+        qr_not_found: "QR не знайдено в базі",
+        qr_inactive: "QR вимкнений",
+        qr_wrong_type: "цей QR не є QR доступу партнера",
+        qr_without_place: "QR не прив'язаний до закладу",
+        organization_missing: "для закладу не знайдено організацію",
+        telegram_id_not_allowed: "поточний Telegram ID не входить до списку дозволених",
+      };
+      const allowed = diagnostic.allowed_telegram_ids.length ? diagnostic.allowed_telegram_ids.join(", ") : "список порожній";
+      throw new UnauthorizedException(
+        `${reasonText[diagnostic.reason] || diagnostic.reason}. Поточний Telegram ID: ${diagnostic.telegram_id || "не визначено"}. Дозволені ID: ${allowed}. start_param: ${startParam}. QR: ${diagnostic.qr_found ? `${diagnostic.qr_type}/${diagnostic.qr_active ? "active" : "inactive"}` : "не знайдено"}.`,
+      );
     }
+    const telegramId = String(diagnostic.telegram_id ?? "");
     await this.db.transaction(async (client) => {
       await client.query("UPDATE users SET role=CASE WHEN role='tourist' THEN 'partner' ELSE role END,updated_at=now() WHERE id=$1", [user.id]);
-      await client.query("UPDATE organizations SET owner_user_id=COALESCE(owner_user_id,$2),updated_at=now() WHERE id=$1", [row.organization_id, user.id]);
+      await client.query("UPDATE organizations SET owner_user_id=COALESCE(owner_user_id,$2),updated_at=now() WHERE id=$1", [diagnostic.organization_id, user.id]);
+      await client.query(
+        `INSERT INTO organization_telegram_access(organization_id,telegram_id,role,active) VALUES($1,$2::bigint,'owner',true)
+         ON CONFLICT (organization_id,telegram_id) DO UPDATE SET active=true,role='owner',updated_at=now()`,
+        [diagnostic.organization_id, telegramId],
+      );
     });
-    return { ok: true, place_id: row.place_id, status: row.status, organization_id: row.organization_id, name: row.name, start_param: startParam, telegram_id: telegramId };
+    return { ok: true, place_id: diagnostic.place_id, status: diagnostic.place_status, organization_id: diagnostic.organization_id, name: diagnostic.place_name, start_param: startParam, telegram_id: telegramId };
   }
 
   async createPartnerPlace(user: AuthUser, body: Record<string, unknown>) {
@@ -709,6 +771,12 @@ export class Stage2Service {
     const result = await this.db.query("UPDATE qr_points SET active=$2,updated_at=now() WHERE id=$1 RETURNING id,start_param,active", [id, active]);
     if (!result.rows[0]) throw new NotFoundException("QR point not found");
     return result.rows[0];
+  }
+
+  async adminDeleteQr(id: string) {
+    const result = await this.db.query("DELETE FROM qr_points WHERE id=$1 RETURNING id,start_param,type,place_id", [id]);
+    if (!result.rows[0]) throw new NotFoundException("QR point not found");
+    return { ok: true, ...result.rows[0] };
   }
 
   async adminSaveTemplate(body: Record<string, unknown>) {

@@ -65,6 +65,10 @@ export class Stage2Controller {
   event(@Req() request: AuthRequest, @Body() body: Record<string, unknown>) { return this.service.addEvent(request.user!, body); }
 
   @UseGuards(SessionGuard)
+  @Get("partner/access-diagnostic/:startParam")
+  partnerAccessDiagnostic(@Req() request: AuthRequest, @Param("startParam") startParam: string) { return this.service.partnerAccessDiagnostic(request.user!, startParam); }
+
+  @UseGuards(SessionGuard)
   @Get("partner/access/:startParam")
   partnerAccess(@Req() request: AuthRequest, @Param("startParam") startParam: string) { return this.service.partnerAccess(request.user!, startParam); }
 
@@ -125,6 +129,10 @@ export class Stage2Controller {
   @UseGuards(AdminKeyGuard)
   @Patch("admin/stage2/qr/:id")
   adminToggleQr(@Param("id") id: string, @Body() body: { active: boolean }) { return this.service.adminToggleQr(id, Boolean(body.active)); }
+
+  @UseGuards(AdminKeyGuard)
+  @Delete("admin/stage2/qr/:id")
+  adminDeleteQr(@Param("id") id: string) { return this.service.adminDeleteQr(id); }
 
   @UseGuards(AdminKeyGuard)
   @Post("admin/stage2/categories")

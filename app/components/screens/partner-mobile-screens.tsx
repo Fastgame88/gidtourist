@@ -57,6 +57,27 @@ import { ensureTelegramSession, setSessionToken, stage2Fetch, telegramStartParam
 type Navigate = (role: RoleKey, slug: string) => void;
 type PartnerProps = { navigate: Navigate; activated: boolean };
 
+type PartnerAccessDiagnostic = {
+  ok: boolean;
+  reason: string;
+  start_param: string;
+  session_user_id?: string | null;
+  telegram_id?: string | null;
+  telegram_username?: string | null;
+  qr_found?: boolean;
+  qr_id?: string | null;
+  qr_active?: boolean | null;
+  qr_type?: string | null;
+  place_id?: string | null;
+  place_name?: string | null;
+  place_status?: string | null;
+  organization_id?: string | null;
+  allowed_telegram_ids?: string[];
+  access_from_table?: boolean;
+  access_from_place_details?: boolean;
+  access_as_owner?: boolean;
+};
+
 type PartnerRuleIcon = "no-smoking" | "quiet" | "pets" | "clock" | "security" | "people" | "info" | "sparkles" | "energy" | "lock";
 type PartnerRule = { id: string; text: string; icon: PartnerRuleIcon };
 
@@ -3021,6 +3042,8 @@ export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate
   const [inviteState, setInviteState] = useState<"checking" | "none" | "allowed" | "denied">("checking");
   const [inviteError, setInviteError] = useState("");
   const [inviteStatus, setInviteStatus] = useState("");
+  const [inviteDiagnostic, setInviteDiagnostic] = useState<PartnerAccessDiagnostic | null>(null);
+  const [sessionTelegramId, setSessionTelegramId] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -3031,6 +3054,7 @@ export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate
         return;
       }
       const startParam = telegramStartParam();
+      setSessionTelegramId(String(session.user.telegram_id ?? ""));
       const isInvite = startParam.startsWith("partner-");
       if (isInvite) {
         try {
@@ -3039,9 +3063,17 @@ export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate
           window.localStorage.setItem(PARTNER_STAGE2_PLACE_KEY, access.place_id);
           window.localStorage.setItem(PARTNER_INVITE_KEY, startParam);
           setInviteStatus(access.status || "draft");
+          setInviteDiagnostic(null);
           setInviteState("allowed");
         } catch (error) {
+          let diagnostic: PartnerAccessDiagnostic | null = null;
+          try {
+            diagnostic = await stage2Fetch<PartnerAccessDiagnostic>(`/partner/access-diagnostic/${encodeURIComponent(startParam)}`);
+          } catch {
+            diagnostic = null;
+          }
           if (!cancelled) {
+            setInviteDiagnostic(diagnostic);
             setInviteState("denied");
             setInviteError(error instanceof Error ? error.message : "Доступ за цим QR заборонений");
           }
@@ -3090,7 +3122,18 @@ export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate
     return <div className="gt-partner-mobile-screen"><main className="gt-partner-mobile-content gt-partner-form-page"><div className="gt-simple-partner-section"><RefreshCcw size={42} /><h2>Перевіряємо доступ</h2><p>Звіряємо ваш Telegram ID із партнерським QR.</p></div></main></div>;
   }
   if (inviteState === "denied") {
-    return <div className="gt-partner-mobile-screen"><main className="gt-partner-mobile-content gt-partner-form-page"><div className="gt-simple-partner-section"><LockKeyhole size={42} /><h2>Доступ заборонено</h2><p>{inviteError || "Ваш Telegram ID не доданий до цього партнера."}</p></div></main></div>;
+    const startParam = telegramStartParam();
+    const diagnosticText = [
+      `Причина: ${inviteDiagnostic?.reason || inviteError || "невідома"}`,
+      `Telegram ID сесії: ${inviteDiagnostic?.telegram_id || sessionTelegramId || "не визначено"}`,
+      `start_param: ${inviteDiagnostic?.start_param || startParam || "не визначено"}`,
+      `QR знайдено: ${inviteDiagnostic?.qr_found == null ? "невідомо" : inviteDiagnostic.qr_found ? "так" : "ні"}`,
+      `QR активний: ${inviteDiagnostic?.qr_active == null ? "невідомо" : inviteDiagnostic.qr_active ? "так" : "ні"}`,
+      `Тип QR: ${inviteDiagnostic?.qr_type || "не визначено"}`,
+      `Заклад: ${inviteDiagnostic?.place_name || inviteDiagnostic?.place_id || "не визначено"}`,
+      `Дозволені Telegram ID: ${inviteDiagnostic?.allowed_telegram_ids?.length ? inviteDiagnostic.allowed_telegram_ids.join(", ") : "список порожній / не отримано"}`,
+    ].join("\n");
+    return <div className="gt-partner-mobile-screen"><main className="gt-partner-mobile-content gt-partner-form-page"><div className="gt-simple-partner-section"><LockKeyhole size={42} /><h2>Доступ заборонено</h2><p>{inviteError || "Ваш Telegram ID не доданий до цього партнера."}</p><div className="gt-partner-access-diagnostics"><strong>Діагностика доступу</strong><small>Telegram ID сесії: {inviteDiagnostic?.telegram_id || sessionTelegramId || "не визначено"}</small><small>start_param: {inviteDiagnostic?.start_param || startParam || "не визначено"}</small><small>QR: {inviteDiagnostic?.qr_found == null ? "невідомо" : inviteDiagnostic.qr_found ? `${inviteDiagnostic.qr_type || "тип не визначено"} · ${inviteDiagnostic.qr_active ? "активний" : "вимкнений"}` : "не знайдено"}</small><small>Заклад: {inviteDiagnostic?.place_name || inviteDiagnostic?.place_id || "не визначено"}</small><small>Дозволені ID: {inviteDiagnostic?.allowed_telegram_ids?.length ? inviteDiagnostic.allowed_telegram_ids.join(", ") : "список порожній / не отримано"}</small><small>Код причини: {inviteDiagnostic?.reason || "немає відповіді diagnostic endpoint"}</small></div><button type="button" className="gt-partner-secondary-button" onClick={() => void navigator.clipboard?.writeText(diagnosticText)}>Скопіювати діагностику</button></div></main></div>;
   }
 
   switch (resolvedSlug) {

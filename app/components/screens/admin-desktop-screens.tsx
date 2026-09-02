@@ -201,9 +201,9 @@ function AdminPageHeader({
   );
 }
 
-function PrimaryButton({ children, onClick }: { children: ReactNode; onClick?: () => void }) {
+function PrimaryButton({ children, onClick, disabled = false }: { children: ReactNode; onClick?: () => void; disabled?: boolean }) {
   return (
-    <button type="button" className="ad-btn ad-btn--primary" onClick={onClick}>
+    <button type="button" className="ad-btn ad-btn--primary" onClick={onClick} disabled={disabled}>
       {children}
     </button>
   );
@@ -1352,6 +1352,8 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
   const [emergencyPhone, setEmergencyPhone] = useState("");
   const [communityUrl, setCommunityUrl] = useState("");
   const [qrPreviewParam, setQrPreviewParam] = useState("");
+  const [qrCreating, setQrCreating] = useState(false);
+  const [qrCreateLocked, setQrCreateLocked] = useState(false);
 
   useEffect(() => {
     void load();
@@ -1391,14 +1393,38 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
   };
 
   const createQr = async () => {
-    const row = await adminStage2Fetch<{ id: string; start_param: string }>("/admin/stage2/qr", adminKey, { method: "POST", body: JSON.stringify({ place_id: qrPlaceId || null, type: "entry_point", source: "hotel", start_param: qrParam || undefined }) });
-    setQrParam(""); setQrPreviewParam(row.start_param); setMessage(`QR-контекст створено: ${row.start_param}`); await load();
+    if (qrCreating || qrCreateLocked) return;
+    setQrCreating(true);
+    setMessage("");
+    try {
+      const row = await adminStage2Fetch<{ id: string; start_param: string }>("/admin/stage2/qr", adminKey, { method: "POST", body: JSON.stringify({ place_id: qrPlaceId || null, type: "entry_point", source: "hotel", start_param: qrParam || undefined }) });
+      setQrPreviewParam(row.start_param);
+      setQrCreateLocked(true);
+      setMessage(`QR успішно створено: ${row.start_param}. Щоб випадково не створити дубль, повторне створення заблоковано.`);
+      await load();
+    } catch (error) {
+      setMessage(error instanceof Error ? `Помилка створення QR: ${error.message}` : "Помилка створення QR");
+    } finally {
+      setQrCreating(false);
+    }
   };
 
   const toggleQr = async (id: string, active: boolean) => {
     await adminStage2Fetch(`/admin/stage2/qr/${encodeURIComponent(id)}`, adminKey, { method: "PATCH", body: JSON.stringify({ active }) });
     setMessage(active ? "QR-контекст активовано" : "QR-контекст деактивовано");
     await load();
+  };
+
+  const deleteQr = async (id: string, startParam: string) => {
+    if (!window.confirm(`Видалити QR ${startParam}? Після видалення цей QR більше не відкриватиме контекст.`)) return;
+    try {
+      await adminStage2Fetch(`/admin/stage2/qr/${encodeURIComponent(id)}`, adminKey, { method: "DELETE" });
+      if (qrPreviewParam === startParam) setQrPreviewParam("");
+      setMessage(`QR ${startParam} видалено.`);
+      await load();
+    } catch (error) {
+      setMessage(error instanceof Error ? `Помилка видалення QR: ${error.message}` : "Помилка видалення QR");
+    }
   };
 
   const deepLink = (startParam: string) => {
@@ -1440,13 +1466,15 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
       <section className="ad-stage2-grid">
         <div className="ad-stage2-card">
           <h2>Створити QR точки входу</h2><p>Вкажіть ID схваленого готелю/точки. Backend створить унікальний start_param.</p>
-          <select value={qrPlaceId} onChange={(e)=>setQrPlaceId(e.target.value)}>
+          <select value={qrPlaceId} onChange={(e)=>{setQrPlaceId(e.target.value);setQrCreateLocked(false);setMessage("");}}>
             <option value="">Публічна точка без закладу</option>
             {approvedPlaces.map((place) => <option key={place.id} value={place.id}>{place.name} · {place.category_slug}</option>)}
           </select>
           <small className="ad-stage2-place-id">{qrPlaceId || "QR буде прив'язаний тільки до регіону"}</small>
-          <input value={qrParam} onChange={(e)=>setQrParam(e.target.value)} placeholder="start_param (необов'язково)" />
-          <PrimaryButton onClick={() => void createQr()}><Plus size={16}/> Створити QR-контекст</PrimaryButton>
+          <input value={qrParam} onChange={(e)=>{setQrParam(e.target.value);setQrCreateLocked(false);setMessage("");}} placeholder="start_param (необов'язково)" />
+          <PrimaryButton disabled={qrCreating || qrCreateLocked} onClick={() => void createQr()}>{qrCreateLocked ? <Check size={16}/> : <Plus size={16}/>} {qrCreating ? "Створення…" : qrCreateLocked ? "QR створено" : "Створити QR-контекст"}</PrimaryButton>
+          {qrCreateLocked && qrPreviewParam ? <div className="ad-stage2-qr-created"><Check size={16}/><span><strong>QR успішно створено</strong><small>{qrPreviewParam}</small></span></div> : null}
+          {qrCreateLocked ? <OutlineButton onClick={()=>{setQrCreateLocked(false);setMessage("");}}>Створити ще один QR</OutlineButton> : null}
         </div>
         <div className="ad-stage2-card">
           <h2>Категорії / підкатегорії</h2><p>Редагуйте основні розділи й їх фільтри без змін коду. Партнер побачить ці підкатегорії у формі.</p>
@@ -1494,7 +1522,7 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
       <section className="ad-stage2-section">
         <AdminPageHeader title="QR точки" subtitle="Посилання можна перетворити на друкований QR будь-яким QR-генератором; start_param зберігається у БД" />
         <AdminTable columns={[{label:"Точка",className:"1.2fr"},{label:"start_param",className:"1.25fr"},{label:"Статус",className:".55fr"},{label:"Deep link",className:"2fr"}]}>
-          {qrRows.map((row)=><TableRow key={row.id} columns={["1.2fr","1.25fr",".55fr","2fr"]}><div><strong>{row.place_name || "Публічна точка"}</strong><small>{row.region_name}</small></div><code>{row.start_param}</code><Status tone={row.active?"green":"gray"}>{row.active?"Активний":"Вимкнено"}</Status><div className="ad-stage2-link"><input readOnly value={deepLink(row.start_param)}/><button onClick={() => void navigator.clipboard.writeText(deepLink(row.start_param))}>Копіювати</button><button onClick={() => setQrPreviewParam(row.start_param)}>QR</button><button onClick={() => void toggleQr(row.id,!row.active)}>{row.active?"Вимк.":"Увімк."}</button></div></TableRow>)}
+          {qrRows.map((row)=><TableRow key={row.id} columns={["1.2fr","1.25fr",".55fr","2fr"]}><div><strong>{row.place_name || "Публічна точка"}</strong><small>{row.region_name}</small></div><code>{row.start_param}</code><Status tone={row.active?"green":"gray"}>{row.active?"Активний":"Вимкнено"}</Status><div className="ad-stage2-link"><input readOnly value={deepLink(row.start_param)}/><button onClick={() => void navigator.clipboard.writeText(deepLink(row.start_param))}>Копіювати</button><button onClick={() => setQrPreviewParam(row.start_param)}>QR</button><button onClick={() => void toggleQr(row.id,!row.active)}>{row.active?"Вимк.":"Увімк."}</button><button className="is-danger" onClick={() => void deleteQr(row.id,row.start_param)}><Trash2 size={14}/> Видалити</button></div></TableRow>)}
         </AdminTable>
         {qrPreviewParam ? <div className="ad-stage2-qr-preview"><Stage2QrPreview value={deepLink(qrPreviewParam)} /><div><strong>QR точки входу</strong><small>{qrPreviewParam}</small><p>Сканування відкриває Telegram Mini App з цим start_param; backend визначає регіон і прив'язаний заклад.</p></div></div> : null}
       </section>

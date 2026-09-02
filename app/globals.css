@@ -28314,3 +28314,28 @@ button.gt-amenities-row {
   background:#eef3ef;
   color:#68736b;
 }
+
+/* ===== 2026-09-02 Stage 2.8: partner QR access diagnostics ===== */
+.gt-partner-access-diagnostics {
+  width: 100%;
+  margin: 10px 0 14px;
+  padding: 12px 14px;
+  box-sizing: border-box;
+  border: 1px solid #e2e9e5;
+  border-radius: 14px;
+  background: #f8fbf9;
+  text-align: left;
+}
+.gt-partner-access-diagnostics strong,
+.gt-partner-access-diagnostics small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.gt-partner-access-diagnostics strong { margin-bottom: 7px; color: #1e2d25; font-size: 13px; }
+.gt-partner-access-diagnostics small { margin-top: 4px; color: #5f6b64; font-size: 11px; line-height: 1.4; }
+
+/* ===== 2026-09-02 Stage 2.8: QR creation confirmation ===== */
+.ad-stage2-qr-created { display:flex; align-items:center; gap:9px; padding:10px 12px; border:1px solid #bfe8d0; border-radius:12px; background:#effaf3; color:#087c47; }
+.ad-stage2-qr-created span,.ad-stage2-qr-created strong,.ad-stage2-qr-created small { display:block; }
+.ad-stage2-qr-created small { margin-top:2px; color:#5d7064; overflow-wrap:anywhere; }
+.ad-stage2-link button.is-danger { color:#b42318; }
