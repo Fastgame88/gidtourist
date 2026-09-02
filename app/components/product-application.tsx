@@ -38,6 +38,7 @@ import { AdminDesktopScreen } from "./screens/admin-desktop-screens";
 import { PartnerMobileScreen } from "./screens/partner-mobile-screens";
 import { TouristScreen } from "./screens/tourist-screens";
 import { TouristRuntimeProvider } from "../lib/tourist-runtime";
+import { telegramStartParam, waitForTelegramWebApp } from "../lib/stage2-api";
 import { Avatar, IconButton } from "./ui";
 
 type TelegramWindow = Window & {
@@ -140,6 +141,21 @@ export default function ProductApplication({ role, slug }: { role: RoleKey; slug
   const [menuOpen, setMenuOpen] = useState(false);
   const [telegramPlatform, setTelegramPlatform] = useState("");
   const activeScreen = getScreen(role, slug);
+
+  useEffect(() => {
+    if (role !== "tourist") return;
+    let cancelled = false;
+    const routePartnerInvite = async () => {
+      await waitForTelegramWebApp(1800).catch(() => undefined);
+      if (cancelled) return;
+      const startParam = telegramStartParam();
+      if (startParam.startsWith("partner-")) {
+        router.replace(`/partner/partner-dashboard?startapp=${encodeURIComponent(startParam)}`);
+      }
+    };
+    void routePartnerInvite();
+    return () => { cancelled = true; };
+  }, [role, router]);
 
   useEffect(() => {
     if (role !== "tourist") return;

@@ -115,6 +115,18 @@ CREATE TABLE IF NOT EXISTS qr_points (
 );
 CREATE INDEX IF NOT EXISTS idx_qr_points_start ON qr_points(start_param, active);
 
+
+CREATE TABLE IF NOT EXISTS organization_telegram_access (
+  organization_id text NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  telegram_id bigint NOT NULL,
+  role text NOT NULL DEFAULT 'owner',
+  active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY(organization_id, telegram_id)
+);
+CREATE INDEX IF NOT EXISTS idx_org_tg_access_telegram ON organization_telegram_access(telegram_id, active);
+
 CREATE TABLE IF NOT EXISTS favorites (
   user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   place_id text NOT NULL REFERENCES places(id) ON DELETE CASCADE,

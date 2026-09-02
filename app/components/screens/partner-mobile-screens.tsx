@@ -52,7 +52,7 @@ import {
   LockKeyhole,
 } from "lucide-react";
 import type { RoleKey } from "../../lib/navigation";
-import { ensureTelegramSession, setSessionToken, stage2Fetch, type Stage2Category, type Stage2GeoDetails, type Stage2GeoSuggestion, type Stage2PlaceTypeTemplate } from "../../lib/stage2-api";
+import { ensureTelegramSession, setSessionToken, stage2Fetch, telegramStartParam, type Stage2Category, type Stage2GeoDetails, type Stage2GeoSuggestion, type Stage2PlaceTypeTemplate } from "../../lib/stage2-api";
 
 type Navigate = (role: RoleKey, slug: string) => void;
 type PartnerProps = { navigate: Navigate; activated: boolean };
@@ -100,6 +100,7 @@ type PartnerProfile = {
   cancellation: string;
   payment: string;
   otherRules: string;
+  cabinetModules: string[];
   templateFields: Record<string, string>;
 };
 
@@ -457,6 +458,7 @@ const defaultProfile: PartnerProfile = {
   payment: "Готівка, Visa, Mastercard",
   otherRules:
     "Адміністрація готелю залишає за собою право змінювати правила проживання. Актуальні правила діють на момент поселення.",
+  cabinetModules: ["Послуги закладу", "Інформація про заклад", "Правила проживання", "Wi‑Fi", "Контакти", "Час заїзду / виїзду"],
   templateFields: { room_count: "18 номерів", opened_year: "2018", languages: "Українська, English, Polski", accommodation_type: "Готель" },
 };
 
@@ -475,6 +477,7 @@ function readPartnerProfile(): PartnerProfile {
       ];
     }
     if (!Array.isArray(parsed.amenities)) merged.amenities = defaultProfile.amenities;
+    if (!Array.isArray(parsed.cabinetModules)) merged.cabinetModules = defaultProfile.cabinetModules;
     if (typeof parsed.hasWifi !== "boolean") merged.hasWifi = Boolean(parsed.wifiSsid ?? defaultProfile.wifiSsid);
     if (!merged.hasWifi) merged.amenities = merged.amenities.filter((item) => item !== "Wi‑Fi");
     return merged;
@@ -514,6 +517,7 @@ function usePartnerProfile() {
 
 
 const PARTNER_STAGE2_PLACE_KEY = "gid-tourist-stage2-partner-place-id";
+const PARTNER_INVITE_KEY = "gid-tourist-stage2-partner-invite";
 
 function categoryFromPlaceType(placeType: string) {
   const value = placeType.toLocaleLowerCase("uk");
@@ -617,6 +621,7 @@ async function submitPartnerProfile(profile: PartnerProfile) {
       address_verified: Boolean(profile.cityPlaceId && profile.streetPlaceId && profile.housePlaceId),
       geo_place_ids: { city: profile.cityPlaceId, street: profile.streetPlaceId, house: profile.housePlaceId },
       services: readPartnerServices(),
+      cabinet_modules: profile.cabinetModules,
       template_fields: profile.templateFields,
     },
   };
@@ -624,7 +629,8 @@ async function submitPartnerProfile(profile: PartnerProfile) {
   if (existingId) {
     try {
       return await stage2Fetch<{ id: string; status?: string }>(`/partner/places/${encodeURIComponent(existingId)}`, { method: "PATCH", body: JSON.stringify(payload) });
-    } catch {
+    } catch (error) {
+      if (typeof window !== "undefined" && window.localStorage.getItem(PARTNER_INVITE_KEY)) throw error;
       window.localStorage.removeItem(PARTNER_STAGE2_PLACE_KEY);
     }
   }
@@ -2053,59 +2059,33 @@ function UpdateScreen({ navigate, activated }: PartnerProps) {
 }
 
 function CabinetScreen({ navigate }: { navigate: Navigate }) {
-  const items = [
-    {
-      slug: "partner-services",
-      icon: Hotel,
-      title: "Послуги закладу",
-      note: "Додавайте та керуйте послугами вашого закладу",
-    },
-    {
-      slug: "partner-info",
-      icon: Building2,
-      title: "Інформація про заклад",
-      note: "Фото, опис, зручності та контактні дані",
-    },
-    {
-      slug: "partner-rules",
-      icon: ClipboardList,
-      title: "Правила проживання",
-      note: "Додати або змінити правила для гостей",
-    },
-    {
-      slug: "partner-wifi",
-      icon: Wifi,
-      title: "Wi‑Fi",
-      note: "Назва мережі та пароль для гостей",
-    },
-    {
-      slug: "partner-contacts",
-      icon: Phone,
-      title: "Контакти",
-      note: "Телефони, email та інші способи зв’язку",
-    },
-    {
-      slug: "partner-checkin",
-      icon: Clock3,
-      title: "Час заїзду-виїзду",
-      note: "Налаштуйте час заїзду та виїзду для гостей",
-    },
-  ];
+  const { profile } = usePartnerProfile();
+  const definitions: Record<string, { slug: string; icon: typeof Hotel; title: string; note: string }> = {
+    "Послуги закладу": { slug: "partner-services", icon: Hotel, title: "Послуги закладу", note: "Додавайте та керуйте послугами вашого закладу" },
+    "Інформація про заклад": { slug: "partner-info", icon: Building2, title: "Інформація про заклад", note: "Фото, опис, зручності та контактні дані" },
+    "Правила проживання": { slug: "partner-rules", icon: ClipboardList, title: "Правила проживання", note: "Додати або змінити правила для гостей" },
+    "Wi‑Fi": { slug: "partner-wifi", icon: Wifi, title: "Wi‑Fi", note: "Назва мережі та пароль для гостей" },
+    "Контакти": { slug: "partner-contacts", icon: Phone, title: "Контакти", note: "Телефони, email та інші способи зв’язку" },
+    "Оперативні контакти": { slug: "partner-contacts", icon: Phone, title: "Оперативні контакти", note: "Телефони, email та інші способи зв’язку" },
+    "Час заїзду / виїзду": { slug: "partner-checkin", icon: Clock3, title: "Час заїзду-виїзду", note: "Налаштуйте час заїзду та виїзду для гостей" },
+    "Рецепція": { slug: "partner-update", icon: Building2, title: "Рецепція", note: "Інформація та налаштування рецепції" },
+    "Парковка": { slug: "partner-update", icon: CircleParking, title: "Парковка", note: "Інформація про паркування для гостей" },
+    "Сніданок": { slug: "partner-services", icon: UtensilsCrossed, title: "Сніданок", note: "Налаштування послуги сніданку" },
+  };
+  const enabled = (profile.cabinetModules?.length ? profile.cabinetModules : defaultProfile.cabinetModules)
+    .filter((name) => profile.hasWifi || name !== "Wi‑Fi")
+    .map((name, index) => definitions[name] ?? { slug: "partner-update", icon: Info, title: name, note: "Налаштування цього розділу кабінету" })
+    .map((item, index) => ({ ...item, key: `${item.title}-${index}` }));
 
   return (
     <div className="gt-partner-mobile-screen has-bottom-nav is-cabinet-screen">
       <main className="gt-partner-mobile-content gt-partner-cabinet-content">
         <Hero showCopy={false} cabinet />
         <div className="gt-partner-cabinet-list">
-          {items.map(({ slug, icon: Icon, title, note }) => (
-            <button type="button" key={slug} onClick={() => navigate("partner", slug)}>
-              <span className="gt-partner-list-icon">
-                <Icon size={23} />
-              </span>
-              <span className="gt-partner-list-copy">
-                <strong>{title}</strong>
-                <small>{note}</small>
-              </span>
+          {enabled.map(({ key, slug, icon: Icon, title, note }) => (
+            <button type="button" key={key} onClick={() => navigate("partner", slug)}>
+              <span className="gt-partner-list-icon"><Icon size={23} /></span>
+              <span className="gt-partner-list-copy"><strong>{title}</strong><small>{note}</small></span>
               <ChevronRight size={21} />
             </button>
           ))}
@@ -3224,41 +3204,116 @@ function PlaceholderScreen({
   );
 }
 
+function hydratePartnerProfileFromDb(place: Record<string, any>) {
+  const current = readPartnerProfile();
+  const details = place.details && typeof place.details === "object" ? place.details : {};
+  const attrs = place.attributes && typeof place.attributes === "object" ? place.attributes : {};
+  const work = place.work_hours && typeof place.work_hours === "object" ? place.work_hours : {};
+  const daily = work.daily && typeof work.daily === "object" ? work.daily : {};
+  const modules = Array.isArray(details.cabinet_modules) ? details.cabinet_modules.map(String) : current.cabinetModules;
+  const amenities = Array.isArray(attrs.amenities) ? attrs.amenities.map(String) : current.amenities;
+  const profile: PartnerProfile = {
+    ...current,
+    placeName: String(place.name || current.placeName),
+    placeType: String(place.subcategory || current.placeType),
+    categorySlug: String(place.category_slug || current.categorySlug),
+    city: String(details.city || current.city),
+    regionName: String(details.region_name || current.regionName),
+    street: String(details.street || current.street),
+    house: String(details.house || current.house),
+    address: String(place.address || current.address),
+    lat: String(place.lat ?? current.lat),
+    lng: String(place.lng ?? current.lng),
+    imageUrl: String(place.image_url || (Array.isArray(details.gallery) ? details.gallery[0] : "") || current.imageUrl),
+    description: String(place.description || current.description),
+    phone: String(place.phone || current.phone),
+    workMode: work.always_open === true ? "Цілодобово" : "Щодня",
+    workHours: work.always_open === true ? "00:00 - 24:00" : daily.from && daily.to ? `${daily.from} - ${daily.to}` : current.workHours,
+    checkIn: details.check_in ? `Поселення з ${details.check_in}` : current.checkIn,
+    checkOut: details.check_out ? `Виселення до ${details.check_out}` : current.checkOut,
+    hasWifi: attrs.wifi === true || amenities.some((item: string) => /wi-?fi/i.test(item)),
+    amenities,
+    cabinetModules: modules,
+  };
+  savePartnerProfile(profile);
+}
+
 export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate: Navigate }) {
   const [activated, setActivated] = useState(false);
+  const [inviteState, setInviteState] = useState<"checking" | "none" | "allowed" | "denied">("checking");
+  const [inviteError, setInviteError] = useState("");
+  const [inviteStatus, setInviteStatus] = useState("");
 
   useEffect(() => {
     let cancelled = false;
     setActivated(readPartnerActivated());
     void ensureTelegramSession().then(async (session) => {
-      if (!session) return;
-      const places = await stage2Fetch<Array<{ id: string; status: string }>>("/partner/places");
+      if (!session) {
+        if (!cancelled) { setInviteState("denied"); setInviteError("Не вдалося авторизуватися через Telegram"); }
+        return;
+      }
+      const startParam = telegramStartParam();
+      const isInvite = startParam.startsWith("partner-");
+      if (isInvite) {
+        try {
+          const access = await stage2Fetch<{ place_id: string; status: string }>(`/partner/access/${encodeURIComponent(startParam)}`);
+          if (cancelled) return;
+          window.localStorage.setItem(PARTNER_STAGE2_PLACE_KEY, access.place_id);
+          window.localStorage.setItem(PARTNER_INVITE_KEY, startParam);
+          setInviteStatus(access.status || "draft");
+          setInviteState("allowed");
+        } catch (error) {
+          if (!cancelled) {
+            setInviteState("denied");
+            setInviteError(error instanceof Error ? error.message : "Доступ за цим QR заборонений");
+          }
+          return;
+        }
+      } else if (!cancelled) {
+        setInviteState("none");
+      }
+      const places = await stage2Fetch<Array<Record<string, any>>>("/partner/places");
       if (cancelled) return;
       const storedId = typeof window !== "undefined" ? window.localStorage.getItem(PARTNER_STAGE2_PLACE_KEY) : null;
       const place = places.find((item) => item.id === storedId) ?? places[0];
       const approved = place?.status === "approved";
       savePartnerActivated(Boolean(approved));
       setActivated(Boolean(approved));
-      if (place?.id && typeof window !== "undefined") window.localStorage.setItem(PARTNER_STAGE2_PLACE_KEY, place.id);
-    }).catch(() => undefined);
+      if (place?.id && typeof window !== "undefined") {
+        window.localStorage.setItem(PARTNER_STAGE2_PLACE_KEY, String(place.id));
+        hydratePartnerProfileFromDb(place);
+      }
+    }).catch((error) => {
+      if (!cancelled && inviteState === "checking") {
+        setInviteState("denied");
+        setInviteError(error instanceof Error ? error.message : "Помилка доступу до партнерського кабінету");
+      }
+    });
     return () => { cancelled = true; };
   }, [slug]);
 
   const resolvedSlug = useMemo(() => {
-    if (activated && (slug === "partner-dashboard" || slug === "partner-onboarding")) {
-      return "partner-cabinet";
+    if (inviteState === "allowed" && !activated && (slug === "partner-dashboard" || slug === "partner-onboarding")) {
+      if (inviteStatus === "pending") return "partner-pending";
+      return "partner-info";
     }
-    if (!activated && slug === "partner-cabinet") {
-      return "partner-dashboard";
-    }
+    if (activated && (slug === "partner-dashboard" || slug === "partner-onboarding")) return "partner-cabinet";
+    if (!activated && slug === "partner-cabinet") return inviteState === "allowed" ? "partner-info" : "partner-dashboard";
     if (slug === "partner-onboarding") return "partner-info";
     return slug;
-  }, [activated, slug]);
+  }, [activated, slug, inviteState, inviteStatus]);
 
   const activatePartner = () => {
     savePartnerActivated(true);
     setActivated(true);
   };
+
+  if (inviteState === "checking" && telegramStartParam().startsWith("partner-")) {
+    return <div className="gt-partner-mobile-screen"><main className="gt-partner-mobile-content gt-partner-form-page"><div className="gt-simple-partner-section"><RefreshCcw size={42} /><h2>Перевіряємо доступ</h2><p>Звіряємо ваш Telegram ID із партнерським QR.</p></div></main></div>;
+  }
+  if (inviteState === "denied") {
+    return <div className="gt-partner-mobile-screen"><main className="gt-partner-mobile-content gt-partner-form-page"><div className="gt-simple-partner-section"><LockKeyhole size={42} /><h2>Доступ заборонено</h2><p>{inviteError || "Ваш Telegram ID не доданий до цього партнера."}</p></div></main></div>;
+  }
 
   switch (resolvedSlug) {
     case "partner-dashboard":

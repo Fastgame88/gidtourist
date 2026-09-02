@@ -190,6 +190,31 @@ export class GooglePlacesService {
     });
   }
 
+
+  async reverse(lat: number, lng: number) {
+    const key = this.key();
+    if (!key) throw new BadGatewayException("GOOGLE_MAPS_SERVER_API_KEY is not configured");
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${encodeURIComponent(String(lat))},${encodeURIComponent(String(lng))}&language=uk&region=ua&key=${encodeURIComponent(key)}`;
+    const response = await fetch(url, { cache: "no-store" });
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      throw new BadGatewayException(`Google Geocoding API ${response.status}: ${body || response.statusText}`);
+    }
+    const data = await response.json() as { status?: string; error_message?: string; results?: Array<{ formatted_address?: string; place_id?: string; address_components?: Array<{ long_name?: string; short_name?: string; types?: string[] }> }> };
+    if (data.status !== "OK" || !data.results?.[0]) throw new BadGatewayException(`Google Geocoding API: ${data.error_message || data.status || "no result"}`);
+    const first = data.results[0];
+    const component = (type: string) => first.address_components?.find((item) => item.types?.includes(type))?.long_name || "";
+    return {
+      place_id: first.place_id || "",
+      formatted_address: first.formatted_address || "",
+      lat, lng,
+      city: component("locality") || component("postal_town") || component("administrative_area_level_3"),
+      region: component("administrative_area_level_1"),
+      street: component("route"),
+      house: component("street_number"),
+    };
+  }
+
   async nearby(lat: number, lng: number, radius: number, section = "all", subcategory = ""): Promise<GoogleNearbyPlace[]> {
     const subcategoryTypes = SUBCATEGORY_TYPES[subcategory] ?? [];
     const types = subcategoryTypes.length ? subcategoryTypes : section === "all" ? Array.from(new Set(Object.values(NEARBY_TYPES).flat())).slice(0, 50) : (NEARBY_TYPES[section] ?? []);

@@ -88,6 +88,8 @@ export function RealMap({
   radius = 500,
   className = "",
   onSelect,
+  onPick,
+  pickable = false,
   compact = false,
 }: {
   center: { lat: number; lng: number };
@@ -95,6 +97,8 @@ export function RealMap({
   radius?: number;
   className?: string;
   onSelect?: (place: Stage2Place) => void;
+  onPick?: (coords: { lat: number; lng: number }) => void;
+  pickable?: boolean;
   compact?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -127,6 +131,17 @@ export function RealMap({
         zIndex: 1000,
         icon: { path: maps.SymbolPath.CIRCLE, scale: compact ? 5 : 7, fillColor: "#1677ff", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 3 },
       });
+      let pickedMarker: any = null;
+      if (pickable && !compact) {
+        map.addListener("click", (event: any) => {
+          const lat = Number(event.latLng?.lat?.() ?? 0);
+          const lng = Number(event.latLng?.lng?.() ?? 0);
+          if (!lat || !lng) return;
+          pickedMarker?.setMap(null);
+          pickedMarker = new maps.Marker({ map, position: { lat, lng }, title: "Обрана точка", zIndex: 1200 });
+          onPick?.({ lat, lng });
+        });
+      }
       const markers = places.slice(0, compact ? 8 : 40).map((place) => {
         const partner = place.is_partner === true || place.source === "partner" || place.attributes?.partner === true;
         const marker = new maps.Marker({
@@ -140,7 +155,7 @@ export function RealMap({
         return marker;
       });
       cleanupRef.current = () => {
-        user.setMap(null); markers.forEach((marker: any) => marker.setMap(null)); circle?.setMap(null);
+        user.setMap(null); pickedMarker?.setMap(null); markers.forEach((marker: any) => marker.setMap(null)); circle?.setMap(null);
       };
     };
 
@@ -151,6 +166,17 @@ export function RealMap({
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap contributors" }).addTo(map);
       if (!compact) L.circle([center.lat, center.lng], { radius, color: "#20b364", weight: 1, opacity: 0.35, fillOpacity: 0.04 }).addTo(map);
       L.circleMarker([center.lat, center.lng], { radius: compact ? 5 : 8, color: "#ffffff", weight: 3, fillColor: "#1677ff", fillOpacity: 1 }).addTo(map).bindTooltip("Ваше місцезнаходження");
+      let picked: any = null;
+      if (pickable && !compact) {
+        map.on("click", (event: any) => {
+          const lat = Number(event.latlng?.lat ?? 0);
+          const lng = Number(event.latlng?.lng ?? 0);
+          if (!lat || !lng) return;
+          if (picked) map.removeLayer(picked);
+          picked = L.circleMarker([lat, lng], { radius: 8, color: "#ffffff", weight: 3, fillColor: "#111827", fillOpacity: 1 }).addTo(map);
+          onPick?.({ lat, lng });
+        });
+      }
       for (const place of places.slice(0, compact ? 8 : 40)) {
         const partner = place.is_partner === true || place.source === "partner" || place.attributes?.partner === true;
         const marker = L.circleMarker([Number(place.lat), Number(place.lng)], { radius: partner ? 8 : 6, color: "#ffffff", weight: partner ? 3 : 2, fillColor: partner ? "#06a85a" : "#4285f4", fillOpacity: 1 }).addTo(map);
@@ -163,7 +189,7 @@ export function RealMap({
 
     void renderGoogle().catch(() => renderFallback().catch(() => undefined));
     return () => { cancelled = true; cleanupRef.current?.(); cleanupRef.current = null; };
-  }, [center.lat, center.lng, radius, places, onSelect, compact]);
+  }, [center.lat, center.lng, radius, places, onSelect, onPick, pickable, compact]);
 
   return <div ref={ref} className={`gt-real-map ${className}`.trim()} aria-label="Інтерактивна карта Google Maps" />;
 }

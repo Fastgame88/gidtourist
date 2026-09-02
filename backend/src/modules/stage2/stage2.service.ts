@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { DatabaseService } from "../../database/database.service.js";
 import { makeId } from "../../common/id.js";
 import type { AuthUser } from "../../common/auth.guard.js";
@@ -82,6 +82,11 @@ function partnerMatchesSubcategory(place: PlaceRow, label: string) {
   if (place.subcategory === label || place.tags.includes(label)) return true;
   const haystack = [place.name, place.description, place.subcategory ?? "", ...place.tags].join(" ").toLocaleLowerCase("uk");
   return (PARTNER_SUBCATEGORY_ALIASES[label] ?? []).some((token) => haystack.includes(token.toLocaleLowerCase("uk")));
+}
+
+function parseTelegramIds(value: unknown) {
+  const raw = Array.isArray(value) ? value : String(value ?? "").split(/[\s,;]+/g);
+  return Array.from(new Set(raw.map((item) => String(item).trim()).filter((item) => /^\d{5,20}$/.test(item))));
 }
 
 
@@ -170,6 +175,11 @@ export class Stage2Service {
 
   async geoAutocomplete(input: string, mode: "city" | "street" | "house", city = "", street = "") {
     return this.google.autocomplete(input, mode, city, street);
+  }
+
+  async geoReverse(lat: number, lng: number) {
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new BadRequestException("lat/lng are required");
+    return this.google.reverse(lat, lng);
   }
 
   async geoDetails(placeId: string) {
@@ -368,9 +378,34 @@ export class Stage2Service {
 
   async partnerPlaces(user: AuthUser) {
     const result = await this.db.query(
-      `SELECT p.* FROM places p JOIN organizations o ON o.id=p.organization_id WHERE o.owner_user_id=$1 ORDER BY p.updated_at DESC`, [user.id],
+      `SELECT DISTINCT p.*
+       FROM places p
+       JOIN organizations o ON o.id=p.organization_id
+       LEFT JOIN organization_telegram_access a ON a.organization_id=o.id AND a.active=true
+       WHERE o.owner_user_id=$1 OR (a.telegram_id::text=$2 AND a.active=true)
+       ORDER BY p.updated_at DESC`,
+      [user.id, user.telegram_id ?? ""],
     );
     return result.rows;
+  }
+
+  async partnerAccess(user: AuthUser, startParam: string) {
+    if (!user.telegram_id) throw new UnauthorizedException("Telegram ID is required");
+    const result = await this.db.query(
+      `SELECT q.id qr_id,q.start_param,q.active,p.id place_id,p.status,p.organization_id,p.name,p.details,
+              EXISTS(SELECT 1 FROM organization_telegram_access a WHERE a.organization_id=p.organization_id AND a.telegram_id::text=$2 AND a.active=true) allowed
+       FROM qr_points q JOIN places p ON p.id=q.place_id
+       WHERE q.start_param=$1 AND q.active=true AND q.type='partner_access' LIMIT 1`,
+      [startParam, user.telegram_id],
+    );
+    const row = result.rows[0] as Record<string, unknown> | undefined;
+    if (!row) throw new NotFoundException("Partner QR not found or inactive");
+    if (row.allowed !== true) throw new UnauthorizedException("Цей Telegram ID не має доступу до кабінету цього партнера");
+    await this.db.transaction(async (client) => {
+      await client.query("UPDATE users SET role=CASE WHEN role='tourist' THEN 'partner' ELSE role END,updated_at=now() WHERE id=$1", [user.id]);
+      await client.query("UPDATE organizations SET owner_user_id=COALESCE(owner_user_id,$2),updated_at=now() WHERE id=$1", [row.organization_id, user.id]);
+    });
+    return { ok: true, place_id: row.place_id, status: row.status, organization_id: row.organization_id, name: row.name, start_param: startParam };
   }
 
   async createPartnerPlace(user: AuthUser, body: Record<string, unknown>) {
@@ -402,7 +437,12 @@ export class Stage2Service {
   }
 
   async updatePartnerPlace(user: AuthUser, placeId: string, body: Record<string, unknown>) {
-    const owned = await this.db.query("SELECT p.id FROM places p JOIN organizations o ON o.id=p.organization_id WHERE p.id=$1 AND o.owner_user_id=$2", [placeId, user.id]);
+    const owned = await this.db.query(
+      `SELECT p.id FROM places p JOIN organizations o ON o.id=p.organization_id
+       LEFT JOIN organization_telegram_access a ON a.organization_id=o.id AND a.active=true
+       WHERE p.id=$1 AND (o.owner_user_id=$2 OR (a.telegram_id::text=$3 AND a.active=true)) LIMIT 1`,
+      [placeId, user.id, user.telegram_id ?? ""],
+    );
     if (!owned.rows[0]) throw new NotFoundException("Partner place not found");
     const current = await this.place(placeId, false) as PlaceRow;
     const nextLat = num(body.lat, Number(current.lat))!;
@@ -416,6 +456,86 @@ export class Stage2Service {
       [placeId, nextRegionId, nextCategory, nextPlaceType, body.name ?? current.name, body.description ?? current.description, body.address ?? current.address, nextLat, nextLng, body.phone ?? current.phone, body.telegram ?? current.telegram, body.website ?? current.website, body.image_url ?? current.image_url, num(body.price_level, current.price_level ?? undefined) ?? null, JSON.stringify(body.work_hours ?? current.work_hours ?? {}), JSON.stringify(body.attributes ?? current.attributes ?? {}), JSON.stringify(body.details ?? current.details ?? {})],
     );
     return this.place(placeId, false);
+  }
+
+  async adminPartners() {
+    const result = await this.db.query(
+      `SELECT p.id,p.name,p.category_slug,p.subcategory,p.address,p.status,p.region_id,p.lat,p.lng,r.name region_name,o.name organization_name,
+              COALESCE((SELECT json_agg(a.telegram_id::text ORDER BY a.telegram_id) FROM organization_telegram_access a WHERE a.organization_id=o.id AND a.active=true),'[]'::json) telegram_ids,
+              (SELECT q.start_param FROM qr_points q WHERE q.place_id=p.id AND q.type='partner_access' AND q.active=true ORDER BY q.created_at DESC LIMIT 1) partner_start_param
+       FROM places p JOIN organizations o ON o.id=p.organization_id JOIN regions r ON r.id=p.region_id
+       ORDER BY p.updated_at DESC`,
+    );
+    return result.rows;
+  }
+
+  async adminCreatePartner(body: Record<string, unknown>) {
+    const name = String(body.name ?? "").trim();
+    const categorySlug = String(body.category_slug ?? "").trim();
+    const telegramIds = parseTelegramIds(body.telegram_ids);
+    if (!name) throw new BadRequestException("Вкажіть назву партнера");
+    if (!categorySlug) throw new BadRequestException("Оберіть категорію");
+    if (!telegramIds.length) throw new BadRequestException("Вкажіть хоча б один числовий Telegram ID");
+    const category = await this.db.query("SELECT slug FROM categories WHERE slug=$1 AND active=true LIMIT 1", [categorySlug]);
+    if (!category.rows[0]) throw new BadRequestException("Невідома категорія");
+
+    const detailsInput = body.details && typeof body.details === "object" ? body.details as Record<string, unknown> : {};
+    let address = String(body.address ?? "").trim();
+    let city = String(body.city ?? "").trim();
+    let regionName = String(body.region_name ?? "").trim();
+    let lat = num(body.lat);
+    let lng = num(body.lng);
+    const mapSelected = body.map_selected === true;
+    if (!mapSelected) {
+      const verified = await this.verifiedAddressFromBody(body);
+      address = verified.formatted_address || address;
+      city = verified.city || city;
+      regionName = verified.region || regionName;
+      lat = verified.lat;
+      lng = verified.lng;
+    } else if (lat == null || lng == null || !address) {
+      throw new BadRequestException("Оберіть адресу з Google або вкажіть точку на мапі");
+    }
+
+    const regionId = await this.ensureRegionForPlace(city, regionName, lat!, lng!, String(body.region_id ?? "region-tatariv"));
+    const organizationId = makeId("org");
+    const placeId = makeId("place");
+    const qrId = makeId("qr");
+    const startParam = `partner-${makeId("").replaceAll("-", "").slice(0, 32)}`;
+    const publish = body.publish === true;
+    const status = publish ? "approved" : "draft";
+    const workHours = body.work_hours && typeof body.work_hours === "object" ? body.work_hours : {};
+    const attributes = body.attributes && typeof body.attributes === "object" ? body.attributes as Record<string, unknown> : {};
+    const details = {
+      ...detailsInput,
+      admin_created: true,
+      partner_invite_start_param: startParam,
+      allowed_telegram_ids: telegramIds,
+    };
+
+    await this.db.transaction(async (client) => {
+      await client.query(
+        "INSERT INTO organizations(id,region_id,name,status) VALUES($1,$2,$3,$4)",
+        [organizationId, regionId, name, publish ? "approved" : "invited"],
+      );
+      await client.query(
+        `INSERT INTO places(id,organization_id,region_id,category_slug,subcategory,name,description,address,lat,lng,phone,image_url,work_hours,attributes,details,status,approved_at)
+         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13::jsonb,$14::jsonb,$15::jsonb,$16,CASE WHEN $16='approved' THEN now() ELSE NULL END)`,
+        [placeId, organizationId, regionId, categorySlug, body.subcategory ?? null, name, String(body.description ?? ""), address, lat, lng, body.phone ?? null, body.image_url ?? null, JSON.stringify(workHours), JSON.stringify({ ...attributes, partner: true, placement_type: body.placement_type ?? "social", rate_percent: num(body.rate_percent, 0) ?? 0 }), JSON.stringify(details), status],
+      );
+      for (const telegramId of telegramIds) {
+        await client.query(
+          `INSERT INTO organization_telegram_access(organization_id,telegram_id,role,active) VALUES($1,$2,'owner',true)
+           ON CONFLICT (organization_id,telegram_id) DO UPDATE SET active=true,updated_at=now()`,
+          [organizationId, telegramId],
+        );
+      }
+      await client.query(
+        `INSERT INTO qr_points(id,start_param,type,source,region_id,place_id,active) VALUES($1,$2,'partner_access','admin_partner',$3,$4,true)`,
+        [qrId, startParam, regionId, placeId],
+      );
+    });
+    return { ok: true, organization_id: organizationId, place_id: placeId, status, start_param: startParam, telegram_ids: telegramIds };
   }
 
   async adminPlaces(status = "approved") {

@@ -47,13 +47,15 @@ import {
   WalletCards,
   UtensilsCrossed,
   Waves,
+  X,
   Camera,
   ShoppingBag,
   Send,
   Star,
 } from "lucide-react";
 import type { RoleKey } from "../../lib/navigation";
-import { adminStage2Fetch, type Stage2Category, type Stage2PlaceTypeTemplate } from "../../lib/stage2-api";
+import { adminStage2Fetch, stage2Fetch, type Stage2Category, type Stage2GeoDetails, type Stage2GeoSuggestion, type Stage2PlaceTypeTemplate } from "../../lib/stage2-api";
+import { RealMap } from "../real-map";
 
 type Navigate = (role: RoleKey, slug: string) => void;
 type AdminProps = { navigate: Navigate };
@@ -300,6 +302,18 @@ const partnerRows = [
 ];
 
 function PartnersScreen({ navigate }: AdminProps) {
+  const [rows, setRows] = useState<Array<{ id: string; name: string; category_slug: string; subcategory?: string | null; address: string; status: string; region_name?: string; organization_name?: string }>>([]);
+  const [categories, setCategories] = useState<Stage2Category[]>([]);
+  const [loadError, setLoadError] = useState("");
+  useEffect(() => {
+    let cancelled = false;
+    void Promise.all([
+      adminStage2Fetch<Array<{ id: string; name: string; category_slug: string; subcategory?: string | null; address: string; status: string; region_name?: string; organization_name?: string }>>("/admin/stage2/partners"),
+      stage2Fetch<Stage2Category[]>("/categories"),
+    ]).then(([places, cats]) => { if (!cancelled) { setRows(places); setCategories(cats); } }).catch((e) => { if (!cancelled) setLoadError(e instanceof Error ? e.message : "Не вдалося завантажити партнерів"); });
+    return () => { cancelled = true; };
+  }, []);
+  const categoryName = (slug: string) => categories.find((item) => item.slug === slug)?.name || slug;
   return (
     <AdminShell active="partners" navigate={navigate} contentClassName="ad-main--partners">
       <AdminPageHeader
@@ -307,20 +321,22 @@ function PartnersScreen({ navigate }: AdminProps) {
         action={<PrimaryButton onClick={() => navigate("admin", "admin-partner-create")}><Plus size={18} /> Новий партнер</PrimaryButton>}
       />
       <FilterStrip type="partners" />
+      {loadError ? <div className="ad-create-message is-error">{loadError}</div> : null}
       <AdminTable columns={[
         { label: "Назва", className: "1.8fr" }, { label: "Категорія", className: "1fr" }, { label: "Локація", className: ".9fr" },
         { label: "Тип розміщення", className: "1.05fr" }, { label: "Статус", className: ".8fr" }, { label: "Дії", className: ".7fr" },
       ]}>
-        {partnerRows.map((row) => (
-          <TableRow key={row[1]} columns={["1.8fr", "1fr", ".9fr", "1.05fr", ".8fr", ".7fr"]}>
-            <div className="ad-entity-cell"><PartnerListIcon name={row[1]} /><div><strong>{row[1]}</strong><small>{row[2]}</small></div></div>
-            <span>{row[3]}</span><span>{row[4]}</span><Status>{row[5]}</Status>
-            <Status tone={row[6] === "Чернетка" ? "gray" : "green"}>{row[6]}</Status>
+        {rows.map((row) => (
+          <TableRow key={row.id} columns={["1.8fr", "1fr", ".9fr", "1.05fr", ".8fr", ".7fr"]}>
+            <div className="ad-entity-cell"><PartnerListIcon name={row.name} /><div><strong>{row.name}</strong><small>{row.subcategory || row.organization_name || "Партнер"}</small></div></div>
+            <span>{categoryName(row.category_slug)}</span><span>{row.region_name || row.address || "—"}</span><Status>{row.category_slug === "hotel" ? "Базовий" : "Партнер"}</Status>
+            <Status tone={row.status === "approved" ? "green" : row.status === "rejected" ? "red" : row.status === "pending" ? "orange" : "gray"}>{row.status}</Status>
             <div className="ad-row-actions"><button onClick={() => navigate("admin", "admin-partner-details")}><Eye size={17} /></button><button onClick={() => navigate("admin", "admin-partner-details")}><Edit3 size={17} /></button><button><MoreVertical size={17} /></button></div>
           </TableRow>
         ))}
+        {!rows.length && !loadError ? <div className="ad-stage2-empty-row">Партнерів у базі ще немає</div> : null}
       </AdminTable>
-      <Pagination label="Показано 1–8 з 8 партнерів" />
+      <Pagination label={`Показано ${rows.length} партнерів`} />
     </AdminShell>
   );
 }
@@ -404,29 +420,240 @@ function BonusesScreen({ navigate }: AdminProps) {
   );
 }
 
+async function adminImageToDataUrl(file: File) {
+  if (!file.type.startsWith("image/")) throw new Error("Оберіть файл зображення");
+  if (file.size > 8 * 1024 * 1024) throw new Error("Фото завелике. Максимум 8 МБ");
+  const original = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Не вдалося прочитати фото"));
+    reader.readAsDataURL(file);
+  });
+  return new Promise<string>((resolve) => {
+    const image = new Image();
+    image.onload = () => {
+      const max = 1400;
+      const ratio = Math.min(1, max / Math.max(image.width, image.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.width * ratio));
+      canvas.height = Math.max(1, Math.round(image.height * ratio));
+      canvas.getContext("2d")?.drawImage(image, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", .78));
+    };
+    image.onerror = () => resolve(original);
+    image.src = original;
+  });
+}
+
+const ADMIN_CABINET_MODULES = [
+  "Час заїзду / виїзду",
+  "Рецепція",
+  "Wi‑Fi",
+  "Парковка",
+  "Правила проживання",
+  "Сніданок",
+  "Оперативні контакти",
+  "Послуги закладу",
+];
+
 function PartnerCreateScreen({ navigate }: AdminProps) {
+  const [categories, setCategories] = useState<Stage2Category[]>([]);
+  const [name, setName] = useState("");
+  const [categorySlug, setCategorySlug] = useState("");
+  const [placement, setPlacement] = useState<"social" | "basic" | "premium">("social");
+  const [rate, setRate] = useState("15");
+  const [city, setCity] = useState("");
+  const [regionName, setRegionName] = useState("");
+  const [street, setStreet] = useState("");
+  const [house, setHouse] = useState("");
+  const [cityPlaceId, setCityPlaceId] = useState("");
+  const [streetPlaceId, setStreetPlaceId] = useState("");
+  const [housePlaceId, setHousePlaceId] = useState("");
+  const [address, setAddress] = useState("");
+  const [lat, setLat] = useState(48.34535);
+  const [lng, setLng] = useState(24.57855);
+  const [mapSelected, setMapSelected] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
+  const [mapDraft, setMapDraft] = useState({ lat: 48.34535, lng: 24.57855 });
+  const [citySuggestions, setCitySuggestions] = useState<Stage2GeoSuggestion[]>([]);
+  const [streetSuggestions, setStreetSuggestions] = useState<Stage2GeoSuggestion[]>([]);
+  const [houseSuggestions, setHouseSuggestions] = useState<Stage2GeoSuggestion[]>([]);
+  const [phone, setPhone] = useState("");
+  const [alwaysOpen, setAlwaysOpen] = useState(false);
+  const [workFrom, setWorkFrom] = useState("09:00");
+  const [workTo, setWorkTo] = useState("18:00");
+  const [description, setDescription] = useState("");
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [telegramIds, setTelegramIds] = useState("");
+  const [modules, setModules] = useState<string[]>([...ADMIN_CABINET_MODULES]);
+  const [checkIn, setCheckIn] = useState("14:00");
+  const [checkOut, setCheckOut] = useState("11:00");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [created, setCreated] = useState<{ place_id: string; start_param: string; status: string; telegram_ids: string[] } | null>(null);
+  const photoInput = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    void stage2Fetch<Stage2Category[]>("/categories").then((rows) => {
+      const list = rows.filter((item) => item.slug !== "emergency");
+      setCategories(list);
+      if (!categorySlug && list[0]?.slug) setCategorySlug(list[0].slug);
+    }).catch((e) => setError(e instanceof Error ? e.message : "Не вдалося завантажити категорії"));
+  }, []);
+
+  useEffect(() => {
+    if (cityPlaceId || city.trim().length < 1) { setCitySuggestions([]); return; }
+    const timer = window.setTimeout(() => {
+      void stage2Fetch<Stage2GeoSuggestion[]>(`/geo/autocomplete?input=${encodeURIComponent(city.trim())}&mode=city`)
+        .then(setCitySuggestions).catch(() => setCitySuggestions([]));
+    }, 220);
+    return () => window.clearTimeout(timer);
+  }, [city, cityPlaceId]);
+
+  useEffect(() => {
+    if (!cityPlaceId || streetPlaceId || street.trim().length < 1) { setStreetSuggestions([]); return; }
+    const timer = window.setTimeout(() => {
+      void stage2Fetch<Stage2GeoSuggestion[]>(`/geo/autocomplete?input=${encodeURIComponent(street.trim())}&mode=street&city=${encodeURIComponent(city)}`)
+        .then(setStreetSuggestions).catch(() => setStreetSuggestions([]));
+    }, 220);
+    return () => window.clearTimeout(timer);
+  }, [street, streetPlaceId, city, cityPlaceId]);
+
+  useEffect(() => {
+    if (!streetPlaceId || housePlaceId || house.trim().length < 1) { setHouseSuggestions([]); return; }
+    const timer = window.setTimeout(() => {
+      void stage2Fetch<Stage2GeoSuggestion[]>(`/geo/autocomplete?input=${encodeURIComponent(house.trim())}&mode=house&city=${encodeURIComponent(city)}&street=${encodeURIComponent(street)}`)
+        .then(setHouseSuggestions).catch(() => setHouseSuggestions([]));
+    }, 220);
+    return () => window.clearTimeout(timer);
+  }, [house, housePlaceId, city, street, streetPlaceId]);
+
+  const chooseGeo = async (suggestion: Stage2GeoSuggestion, mode: "city" | "street" | "house") => {
+    const details = await stage2Fetch<Stage2GeoDetails>(`/geo/place/${encodeURIComponent(suggestion.place_id)}`);
+    if (mode === "city") {
+      setCity(details.city || suggestion.main_text); setRegionName(details.region); setCityPlaceId(suggestion.place_id);
+      setStreet(""); setStreetPlaceId(""); setHouse(""); setHousePlaceId(""); setAddress(""); setMapSelected(false);
+      if (details.lat && details.lng) { setLat(details.lat); setLng(details.lng); setMapDraft({ lat: details.lat, lng: details.lng }); }
+    } else if (mode === "street") {
+      setStreet(details.street || suggestion.main_text); setStreetPlaceId(suggestion.place_id); setHouse(""); setHousePlaceId(""); setAddress(""); setMapSelected(false);
+      if (details.lat && details.lng) { setLat(details.lat); setLng(details.lng); setMapDraft({ lat: details.lat, lng: details.lng }); }
+    } else {
+      setHouse(details.house || suggestion.main_text); setHousePlaceId(suggestion.place_id); setAddress(details.formatted_address); setMapSelected(false);
+      setLat(details.lat); setLng(details.lng); setMapDraft({ lat: details.lat, lng: details.lng });
+      if (details.city) setCity(details.city); if (details.region) setRegionName(details.region); if (details.street) setStreet(details.street);
+    }
+  };
+
+  const confirmMap = async () => {
+    try {
+      const details = await stage2Fetch<Stage2GeoDetails>(`/geo/reverse?lat=${encodeURIComponent(String(mapDraft.lat))}&lng=${encodeURIComponent(String(mapDraft.lng))}`);
+      setLat(mapDraft.lat); setLng(mapDraft.lng); setAddress(details.formatted_address || `${mapDraft.lat.toFixed(6)}, ${mapDraft.lng.toFixed(6)}`);
+      setCity(details.city || city); setRegionName(details.region || regionName); setStreet(details.street || street); setHouse(details.house || house);
+      setCityPlaceId(""); setStreetPlaceId(""); setHousePlaceId(""); setMapSelected(true); setMapOpen(false); setError("");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Не вдалося визначити адресу точки");
+    }
+  };
+
+  const handlePhotos = async (files: FileList | null) => {
+    if (!files?.length) return;
+    try {
+      const selected = Array.from(files).slice(0, 3);
+      const encoded = await Promise.all(selected.map(adminImageToDataUrl));
+      setPhotos(encoded); setError("");
+    } catch (e) { setError(e instanceof Error ? e.message : "Не вдалося завантажити фото"); }
+  };
+
+  const toggleModule = (module: string) => setModules((current) => current.includes(module) ? current.filter((item) => item !== module) : [...current, module]);
+  const addModule = () => {
+    const value = window.prompt("Назва нового пункту кабінету партнера:")?.trim();
+    if (value && !modules.includes(value)) setModules((current) => [...current, value]);
+  };
+
+  const partnerDeepLink = (startParam: string) => {
+    const bot = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME?.replace(/^@/, "");
+    const app = process.env.NEXT_PUBLIC_TELEGRAM_APP_SHORT_NAME;
+    if (bot && app) return `https://t.me/${bot}/${app}?startapp=${encodeURIComponent(startParam)}`;
+    if (typeof window !== "undefined") return `${window.location.origin}/partner/partner-dashboard?startapp=${encodeURIComponent(startParam)}`;
+    return startParam;
+  };
+
+  const save = async (publish: boolean) => {
+    setError("");
+    const ids = telegramIds.split(/[\s,;]+/g).map((item) => item.trim()).filter(Boolean);
+    if (!name.trim()) return setError("Вкажіть назву партнера");
+    if (!categorySlug) return setError("Оберіть категорію");
+    if (!ids.length || ids.some((item) => !/^\d{5,20}$/.test(item))) return setError("Вкажіть один або декілька коректних числових Telegram ID");
+    if (!mapSelected && (!cityPlaceId || !streetPlaceId || !housePlaceId)) return setError("Оберіть адресу з Google-підказок або вкажіть точку на мапі");
+    setSaving(true);
+    try {
+      const result = await adminStage2Fetch<{ place_id: string; start_param: string; status: string; telegram_ids: string[] }>("/admin/stage2/partners", "", {
+        method: "POST",
+        body: JSON.stringify({
+          name: name.trim(), category_slug: categorySlug, placement_type: placement, rate_percent: Number(rate) || 0,
+          city, region_name: regionName, street, house, address, lat, lng, map_selected: mapSelected,
+          phone, description, image_url: photos[0] || null, telegram_ids: ids, publish,
+          work_hours: alwaysOpen ? { always_open: true } : { daily: { from: workFrom, to: workTo } },
+          attributes: { partner: true },
+          subcategory: ({ hotel: "Готель", food: "Ресторан", shop: "Магазин", rest: "SPA / сауна", entertainment: "Активний відпочинок", transfer: "Трансфер / таксі" } as Record<string,string>)[categorySlug] || null,
+          details: {
+            address_verified: !mapSelected && Boolean(housePlaceId),
+            geo_place_ids: { city: cityPlaceId, street: streetPlaceId, house: housePlaceId },
+            city, region_name: regionName, street, house,
+            gallery: photos,
+            cabinet_modules: modules,
+            check_in: checkIn,
+            check_out: checkOut,
+          },
+        }),
+      });
+      setCreated(result);
+    } catch (e) { setError(e instanceof Error ? e.message : "Не вдалося створити партнера"); }
+    finally { setSaving(false); }
+  };
+
+  const geoFields = (
+    <div className="ad-admin-address-grid">
+      <div className="ad-admin-autocomplete">
+        <input value={city} onChange={(e) => { setCity(e.target.value); setCityPlaceId(""); setStreet(""); setStreetPlaceId(""); setHouse(""); setHousePlaceId(""); setMapSelected(false); }} placeholder="Місто / село" />
+        {citySuggestions.length ? <div className="ad-admin-suggestions">{citySuggestions.map((item) => <button type="button" key={item.place_id} onClick={() => void chooseGeo(item, "city")}><strong>{item.main_text}</strong><small>{item.secondary_text}</small></button>)}</div> : null}
+      </div>
+      <div className="ad-admin-autocomplete">
+        <input value={street} disabled={!cityPlaceId && !mapSelected} onChange={(e) => { setStreet(e.target.value); setStreetPlaceId(""); setHouse(""); setHousePlaceId(""); setMapSelected(false); }} placeholder={cityPlaceId || mapSelected ? "Вулиця" : "Спочатку виберіть місто"} />
+        {streetSuggestions.length ? <div className="ad-admin-suggestions">{streetSuggestions.map((item) => <button type="button" key={item.place_id} onClick={() => void chooseGeo(item, "street")}><strong>{item.main_text}</strong><small>{item.secondary_text}</small></button>)}</div> : null}
+      </div>
+      <div className="ad-admin-autocomplete">
+        <input value={house} disabled={!streetPlaceId && !mapSelected} onChange={(e) => { setHouse(e.target.value); setHousePlaceId(""); setMapSelected(false); }} placeholder={streetPlaceId || mapSelected ? "Будинок" : "Спочатку виберіть вулицю"} />
+        {houseSuggestions.length ? <div className="ad-admin-suggestions">{houseSuggestions.map((item) => <button type="button" key={item.place_id} onClick={() => void chooseGeo(item, "house")}><strong>{item.main_text}</strong><small>{item.secondary_text}</small></button>)}</div> : null}
+      </div>
+      <OutlineButton onClick={() => { setMapDraft({ lat, lng }); setMapOpen(true); }}><MapPin size={16}/> Вказати на мапі</OutlineButton>
+      {address ? <small className="ad-admin-address-result">{address}</small> : null}
+    </div>
+  );
+
   return (
     <AdminShell active="partners" navigate={navigate} contentClassName="ad-main--create">
       <AdminPageHeader
         title="Створення партнера"
         subtitle="Заповніть інформацію про партнера"
-        action={<div className="ad-page-actions"><OutlineButton>Скасувати</OutlineButton><OutlineButton>Зберегти</OutlineButton><PrimaryButton><FileText size={17}/> Зберегти і розмістити</PrimaryButton></div>}
+        action={<div className="ad-page-actions"><OutlineButton onClick={() => navigate("admin", "admin-partners")}>Скасувати</OutlineButton><OutlineButton onClick={() => void save(false)}>{saving ? "Збереження…" : "Зберегти"}</OutlineButton><PrimaryButton onClick={() => void save(true)}><FileText size={17}/> {saving ? "Збереження…" : "Зберегти і розмістити"}</PrimaryButton></div>}
       />
+      {error ? <div className="ad-create-message is-error">{error}</div> : null}
+      {created ? <section className="ad-created-partner-card"><Stage2QrPreview value={partnerDeepLink(created.start_param)} /><div><h2>Партнера створено</h2><p>QR збережений у PostgreSQL і працюватиме після redeploy. Доступ мають лише вказані Telegram ID.</p><code>{created.start_param}</code><input readOnly value={partnerDeepLink(created.start_param)} /><div className="ad-page-actions"><OutlineButton onClick={() => void navigator.clipboard.writeText(partnerDeepLink(created.start_param))}>Копіювати посилання</OutlineButton><PrimaryButton onClick={() => navigate("admin", "admin-partners")}>До партнерів</PrimaryButton></div></div></section> : null}
       <section className="ad-create-form">
-        {[
-          ["1", "Назва", <input key="name" placeholder="Введіть назву партнера" />],
-          ["2", "Категорія", <SelectBox key="category" value="Оберіть категорію" />],
-          ["3", "Тип розміщення", <div key="placement" className="ad-placement-options"><label className="is-selected"><i><Check size={14}/></i><span><strong>Соціальний</strong><small>Безкоштовне розміщення</small></span></label><label><i/><span><strong>Базовий</strong><small>Інфо про заклад + QR для гостей</small></span></label><label><i/><span><strong>Платний / Преміум</strong><small>Просування послуг та монетизація</small></span></label></div>],
-          ["4", "Ставка, %", <div key="rate" className="ad-input-with-suffix"><input placeholder="Наприклад, 10"/><span>%</span></div>],
-          ["5", "Адреса або геолокація", <div key="addr" className="ad-inline-field"><input placeholder="Введіть адресу"/><OutlineButton><MapPin size={16}/> Вказати на мапі</OutlineButton></div>],
-          ["6", "Телефон", <input key="phone" placeholder="+380 (___) ___-__-__" />],
-          ["7", "Графік роботи", <div key="schedule" className="ad-placement-options ad-placement-options--schedule"><label><i/><span><strong>Цілодобово</strong></span></label><label className="is-selected"><i><Check size={14}/></i><span><strong>За графіком</strong></span><b>09:00</b><em>–</em><b>18:00</b></label></div>],
-          ["8", "Короткий опис", <textarea key="desc" placeholder="Опишіть партнера, послуги, особливості тощо..." rows={3} />],
-          ["9", "Фото", <button key="photo" className="ad-upload-box"><ImagePlus size={23}/><span><strong>Завантажте 3 фото партнера</strong><small>Рівно 3 фото — обов'язково</small></span></button>],
-          ["10", "Telegram ID", <input key="tg" placeholder="Введіть Telegram ID (числовий ідентифікатор)" />],
-          ["11", "Структура кабінету партнера", <div key="modules" className="ad-module-grid"><div className="ad-module-preview"><strong>Каркас</strong><small>Базова структура кабінету партнера</small><span>7 модулів увімкнено</span></div>{["Час заїзду / виїзду","Рецепція","Wi‑Fi","Парковка","Правила проживання","Сніданок","Оперативні контакти","Інше"].map((m)=><label key={m}><i><Check size={13}/></i>{m}</label>)}</div>],
-        ].map(([num, label, control]) => <div className={`ad-create-row ad-create-row--${num as string}`} key={num as string}><div className="ad-create-row__label"><span>{num as string}</span><strong>{label as string}</strong></div><div className="ad-create-row__control">{control as ReactNode}</div></div>)}
+        <div className="ad-create-row ad-create-row--1"><div className="ad-create-row__label"><span>1</span><strong>Назва</strong></div><div className="ad-create-row__control"><input value={name} onChange={(e)=>setName(e.target.value)} placeholder="Введіть назву партнера" /></div></div>
+        <div className="ad-create-row ad-create-row--2"><div className="ad-create-row__label"><span>2</span><strong>Категорія</strong></div><div className="ad-create-row__control"><select className="ad-native-select" value={categorySlug} onChange={(e)=>setCategorySlug(e.target.value)}><option value="">Оберіть категорію</option>{categories.map((item)=><option key={item.slug} value={item.slug}>{item.slug === "hotel" ? "Готель / точка входу" : item.name}</option>)}</select></div></div>
+        <div className="ad-create-row ad-create-row--3"><div className="ad-create-row__label"><span>3</span><strong>Тип розміщення</strong></div><div className="ad-create-row__control"><div className="ad-placement-options">{([['social','Соціальний','Безкоштовне розміщення'],['basic','Базовий','Інфо про заклад + QR для гостей'],['premium','Платний / Преміум','Просування послуг та монетизація']] as const).map(([key,title,note])=><label key={key} className={placement===key?'is-selected':''} onClick={()=>setPlacement(key)}><i>{placement===key?<Check size={14}/>:null}</i><span><strong>{title}</strong><small>{note}</small></span></label>)}</div></div></div>
+        <div className="ad-create-row ad-create-row--4"><div className="ad-create-row__label"><span>4</span><strong>Ставка, %</strong></div><div className="ad-create-row__control"><div className="ad-input-with-suffix"><input type="number" min="0" max="100" value={rate} onChange={(e)=>setRate(e.target.value)} /><span>%</span></div></div></div>
+        <div className="ad-create-row ad-create-row--5"><div className="ad-create-row__label"><span>5</span><strong>Адреса або геолокація</strong></div><div className="ad-create-row__control">{geoFields}</div></div>
+        <div className="ad-create-row ad-create-row--6"><div className="ad-create-row__label"><span>6</span><strong>Телефон</strong></div><div className="ad-create-row__control"><input value={phone} onChange={(e)=>setPhone(e.target.value)} placeholder="+380 (___) ___-__-__" /></div></div>
+        <div className="ad-create-row ad-create-row--7"><div className="ad-create-row__label"><span>7</span><strong>Графік роботи</strong></div><div className="ad-create-row__control"><div className="ad-placement-options ad-placement-options--schedule"><label className={alwaysOpen?'is-selected':''} onClick={()=>setAlwaysOpen(true)}><i>{alwaysOpen?<Check size={14}/>:null}</i><span><strong>Цілодобово</strong></span></label><label className={!alwaysOpen?'is-selected':''} onClick={()=>setAlwaysOpen(false)}><i>{!alwaysOpen?<Check size={14}/>:null}</i><span><strong>За графіком</strong></span><input type="time" value={workFrom} onChange={(e)=>setWorkFrom(e.target.value)} onClick={(e)=>e.stopPropagation()} /><em>–</em><input type="time" value={workTo} onChange={(e)=>setWorkTo(e.target.value)} onClick={(e)=>e.stopPropagation()} /></label></div></div></div>
+        <div className="ad-create-row ad-create-row--8"><div className="ad-create-row__label"><span>8</span><strong>Короткий опис</strong></div><div className="ad-create-row__control"><textarea value={description} onChange={(e)=>setDescription(e.target.value)} placeholder="Опишіть партнера, послуги, особливості тощо..." rows={3} /></div></div>
+        <div className="ad-create-row ad-create-row--9"><div className="ad-create-row__label"><span>9</span><strong>Фото</strong></div><div className="ad-create-row__control"><input ref={photoInput} type="file" accept="image/*" multiple hidden onChange={(e)=>void handlePhotos(e.target.files)} /><button type="button" className="ad-upload-box" onClick={()=>photoInput.current?.click()}><ImagePlus size={23}/><span><strong>{photos.length ? `Завантажено фото: ${photos.length}` : "Завантажте до 3 фото партнера"}</strong><small>JPG/PNG, фото стискаються перед збереженням у БД</small></span></button>{photos.length ? <div className="ad-admin-photo-preview">{photos.map((src,i)=><div key={i}><img src={src} alt={`Фото ${i+1}`} /><button type="button" onClick={()=>setPhotos((current)=>current.filter((_,index)=>index!==i))}><Trash2 size={14}/></button></div>)}</div>:null}</div></div>
+        <div className="ad-create-row ad-create-row--10"><div className="ad-create-row__label"><span>10</span><strong>Telegram ID</strong></div><div className="ad-create-row__control"><textarea value={telegramIds} onChange={(e)=>setTelegramIds(e.target.value)} rows={2} placeholder="Наприклад: 123456789, 987654321" /><small className="ad-field-note">Можна вказати декілька ID через кому, пробіл або з нового рядка. Лише ці акаунти зможуть відкрити партнерський QR.</small></div></div>
+        <div className="ad-create-row ad-create-row--11"><div className="ad-create-row__label"><span>11</span><strong>Структура кабінету партнера</strong></div><div className="ad-create-row__control"><div className="ad-module-grid"><div className="ad-module-preview"><strong>Каркас</strong><small>Вмикайте/вимикайте потрібні пункти кабінету</small><span>{modules.length} модулів увімкнено</span><div className="ad-checkin-times"><label>Заїзд <input type="time" value={checkIn} onChange={(e)=>setCheckIn(e.target.value)} /></label><label>Виїзд <input type="time" value={checkOut} onChange={(e)=>setCheckOut(e.target.value)} /></label></div></div>{Array.from(new Set([...ADMIN_CABINET_MODULES,...modules])).map((m)=><label key={m} className={modules.includes(m)?'is-selected':''} onClick={()=>toggleModule(m)}><i>{modules.includes(m)?<Check size={13}/>:null}</i>{m}</label>)}<button type="button" className="ad-module-add" onClick={addModule}><Plus size={15}/> Додати пункт</button></div></div></div>
       </section>
+      {mapOpen ? <div className="ad-map-modal-backdrop"><section className="ad-map-modal"><header><div><h2>Вкажіть точку на мапі</h2><p>Натисніть на потрібне місце, після чого підтвердьте вибір.</p></div><button type="button" onClick={()=>setMapOpen(false)}><X size={22}/></button></header><RealMap center={mapDraft} places={[]} radius={500} pickable onPick={setMapDraft} /><footer><span>{mapDraft.lat.toFixed(6)}, {mapDraft.lng.toFixed(6)}</span><div className="ad-page-actions"><OutlineButton onClick={()=>setMapOpen(false)}>Скасувати</OutlineButton><PrimaryButton onClick={()=>void confirmMap()}>Обрати цю точку</PrimaryButton></div></footer></section></div> : null}
     </AdminShell>
   );
 }

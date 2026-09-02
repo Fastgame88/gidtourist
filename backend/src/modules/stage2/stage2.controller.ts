@@ -24,6 +24,9 @@ export class Stage2Controller {
   @Get("geo/place/:placeId")
   geoDetails(@Param("placeId") placeId: string) { return this.service.geoDetails(placeId); }
 
+  @Get("geo/reverse")
+  geoReverse(@Query("lat") lat = "", @Query("lng") lng = "") { return this.service.geoReverse(Number(lat), Number(lng)); }
+
   @Get("places")
   places(@Query() query: Record<string, unknown>) { return this.service.places(query); }
 
@@ -62,6 +65,10 @@ export class Stage2Controller {
   event(@Req() request: AuthRequest, @Body() body: Record<string, unknown>) { return this.service.addEvent(request.user!, body); }
 
   @UseGuards(SessionGuard)
+  @Get("partner/access/:startParam")
+  partnerAccess(@Req() request: AuthRequest, @Param("startParam") startParam: string) { return this.service.partnerAccess(request.user!, startParam); }
+
+  @UseGuards(SessionGuard)
   @Get("partner/places")
   partnerPlaces(@Req() request: AuthRequest) { return this.service.partnerPlaces(request.user!); }
 
@@ -72,6 +79,14 @@ export class Stage2Controller {
   @UseGuards(SessionGuard)
   @Patch("partner/places/:id")
   partnerUpdate(@Req() request: AuthRequest, @Param("id") id: string, @Body() body: Record<string, unknown>) { return this.service.updatePartnerPlace(request.user!, id, body); }
+
+  @UseGuards(AdminKeyGuard)
+  @Get("admin/stage2/partners")
+  adminPartners() { return this.service.adminPartners(); }
+
+  @UseGuards(AdminKeyGuard)
+  @Post("admin/stage2/partners")
+  adminCreatePartner(@Body() body: Record<string, unknown>) { return this.service.adminCreatePartner(body); }
 
   @UseGuards(AdminKeyGuard)
   @Get("admin/stage2/places")
