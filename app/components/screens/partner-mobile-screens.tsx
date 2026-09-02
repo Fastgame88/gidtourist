@@ -569,7 +569,8 @@ function mergedTemplates(remote: Stage2PlaceTypeTemplate[]) {
 }
 
 async function submitPartnerProfile(profile: PartnerProfile) {
-  await ensureTelegramSession();
+  const session = await ensureTelegramSession();
+  if (!session) throw new Error("Не вдалося авторизувати партнера через Telegram. Закрийте Mini App, відкрийте його знову через бота та повторіть збереження.");
   const existingId = typeof window !== "undefined" ? window.localStorage.getItem(PARTNER_STAGE2_PLACE_KEY) : null;
   const hours = profile.workHours.match(/(\d{2}:\d{2}).*?(\d{2}:\d{2})/);
   const payload = {
@@ -1613,6 +1614,8 @@ function ContactRow({
 
 function ContactsScreen({ navigate, activated, onActivate }: PartnerProps & { onActivate: () => void }) {
   const { profile, setProfile } = usePartnerProfile();
+  const [submitError, setSubmitError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   return (
     <div className="gt-partner-mobile-screen has-bottom-nav is-contact-page">
@@ -1620,15 +1623,21 @@ function ContactsScreen({ navigate, activated, onActivate }: PartnerProps & { on
         title="Контакти"
         navigate={navigate}
         back={profile.hasWifi ? "partner-wifi" : "partner-rules"}
-        nextLabel="Зберегти"
+        nextLabel={submitting ? "Збереження…" : "Зберегти"}
         onNext={() => {
+          if (submitting) return;
+          setSubmitError("");
+          setSubmitting(true);
           void submitPartnerProfile(profile).then((place) => {
             if (place.status === "approved") onActivate();
             navigate("partner", place.status === "approved" ? "partner-cabinet" : "partner-pending");
-          }).catch(() => navigate("partner", "partner-pending"));
+          }).catch((error) => {
+            setSubmitError(error instanceof Error ? error.message : "Не вдалося відправити заклад на модерацію");
+          }).finally(() => setSubmitting(false));
         }}
       />
       <main className="gt-partner-mobile-content gt-partner-form-page gt-contact-page-content">
+        {submitError ? <div className="gt-partner-submit-error">{submitError}</div> : null}
         <section className="gt-contact-edit-card">
           <ContactRow
             icon={Phone}
@@ -1927,22 +1936,30 @@ function PartnerPendingScreen({ navigate, onActivate }: { navigate: Navigate; on
   const { profile } = usePartnerProfile();
   const [status, setStatus] = useState<"loading" | "pending" | "approved" | "rejected" | "error">("loading");
   const [comment, setComment] = useState("");
+  const [statusError, setStatusError] = useState("");
 
   const refresh = async () => {
     setStatus("loading");
+    setStatusError("");
     try {
-      await ensureTelegramSession();
+      const session = await ensureTelegramSession();
+      if (!session) throw new Error("Не вдалося авторизуватися через Telegram");
       const places = await stage2Fetch<Array<{ id: string; status: string; moderation_comment?: string | null }>>("/partner/places");
       const placeId = typeof window !== "undefined" ? window.localStorage.getItem(PARTNER_STAGE2_PLACE_KEY) : null;
       const place = places.find((item) => item.id === placeId) ?? places[0];
-      if (!place) { setStatus("error"); return; }
+      if (!place) {
+        setStatusError("Заклад ще не знайдено на сервері. Поверніться до контактів і натисніть «Зберегти» ще раз.");
+        setStatus("error");
+        return;
+      }
       setComment(place.moderation_comment || "");
       if (place.status === "approved") {
         onActivate();
         setStatus("approved");
       } else if (place.status === "rejected") setStatus("rejected");
       else setStatus("pending");
-    } catch {
+    } catch (error) {
+      setStatusError(error instanceof Error ? error.message : "Не вдалося перевірити статус закладу");
       setStatus("error");
     }
   };
@@ -1957,7 +1974,7 @@ function PartnerPendingScreen({ navigate, onActivate }: { navigate: Navigate; on
           <span>{status === "approved" ? <Check size={30} /> : status === "rejected" ? <X size={30} /> : <Clock3 size={30} />}</span>
           <div>
             <strong>{status === "approved" ? "Заклад схвалено" : status === "rejected" ? "Потрібне доопрацювання" : status === "error" ? "Не вдалося перевірити статус" : "Заклад на модерації"}</strong>
-            <small>{comment || (status === "approved" ? "Заклад підтверджено адміністрацією та активовано у відповідному розділі гіда і на карті." : moderationPendingText(profile.placeType))}</small>
+            <small>{status === "error" ? statusError : comment || (status === "approved" ? "Заклад підтверджено адміністрацією та активовано у відповідному розділі гіда і на карті." : moderationPendingText(profile.placeType))}</small>
           </div>
         </section>
         <button type="button" className="gt-partner-primary-button" onClick={() => status === "approved" ? navigate("partner", "partner-cabinet") : void refresh()}>{status === "approved" ? "Відкрити кабінет" : "Оновити статус"}</button>

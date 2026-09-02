@@ -109,16 +109,28 @@ export function setSelectedPlaceIdStorage(id: string) {
   else window.sessionStorage.removeItem(SELECTED_PLACE_KEY);
 }
 
-export async function stage2Fetch<T>(path: string, init: RequestInit = {}, token?: string): Promise<T> {
+async function stage2Request(path: string, init: RequestInit = {}, token = "") {
   const headers = new Headers(init.headers);
   if (!headers.has("Content-Type") && init.body) headers.set("Content-Type", "application/json");
-  const authToken = token ?? sessionToken();
-  if (authToken) headers.set("Authorization", `Bearer ${authToken}`);
-  const response = await fetch(`${apiBase()}${path.startsWith("/") ? path : `/${path}`}`, { ...init, headers, cache: "no-store" });
-  if (!response.ok) {
-    const text = await response.text().catch(() => "");
-    throw new Error(text || `API ${response.status}`);
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  return fetch(`${apiBase()}${path.startsWith("/") ? path : `/${path}`}`, { ...init, headers, cache: "no-store" });
+}
+
+async function responseError(response: Response) {
+  const text = await response.text().catch(() => "");
+  try {
+    const parsed = JSON.parse(text) as { message?: string | string[] };
+    const message = Array.isArray(parsed.message) ? parsed.message.join(". ") : parsed.message;
+    return message || text || `API ${response.status}`;
+  } catch {
+    return text || `API ${response.status}`;
   }
+}
+
+export async function stage2Fetch<T>(path: string, init: RequestInit = {}, token?: string): Promise<T> {
+  const authToken = token ?? sessionToken();
+  const response = await stage2Request(path, init, authToken);
+  if (!response.ok) throw new Error(await responseError(response));
   return response.json() as Promise<T>;
 }
 
@@ -164,10 +176,12 @@ export async function ensureTelegramSession(): Promise<{ token: string; user: St
     language_code: "uk",
   };
   try {
-    const result = await stage2Fetch<{ token: string; user: Stage2User }>("/auth/telegram", {
+    const response = await stage2Request("/auth/telegram", {
       method: "POST",
       body: JSON.stringify({ initData, devUser: fallbackUser }),
-    }, "");
+    });
+    if (!response.ok) throw new Error(await responseError(response));
+    const result = await response.json() as { token: string; user: Stage2User };
     setSessionToken(result.token);
     return result;
   } catch {

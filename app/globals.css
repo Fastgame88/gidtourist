@@ -28177,3 +28177,35 @@ button.gt-amenities-row {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+
+/* ===== Stage 2.4: automatic admin API status + partner moderation submit feedback ===== */
+.ad-stage2-access--status {
+  grid-template-columns: minmax(280px, 1fr) auto !important;
+  align-items: center !important;
+}
+.ad-stage2-api-status {
+  display: grid;
+  gap: 4px;
+  min-height: 44px;
+  align-content: center;
+}
+.ad-stage2-api-status strong { font-size: 13px; }
+.ad-stage2-api-status small { font-size: 10.5px; line-height: 1.35; }
+.ad-stage2-api-status.is-connected strong { color: #0b8d51; }
+.ad-stage2-api-status.is-error strong,
+.ad-stage2-api-status.is-error small { color: #b83a31; }
+.ad-stage2-api-status.is-checking strong { color: #6a746e; }
+.gt-partner-submit-error {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border: 1px solid #f0c8c3;
+  border-radius: 12px;
+  background: #fff6f4;
+  color: #aa352e;
+  font-size: 11px;
+  line-height: 1.4;
+}
+@media (max-width: 760px) {
+  .ad-stage2-access--status { grid-template-columns: 1fr !important; }
+}

@@ -956,7 +956,7 @@ function Stage2QrPreview({ value }: { value: string }) {
 }
 
 function Stage2ContentScreen({ navigate }: AdminProps) {
-  const [adminKey, setAdminKey] = useState("");
+  const adminKey = "";
   const [pending, setPending] = useState<Array<{ id: string; name: string; category_slug: string; subcategory?: string | null; address: string; status: string; organization_name?: string; region_name?: string; moderation_comment?: string | null }>>([]);
   const [moderationCategories, setModerationCategories] = useState<Record<string, string>>({});
   const [qrRows, setQrRows] = useState<Array<{ id: string; start_param: string; type: string; source: string; active: boolean; region_name: string; place_name?: string | null; place_id?: string | null }>>([]);
@@ -972,6 +972,8 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
   const [templateFields, setTemplateFields] = useState("room_count=Кількість номерів; opened_year=Рік відкриття");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [apiStatus, setApiStatus] = useState<"checking" | "connected" | "error">("checking");
+  const [apiError, setApiError] = useState("");
   const [qrPlaceId, setQrPlaceId] = useState("place-girskyi-zatyshok");
   const [qrParam, setQrParam] = useState("");
   const [categorySlug, setCategorySlug] = useState("");
@@ -983,13 +985,13 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
   const [qrPreviewParam, setQrPreviewParam] = useState("");
 
   useEffect(() => {
-    const stored = window.sessionStorage.getItem("gid-tourist-admin-stage2-key") || "";
-    setAdminKey(stored);
-    void load(stored);
+    void load();
   }, []);
 
   const load = async (key = adminKey) => {
-    setLoading(true); setMessage("");
+    setLoading(true);
+    setApiStatus("checking");
+    setApiError("");
     try {
       const [moderation, qr, approved, categories, templates] = await Promise.all([
         adminStage2Fetch<typeof pending>("/admin/stage2/moderation", key),
@@ -1003,9 +1005,11 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
       setQrRows(qr); setApprovedPlaces(approved); setStage2Categories(categories); setPlaceTemplates(templates);
       if (!qrPlaceId && approved[0]?.id) setQrPlaceId(approved[0].id);
       if (!qrPreviewParam && qr[0]?.start_param) setQrPreviewParam(qr[0].start_param);
-      if (key) window.sessionStorage.setItem("gid-tourist-admin-stage2-key", key);
+      setApiStatus("connected");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Помилка доступу до Stage 2 API");
+      const errorText = error instanceof Error ? error.message : "Помилка доступу до Stage 2 API";
+      setApiStatus("error");
+      setApiError(errorText);
     } finally { setLoading(false); }
   };
 
@@ -1039,10 +1043,12 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
   return (
     <AdminShell active="content" navigate={navigate} contentClassName="ad-main--stage2">
       <AdminPageHeader title="Контент / QR — Етап 2" subtitle="Модерація закладів, QR-контекст, категорії та локальні контакти" action={<OutlineButton onClick={() => void load()}><RefreshCcw size={17}/> Оновити</OutlineButton>} />
-      <section className="ad-stage2-access">
-        <label><span>ADMIN_API_KEY</span><input type="password" value={adminKey} onChange={(event) => setAdminKey(event.target.value)} placeholder="Секрет ADMIN_API_KEY з backend Railway; можна лишити порожнім, якщо STAGE2_ADMIN_API_KEY заданий у frontend" /></label>
-        <PrimaryButton onClick={() => void load(adminKey)}>{loading ? "Підключення…" : "Перевірити API"}</PrimaryButton>
-        <small className="ad-stage2-api-help">Це не URL API. Ключ лише підтверджує права адміністратора; URL backend береться з BACKEND_API_URL / NEXT_PUBLIC_API_URL.</small>
+      <section className="ad-stage2-access ad-stage2-access--status">
+        <div className={`ad-stage2-api-status is-${apiStatus}`}>
+          <strong>{apiStatus === "connected" ? "API успішно підключено" : apiStatus === "error" ? "Помилка підключення API" : "Перевіряємо підключення API…"}</strong>
+          {apiStatus === "error" && apiError ? <small>{apiError}</small> : null}
+        </div>
+        <PrimaryButton onClick={() => void load()}>{loading ? "Підключення…" : "Перевірити API"}</PrimaryButton>
         {message ? <p>{message}</p> : null}
       </section>
 
