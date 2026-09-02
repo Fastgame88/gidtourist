@@ -432,18 +432,20 @@ async function adminImageToDataUrl(file: File) {
   return new Promise<string>((resolve) => {
     const image = new Image();
     image.onload = () => {
-      const max = 1400;
+      const max = 1100;
       const ratio = Math.min(1, max / Math.max(image.width, image.height));
       const canvas = document.createElement("canvas");
       canvas.width = Math.max(1, Math.round(image.width * ratio));
       canvas.height = Math.max(1, Math.round(image.height * ratio));
       canvas.getContext("2d")?.drawImage(image, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL("image/jpeg", .78));
+      resolve(canvas.toDataURL("image/jpeg", .72));
     };
     image.onerror = () => resolve(original);
     image.src = original;
   });
 }
+
+const EMPTY_ADMIN_MAP_PLACES: never[] = [];
 
 const ADMIN_CABINET_MODULES = [
   "Час заїзду / виїзду",
@@ -608,7 +610,10 @@ function PartnerCreateScreen({ navigate }: AdminProps) {
         }),
       });
       setCreated(result);
-    } catch (e) { setError(e instanceof Error ? e.message : "Не вдалося створити партнера"); }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Не вдалося створити партнера";
+      setError(/too large|payload|занадто велик/i.test(message) ? "Не вдалося відправити дані: сервер ще використовує старий ліміт запиту. Оновіть backend цією версією та повторіть." : message);
+    }
     finally { setSaving(false); }
   };
 
@@ -653,7 +658,7 @@ function PartnerCreateScreen({ navigate }: AdminProps) {
         <div className="ad-create-row ad-create-row--10"><div className="ad-create-row__label"><span>10</span><strong>Telegram ID</strong></div><div className="ad-create-row__control"><textarea value={telegramIds} onChange={(e)=>setTelegramIds(e.target.value)} rows={2} placeholder="Наприклад: 123456789, 987654321" /><small className="ad-field-note">Можна вказати декілька ID через кому, пробіл або з нового рядка. Лише ці акаунти зможуть відкрити партнерський QR.</small></div></div>
         <div className="ad-create-row ad-create-row--11"><div className="ad-create-row__label"><span>11</span><strong>Структура кабінету партнера</strong></div><div className="ad-create-row__control"><div className="ad-module-grid"><div className="ad-module-preview"><strong>Каркас</strong><small>Вмикайте/вимикайте потрібні пункти кабінету</small><span>{modules.length} модулів увімкнено</span><div className="ad-checkin-times"><label>Заїзд <input type="time" value={checkIn} onChange={(e)=>setCheckIn(e.target.value)} /></label><label>Виїзд <input type="time" value={checkOut} onChange={(e)=>setCheckOut(e.target.value)} /></label></div></div>{Array.from(new Set([...ADMIN_CABINET_MODULES,...modules])).map((m)=><label key={m} className={modules.includes(m)?'is-selected':''} onClick={()=>toggleModule(m)}><i>{modules.includes(m)?<Check size={13}/>:null}</i>{m}</label>)}<button type="button" className="ad-module-add" onClick={addModule}><Plus size={15}/> Додати пункт</button></div></div></div>
       </section>
-      {mapOpen ? <div className="ad-map-modal-backdrop"><section className="ad-map-modal"><header><div><h2>Вкажіть точку на мапі</h2><p>Натисніть на потрібне місце, після чого підтвердьте вибір.</p></div><button type="button" onClick={()=>setMapOpen(false)}><X size={22}/></button></header><RealMap center={mapDraft} places={[]} radius={500} pickable onPick={setMapDraft} /><footer><span>{mapDraft.lat.toFixed(6)}, {mapDraft.lng.toFixed(6)}</span><div className="ad-page-actions"><OutlineButton onClick={()=>setMapOpen(false)}>Скасувати</OutlineButton><PrimaryButton onClick={()=>void confirmMap()}>Обрати цю точку</PrimaryButton></div></footer></section></div> : null}
+      {mapOpen ? <div className="ad-map-modal-backdrop"><section className="ad-map-modal"><header><div><h2>Вкажіть точку на мапі</h2><p>Натисніть на потрібне місце, після чого підтвердьте вибір.</p></div><button type="button" onClick={()=>setMapOpen(false)}><X size={22}/></button></header><RealMap center={mapDraft} places={EMPTY_ADMIN_MAP_PLACES} radius={500} pickable preferLeaflet onPick={setMapDraft} /><footer><span>{mapDraft.lat.toFixed(6)}, {mapDraft.lng.toFixed(6)}</span><div className="ad-page-actions"><OutlineButton onClick={()=>setMapOpen(false)}>Скасувати</OutlineButton><PrimaryButton onClick={()=>void confirmMap()}>Обрати цю точку</PrimaryButton></div></footer></section></div> : null}
     </AdminShell>
   );
 }

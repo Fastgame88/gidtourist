@@ -91,6 +91,7 @@ export function RealMap({
   onPick,
   pickable = false,
   compact = false,
+  preferLeaflet = false,
 }: {
   center: { lat: number; lng: number };
   places: Stage2Place[];
@@ -100,6 +101,8 @@ export function RealMap({
   onPick?: (coords: { lat: number; lng: number }) => void;
   pickable?: boolean;
   compact?: boolean;
+  /** Use OpenStreetMap/Leaflet first. Useful for the admin point picker so it works even when a browser Google key is restricted. */
+  preferLeaflet?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
@@ -187,9 +190,13 @@ export function RealMap({
       cleanupRef.current = () => map.remove();
     };
 
-    void renderGoogle().catch(() => renderFallback().catch(() => undefined));
+    if (preferLeaflet) {
+      void renderFallback().catch(() => renderGoogle().catch(() => undefined));
+    } else {
+      void renderGoogle().catch(() => renderFallback().catch(() => undefined));
+    }
     return () => { cancelled = true; cleanupRef.current?.(); cleanupRef.current = null; };
-  }, [center.lat, center.lng, radius, places, onSelect, onPick, pickable, compact]);
+  }, [center.lat, center.lng, radius, places, onSelect, onPick, pickable, compact, preferLeaflet]);
 
-  return <div ref={ref} className={`gt-real-map ${className}`.trim()} aria-label="Інтерактивна карта Google Maps" />;
+  return <div ref={ref} className={`gt-real-map ${className}`.trim()} aria-label="Інтерактивна карта" />;
 }
