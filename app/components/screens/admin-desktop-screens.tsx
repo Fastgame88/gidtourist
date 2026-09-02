@@ -573,11 +573,8 @@ function PartnerCreateScreen({ navigate }: AdminProps) {
   };
 
   const partnerDeepLink = (startParam: string) => {
-    const bot = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME?.replace(/^@/, "");
-    const app = process.env.NEXT_PUBLIC_TELEGRAM_APP_SHORT_NAME;
-    if (bot && app) return `https://t.me/${bot}/${app}?startapp=${encodeURIComponent(startParam)}`;
-    if (typeof window !== "undefined") return `${window.location.origin}/partner/partner-dashboard?startapp=${encodeURIComponent(startParam)}`;
-    return startParam;
+    const bot = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME?.replace(/^@/, "").trim() || "GidTourist_Bot";
+    return `https://t.me/${bot}?startapp=${encodeURIComponent(startParam)}`;
   };
 
   const save = async (publish: boolean) => {
@@ -1265,11 +1262,8 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
   };
 
   const deepLink = (startParam: string) => {
-    const bot = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME?.replace(/^@/, "");
-    const app = process.env.NEXT_PUBLIC_TELEGRAM_APP_SHORT_NAME;
-    if (bot && app) return `https://t.me/${bot}/${app}?startapp=${encodeURIComponent(startParam)}`;
-    if (typeof window !== "undefined") return `${window.location.origin}/tourist/welcome?startapp=${encodeURIComponent(startParam)}`;
-    return startParam;
+    const bot = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME?.replace(/^@/, "").trim() || "GidTourist_Bot";
+    return `https://t.me/${bot}?startapp=${encodeURIComponent(startParam)}`;
   };
 
   return (
