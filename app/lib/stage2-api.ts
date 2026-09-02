@@ -147,26 +147,34 @@ export async function waitForTelegramWebApp(timeoutMs = 2500) {
 }
 
 export function telegramStartParam() {
-  if (typeof window === "undefined") return process.env.NEXT_PUBLIC_DEFAULT_QR_START_PARAM || "hotel-girskyi-zatyshok";
+  if (typeof window === "undefined") return process.env.NEXT_PUBLIC_DEFAULT_QR_START_PARAM || "";
   const webApp = (window as TelegramWindow).Telegram?.WebApp;
   const fromTelegram = webApp?.initDataUnsafe?.start_param;
   const params = new URLSearchParams(window.location.search);
-  return fromTelegram || params.get("tgWebAppStartParam") || params.get("startapp") || params.get("start") || process.env.NEXT_PUBLIC_DEFAULT_QR_START_PARAM || "hotel-girskyi-zatyshok";
+  return fromTelegram || params.get("tgWebAppStartParam") || params.get("startapp") || params.get("start") || process.env.NEXT_PUBLIC_DEFAULT_QR_START_PARAM || "";
 }
 
 export async function ensureTelegramSession(): Promise<{ token: string; user: Stage2User } | null> {
+  if (typeof window === "undefined") return null;
+
+  const webApp = await waitForTelegramWebApp();
+  const currentTelegramId = webApp?.initDataUnsafe?.user?.id ? String(webApp.initDataUnsafe.user.id) : "";
   const existing = sessionToken();
   if (existing) {
     try {
       const user = await stage2Fetch<Stage2User>("/me", {}, existing);
-      return { token: existing, user };
+      const sessionTelegramId = String(user.telegram_id ?? "");
+      if (!currentTelegramId || !sessionTelegramId || sessionTelegramId === currentTelegramId) {
+        return { token: existing, user };
+      }
+      // Telegram WebView/localStorage can keep an old session from another test account.
+      // Never reuse it for partner QR access when the actual Telegram user changed.
+      setSessionToken("");
     } catch {
       setSessionToken("");
     }
   }
 
-  if (typeof window === "undefined") return null;
-  const webApp = await waitForTelegramWebApp();
   const initData = webApp?.initData ?? "";
   const fallbackUser = webApp?.initDataUnsafe?.user ?? {
     id: 900000001,

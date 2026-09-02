@@ -28286,3 +28286,31 @@ button.gt-amenities-row {
   .ad-admin-address-grid > .ad-btn { width:100%; }
   .ad-created-partner-card { grid-template-columns:1fr; }
 }
+
+/* ===== 2026-09-02 real partner data only: neutral empty media placeholders ===== */
+.gt-partner-hero__placeholder,
+.gt-partner-photo-placeholder {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  background:#eef3ef;
+  color:#667168;
+}
+.gt-partner-hero__placeholder {
+  position:absolute;
+  inset:0;
+  flex-direction:column;
+}
+.gt-partner-photo-placeholder {
+  min-height:180px;
+  flex-direction:column;
+  border-radius:18px;
+}
+.gt-real-place-image-placeholder {
+  display:flex !important;
+  align-items:center;
+  justify-content:center;
+  background:#eef3ef;
+  color:#68736b;
+}

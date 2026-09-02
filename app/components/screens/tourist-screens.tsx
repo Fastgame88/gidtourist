@@ -464,7 +464,7 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
         <span className="gt-current-place-pin" aria-hidden="true"><CurrentPlaceSticker /></span>
         <span className="gt-current-place-copy">
           <strong>{language === "en" ? "Your QR point" : language === "pl" ? "Punkt z QR" : "Ви зараз тут"}</strong>
-          <small>{contextPlace?.name || "Готель «Гірський затишок»"}</small>
+          <small>{contextPlace?.name || "Точка входу не визначена"}</small>
           <b><Star size={14} fill="currentColor" /> {(contextPlace?.rating ?? 4.8).toFixed(1)} · {contextPlace?.review_count ?? 125} {language === "en" ? "reviews" : language === "pl" ? "opinii" : "відгуків"}</b>
         </span>
         {contextPlace?.image_url ? <img src={contextPlace.image_url} alt="" className="gt-photo gt-current-place-photo gt-current-place-photo--remote" /> : <Thumb name="hotel" className="gt-current-place-photo" />}
@@ -751,7 +751,7 @@ function AboutScreen({ navigate }: { navigate: Navigate }) {
           <small>готель</small>
         </div>
         <div className="gt-about-hero__copy">
-          <h1>{place?.name || "Готель «Гірський затишок»"}</h1>
+          <h1>{place?.name || "Інформація про заклад"}</h1>
           <p><MapPin size={18} /> {place?.address || "Татарів, вул. Незалежності, 15Б"}</p>
         </div>
         <div className="gt-checkin-card gt-checkin-card--hero">
@@ -1044,14 +1044,13 @@ type DynamicCategoryConfig = {
   placeholder: string;
   sectionTitle: string;
   fallbackChips: string[];
-  fallbackPlaces: Stage2Place[];
 };
 
 function DynamicCategoryScreen({ navigate, config }: { navigate: Navigate; config: DynamicCategoryConfig }) {
   const runtime = useTouristRuntime();
   const [query, setQuery] = useState("");
   const [selectedChip, setSelectedChip] = useState("Усі");
-  const [places, setPlaces] = useState<Stage2Place[]>(config.fallbackPlaces);
+  const [places, setPlaces] = useState<Stage2Place[]>([]);
   const [category, setCategory] = useState<Stage2Category | null>(null);
   const [openNow, setOpenNow] = useState(false);
   const [highRating, setHighRating] = useState(false);
@@ -1149,11 +1148,6 @@ function CatalogScreen({ navigate }: { navigate: Navigate }) {
     subtitle: "Кафе, ресторани та заклади", subtitleEn: "Cafes and restaurants", subtitlePl: "Kawiarnie i restauracje", tone: "orange",
     placeholder: "Пошук закладу, кухні або страви", sectionTitle: "Рекомендовані заклади",
     fallbackChips: ["Українська кухня", "Неукраїнська кухня", "Фаст фуд", "Кавʼярні"],
-    fallbackPlaces: [
-      { id:"food-hutsulshchyna",region_id:"region-tatariv",category_slug:"food",category_name:"Де поїсти",subcategory:"Українська кухня",name:"Ресторан «Гуцульщина»",description:"Автентична карпатська кухня",address:"Татарів",lat:48.3457,lng:24.5774,rating:4.8,review_count:125,tags:["Банош","Бограч","Деруни"],distance_m:120,attributes:{verified:true} },
-      { id:"food-coffee",region_id:"region-tatariv",category_slug:"food",category_name:"Де поїсти",subcategory:"Кавʼярні",name:"Кавʼярня «Гори & Кава»",description:"Кава та десерти",address:"Татарів",lat:48.3464,lng:24.5802,rating:4.9,review_count:68,tags:["Кава","Сніданки","Wi‑Fi"],distance_m:180 },
-      { id:"food-pizza",region_id:"region-tatariv",category_slug:"food",category_name:"Де поїсти",subcategory:"Неукраїнська кухня",name:"Піцерія «Татаріно»",description:"Піца та паста",address:"Татарів",lat:48.3437,lng:24.5811,rating:4.7,review_count:94,tags:["Піца","Італійська кухня"],distance_m:250 },
-    ],
   }} />;
 }
 
@@ -1339,7 +1333,7 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
   const runtime = useTouristRuntime();
   const [place, setPlace] = useState<Stage2Place | null>(null);
   const [favorite, setFavorite] = useState(false);
-  const fallbackId = runtime.selectedPlaceId || runtime.context?.place?.id || "food-hutsulshchyna";
+  const fallbackId = runtime.selectedPlaceId || runtime.context?.place?.id || "";
 
   useEffect(() => {
     if (!fallbackId) return;
@@ -1351,10 +1345,10 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
     return () => { cancelled = true; };
   }, [fallbackId, runtime.context?.place]);
 
-  const current = place ?? runtime.context?.place ?? {
-    id: "food-hutsulshchyna", region_id: "region-tatariv", category_slug: "food", name: "Ресторан «Гуцульщина»", description: "Автентична карпатська кухня, локальні продукти та затишна атмосфера з видом на гори.",
-    address: "вул. Незалежності, 42, Татарів", lat: 48.3457, lng: 24.5774, rating: 4.8, review_count: 125, is_open_now: true,
-  } as Stage2Place;
+  const current = place ?? runtime.context?.place ?? null;
+  if (!current) {
+    return <div className="tourist-screen gt-screen"><main className="gt-content"><div className="gt-stage2-empty">Локацію не вибрано або вона відсутня в базі</div></main></div>;
+  }
   const daily = current.work_hours?.daily as { from?: string; to?: string } | undefined;
   const hours = current.work_hours?.always_open === true ? "Цілодобово" : daily?.from && daily?.to ? `Щодня · ${daily.from}–${daily.to}` : "Графік уточнюється";
   const distance = runtime.location ? distanceLabel(Math.round((() => {
@@ -1417,11 +1411,6 @@ function AvailableScreen({ navigate }: { navigate: Navigate }) {
     subtitle: "Місця для релаксу та відпочинку", subtitleEn: "Relax and wellness places", subtitlePl: "Relaks i wypoczynek", tone: "purple",
     placeholder: "Пошук відпочинку та розваг", sectionTitle: "Рекомендовані місця для відпочинку",
     fallbackChips: ["Чани","Сауни","Басейни","Масаж","Походи","Екскурсії"],
-    fallbackPlaces: [
-      { id:"rest-tub",region_id:"region-tatariv",category_slug:"rest",category_name:"Де відпочити",subcategory:"Чани",name:"Чан «Гірське відновлення»",description:"Карпатський чан",address:"Татарів",lat:48.3429,lng:24.5758,rating:4.8,review_count:128,tags:["Чани","Вид на гори","Парковка"],distance_m:250,image_url:"/images/service-tub.webp" },
-      { id:"rest-sauna",region_id:"region-tatariv",category_slug:"rest",category_name:"Де відпочити",subcategory:"Сауни",name:"Сауна в «Карпатському затишку»",description:"Сауна",address:"Татарів",lat:48.34485,lng:24.5791,rating:4.7,review_count:86,tags:["Сауна","Душ"],distance_m:350,image_url:"/images/service-sauna.webp" },
-      { id:"rest-pool",region_id:"region-tatariv",category_slug:"rest",category_name:"Де відпочити",subcategory:"Басейни",name:"Басейн «Aqua Relax»",description:"Басейн",address:"Татарів",lat:48.3477,lng:24.5821,rating:4.6,review_count:93,tags:["Басейн","Шезлонги"],distance_m:450,image_url:"/images/service-pool.webp" },
-    ],
   }} />;
 }
 
@@ -1431,11 +1420,6 @@ function ShopScreen({ navigate }: { navigate: Navigate }) {
     subtitle: "Магазини та корисні покупки", subtitleEn: "Shops and useful purchases", subtitlePl: "Sklepy i zakupy", tone: "blue",
     placeholder: "Пошук магазину або товарів", sectionTitle: "Магазини поруч",
     fallbackChips: ["Продовольчі","Промтовари","Сувеніри","Аптеки"],
-    fallbackPlaces: [
-      { id:"shop-smak",region_id:"region-tatariv",category_slug:"shop",category_name:"Де купити",subcategory:"Продовольчі",name:"Магазин продуктів «Смак»",description:"Продукти",address:"Татарів",lat:48.34595,lng:24.5797,rating:4.8,review_count:126,tags:["Продукти","Хліб","Молочні вироби"],distance_m:120 },
-      { id:"shop-souvenir",region_id:"region-tatariv",category_slug:"shop",category_name:"Де купити",subcategory:"Сувеніри",name:"Сувеніри «Карпати»",description:"Сувеніри",address:"Татарів",lat:48.3462,lng:24.5779,rating:4.7,review_count:89,tags:["Сувеніри","Кераміка"],distance_m:180 },
-      { id:"shop-pharmacy",region_id:"region-tatariv",category_slug:"shop",category_name:"Де купити",subcategory:"Аптеки",name:"Аптека «Здоровʼя»",description:"Ліки",address:"Татарів",lat:48.3448,lng:24.5765,rating:4.6,review_count:72,tags:["Ліки","Вітаміни"],distance_m:220 },
-    ],
   }} />;
 }
 
@@ -1445,80 +1429,24 @@ function EntertainmentScreen({ navigate }: { navigate: Navigate }) {
     subtitle: "Активності та яскраві враження", subtitleEn: "Activities and impressions", subtitlePl: "Aktywności i wrażenia", tone: "red",
     placeholder: "Пошук розваг", sectionTitle: "Активні розваги поруч",
     fallbackChips: ["Джипи","Квадроцикли","Рафтинг","Зіплайн","Для дітей","Коні"],
-    fallbackPlaces: [
-      { id:"fun-jeep",region_id:"region-tatariv",category_slug:"entertainment",category_name:"Розваги",subcategory:"Джипи",name:"Джип-тур Гірськими стежками",description:"Маршрут на полонини",address:"Татарів",lat:48.3468,lng:24.584,rating:4.9,review_count:128,tags:["Джипи","Природа","Екстрим"],distance_m:2300 },
-      { id:"fun-quad",region_id:"region-tatariv",category_slug:"entertainment",category_name:"Розваги",subcategory:"Квадроцикли",name:"Квадроцикли в Карпатах",description:"Лісові маршрути",address:"Татарів",lat:48.3419,lng:24.586,rating:4.8,review_count:96,tags:["Квадроцикли","Екстрим"],distance_m:3100,image_url:"/images/fun-quad.webp" },
-      { id:"fun-rafting",region_id:"region-tatariv",category_slug:"entertainment",category_name:"Розваги",subcategory:"Рафтинг",name:"Рафтинг на Пруті",description:"Сплави",address:"Татарів",lat:48.3492,lng:24.5728,rating:4.7,review_count:74,tags:["Рафтинг","Вода"],distance_m:4000,image_url:"/images/fun-rafting.webp" },
-    ],
   }} />;
 }
 
-const transferPartners: Array<{
-  photo: PhotoName;
+type TransferDisplayPlace = {
+  image: string;
   title: string;
-  note: string;
+  subtitle: string;
   rating: string;
-  trips: string;
-  price: string;
-  action: string;
-}> = [
-  { photo: "van", title: "Uklon Transfer", note: "Комфортні поїздки по місту та між містами", rating: "4.8", trips: "5 хв", price: "Від 250 ₴", action: "Замовити" },
-  { photo: "van", title: "Visit Carpathians", note: "Трансфери в Карпати та по Західній Україні", rating: "4.9", trips: "10 хв", price: "Від 650 ₴", action: "Замовити" },
-  { photo: "van", title: "Local Taxi", note: "Таксі по місту та районах. Подача швидко", rating: "4.7", trips: "3 хв", price: "Від 120 ₴", action: "Замовити" },
-  { photo: "jeep", title: "Carpathian Drive", note: "Оренда авто без застави та прихованих платежів", rating: "4.8", trips: "15 хв", price: "Від 900 ₴/доба", action: "Деталі" },
-];
+  distance: string;
+  walk: string;
+  walking: boolean;
+  tags: string[];
+};
 
-function TransferKindIcon({ kind }: { kind: "taxi" | "transfer" | "rental" }) {
-  return <span className={`gt-transfer-kind-icon gt-transfer-kind-icon--${kind}`} aria-hidden="true" />;
-}
-
-const transferReferencePlaces = [
-  {
-    image: "/images/transfer-reference/taxi-card.jpg",
-    title: "Таксі «Карпати трансфер»",
-    subtitle: "Трансфери по Карпатах та Україні",
-    rating: "4.8 (126)",
-    distance: "150 м",
-    walk: "2 хв",
-    walking: false,
-    tags: ["Трансфери", "Мікроавтобуси", "24/7"],
-  },
-  {
-    image: "/images/transfer-reference/bus-card.jpg",
-    title: "Автостанція Татарів",
-    subtitle: "Міжміські та приміські маршрути",
-    rating: "4.6 (89)",
-    distance: "350 м",
-    walk: "5 хв",
-    walking: true,
-    tags: ["Автобуси", "Каси", "Розклад"],
-  },
-  {
-    image: "/images/transfer-reference/gas-card.jpg",
-    title: "АЗС ОККО",
-    subtitle: "Паливо, кава, магазин",
-    rating: "4.5 (72)",
-    distance: "450 м",
-    walk: "3 хв",
-    walking: false,
-    tags: ["Заправки", "Магазин", "Кава"],
-  },
-  {
-    image: "/images/transfer-reference/parking-card.jpg",
-    title: "Парковка біля вокзалу",
-    subtitle: "Зручна парковка для автомобілів",
-    rating: "4.3 (51)",
-    distance: "600 м",
-    walk: "8 хв",
-    walking: true,
-    tags: ["Парковки", "Відеонагляд", "Безпека"],
-  },
-] as const;
-
-function TransferReferenceRow({ place, onClick }: { place: (typeof transferReferencePlaces)[number]; onClick?: () => void }) {
+function TransferReferenceRow({ place, onClick }: { place: TransferDisplayPlace; onClick?: () => void }) {
   return (
     <article className="gt-transfer-reference-row" onClick={onClick} role={onClick ? "button" : undefined} tabIndex={onClick ? 0 : undefined}>
-      <img src={place.image} alt="" className="gt-transfer-reference-row__image" />
+      {place.image ? <img src={place.image} alt="" className="gt-transfer-reference-row__image" /> : <div className="gt-transfer-reference-row__image gt-real-place-image-placeholder"><CarFront size={24} /></div>}
       <div className="gt-transfer-reference-row__body">
         <div className="gt-transfer-reference-row__title">
           <strong>{place.title}</strong>
@@ -1566,8 +1494,8 @@ function TransferScreen({ navigate }: { navigate: Navigate }) {
     return () => { cancelled = true; window.clearTimeout(timer); };
   }, [runtime.context, runtime.location, query, chip, openNow]);
 
-  const display = apiLoaded ? places.map((place) => ({
-    image: place.image_url || "/images/transfer-reference/taxi-card.jpg",
+  const display = places.map((place) => ({
+    image: place.image_url || "",
     title: place.name,
     subtitle: place.description || place.subcategory || "Транспортна послуга",
     rating: `${Number(place.rating || 0).toFixed(1)} (${place.review_count || 0})`,
@@ -1575,7 +1503,7 @@ function TransferScreen({ navigate }: { navigate: Navigate }) {
     walk: walkLabel(place.distance_m),
     walking: false,
     tags: (place.tags?.length ? place.tags : [place.subcategory || "Трансфер"]).slice(0, 3),
-  })) : transferReferencePlaces;
+  }));
 
   return (
     <div className="tourist-screen gt-screen gt-transfer-reference-screen">
@@ -1587,7 +1515,7 @@ function TransferScreen({ navigate }: { navigate: Navigate }) {
         <MapStrip real places={places} />
         <SectionTitle title="Трансфери поруч" action={`${display.length}`} />
         <div className="gt-transfer-reference-list">
-          {display.map((place, index) => <TransferReferenceRow key={`${place.title}-${index}`} place={place as (typeof transferReferencePlaces)[number]} onClick={apiLoaded && places[index] ? () => { runtime.setSelectedPlaceId(places[index].id); navigate("tourist", "place"); } : undefined} />)}
+          {display.map((place, index) => <TransferReferenceRow key={`${place.title}-${index}`} place={place} onClick={places[index] ? () => { runtime.setSelectedPlaceId(places[index].id); navigate("tourist", "place"); } : undefined} />)}
         </div>
         {apiLoaded && !places.length ? <div className="gt-stage2-empty">За цими фільтрами трансферів не знайдено</div> : null}
       </main>

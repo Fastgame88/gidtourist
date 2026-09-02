@@ -104,7 +104,7 @@ type PartnerProfile = {
   templateFields: Record<string, string>;
 };
 
-const heroImage = "/images/mountain-hotel.webp";
+const heroImage = "";
 const PROFILE_STORAGE_KEY = "gid-tourist-partner-profile";
 const ACTIVATED_STORAGE_KEY = "gid-tourist-partner-activated";
 
@@ -142,219 +142,8 @@ type PartnerService = {
   breaks?: Array<{ from: string; to: string }>;
 };
 
-const defaultServices: PartnerService[] = [
-  {
-    id: "breakfast",
-    name: "Сніданок",
-    category: "Харчування",
-    description: "Сніданок для гостей готелю",
-    audience: "hotel",
-    active: true,
-    hidden: false,
-    priceType: "free",
-    price: "0",
-    currency: "UAH",
-    scheduleType: "daily",
-    scheduleLabel: "Щодня · з 08:00 до 10:00",
-    timeFrom: "08:00",
-    timeTo: "10:00",
-    phone: "+38 067 123 45 67",
-    extraPhone: "",
-    email: "info@girskyi-zatyshok.ua",
-    bookingNote: "Для гостей готелю",
-    additionalInfo: "Входить у вартість проживання.",
-    amenities: ["Шведський стіл"],
-    promo: false,
-  },
-  {
-    id: "parking",
-    name: "Паркінг",
-    category: "Паркінг",
-    description: "Безкоштовно для гостей",
-    audience: "hotel",
-    active: true,
-    hidden: false,
-    priceType: "free",
-    price: "0",
-    currency: "UAH",
-    scheduleType: "daily",
-    scheduleLabel: "Безкоштовно для гостей",
-    timeFrom: "00:00",
-    timeTo: "24:00",
-    phone: "+38 067 123 45 67",
-    extraPhone: "",
-    email: "info@girskyi-zatyshok.ua",
-    bookingNote: "Бронювання не потрібне",
-    additionalInfo: "Паркінг на території закладу.",
-    amenities: ["Відеонагляд"],
-    promo: false,
-  },
-  {
-    id: "sauna",
-    name: "Сауна",
-    category: "Сауна та SPA",
-    description: "Затишна сауна з панорамним видом на гори. Ідеальне місце для відпочинку та відновлення сил після активного дня.",
-    audience: "hotel",
-    active: true,
-    hidden: false,
-    priceType: "fixed",
-    price: "800",
-    currency: "UAH",
-    scheduleType: "daily",
-    scheduleLabel: "Щодня · з 16:00 до 22:00",
-    timeFrom: "16:00",
-    timeTo: "22:00",
-    phone: "+38 067 123 45 67",
-    extraPhone: "+38 050 987 65 43",
-    email: "info@girskyi-zatyshok.ua",
-    bookingNote: "Телефон адміністратора або через рецепцію готелю.",
-    additionalInfo: "Мінімальний час бронювання — 2 години. До 6 осіб одночасно.",
-    amenities: ["Панорамний вид", "Душ", "Рушники", "Чай / вода", "Музика"],
-    promo: true,
-    image: "/images/service-sauna.webp",
-  },
-  {
-    id: "transfer",
-    name: "Трансфер",
-    category: "Трансфер",
-    description: "За попереднім запитом",
-    audience: "hotel",
-    active: true,
-    hidden: false,
-    priceType: "request",
-    price: "",
-    currency: "UAH",
-    scheduleType: "daily",
-    scheduleLabel: "За попереднім запитом",
-    timeFrom: "00:00",
-    timeTo: "24:00",
-    phone: "+38 067 123 45 67",
-    extraPhone: "",
-    email: "info@girskyi-zatyshok.ua",
-    bookingNote: "За попереднім запитом",
-    additionalInfo: "Доступні трансфери по регіону.",
-    amenities: [],
-    promo: false,
-  },
-  {
-    id: "laundry",
-    name: "Пральня",
-    category: "Додаткові послуги",
-    description: "08:00 – 20:00 · від 150 грн",
-    audience: "hotel",
-    active: true,
-    hidden: false,
-    priceType: "from",
-    price: "150",
-    currency: "UAH",
-    scheduleType: "daily",
-    scheduleLabel: "08:00 – 20:00 · від 150 грн",
-    timeFrom: "08:00",
-    timeTo: "20:00",
-    phone: "+38 067 123 45 67",
-    extraPhone: "",
-    email: "info@girskyi-zatyshok.ua",
-    bookingNote: "Зверніться на рецепцію",
-    additionalInfo: "Прання та сушіння речей гостей.",
-    amenities: [],
-    promo: false,
-  },
-  {
-    id: "restaurant",
-    name: "Ресторан",
-    category: "Харчування",
-    description: "08:00 – 22:00 · Середній чек 300 грн",
-    audience: "all",
-    active: true,
-    hidden: false,
-    priceType: "from",
-    price: "300",
-    currency: "UAH",
-    scheduleType: "daily",
-    scheduleLabel: "08:00 – 22:00 · Середній чек 300 грн",
-    timeFrom: "08:00",
-    timeTo: "22:00",
-    phone: "+38 067 123 45 67",
-    extraPhone: "",
-    email: "restaurant@girskyi-zatyshok.ua",
-    bookingNote: "Бронювання столика телефоном",
-    additionalInfo: "Карпатська та європейська кухня.",
-    amenities: ["Тераса"],
-    promo: true,
-    image: "/images/rest-excursion.webp",
-  },
-  {
-    id: "tub",
-    name: "Чан",
-    category: "Сауна та SPA",
-    description: "10:00 – 22:00 · від 1500 грн",
-    audience: "all",
-    active: true,
-    hidden: false,
-    priceType: "from",
-    price: "1500",
-    currency: "UAH",
-    scheduleType: "daily",
-    scheduleLabel: "10:00 – 22:00 · від 1500 грн",
-    timeFrom: "10:00",
-    timeTo: "22:00",
-    phone: "+38 067 123 45 67",
-    extraPhone: "",
-    email: "spa@girskyi-zatyshok.ua",
-    bookingNote: "Попереднє бронювання",
-    additionalInfo: "Карпатський чан просто неба.",
-    amenities: ["Чай / вода"],
-    promo: true,
-    image: "/images/service-tub.webp",
-  },
-  {
-    id: "massage",
-    name: "SPA масаж",
-    category: "Сауна та SPA",
-    description: "09:00 – 20:00 · від 800 грн",
-    audience: "all",
-    active: true,
-    hidden: false,
-    priceType: "from",
-    price: "800",
-    currency: "UAH",
-    scheduleType: "daily",
-    scheduleLabel: "09:00 – 20:00 · від 800 грн",
-    timeFrom: "09:00",
-    timeTo: "20:00",
-    phone: "+38 067 123 45 67",
-    extraPhone: "",
-    email: "spa@girskyi-zatyshok.ua",
-    bookingNote: "За попереднім записом",
-    additionalInfo: "Класичний та релакс-масаж.",
-    amenities: ["Рушники", "Музика"],
-    promo: false,
-    image: "/images/rest-massage.webp",
-  },
-  {
-    id: "bike-rental",
-    name: "Прокат велосипедів",
-    category: "Активний відпочинок",
-    description: "09:00 – 18:00 · 200 грн/день",
-    audience: "all",
-    active: false,
-    hidden: true,
-    priceType: "fixed",
-    price: "200",
-    currency: "UAH",
-    scheduleType: "daily",
-    scheduleLabel: "09:00 – 18:00 · 200 грн/день",
-    timeFrom: "09:00",
-    timeTo: "18:00",
-    phone: "+38 067 123 45 67",
-    extraPhone: "",
-    email: "info@girskyi-zatyshok.ua",
-    bookingNote: "На рецепції",
-    additionalInfo: "Прокат гірських велосипедів.",
-    amenities: [],
-    promo: false,
-  },
-];
+const defaultServices: PartnerService[] = [];
+
 
 const emptyServiceDraft: PartnerService = {
   id: "",
@@ -371,9 +160,9 @@ const emptyServiceDraft: PartnerService = {
   scheduleLabel: "Щодня",
   timeFrom: "09:00",
   timeTo: "18:00",
-  phone: "+38 067 123 45 67",
+  phone: "",
   extraPhone: "",
-  email: "info@girskyi-zatyshok.ua",
+  email: "",
   bookingNote: "",
   additionalInfo: "",
   amenities: [],
@@ -381,12 +170,12 @@ const emptyServiceDraft: PartnerService = {
 };
 
 function readPartnerServices(): PartnerService[] {
-  if (typeof window === "undefined") return defaultServices;
+  if (typeof window === "undefined") return [];
   try {
     const raw = window.localStorage.getItem(SERVICES_STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as PartnerService[]) : defaultServices;
+    return raw ? (JSON.parse(raw) as PartnerService[]) : [];
   } catch {
-    return defaultServices;
+    return [];
   }
 }
 
@@ -412,55 +201,49 @@ function saveServiceDraft(service: PartnerService) {
 
 
 const defaultProfile: PartnerProfile = {
-  placeName: "Гірський Затишок",
+  placeName: "",
   placeType: "Готель",
   categorySlug: "hotel",
-  city: "Татарів",
-  regionName: "Івано-Франківська область",
-  street: "вул. Незалежності",
-  house: "155",
+  city: "",
+  regionName: "",
+  street: "",
+  house: "",
   cityPlaceId: "",
   streetPlaceId: "",
   housePlaceId: "",
-  address: "вул. Незалежності, 155, Татарів, Івано-Франківська область",
-  lat: "48.34490",
-  lng: "24.57920",
-  imageUrl: heroImage,
-  description:
-    "Затишний готель у серці Карпат з видом на гори та річку. Комфортні номери, чан, сауна та відкритий басейн.",
-  roomCount: "18 номерів",
-  openedYear: "2018",
-  languages: "Українська, English, Polski",
-  accommodationType: "Готель",
-  hasWifi: true,
-  wifiSsid: "Girskyi_Zatyshok_Guest",
-  wifiPassword: "zatyshok155",
-  amenities: ["Номери", "Паркінг", "Wi‑Fi", "Сніданок"],
-  generalRules: [
-    { id: "rule-smoking", text: "Куріння заборонено в приміщеннях готелю", icon: "no-smoking" },
-    { id: "rule-quiet", text: "Тихий час з 22:00 до 08:00", icon: "quiet" },
-    { id: "rule-pets", text: "Розміщення з домашніми тваринами за попереднім погодженням", icon: "pets" },
-  ],
-  phone: "+38 067 123 45 67",
-  messenger: "+38 067 123 45 67",
-  email: "info@girskiy-zatyshok.ua",
-  website: "girskiy-zatyshok.ua",
-  instagram: "@girskyi_zatyshok",
-  facebook: "facebook.com/girskiy.zatyshok",
+  address: "",
+  lat: "",
+  lng: "",
+  imageUrl: "",
+  description: "",
+  roomCount: "",
+  openedYear: "",
+  languages: "",
+  accommodationType: "",
+  hasWifi: false,
+  wifiSsid: "",
+  wifiPassword: "",
+  amenities: [],
+  generalRules: [],
+  phone: "",
+  messenger: "",
+  email: "",
+  website: "",
+  instagram: "",
+  facebook: "",
   workMode: "Щодня",
-  workHours: "00:00 - 24:00",
-  checkIn: "Поселення з 14:00",
-  checkOut: "Виселення до 11:00",
-  quietHours: "Тихий час з 22:00 до 08:00",
-  petPolicy: "Розміщення з домашніми тваринами за попереднім погодженням",
-  cancellation:
-    "Безкоштовне скасування бронювання можливе за 7 днів до дати заїзду. У разі пізнішого скасування стягується штраф у розмірі вартості першої доби.",
-  payment: "Готівка, Visa, Mastercard",
-  otherRules:
-    "Адміністрація готелю залишає за собою право змінювати правила проживання. Актуальні правила діють на момент поселення.",
-  cabinetModules: ["Послуги закладу", "Інформація про заклад", "Правила проживання", "Wi‑Fi", "Контакти", "Час заїзду / виїзду"],
-  templateFields: { room_count: "18 номерів", opened_year: "2018", languages: "Українська, English, Polski", accommodation_type: "Готель" },
+  workHours: "09:00 - 18:00",
+  checkIn: "",
+  checkOut: "",
+  quietHours: "",
+  petPolicy: "",
+  cancellation: "",
+  payment: "",
+  otherRules: "",
+  cabinetModules: [],
+  templateFields: {},
 };
+
 
 function readPartnerProfile(): PartnerProfile {
   if (typeof window === "undefined") return defaultProfile;
@@ -468,17 +251,17 @@ function readPartnerProfile(): PartnerProfile {
     const raw = window.localStorage.getItem(PROFILE_STORAGE_KEY);
     if (!raw) return defaultProfile;
     const parsed = JSON.parse(raw) as Partial<PartnerProfile>;
-    const merged: PartnerProfile = { ...defaultProfile, ...parsed };
-    if (!Array.isArray(parsed.generalRules)) {
-      merged.generalRules = [
-        { id: "rule-smoking", text: "Куріння заборонено в приміщеннях готелю", icon: "no-smoking" },
-        { id: "rule-quiet", text: parsed.quietHours || defaultProfile.quietHours, icon: "quiet" },
-        { id: "rule-pets", text: parsed.petPolicy || defaultProfile.petPolicy, icon: "pets" },
-      ];
+    const isLegacyDemo = parsed.placeName === "Гірський Затишок" && String(parsed.address || "").includes("Незалежності");
+    if (isLegacyDemo) {
+      window.localStorage.removeItem(PROFILE_STORAGE_KEY);
+      window.localStorage.removeItem(SERVICES_STORAGE_KEY);
+      return defaultProfile;
     }
-    if (!Array.isArray(parsed.amenities)) merged.amenities = defaultProfile.amenities;
-    if (!Array.isArray(parsed.cabinetModules)) merged.cabinetModules = defaultProfile.cabinetModules;
-    if (typeof parsed.hasWifi !== "boolean") merged.hasWifi = Boolean(parsed.wifiSsid ?? defaultProfile.wifiSsid);
+    const merged: PartnerProfile = { ...defaultProfile, ...parsed };
+    merged.generalRules = Array.isArray(parsed.generalRules) ? parsed.generalRules : [];
+    merged.amenities = Array.isArray(parsed.amenities) ? parsed.amenities : [];
+    merged.cabinetModules = Array.isArray(parsed.cabinetModules) ? parsed.cabinetModules : [];
+    merged.templateFields = parsed.templateFields && typeof parsed.templateFields === "object" ? parsed.templateFields : {};
     if (!merged.hasWifi) merged.amenities = merged.amenities.filter((item) => item !== "Wi‑Fi");
     return merged;
   } catch {
@@ -586,12 +369,12 @@ async function submitPartnerProfile(profile: PartnerProfile) {
     organization_name: profile.placeName,
     description: profile.description,
     address: profile.address,
-    lat: Number(profile.lat) || 48.34535,
-    lng: Number(profile.lng) || 24.57855,
+    lat: Number(profile.lat),
+    lng: Number(profile.lng),
     phone: profile.phone,
     telegram: profile.messenger.startsWith("http") ? profile.messenger : undefined,
     website: profile.website.startsWith("http") ? profile.website : profile.website ? `https://${profile.website}` : undefined,
-    image_url: profile.imageUrl || heroImage,
+    image_url: profile.imageUrl || null,
     work_hours: profile.workMode.toLocaleLowerCase("uk").includes("цілодоб") ? { always_open: true } : hours ? { daily: { from: hours[1], to: hours[2] } } : {},
     attributes: {
       partner: true,
@@ -600,8 +383,8 @@ async function submitPartnerProfile(profile: PartnerProfile) {
       amenities: profile.amenities.filter((item) => profile.hasWifi || item !== "Wi‑Fi"),
     },
     details: {
-      check_in: profile.checkIn.match(/\d{2}:\d{2}/)?.[0] || "14:00",
-      check_out: profile.checkOut.match(/\d{2}:\d{2}/)?.[0] || "11:00",
+      check_in: profile.checkIn.match(/\d{2}:\d{2}/)?.[0] || "",
+      check_out: profile.checkOut.match(/\d{2}:\d{2}/)?.[0] || "",
       wifi_ssid: profile.hasWifi ? profile.wifiSsid : "",
       wifi_password: profile.hasWifi ? profile.wifiPassword : "",
       rules: [...profile.generalRules.map((item) => item.text), profile.cancellation, profile.payment, profile.otherRules].filter(Boolean),
@@ -744,7 +527,8 @@ function PartnerBottomNav({
   );
 }
 
-function LogoCard() {
+function LogoCard({ name, placeType }: { name: string; placeType: string }) {
+  const title = name.trim() || "Ваш заклад";
   return (
     <div className="gt-partner-logo-card">
       <div className="gt-partner-logo-card__icon">
@@ -754,17 +538,18 @@ function LogoCard() {
           <path d="M4.5 31H37.5" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round"/>
         </svg>
       </div>
-      <strong>ГІРСЬКИЙ<br />ЗАТИШОК</strong>
-      <small>ГОТЕЛЬ</small>
+      <strong>{title}</strong>
+      <small>{placeType || "Партнер"}</small>
     </div>
   );
 }
 
 function Hero({ showCopy = true, cabinet = false }: { showCopy?: boolean; cabinet?: boolean }) {
+  const { profile } = usePartnerProfile();
   return (
     <section className={`gt-partner-hero ${cabinet ? "is-cabinet" : ""}`}>
-      <img src={heroImage} alt="Гірський Затишок" />
-      <LogoCard />
+      {profile.imageUrl ? <img src={profile.imageUrl} alt={profile.placeName || "Фото закладу"} /> : <div className="gt-partner-hero__placeholder"><ImageIcon size={42} /><span>Фото закладу</span></div>}
+      <LogoCard name={profile.placeName} placeType={profile.placeType} />
       {showCopy ? (
         <div className="gt-partner-hero__copy">
           <h1>{cabinet ? "Кабінет партнера" : "Стати партнером"}</h1>
@@ -1024,22 +809,8 @@ function AddressAutocompleteRow({
   );
 }
 
-function serviceFromTemplate(name: string, index: number): PartnerService {
-  return {
-    ...emptyServiceDraft,
-    id: `template-${Date.now()}-${index}`,
-    name,
-    category: /снідан|меню|кава|десерт|їжа/i.test(name) ? "Харчування" : /саун|чан|масаж|басейн|spa/i.test(name) ? "Сауна та SPA" : /паркін/i.test(name) ? "Паркінг" : /трансфер|таксі|авто/i.test(name) ? "Трансфер" : "Додаткові послуги",
-    description: name,
-    active: true,
-    hidden: false,
-  };
-}
-
-function applyTemplateServices(template?: Stage2PlaceTypeTemplate) {
-  if (!template?.default_services?.length) return;
-  const serviceNames = template.default_services.filter((item) => !/^wi[\s‑-]*fi$/i.test(item.trim()));
-  savePartnerServices(serviceNames.map(serviceFromTemplate));
+function applyTemplateServices(_template?: Stage2PlaceTypeTemplate) {
+  // Type templates define available fields only. They must never create fake services/data for a real partner.
 }
 
 function amenityIcon(label: string) {
@@ -1107,24 +878,8 @@ function PartnerInfoScreen({ navigate, activated }: PartnerProps) {
     return () => { cancelled = true; };
   }, []);
 
-  const applyPlaceTemplate = (template: Stage2PlaceTypeTemplate | undefined, categorySlug: string, placeType: string) => {
-    applyTemplateServices(template);
-    setProfile((prev) => {
-      const amenities = template?.default_amenities?.length ? [...template.default_amenities] : prev.amenities;
-      const hasWifi = amenities.some((item) => /wi[\s‑-]*fi/i.test(item));
-      return {
-        ...prev,
-        categorySlug,
-        placeType,
-        placeName: template?.default_title || prev.placeName,
-        description: template?.default_description || prev.description,
-        amenities,
-        hasWifi,
-        wifiSsid: hasWifi ? prev.wifiSsid : "",
-        wifiPassword: hasWifi ? prev.wifiPassword : "",
-        templateFields: {},
-      };
-    });
+  const applyPlaceTemplate = (_template: Stage2PlaceTypeTemplate | undefined, categorySlug: string, placeType: string) => {
+    setProfile((prev) => ({ ...prev, categorySlug, placeType, templateFields: {} }));
   };
 
   const activeTemplate = placeTemplates.find((item) => item.place_type === profile.placeType);
@@ -1138,8 +893,10 @@ function PartnerInfoScreen({ navigate, activated }: PartnerProps) {
         back={goBack}
         nextLabel="Далі"
         onNext={() => {
-          if (!profile.cityPlaceId || !profile.streetPlaceId || !profile.housePlaceId) {
-            setAddressError("Оберіть місто, вулицю та будинок саме з випадаючих підказок Google — довільну адресу зберегти не можна.");
+          const hasGoogleAddress = Boolean(profile.cityPlaceId && profile.streetPlaceId && profile.housePlaceId);
+          const hasSavedLocation = Boolean(profile.address.trim() && Number.isFinite(Number(profile.lat)) && Number.isFinite(Number(profile.lng)));
+          if (!hasGoogleAddress && !hasSavedLocation) {
+            setAddressError("Оберіть реальну адресу з підказок Google або використайте вже збережене адміністратором місцезнаходження.");
             return;
           }
           setAddressError("");
@@ -1148,7 +905,7 @@ function PartnerInfoScreen({ navigate, activated }: PartnerProps) {
       />
       <main className="gt-partner-mobile-content gt-partner-form-page">
         <section className="gt-partner-photo-editor">
-          <img src={profile.imageUrl || heroImage} alt="Фото закладу" />
+          {profile.imageUrl ? <img src={profile.imageUrl} alt="Фото закладу" /> : <div className="gt-partner-photo-placeholder"><ImageIcon size={30} /><span>Фото ще не додано</span></div>}
           <input ref={photoInputRef} className="gt-visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => {
             const file = event.target.files?.[0];
             if (!file) return;
@@ -2041,7 +1798,7 @@ function UpdateScreen({ navigate, activated }: PartnerProps) {
           </ul>
         </div>
 
-        <button type="button" className="gt-partner-refresh gt-partner-refresh--large" onClick={() => navigate("partner", "partner-dashboard")}>
+        <button type="button" className="gt-partner-refresh gt-partner-refresh--large" onClick={() => navigate("partner", "partner-info")}>
           <RefreshCcw size={18} /> Оновити зараз
         </button>
 
@@ -2072,7 +1829,7 @@ function CabinetScreen({ navigate }: { navigate: Navigate }) {
     "Парковка": { slug: "partner-update", icon: CircleParking, title: "Парковка", note: "Інформація про паркування для гостей" },
     "Сніданок": { slug: "partner-services", icon: UtensilsCrossed, title: "Сніданок", note: "Налаштування послуги сніданку" },
   };
-  const enabled = (profile.cabinetModules?.length ? profile.cabinetModules : defaultProfile.cabinetModules)
+  const enabled = (profile.cabinetModules ?? [])
     .filter((name) => profile.hasWifi || name !== "Wi‑Fi")
     .map((name, index) => definitions[name] ?? { slug: "partner-update", icon: Info, title: name, note: "Налаштування цього розділу кабінету" })
     .map((item, index) => ({ ...item, key: `${item.title}-${index}` }));
@@ -2483,12 +2240,12 @@ function PriceTypeScreen({ navigate }: { navigate: Navigate }) {
 }
 
 function readSelectedService() {
-  const id = typeof window === "undefined" ? "sauna" : window.localStorage.getItem(SERVICE_SELECTED_STORAGE_KEY) || "sauna";
-  return readPartnerServices().find((service) => service.id === id) ?? defaultServices.find((service) => service.id === "sauna")!;
+  const id = typeof window === "undefined" ? "" : window.localStorage.getItem(SERVICE_SELECTED_STORAGE_KEY) || "";
+  return readPartnerServices().find((service) => service.id === id) ?? { ...emptyServiceDraft };
 }
 
 function EditServiceScreen({ navigate }: { navigate: Navigate }) {
-  const [service, setService] = useState<PartnerService>(() => defaultServices.find((item) => item.id === "sauna")!);
+  const [service, setService] = useState<PartnerService>(() => ({ ...emptyServiceDraft }));
 
   useEffect(() => {
     setService(readSelectedService());
@@ -3205,37 +2962,58 @@ function PlaceholderScreen({
 }
 
 function hydratePartnerProfileFromDb(place: Record<string, any>) {
-  const current = readPartnerProfile();
   const details = place.details && typeof place.details === "object" ? place.details : {};
   const attrs = place.attributes && typeof place.attributes === "object" ? place.attributes : {};
   const work = place.work_hours && typeof place.work_hours === "object" ? place.work_hours : {};
   const daily = work.daily && typeof work.daily === "object" ? work.daily : {};
-  const modules = Array.isArray(details.cabinet_modules) ? details.cabinet_modules.map(String) : current.cabinetModules;
-  const amenities = Array.isArray(attrs.amenities) ? attrs.amenities.map(String) : current.amenities;
+  const modules = Array.isArray(details.cabinet_modules) ? details.cabinet_modules.map(String) : [];
+  const amenities = Array.isArray(attrs.amenities) ? attrs.amenities.map(String) : [];
+  const rules = Array.isArray(details.rule_items) ? details.rule_items : [];
+  const services = Array.isArray(details.services) ? details.services : [];
   const profile: PartnerProfile = {
-    ...current,
-    placeName: String(place.name || current.placeName),
-    placeType: String(place.subcategory || current.placeType),
-    categorySlug: String(place.category_slug || current.categorySlug),
-    city: String(details.city || current.city),
-    regionName: String(details.region_name || current.regionName),
-    street: String(details.street || current.street),
-    house: String(details.house || current.house),
-    address: String(place.address || current.address),
-    lat: String(place.lat ?? current.lat),
-    lng: String(place.lng ?? current.lng),
-    imageUrl: String(place.image_url || (Array.isArray(details.gallery) ? details.gallery[0] : "") || current.imageUrl),
-    description: String(place.description || current.description),
-    phone: String(place.phone || current.phone),
-    workMode: work.always_open === true ? "Цілодобово" : "Щодня",
-    workHours: work.always_open === true ? "00:00 - 24:00" : daily.from && daily.to ? `${daily.from} - ${daily.to}` : current.workHours,
-    checkIn: details.check_in ? `Поселення з ${details.check_in}` : current.checkIn,
-    checkOut: details.check_out ? `Виселення до ${details.check_out}` : current.checkOut,
+    ...defaultProfile,
+    placeName: String(place.name || ""),
+    placeType: String(place.subcategory || "Готель"),
+    categorySlug: String(place.category_slug || "hotel"),
+    city: String(details.city || ""),
+    regionName: String(details.region_name || ""),
+    street: String(details.street || ""),
+    house: String(details.house || ""),
+    cityPlaceId: String(details.geo_place_ids?.city || ""),
+    streetPlaceId: String(details.geo_place_ids?.street || ""),
+    housePlaceId: String(details.geo_place_ids?.house || ""),
+    address: String(place.address || ""),
+    lat: String(place.lat ?? ""),
+    lng: String(place.lng ?? ""),
+    imageUrl: String(place.image_url || (Array.isArray(details.gallery) ? details.gallery[0] : "") || ""),
+    description: String(place.description || ""),
+    roomCount: String(details.room_count || ""),
+    openedYear: String(details.opened_year || ""),
+    languages: String(details.languages || ""),
+    accommodationType: String(details.accommodation_type || ""),
     hasWifi: attrs.wifi === true || amenities.some((item: string) => /wi-?fi/i.test(item)),
+    wifiSsid: String(details.wifi_ssid || ""),
+    wifiPassword: String(details.wifi_password || ""),
     amenities,
+    generalRules: Array.isArray(rules) ? rules as PartnerRule[] : [],
+    phone: String(place.phone || ""),
+    messenger: String(place.telegram || ""),
+    email: String(details.email || ""),
+    website: String(place.website || ""),
+    instagram: String(details.instagram || ""),
+    facebook: String(details.facebook || ""),
+    workMode: work.always_open === true ? "Цілодобово" : "Щодня",
+    workHours: work.always_open === true ? "00:00 - 24:00" : daily.from && daily.to ? `${daily.from} - ${daily.to}` : "",
+    checkIn: details.check_in ? `Поселення з ${details.check_in}` : "",
+    checkOut: details.check_out ? `Виселення до ${details.check_out}` : "",
+    cancellation: String(details.cancellation || ""),
+    payment: Array.isArray(details.payment_methods) ? details.payment_methods.join(", ") : String(details.payment || ""),
+    otherRules: String(details.other_rules || ""),
     cabinetModules: modules,
+    templateFields: details.template_fields && typeof details.template_fields === "object" ? details.template_fields : {},
   };
   savePartnerProfile(profile);
+  savePartnerServices(Array.isArray(services) ? services as PartnerService[] : []);
 }
 
 export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate: Navigate }) {

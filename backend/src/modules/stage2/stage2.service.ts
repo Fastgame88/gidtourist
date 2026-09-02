@@ -390,22 +390,32 @@ export class Stage2Service {
   }
 
   async partnerAccess(user: AuthUser, startParam: string) {
-    if (!user.telegram_id) throw new UnauthorizedException("Telegram ID is required");
+    const telegramId = String(user.telegram_id ?? "").trim();
+    if (!/^\d{5,20}$/.test(telegramId)) throw new UnauthorizedException("Telegram ID is required");
     const result = await this.db.query(
-      `SELECT q.id qr_id,q.start_param,q.active,p.id place_id,p.status,p.organization_id,p.name,p.details,
-              EXISTS(SELECT 1 FROM organization_telegram_access a WHERE a.organization_id=p.organization_id AND a.telegram_id::text=$2 AND a.active=true) allowed
-       FROM qr_points q JOIN places p ON p.id=q.place_id
+      `SELECT q.id qr_id,q.start_param,q.active,p.id place_id,p.status,p.organization_id,p.name,p.details,o.owner_user_id,
+              EXISTS(
+                SELECT 1 FROM organization_telegram_access a
+                WHERE a.organization_id=p.organization_id AND a.telegram_id=$2::bigint AND a.active=true
+              ) OR o.owner_user_id=$3 AS allowed,
+              COALESCE((SELECT json_agg(a.telegram_id::text ORDER BY a.telegram_id) FROM organization_telegram_access a WHERE a.organization_id=p.organization_id AND a.active=true),'[]'::json) allowed_telegram_ids
+       FROM qr_points q
+       JOIN places p ON p.id=q.place_id
+       JOIN organizations o ON o.id=p.organization_id
        WHERE q.start_param=$1 AND q.active=true AND q.type='partner_access' LIMIT 1`,
-      [startParam, user.telegram_id],
+      [startParam, telegramId, user.id],
     );
     const row = result.rows[0] as Record<string, unknown> | undefined;
     if (!row) throw new NotFoundException("Partner QR not found or inactive");
-    if (row.allowed !== true) throw new UnauthorizedException("Цей Telegram ID не має доступу до кабінету цього партнера");
+    if (row.allowed !== true) {
+      const allowed = Array.isArray(row.allowed_telegram_ids) ? row.allowed_telegram_ids.map(String).join(", ") : "";
+      throw new UnauthorizedException(`Цей Telegram ID (${telegramId}) не має доступу до кабінету цього партнера${allowed ? `. Дозволені ID: ${allowed}` : ""}`);
+    }
     await this.db.transaction(async (client) => {
       await client.query("UPDATE users SET role=CASE WHEN role='tourist' THEN 'partner' ELSE role END,updated_at=now() WHERE id=$1", [user.id]);
       await client.query("UPDATE organizations SET owner_user_id=COALESCE(owner_user_id,$2),updated_at=now() WHERE id=$1", [row.organization_id, user.id]);
     });
-    return { ok: true, place_id: row.place_id, status: row.status, organization_id: row.organization_id, name: row.name, start_param: startParam };
+    return { ok: true, place_id: row.place_id, status: row.status, organization_id: row.organization_id, name: row.name, start_param: startParam, telegram_id: telegramId };
   }
 
   async createPartnerPlace(user: AuthUser, body: Record<string, unknown>) {
@@ -467,6 +477,86 @@ export class Stage2Service {
        ORDER BY p.updated_at DESC`,
     );
     return result.rows;
+  }
+
+  async adminPartner(placeId: string) {
+    const result = await this.db.query(
+      `SELECT p.*,r.name region_name,o.name organization_name,o.status organization_status,o.owner_user_id,
+              COALESCE((SELECT json_agg(a.telegram_id::text ORDER BY a.telegram_id) FROM organization_telegram_access a WHERE a.organization_id=o.id AND a.active=true),'[]'::json) telegram_ids,
+              (SELECT q.start_param FROM qr_points q WHERE q.place_id=p.id AND q.type='partner_access' AND q.active=true ORDER BY q.created_at DESC LIMIT 1) partner_start_param,
+              COALESCE((SELECT COUNT(*)::int FROM activity_events e WHERE e.place_id=p.id AND e.event_type='place_viewed'),0) views,
+              COALESCE((SELECT COUNT(*)::int FROM activity_events e WHERE e.place_id=p.id AND e.event_type='qr_scanned'),0) qr_scans,
+              COALESCE((SELECT COUNT(*)::int FROM activity_events e WHERE e.place_id=p.id AND e.event_type='route_clicked'),0) route_clicks,
+              COALESCE((SELECT COUNT(*)::int FROM activity_events e WHERE e.place_id=p.id AND e.event_type='call_clicked'),0) call_clicks
+       FROM places p JOIN regions r ON r.id=p.region_id LEFT JOIN organizations o ON o.id=p.organization_id
+       WHERE p.id=$1 LIMIT 1`,
+      [placeId],
+    );
+    if (!result.rows[0]) throw new NotFoundException("Partner not found");
+    return result.rows[0];
+  }
+
+  async adminUpdatePartner(placeId: string, body: Record<string, unknown>) {
+    const current = await this.adminPartner(placeId) as Record<string, any>;
+    const organizationId = String(current.organization_id ?? "");
+    if (!organizationId) throw new BadRequestException("Partner organization is missing");
+
+    const categorySlug = String(body.category_slug ?? current.category_slug ?? "").trim();
+    const category = await this.db.query("SELECT slug FROM categories WHERE slug=$1 AND active=true LIMIT 1", [categorySlug]);
+    if (!category.rows[0]) throw new BadRequestException("Невідома категорія");
+
+    const telegramIds = body.telegram_ids === undefined ? (Array.isArray(current.telegram_ids) ? current.telegram_ids.map(String) : []) : parseTelegramIds(body.telegram_ids);
+    if (!telegramIds.length) throw new BadRequestException("Вкажіть хоча б один числовий Telegram ID");
+
+    const currentDetails = current.details && typeof current.details === "object" ? current.details as Record<string, unknown> : {};
+    const currentAttributes = current.attributes && typeof current.attributes === "object" ? current.attributes as Record<string, unknown> : {};
+    const detailsInput = body.details && typeof body.details === "object" ? body.details as Record<string, unknown> : {};
+    const attributesInput = body.attributes && typeof body.attributes === "object" ? body.attributes as Record<string, unknown> : {};
+
+    let address = String(body.address ?? current.address ?? "").trim();
+    let city = String(body.city ?? detailsInput.city ?? currentDetails.city ?? "").trim();
+    let regionName = String(body.region_name ?? detailsInput.region_name ?? currentDetails.region_name ?? current.region_name ?? "").trim();
+    let lat = num(body.lat, Number(current.lat));
+    let lng = num(body.lng, Number(current.lng));
+    const mapSelected = body.map_selected === true;
+    const ids = detailsInput.geo_place_ids && typeof detailsInput.geo_place_ids === "object" ? detailsInput.geo_place_ids as Record<string, unknown> : {};
+    const canVerify = detailsInput.address_verified === true && String(ids.city ?? "") && String(ids.street ?? "") && String(ids.house ?? "");
+    if (!mapSelected && canVerify) {
+      const verified = await this.verifiedAddressFromBody({ ...body, details: detailsInput });
+      address = verified.formatted_address || address;
+      city = verified.city || city;
+      regionName = verified.region || regionName;
+      lat = verified.lat;
+      lng = verified.lng;
+    }
+    if (lat == null || lng == null || !address) throw new BadRequestException("Вкажіть коректну адресу або точку на мапі");
+    const regionId = await this.ensureRegionForPlace(city, regionName, lat, lng, String(body.region_id ?? current.region_id));
+
+    const details = { ...currentDetails, ...detailsInput, city, region_name: regionName, allowed_telegram_ids: telegramIds };
+    const attributes = { ...currentAttributes, ...attributesInput };
+    const workHours = body.work_hours && typeof body.work_hours === "object" ? body.work_hours : current.work_hours ?? {};
+    const name = String(body.name ?? current.name ?? "").trim();
+    if (!name) throw new BadRequestException("Вкажіть назву партнера");
+
+    await this.db.transaction(async (client) => {
+      await client.query("UPDATE organizations SET region_id=$2,name=$3,updated_at=now() WHERE id=$1", [organizationId, regionId, name]);
+      await client.query(
+        `UPDATE places SET region_id=$2,category_slug=$3,subcategory=$4,name=$5,description=$6,address=$7,lat=$8,lng=$9,phone=$10,image_url=$11,
+         work_hours=$12::jsonb,attributes=$13::jsonb,details=$14::jsonb,updated_at=now() WHERE id=$1`,
+        [placeId, regionId, categorySlug, body.subcategory ?? current.subcategory ?? null, name, String(body.description ?? current.description ?? ""), address, lat, lng,
+         body.phone === undefined ? current.phone : body.phone || null, body.image_url === undefined ? current.image_url : body.image_url || null,
+         JSON.stringify(workHours), JSON.stringify(attributes), JSON.stringify(details)],
+      );
+      await client.query("UPDATE organization_telegram_access SET active=false,updated_at=now() WHERE organization_id=$1", [organizationId]);
+      for (const telegramId of telegramIds) {
+        await client.query(
+          `INSERT INTO organization_telegram_access(organization_id,telegram_id,role,active) VALUES($1,$2,'owner',true)
+           ON CONFLICT (organization_id,telegram_id) DO UPDATE SET active=true,role='owner',updated_at=now()`,
+          [organizationId, telegramId],
+        );
+      }
+    });
+    return this.adminPartner(placeId);
   }
 
   async adminCreatePartner(body: Record<string, unknown>) {
@@ -579,10 +669,13 @@ export class Stage2Service {
       if (!category.rows[0]) throw new BadRequestException("Invalid category_slug");
     }
     const result = await this.db.query(
-      `UPDATE places SET status=$2,moderation_comment=$3,category_slug=COALESCE($4,category_slug),approved_at=CASE WHEN $2='approved' THEN now() ELSE approved_at END,updated_at=now() WHERE id=$1 RETURNING id,name,status,category_slug,moderation_comment`,
+      `UPDATE places SET status=$2,moderation_comment=$3,category_slug=COALESCE($4,category_slug),approved_at=CASE WHEN $2='approved' THEN now() ELSE approved_at END,updated_at=now() WHERE id=$1 RETURNING id,name,status,category_slug,moderation_comment,organization_id`,
       [placeId, status, comment ?? null, cleanCategory || null],
     );
     if (!result.rows[0]) throw new NotFoundException("Place not found");
+    if (result.rows[0].organization_id) {
+      await this.db.query("UPDATE organizations SET status=$2,updated_at=now() WHERE id=$1", [result.rows[0].organization_id, status === "approved" ? "approved" : status]);
+    }
     return result.rows[0];
   }
 

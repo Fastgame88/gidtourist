@@ -60,6 +60,51 @@ import { RealMap } from "../real-map";
 type Navigate = (role: RoleKey, slug: string) => void;
 type AdminProps = { navigate: Navigate };
 
+const ADMIN_SELECTED_PARTNER_KEY = "gid-tourist-admin-selected-partner-id";
+const ADMIN_EDIT_PARTNER_KEY = "gid-tourist-admin-edit-partner-id";
+
+type AdminPartnerDetail = {
+  id: string;
+  organization_id?: string | null;
+  organization_name?: string | null;
+  region_id: string;
+  region_name?: string;
+  category_slug: string;
+  subcategory?: string | null;
+  name: string;
+  description?: string;
+  address: string;
+  lat: number;
+  lng: number;
+  phone?: string | null;
+  image_url?: string | null;
+  work_hours?: Record<string, any>;
+  attributes?: Record<string, any>;
+  details?: Record<string, any>;
+  status: string;
+  moderation_comment?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  telegram_ids?: string[];
+  partner_start_param?: string | null;
+  views?: number;
+  qr_scans?: number;
+  route_clicks?: number;
+  call_clicks?: number;
+};
+
+function rememberPartner(id: string, edit = false) {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(ADMIN_SELECTED_PARTNER_KEY, id);
+  if (edit) window.sessionStorage.setItem(ADMIN_EDIT_PARTNER_KEY, id);
+  else window.sessionStorage.removeItem(ADMIN_EDIT_PARTNER_KEY);
+}
+
+function selectedAdminPartnerId() {
+  if (typeof window === "undefined") return "";
+  return window.sessionStorage.getItem(ADMIN_SELECTED_PARTNER_KEY) || "";
+}
+
 type NavKey = "partners" | "content" | "clients" | "settlements" | "bonuses" | "statistics" | "settings";
 
 type TableColumn = {
@@ -318,7 +363,7 @@ function PartnersScreen({ navigate }: AdminProps) {
     <AdminShell active="partners" navigate={navigate} contentClassName="ad-main--partners">
       <AdminPageHeader
         title="Партнери"
-        action={<PrimaryButton onClick={() => navigate("admin", "admin-partner-create")}><Plus size={18} /> Новий партнер</PrimaryButton>}
+        action={<PrimaryButton onClick={() => { if (typeof window !== "undefined") window.sessionStorage.removeItem(ADMIN_EDIT_PARTNER_KEY); navigate("admin", "admin-partner-create"); }}><Plus size={18} /> Новий партнер</PrimaryButton>}
       />
       <FilterStrip type="partners" />
       {loadError ? <div className="ad-create-message is-error">{loadError}</div> : null}
@@ -331,7 +376,10 @@ function PartnersScreen({ navigate }: AdminProps) {
             <div className="ad-entity-cell"><PartnerListIcon name={row.name} /><div><strong>{row.name}</strong><small>{row.subcategory || row.organization_name || "Партнер"}</small></div></div>
             <span>{categoryName(row.category_slug)}</span><span>{row.region_name || row.address || "—"}</span><Status>{row.category_slug === "hotel" ? "Базовий" : "Партнер"}</Status>
             <Status tone={row.status === "approved" ? "green" : row.status === "rejected" ? "red" : row.status === "pending" ? "orange" : "gray"}>{row.status}</Status>
-            <div className="ad-row-actions"><button onClick={() => navigate("admin", "admin-partner-details")}><Eye size={17} /></button><button onClick={() => navigate("admin", "admin-partner-details")}><Edit3 size={17} /></button><button><MoreVertical size={17} /></button></div>
+            <div className="ad-row-actions">
+              <button onClick={() => { rememberPartner(row.id); navigate("admin", "admin-partner-details"); }} aria-label="Переглянути"><Eye size={17} /></button>
+              <button onClick={() => { rememberPartner(row.id, true); navigate("admin", "admin-partner-create"); }} aria-label="Редагувати"><Edit3 size={17} /></button>
+            </div>
           </TableRow>
         ))}
         {!rows.length && !loadError ? <div className="ad-stage2-empty-row">Партнерів у базі ще немає</div> : null}
@@ -493,6 +541,9 @@ function PartnerCreateScreen({ navigate }: AdminProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [created, setCreated] = useState<{ place_id: string; start_param: string; status: string; telegram_ids: string[] } | null>(null);
+  const [editId, setEditId] = useState("");
+  const [editStatus, setEditStatus] = useState("");
+  const [success, setSuccess] = useState("");
   const photoInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -501,6 +552,34 @@ function PartnerCreateScreen({ navigate }: AdminProps) {
       setCategories(list);
       if (!categorySlug && list[0]?.slug) setCategorySlug(list[0].slug);
     }).catch((e) => setError(e instanceof Error ? e.message : "Не вдалося завантажити категорії"));
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const id = window.sessionStorage.getItem(ADMIN_EDIT_PARTNER_KEY) || "";
+    if (!id) return;
+    setEditId(id);
+    void adminStage2Fetch<AdminPartnerDetail>(`/admin/stage2/partners/${encodeURIComponent(id)}`).then((row) => {
+      const details = row.details && typeof row.details === "object" ? row.details : {};
+      const attrs = row.attributes && typeof row.attributes === "object" ? row.attributes : {};
+      const work = row.work_hours && typeof row.work_hours === "object" ? row.work_hours : {};
+      const daily = work.daily && typeof work.daily === "object" ? work.daily as Record<string, string> : {};
+      const gallery = Array.isArray(details.gallery) ? details.gallery.map(String).filter(Boolean) : [];
+      setName(row.name || "");
+      setCategorySlug(row.category_slug || "");
+      setPlacement((attrs.placement_type === "basic" || attrs.placement_type === "premium") ? attrs.placement_type : "social");
+      setRate(String(attrs.rate_percent ?? 0));
+      setCity(String(details.city || "")); setRegionName(String(details.region_name || row.region_name || "")); setStreet(String(details.street || "")); setHouse(String(details.house || ""));
+      setAddress(row.address || ""); setLat(Number(row.lat)); setLng(Number(row.lng)); setMapDraft({ lat: Number(row.lat), lng: Number(row.lng) }); setMapSelected(true);
+      setPhone(String(row.phone || "")); setDescription(String(row.description || ""));
+      setAlwaysOpen(work.always_open === true); setWorkFrom(String(daily.from || "09:00")); setWorkTo(String(daily.to || "18:00"));
+      setPhotos(gallery.length ? gallery : row.image_url ? [String(row.image_url)] : []);
+      setTelegramIds(Array.isArray(row.telegram_ids) ? row.telegram_ids.join(", ") : "");
+      setModules(Array.isArray(details.cabinet_modules) ? details.cabinet_modules.map(String) : []);
+      setCheckIn(String(details.check_in || "14:00")); setCheckOut(String(details.check_out || "11:00"));
+      setEditStatus(row.status || "");
+      setError("");
+    }).catch((e) => setError(e instanceof Error ? e.message : "Не вдалося завантажити партнера"));
   }, []);
 
   useEffect(() => {
@@ -586,27 +665,36 @@ function PartnerCreateScreen({ navigate }: AdminProps) {
     if (!mapSelected && (!cityPlaceId || !streetPlaceId || !housePlaceId)) return setError("Оберіть адресу з Google-підказок або вкажіть точку на мапі");
     setSaving(true);
     try {
-      const result = await adminStage2Fetch<{ place_id: string; start_param: string; status: string; telegram_ids: string[] }>("/admin/stage2/partners", "", {
-        method: "POST",
-        body: JSON.stringify({
-          name: name.trim(), category_slug: categorySlug, placement_type: placement, rate_percent: Number(rate) || 0,
-          city, region_name: regionName, street, house, address, lat, lng, map_selected: mapSelected,
-          phone, description, image_url: photos[0] || null, telegram_ids: ids, publish,
-          work_hours: alwaysOpen ? { always_open: true } : { daily: { from: workFrom, to: workTo } },
-          attributes: { partner: true },
-          subcategory: ({ hotel: "Готель", food: "Ресторан", shop: "Магазин", rest: "SPA / сауна", entertainment: "Активний відпочинок", transfer: "Трансфер / таксі" } as Record<string,string>)[categorySlug] || null,
-          details: {
-            address_verified: !mapSelected && Boolean(housePlaceId),
-            geo_place_ids: { city: cityPlaceId, street: streetPlaceId, house: housePlaceId },
-            city, region_name: regionName, street, house,
-            gallery: photos,
-            cabinet_modules: modules,
-            check_in: checkIn,
-            check_out: checkOut,
-          },
-        }),
-      });
-      setCreated(result);
+      const requestBody = {
+        name: name.trim(), category_slug: categorySlug, placement_type: placement, rate_percent: Number(rate) || 0,
+        city, region_name: regionName, street, house, address, lat, lng, map_selected: mapSelected,
+        phone, description, image_url: photos[0] || null, telegram_ids: ids, publish,
+        work_hours: alwaysOpen ? { always_open: true } : { daily: { from: workFrom, to: workTo } },
+        attributes: { partner: true, placement_type: placement, rate_percent: Number(rate) || 0 },
+        subcategory: ({ hotel: "Готель", food: "Ресторан", shop: "Магазин", rest: "SPA / сауна", entertainment: "Активний відпочинок", transfer: "Трансфер / таксі" } as Record<string,string>)[categorySlug] || null,
+        details: {
+          address_verified: !mapSelected && Boolean(housePlaceId),
+          geo_place_ids: { city: cityPlaceId, street: streetPlaceId, house: housePlaceId },
+          city, region_name: regionName, street, house,
+          gallery: photos,
+          cabinet_modules: modules,
+          check_in: checkIn,
+          check_out: checkOut,
+        },
+      };
+      if (editId) {
+        await adminStage2Fetch<AdminPartnerDetail>(`/admin/stage2/partners/${encodeURIComponent(editId)}`, "", { method: "PATCH", body: JSON.stringify(requestBody) });
+        rememberPartner(editId);
+        if (typeof window !== "undefined") window.sessionStorage.removeItem(ADMIN_EDIT_PARTNER_KEY);
+        setSuccess("Зміни партнера збережено");
+        navigate("admin", "admin-partner-details");
+      } else {
+        const result = await adminStage2Fetch<{ place_id: string; start_param: string; status: string; telegram_ids: string[] }>("/admin/stage2/partners", "", {
+          method: "POST", body: JSON.stringify(requestBody),
+        });
+        setCreated(result);
+        rememberPartner(result.place_id);
+      }
     } catch (e) {
       const message = e instanceof Error ? e.message : "Не вдалося створити партнера";
       setError(/too large|payload|занадто велик/i.test(message) ? "Не вдалося відправити дані: сервер ще використовує старий ліміт запиту. Оновіть backend цією версією та повторіть." : message);
@@ -636,12 +724,13 @@ function PartnerCreateScreen({ navigate }: AdminProps) {
   return (
     <AdminShell active="partners" navigate={navigate} contentClassName="ad-main--create">
       <AdminPageHeader
-        title="Створення партнера"
-        subtitle="Заповніть інформацію про партнера"
-        action={<div className="ad-page-actions"><OutlineButton onClick={() => navigate("admin", "admin-partners")}>Скасувати</OutlineButton><OutlineButton onClick={() => void save(false)}>{saving ? "Збереження…" : "Зберегти"}</OutlineButton><PrimaryButton onClick={() => void save(true)}><FileText size={17}/> {saving ? "Збереження…" : "Зберегти і розмістити"}</PrimaryButton></div>}
+        title={editId ? "Редагування партнера" : "Створення партнера"}
+        subtitle={editId ? `Редагування реальних даних партнера${editStatus ? ` · ${editStatus}` : ""}` : "Заповніть інформацію про партнера"}
+        action={<div className="ad-page-actions"><OutlineButton onClick={() => { if (typeof window !== "undefined") window.sessionStorage.removeItem(ADMIN_EDIT_PARTNER_KEY); navigate("admin", "admin-partners"); }}>Скасувати</OutlineButton>{editId ? <PrimaryButton onClick={() => void save(editStatus === "approved")}><FileText size={17}/> {saving ? "Збереження…" : "Зберегти зміни"}</PrimaryButton> : <><OutlineButton onClick={() => void save(false)}>{saving ? "Збереження…" : "Зберегти"}</OutlineButton><PrimaryButton onClick={() => void save(true)}><FileText size={17}/> {saving ? "Збереження…" : "Зберегти і розмістити"}</PrimaryButton></>}</div>}
       />
       {error ? <div className="ad-create-message is-error">{error}</div> : null}
-      {created ? <section className="ad-created-partner-card"><Stage2QrPreview value={partnerDeepLink(created.start_param)} /><div><h2>Партнера створено</h2><p>QR збережений у PostgreSQL і працюватиме після redeploy. Доступ мають лише вказані Telegram ID.</p><code>{created.start_param}</code><input readOnly value={partnerDeepLink(created.start_param)} /><div className="ad-page-actions"><OutlineButton onClick={() => void navigator.clipboard.writeText(partnerDeepLink(created.start_param))}>Копіювати посилання</OutlineButton><PrimaryButton onClick={() => navigate("admin", "admin-partners")}>До партнерів</PrimaryButton></div></div></section> : null}
+      {success ? <div className="ad-create-message">{success}</div> : null}
+      {created && !editId ? <section className="ad-created-partner-card"><Stage2QrPreview value={partnerDeepLink(created.start_param)} /><div><h2>Партнера створено</h2><p>QR збережений у PostgreSQL і працюватиме після redeploy. Доступ мають лише вказані Telegram ID.</p><code>{created.start_param}</code><input readOnly value={partnerDeepLink(created.start_param)} /><div className="ad-page-actions"><OutlineButton onClick={() => void navigator.clipboard.writeText(partnerDeepLink(created.start_param))}>Копіювати посилання</OutlineButton><PrimaryButton onClick={() => navigate("admin", "admin-partners")}>До партнерів</PrimaryButton></div></div></section> : null}
       <section className="ad-create-form">
         <div className="ad-create-row ad-create-row--1"><div className="ad-create-row__label"><span>1</span><strong>Назва</strong></div><div className="ad-create-row__control"><input value={name} onChange={(e)=>setName(e.target.value)} placeholder="Введіть назву партнера" /></div></div>
         <div className="ad-create-row ad-create-row--2"><div className="ad-create-row__label"><span>2</span><strong>Категорія</strong></div><div className="ad-create-row__control"><select className="ad-native-select" value={categorySlug} onChange={(e)=>setCategorySlug(e.target.value)}><option value="">Оберіть категорію</option>{categories.map((item)=><option key={item.slug} value={item.slug}>{item.slug === "hotel" ? "Готель / точка входу" : item.name}</option>)}</select></div></div>
@@ -729,17 +818,22 @@ function ClientHistoryScreen({ navigate }: AdminProps) {
   );
 }
 
-function PartnerDetailHeader({ navigate }: AdminProps) {
+function PartnerDetailHeader({ navigate, partner, onEdit, onToggleStatus }: AdminProps & { partner: AdminPartnerDetail; onEdit: () => void; onToggleStatus: () => void }) {
+  const created = partner.created_at ? new Date(partner.created_at).toLocaleDateString("uk-UA") : "—";
+  const updated = partner.updated_at ? new Date(partner.updated_at).toLocaleDateString("uk-UA") : "—";
   return (
     <div className="ad-detail-header ad-partner-detail-header">
       <div className="ad-detail-person">
-        <span className="ad-partner-header-icon"><UtensilsCrossed size={24}/></span>
+        <span className="ad-partner-header-icon"><Store size={24}/></span>
         <div>
-          <div className="ad-detail-title-line"><h1>Ресторан «Гуцульщина»</h1><Status>Активний</Status></div>
-          <small>ID партнера: 00057 · Створено: 15.03.2024 · Оновлено: 20.05.2024</small>
+          <div className="ad-detail-title-line"><h1>{partner.name}</h1><Status tone={partner.status === "approved" ? "green" : partner.status === "rejected" ? "red" : partner.status === "pending" ? "orange" : "gray"}>{partner.status}</Status></div>
+          <small>ID партнера: {partner.id} · Створено: {created} · Оновлено: {updated}</small>
         </div>
       </div>
-      <div className="ad-page-actions"><OutlineButton><Edit3 size={16}/> Редагувати</OutlineButton><OutlineButton>Призупинити</OutlineButton><PrimaryButton onClick={() => navigate("admin", "admin-partner-history")}>Інші дії <ChevronDown size={15}/></PrimaryButton></div>
+      <div className="ad-page-actions">
+        <OutlineButton onClick={onEdit}><Edit3 size={16}/> Редагувати</OutlineButton>
+        <OutlineButton onClick={onToggleStatus}>{partner.status === "approved" ? "Призупинити" : "Активувати"}</OutlineButton>
+      </div>
     </div>
   );
 }
@@ -754,52 +848,98 @@ function PartnerInfoItem({ icon, label, children, className = "" }: { icon: Reac
 }
 
 function PartnerDetailsScreen({ navigate }: AdminProps) {
+  const [partner, setPartner] = useState<AdminPartnerDetail | null>(null);
+  const [categories, setCategories] = useState<Stage2Category[]>([]);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const load = async () => {
+    const id = selectedAdminPartnerId();
+    if (!id) { setError("Не вибрано партнера для перегляду"); return; }
+    try {
+      const [row, cats] = await Promise.all([
+        adminStage2Fetch<AdminPartnerDetail>(`/admin/stage2/partners/${encodeURIComponent(id)}`),
+        stage2Fetch<Stage2Category[]>("/categories"),
+      ]);
+      setPartner(row); setCategories(cats); setError("");
+    } catch (e) { setError(e instanceof Error ? e.message : "Не вдалося завантажити партнера"); }
+  };
+
+  useEffect(() => { void load(); }, []);
+
+  if (!partner) {
+    return <AdminShell active="partners" navigate={navigate} contentClassName="ad-main--partner-detail"><AdminPageHeader title="Партнер" />{error ? <div className="ad-create-message is-error">{error}</div> : <div className="ad-stage2-empty-row">Завантаження даних партнера…</div>}</AdminShell>;
+  }
+
+  const details = partner.details && typeof partner.details === "object" ? partner.details : {};
+  const attrs = partner.attributes && typeof partner.attributes === "object" ? partner.attributes : {};
+  const work = partner.work_hours && typeof partner.work_hours === "object" ? partner.work_hours : {};
+  const daily = work.daily && typeof work.daily === "object" ? work.daily as Record<string, string> : {};
+  const hours = work.always_open === true ? "Цілодобово" : daily.from && daily.to ? `${daily.from} – ${daily.to}` : "Не вказано";
+  const categoryName = categories.find((item) => item.slug === partner.category_slug)?.name || partner.category_slug;
+  const placement = attrs.placement_type === "premium" ? "Платний / Преміум" : attrs.placement_type === "basic" ? "Базовий" : "Соціальний";
+  const gallery = Array.from(new Set([...(Array.isArray(details.gallery) ? details.gallery.map(String) : []), partner.image_url || ""].filter(Boolean)));
+  const modules = Array.isArray(details.cabinet_modules) ? details.cabinet_modules.map(String) : [];
+  const telegramIds = Array.isArray(partner.telegram_ids) ? partner.telegram_ids.map(String) : [];
+  const rate = Number(attrs.rate_percent ?? 0);
+
+  const edit = () => { rememberPartner(partner.id, true); navigate("admin", "admin-partner-create"); };
+  const toggleStatus = async () => {
+    setBusy(true);
+    try {
+      await adminStage2Fetch(`/admin/stage2/places/${encodeURIComponent(partner.id)}/status`, "", { method: "PATCH", body: JSON.stringify({ status: partner.status === "approved" ? "draft" : "approved" }) });
+      await load();
+    } catch (e) { setError(e instanceof Error ? e.message : "Не вдалося змінити статус"); }
+    finally { setBusy(false); }
+  };
+
   return (
     <AdminShell active="partners" navigate={navigate} contentClassName="ad-main--partner-detail">
-      <PartnerDetailHeader navigate={navigate}/>
+      <PartnerDetailHeader navigate={navigate} partner={partner} onEdit={edit} onToggleStatus={() => { if (!busy) void toggleStatus(); }}/>
+      {error ? <div className="ad-create-message is-error">{error}</div> : null}
       <section className="ad-detail-card ad-partner-reference-card">
-        <div className="ad-detail-card__title"><h2>Дані партнера</h2><Status>Після погодження даних ви зможете редагувати партнера</Status></div>
+        <div className="ad-detail-card__title"><h2>Дані партнера</h2><Status>{partner.status === "approved" ? "Дані активні в каталозі" : "Дані ще не активні в каталозі"}</Status></div>
         <div className="ad-partner-reference-grid">
           <div className="ad-partner-reference-col">
-            <PartnerInfoItem icon={<Store size={17}/>} label="Категорія"><strong>Харчування</strong></PartnerInfoItem>
-            <PartnerInfoItem icon={<Building2 size={17}/>} label="Тип розміщення"><strong>Преміум партнер 🏅 (монетизований)</strong></PartnerInfoItem>
-            <PartnerInfoItem icon={<Percent size={17}/>} label="Ставка, %"><strong>12%</strong></PartnerInfoItem>
-            <PartnerInfoItem icon={<MapPin size={17}/>} label="Адреса / геолокація"><strong>м. Яремче, вул. Свободи, 247</strong></PartnerInfoItem>
-            <PartnerInfoItem icon={<Phone size={17}/>} label="Телефон"><strong>+380 (98) 765-43-21</strong></PartnerInfoItem>
+            <PartnerInfoItem icon={<Store size={17}/>} label="Категорія"><strong>{categoryName || "—"}</strong></PartnerInfoItem>
+            <PartnerInfoItem icon={<Building2 size={17}/>} label="Тип розміщення"><strong>{placement}</strong></PartnerInfoItem>
+            <PartnerInfoItem icon={<Percent size={17}/>} label="Ставка, %"><strong>{rate}%</strong></PartnerInfoItem>
+            <PartnerInfoItem icon={<MapPin size={17}/>} label="Адреса / геолокація"><strong>{partner.address || "Не вказано"}</strong></PartnerInfoItem>
+            <PartnerInfoItem icon={<Phone size={17}/>} label="Телефон"><strong>{partner.phone || "Не вказано"}</strong></PartnerInfoItem>
           </div>
           <div className="ad-partner-reference-col">
-            <PartnerInfoItem icon={<Clock3 size={17}/>} label="Графік роботи"><strong>Щоденно 11:00 – 22:00</strong></PartnerInfoItem>
-            <PartnerInfoItem icon={<FileText size={17}/>} label="Короткий опис"><strong>Ресторан гуцульської кухні з автентичними стравами, затишною атмосферою та видом на Карпати. Ідеальне місце для сімейного відпочинку та святкувань.</strong></PartnerInfoItem>
+            <PartnerInfoItem icon={<Clock3 size={17}/>} label="Графік роботи"><strong>{hours}</strong></PartnerInfoItem>
+            <PartnerInfoItem icon={<FileText size={17}/>} label="Короткий опис"><strong>{partner.description || "Опис ще не додано"}</strong></PartnerInfoItem>
             <PartnerInfoItem icon={<Camera size={17}/>} label="Фото">
-              <div className="ad-photo-strip ad-photo-strip--images">
-                <img src="/images/mountain-hotel.webp" alt="Фото партнера 1" />
-                <img src="/images/rest-excursion.webp" alt="Фото партнера 2" />
-                <img src="/images/rest-massage.webp" alt="Фото партнера 3" />
-                <span>+3</span>
-              </div>
+              {gallery.length ? <div className="ad-photo-strip ad-photo-strip--images">{gallery.slice(0,3).map((src, index)=><img src={src} alt={`Фото партнера ${index+1}`} key={`${src}-${index}`} />)}{gallery.length > 3 ? <span>+{gallery.length - 3}</span> : null}</div> : <strong>Фото ще не завантажено</strong>}
             </PartnerInfoItem>
           </div>
           <div className="ad-partner-reference-col ad-partner-reference-col--wide">
-            <PartnerInfoItem icon={<Send size={17}/>} label="Telegram ID"><strong>@Hutsulshchyna_rest</strong></PartnerInfoItem>
+            <PartnerInfoItem icon={<Send size={17}/>} label="Telegram ID"><strong>{telegramIds.length ? telegramIds.join(", ") : "Не вказано"}</strong></PartnerInfoItem>
             <PartnerInfoItem icon={<BriefcaseBusiness size={17}/>} label="Структура кабінету партнера">
-              <span className="ad-tags">{["Меню","Резерв столика","Графік роботи","Контакти","Галерея","Акції та новини","Відгуки","Wi‑Fi","Парковка","Локація"].map(t=><i key={t}>✓ {t}</i>)}</span>
+              {modules.length ? <span className="ad-tags">{modules.map(t=><i key={t}>✓ {t}</i>)}</span> : <strong>Пункти кабінету ще не налаштовані</strong>}
             </PartnerInfoItem>
+            <PartnerInfoItem icon={<KeyRound size={17}/>} label="Партнерський QR"><strong>{partner.partner_start_param || "Не створено"}</strong></PartnerInfoItem>
           </div>
         </div>
       </section>
-      <section className="ad-detail-card"><div className="ad-section-title"><h2>Взаєморозрахунки</h2><Info size={16}/></div><div className="ad-settlement-equation"><SummaryCard label="Загальна сума продажів через додаток" value="247 360 ₴" note="За весь період"/><span>−</span><SummaryCard label="Нараховано комісії (платформою)" value="29 683 ₴" note="Комісія 12%" tone="neutral"/><span>−</span><SummaryCard label="Списано балів у партнера (клієнтами)" value="18 450 ₴" note="За весь період" tone="neutral"/><span>=</span><SummaryCard label="До сплати платформі" value="−59 087 ₴" note="Кредитний баланс" tone="green"/></div><button type="button" className="ad-link-button" onClick={() => navigate("admin", "admin-partner-history")}>Перейти до взаєморозрахунків →</button></section>
-      <section className="ad-detail-card"><div className="ad-section-title"><h2>Статистика</h2><DateRange/></div><div className="ad-mini-stats">{[["Перегляди","4 125"],["QR-сканування","1 872"],["Бронювання столів","326"],["Кількість клієнтів","589"],["Відгуки","72"],["Продажі / операції","247 360 ₴"]].map(([l,v])=><div key={l}><small>{l}</small><strong>{v}</strong><span>↗ 13%</span><MiniSparkline/></div>)}</div></section>
+      <section className="ad-detail-card"><div className="ad-section-title"><h2>Взаєморозрахунки</h2><Info size={16}/></div><div className="ad-settlement-equation"><SummaryCard label="Загальна сума продажів через додаток" value="0 ₴" note="Реальні операції ще відсутні"/><span>−</span><SummaryCard label="Нараховано комісії" value="0 ₴" note={`Ставка ${rate}%`} tone="neutral"/><span>−</span><SummaryCard label="Компенсації / бонуси" value="0 ₴" note="Операцій ще немає" tone="neutral"/><span>=</span><SummaryCard label="Баланс взаєморозрахунків" value="0 ₴" note="За реальними даними" tone="green"/></div></section>
+      <section className="ad-detail-card"><div className="ad-section-title"><h2>Статистика</h2></div><div className="ad-mini-stats">{[["Перегляди",String(partner.views ?? 0)],["QR-сканування",String(partner.qr_scans ?? 0)],["Переходи в маршрут",String(partner.route_clicks ?? 0)],["Дзвінки",String(partner.call_clicks ?? 0)],["Бронювання","0"],["Операції","0"]].map(([l,v])=><div key={l}><small>{l}</small><strong>{v}</strong><span>Реальні дані</span></div>)}</div></section>
     </AdminShell>
   );
 }
 
 function PartnerHistoryScreen({ navigate }: AdminProps) {
+  const [partner, setPartner] = useState<AdminPartnerDetail | null>(null);
+  useEffect(() => {
+    const id = selectedAdminPartnerId();
+    if (id) void adminStage2Fetch<AdminPartnerDetail>(`/admin/stage2/partners/${encodeURIComponent(id)}`).then(setPartner).catch(() => undefined);
+  }, []);
   return (
     <AdminShell active="partners" navigate={navigate} contentClassName="ad-main--partner-history">
-      <PartnerDetailHeader navigate={navigate}/>
-      <section className="ad-detail-card"><div className="ad-section-title"><h2>Історія взаєморозрахунків (нарахування за продаж)</h2><DateRange/></div><AdminTable columns={[{label:"Дата операції",className:"1fr"},{label:"Клієнт",className:"1fr"},{label:"Операція / Послуга",className:"2fr"},{label:"Сума продажу",className:"1fr"},{label:"Ставка платформи",className:"1fr"},{label:"Нараховано партнеру",className:"1.1fr"}]}>{[["31.05.2024 18:42","Іван Петренко","Рахунок №9371\nРесторанні послуги","1 280 ₴","10%","128 ₴"],["31.05.2024 15:21","Оксана Гнатюк","Рахунок №1362\nРесторанні послуги","950 ₴","10%","95 ₴"],["30.05.2024 20:05","Тарас Мельник","Рахунок №5181\nВечірнє обслуговування","5 600 ₴","10%","560 ₴"]].map(r=><TableRow key={r[0]} columns={["1fr","1fr","2fr","1fr","1fr","1.1fr"]}>{r.map((v,i)=><span key={i} className={i===2?"ad-preline":""}>{v}</span>)}</TableRow>)}</AdminTable></section>
-      <section className="ad-detail-card"><div className="ad-section-title"><h2>Історія оплат бонусами (лише повна оплата)</h2></div><div className="ad-info-banner"><Info size={17}/> Оплата бонусами доступна лише на повну суму чека. Часткове списання бонусів недоступне.</div><AdminTable columns={[{label:"Дата операції",className:"1fr"},{label:"Клієнт",className:"1fr"},{label:"Операція / Послуга",className:"2fr"},{label:"Сума чека",className:"1fr"},{label:"Оплачено бонусами",className:"1.2fr"}]}>{[["31.05.2024 12:08","Іван Петренко","Рахунок №1391\nРесторанні послуги","1 120 ₴","1 120 бонусів"],["28.05.2024 21:44","Володимир Дячук","Рахунок №8350\nРесторанні послуги","3 480 ₴","3 480 бонусів"]].map(r=><TableRow key={r[0]} columns={["1fr","1fr","2fr","1fr","1.2fr"]}>{r.map((v,i)=><span key={i} className={i===2?"ad-preline":""}>{v}</span>)}</TableRow>)}</AdminTable></section>
-      <section className="ad-detail-card"><div className="ad-section-title"><h2>Історія активності партнера</h2></div><AdminTable columns={[{label:"Дата та час",className:"1fr"},{label:"Тип дії",className:"1fr"},{label:"Опис",className:"2fr"},{label:"Виконавець",className:"1.5fr"}]}>{[["20.05.2024 11:28","Оновлення даних","Оновлено банківські реквізити партнера","Адміністратор (admin@gidtourist.ua)"],["15.05.2024 09:42","Фінансова операція","Додано списання бонус партнеру на суму 1 200 ₴","Адміністратор (admin@gidtourist.ua)"],["12.05.2024 16:15","Зміна статусу","Партнера активовано","Адміністратор (admin@gidtourist.ua)"]].map(r=><TableRow key={r[0]} columns={["1fr","1fr","2fr","1.5fr"]}>{r.map((v,i)=><span key={i}>{v}</span>)}</TableRow>)}</AdminTable></section>
+      <AdminPageHeader title={partner ? `Історія — ${partner.name}` : "Історія партнера"} action={<OutlineButton onClick={() => navigate("admin", "admin-partner-details")}><ArrowLeft size={16}/> До партнера</OutlineButton>} />
+      <section className="ad-detail-card"><div className="ad-section-title"><h2>Історія взаєморозрахунків</h2></div><div className="ad-stage2-empty-row">Реальних фінансових операцій для цього партнера ще немає</div></section>
+      <section className="ad-detail-card"><div className="ad-section-title"><h2>Історія активності партнера</h2></div><div className="ad-stage2-empty-row">Історія буде заповнюватися реальними діями після підключення відповідних модулів</div></section>
     </AdminShell>
   );
 }
@@ -1203,7 +1343,7 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
   const [message, setMessage] = useState("");
   const [apiStatus, setApiStatus] = useState<"checking" | "connected" | "error">("checking");
   const [apiError, setApiError] = useState("");
-  const [qrPlaceId, setQrPlaceId] = useState("place-girskyi-zatyshok");
+  const [qrPlaceId, setQrPlaceId] = useState("");
   const [qrParam, setQrParam] = useState("");
   const [categorySlug, setCategorySlug] = useState("");
   const [categoryName, setCategoryName] = useState("");

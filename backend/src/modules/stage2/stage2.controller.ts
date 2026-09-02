@@ -89,6 +89,14 @@ export class Stage2Controller {
   adminCreatePartner(@Body() body: Record<string, unknown>) { return this.service.adminCreatePartner(body); }
 
   @UseGuards(AdminKeyGuard)
+  @Get("admin/stage2/partners/:id")
+  adminPartner(@Param("id") id: string) { return this.service.adminPartner(id); }
+
+  @UseGuards(AdminKeyGuard)
+  @Patch("admin/stage2/partners/:id")
+  adminUpdatePartner(@Param("id") id: string, @Body() body: Record<string, unknown>) { return this.service.adminUpdatePartner(id, body); }
+
+  @UseGuards(AdminKeyGuard)
   @Get("admin/stage2/places")
   adminPlaces(@Query("status") status = "approved") { return this.service.adminPlaces(status); }
 

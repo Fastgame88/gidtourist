@@ -46,15 +46,17 @@ export function TouristRuntimeProvider({ children }: { children: ReactNode }) {
       let resolvedContext: Stage2Context | null = null;
       await waitForTelegramWebApp(1500);
       const startParam = telegramStartParam();
-      try {
-        const ctx = await stage2Fetch<Stage2Context>(`/context/${encodeURIComponent(startParam)}`);
-        resolvedContext = ctx;
-        if (cancelled) return;
-        setContext(ctx);
-        setLocation({ lat: Number(ctx.place?.lat ?? ctx.region.lat), lng: Number(ctx.place?.lng ?? ctx.region.lng), source: "qr" });
-        setApiOnline(true);
-      } catch {
-        if (!cancelled) setApiOnline(false);
+      if (startParam) {
+        try {
+          const ctx = await stage2Fetch<Stage2Context>(`/context/${encodeURIComponent(startParam)}`);
+          resolvedContext = ctx;
+          if (cancelled) return;
+          setContext(ctx);
+          setLocation({ lat: Number(ctx.place?.lat ?? ctx.region.lat), lng: Number(ctx.place?.lng ?? ctx.region.lng), source: "qr" });
+          setApiOnline(true);
+        } catch {
+          if (!cancelled) setApiOnline(false);
+        }
       }
 
       const auth = await ensureTelegramSession();
@@ -63,8 +65,10 @@ export function TouristRuntimeProvider({ children }: { children: ReactNode }) {
         const trackKey = `gid-tourist-stage2-opened:${startParam}`;
         const alreadyTracked = typeof window !== "undefined" && window.sessionStorage.getItem(trackKey) === "1";
         if (!alreadyTracked) {
-          void trackEvent("app_opened", { regionId: resolvedContext?.region.id, placeId: resolvedContext?.place?.id, payload: { start_param: startParam } });
-          void trackEvent("qr_scanned", { regionId: resolvedContext?.region.id, placeId: resolvedContext?.place?.id, payload: { start_param: startParam, source: resolvedContext?.qr.source } });
+          void trackEvent("app_opened", { regionId: resolvedContext?.region.id, placeId: resolvedContext?.place?.id, payload: startParam ? { start_param: startParam } : {} });
+          if (startParam && resolvedContext?.qr) {
+            void trackEvent("qr_scanned", { regionId: resolvedContext.region.id, placeId: resolvedContext.place?.id, payload: { start_param: startParam, source: resolvedContext.qr.source } });
+          }
           if (typeof window !== "undefined") window.sessionStorage.setItem(trackKey, "1");
         }
       }

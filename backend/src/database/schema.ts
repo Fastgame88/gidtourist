@@ -213,43 +213,15 @@ INSERT INTO place_type_templates (id,category_slug,place_type,label,default_titl
 ('tpl-transfer','transfer','Трансфер / таксі','Трансфер / таксі','Новий трансфер','Трансфер або таксі для гостей регіону. Вкажіть тип транспорту, місткість і зону роботи.','["Трансфер","Таксі","Оренда авто"]'::jsonb,'["Трансфер","Багаж","Дитяче крісло"]'::jsonb,'{"vehicle_type":"Тип транспорту","capacity":"Місткість","service_area":"Зона роботи","languages":"Мови водія"}'::jsonb,10)
 ON CONFLICT (category_slug,place_type) DO UPDATE SET label=EXCLUDED.label,default_title=EXCLUDED.default_title,default_description=EXCLUDED.default_description,default_services=EXCLUDED.default_services,default_amenities=EXCLUDED.default_amenities,fields=EXCLUDED.fields,sort_order=EXCLUDED.sort_order,updated_at=now();
 
-INSERT INTO places (id, region_id, category_slug, subcategory, name, description, address, lat, lng, phone, telegram, website, image_url, rating, review_count, price_level, work_hours, attributes, details, status, approved_at)
-VALUES
-('place-girskyi-zatyshok','region-tatariv','hotel','Готель','Готель «Гірський затишок»','Затишний готель у серці Карпат з видом на гори та річку.','вул. Незалежності, 155, Татарів',48.34490,24.57920,'+380671234567','https://t.me/gid_tourist_tatariv','https://example.com','/images/mountain-hotel.webp',4.80,125,3,'{"always_open":true}'::jsonb,'{"parking":true,"kids":true,"wifi":true,"partner":true,"verified":true}'::jsonb,'{"check_in":"14:00","check_out":"11:00","wifi_ssid":"Girskyi_Zatyshok_Guest","wifi_password":"zatyshok155","rules":["Куріння заборонено в приміщеннях","Тихий час 22:00–08:00"],"languages":["uk","en","pl"]}'::jsonb,'approved',now()),
-('food-hutsulshchyna','region-tatariv','food','Українська кухня','Ресторан «Гуцульщина»','Автентична карпатська кухня, локальні продукти та затишна атмосфера.','вул. Незалежності, 42, Татарів',48.34570,24.57740,'+380673421111',NULL,NULL,NULL,4.80,125,2,'{"daily":{"from":"10:00","to":"22:00"}}'::jsonb,'{"kids":true,"parking":true,"partner":true,"verified":true}'::jsonb,'{}'::jsonb,'approved',now()),
-('food-kolyba','region-tatariv','food','Українська кухня','Колиба «У Марічки»','Банош, бограч, деруни та домашні карпатські страви.','вул. Шевченка, 8, Татарів',48.34710,24.57590,'+380673422222',NULL,NULL,NULL,4.70,86,2,'{"daily":{"from":"09:00","to":"21:30"}}'::jsonb,'{"kids":true,"parking":true}'::jsonb,'{}'::jsonb,'approved',now()),
-('food-pizza','region-tatariv','food','Неукраїнська кухня','Піцерія «Татаріно»','Піца, паста та італійська кухня.','вул. Незалежності, 61, Татарів',48.34370,24.58110,'+380673423333',NULL,NULL,NULL,4.70,94,2,'{"daily":{"from":"11:00","to":"23:00"}}'::jsonb,'{"kids":true}'::jsonb,'{}'::jsonb,'approved',now()),
-('food-coffee','region-tatariv','food','Кавʼярні','Кавʼярня «Гори & Кава»','Кава, десерти та сніданки.','вул. Незалежності, 28, Татарів',48.34640,24.58020,'+380673424444',NULL,NULL,NULL,4.90,68,1,'{"daily":{"from":"08:00","to":"20:00"}}'::jsonb,'{"kids":true,"wifi":true}'::jsonb,'{}'::jsonb,'approved',now()),
-('shop-smak','region-tatariv','shop','Продовольчі','Магазин продуктів «Смак»','Продукти харчування, хліб та молочні вироби.','вул. Незалежності, 36, Татарів',48.34595,24.57970,'+380674001111',NULL,NULL,NULL,4.80,126,1,'{"daily":{"from":"08:00","to":"22:00"}}'::jsonb,'{"parking":true}'::jsonb,'{}'::jsonb,'approved',now()),
-('shop-souvenir','region-tatariv','shop','Сувеніри','Сувеніри «Карпати»','Подарунки, кераміка та локальні вироби.','вул. Незалежності, 40, Татарів',48.34620,24.57790,'+380674002222',NULL,NULL,NULL,4.70,89,2,'{"daily":{"from":"09:00","to":"20:00"}}'::jsonb,'{}'::jsonb,'{}'::jsonb,'approved',now()),
-('shop-pharmacy','region-tatariv','shop','Аптеки','Аптека «Здоровʼя»','Ліки та товари для здоровʼя.','вул. Незалежності, 52, Татарів',48.34480,24.57650,'+380674003333',NULL,NULL,NULL,4.60,72,2,'{"daily":{"from":"08:00","to":"21:00"}}'::jsonb,'{}'::jsonb,'{}'::jsonb,'approved',now()),
-('shop-home','region-tatariv','shop','Промтовари','Госптовари «Все для дому»','Побутова хімія, інструменти та посуд.','вул. Незалежності, 70, Татарів',48.34320,24.58330,'+380674004444',NULL,NULL,NULL,4.50,51,1,'{"daily":{"from":"09:00","to":"19:00"}}'::jsonb,'{}'::jsonb,'{}'::jsonb,'approved',now()),
-('rest-tub','region-tatariv','rest','Чани','Чан «Гірське відновлення»','Карпатський чан з видом на гори.','вул. Лісова, 4, Татарів',48.34290,24.57580,'+380675001111',NULL,NULL,'/images/service-tub.webp',4.80,128,3,'{"daily":{"from":"10:00","to":"22:00"}}'::jsonb,'{"parking":true,"partner":true}'::jsonb,'{}'::jsonb,'approved',now()),
-('rest-sauna','region-tatariv','rest','Сауни','Сауна в «Карпатському затишку»','Сауна, віники та душ.','вул. Незалежності, 155, Татарів',48.34485,24.57910,'+380675002222',NULL,NULL,'/images/service-sauna.webp',4.70,86,3,'{"daily":{"from":"16:00","to":"22:00"}}'::jsonb,'{"parking":true,"partner":true}'::jsonb,'{}'::jsonb,'approved',now()),
-('rest-pool','region-tatariv','rest','Басейни','Басейн «Aqua Relax»','Басейн, шезлонги та бар.','вул. Гірська, 12, Татарів',48.34770,24.58210,'+380675003333',NULL,NULL,'/images/service-pool.webp',4.60,93,3,'{"daily":{"from":"09:00","to":"21:00"}}'::jsonb,'{"kids":true,"parking":true}'::jsonb,'{}'::jsonb,'approved',now()),
-('rest-massage','region-tatariv','rest','Масаж','Масажний салон «Harmony»','Масаж та SPA-процедури.','вул. Незалежності, 77, Татарів',48.34810,24.57600,'+380675004444',NULL,NULL,'/images/rest-massage.webp',4.90,112,3,'{"daily":{"from":"09:00","to":"20:00"}}'::jsonb,'{}'::jsonb,'{}'::jsonb,'approved',now()),
-('fun-jeep','region-tatariv','entertainment','Джипи','Джип-тур Гірськими стежками','Маршрут на полонини та водоспади.','Старт: центр Татарова',48.34680,24.58400,'+380676001111',NULL,NULL,NULL,4.90,128,3,'{"daily":{"from":"08:00","to":"19:00"}}'::jsonb,'{"partner":true}'::jsonb,'{}'::jsonb,'approved',now()),
-('fun-quad','region-tatariv','entertainment','Квадроцикли','Квадроцикли в Карпатах','Лісові маршрути та драйв.','вул. Польова, 7, Татарів',48.34190,24.58600,'+380676002222',NULL,NULL,'/images/fun-quad.webp',4.80,96,3,'{"daily":{"from":"09:00","to":"18:00"}}'::jsonb,'{}'::jsonb,'{}'::jsonb,'approved',now()),
-('fun-rafting','region-tatariv','entertainment','Рафтинг','Рафтинг на Пруті','Сплави різної складності.','Татарів, берег Прута',48.34920,24.57280,'+380676003333',NULL,NULL,'/images/fun-rafting.webp',4.70,74,3,'{"daily":{"from":"09:00","to":"18:00"}}'::jsonb,'{}'::jsonb,'{}'::jsonb,'approved',now()),
-('fun-zipline','region-tatariv','entertainment','Зіплайн','Зіплайн над карпатським лісом','Панорамний політ над лісом.','вул. Гірська, 25, Татарів',48.35000,24.58550,'+380676004444',NULL,NULL,'/images/fun-zipline.webp',4.90,58,3,'{"daily":{"from":"10:00","to":"18:00"}}'::jsonb,'{}'::jsonb,'{}'::jsonb,'approved',now()),
-('transfer-taxi','region-tatariv','transfer','Таксі','Таксі «Карпати трансфер»','Трансфери по Карпатах та Україні.','Татарів',48.34520,24.57820,'+380677001111',NULL,NULL,'/images/transfer-reference/taxi-card.jpg',4.80,126,2,'{"always_open":true}'::jsonb,'{"partner":true}'::jsonb,'{}'::jsonb,'approved',now()),
-('transfer-bus','region-tatariv','transfer','Автостанції','Автостанція Татарів','Міжміські та приміські маршрути.','вул. Незалежності, Татарів',48.34430,24.58080,NULL,NULL,NULL,'/images/transfer-reference/bus-card.jpg',4.60,89,1,'{"daily":{"from":"06:00","to":"22:00"}}'::jsonb,'{}'::jsonb,'{}'::jsonb,'approved',now()),
-('transfer-gas','region-tatariv','transfer','Заправки','АЗС ОККО','Паливо, кава, магазин.','Татарів',48.35110,24.57060,NULL,NULL,NULL,'/images/transfer-reference/gas-card.jpg',4.50,72,2,'{"always_open":true}'::jsonb,'{}'::jsonb,'{}'::jsonb,'approved',now()),
-('transfer-parking','region-tatariv','transfer','Парковки','Парковка біля вокзалу','Зручна парковка для автомобілів.','Татарів',48.34400,24.58120,NULL,NULL,NULL,'/images/transfer-reference/parking-card.jpg',4.30,51,1,'{"always_open":true}'::jsonb,'{}'::jsonb,'{}'::jsonb,'approved',now())
-ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name, description=EXCLUDED.description, address=EXCLUDED.address, lat=EXCLUDED.lat, lng=EXCLUDED.lng, category_slug=EXCLUDED.category_slug, subcategory=EXCLUDED.subcategory, status=EXCLUDED.status;
-
-INSERT INTO place_tags (place_id, tag) VALUES
-('food-hutsulshchyna','Банош'),('food-hutsulshchyna','Бограч'),('food-hutsulshchyna','Грибна юшка'),('food-hutsulshchyna','Деруни'),
-('food-kolyba','Українська кухня'),('food-kolyba','Для дітей'),('food-pizza','Піца'),('food-pizza','Італійська кухня'),('food-coffee','Кава'),('food-coffee','Сніданки'),
-('shop-smak','Продукти'),('shop-smak','Хліб'),('shop-smak','Молочні вироби'),('shop-souvenir','Сувеніри'),('shop-souvenir','Кераміка'),('shop-pharmacy','Ліки'),('shop-home','Побутова хімія'),
-('rest-tub','Чани'),('rest-tub','Вид на гори'),('rest-sauna','Сауна'),('rest-pool','Басейн'),('rest-massage','Масаж'),('rest-massage','SPA'),
-('fun-jeep','Джипи'),('fun-jeep','Екстрим'),('fun-quad','Квадроцикли'),('fun-rafting','Рафтинг'),('fun-zipline','Зіплайн'),
-('transfer-taxi','Трансфери'),('transfer-taxi','24/7'),('transfer-bus','Автобуси'),('transfer-gas','Заправки'),('transfer-parking','Парковки')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO qr_points (id, start_param, type, source, region_id, place_id, active)
-VALUES ('qr-girskyi-zatyshok','hotel-girskyi-zatyshok','entry_point','hotel','region-tatariv','place-girskyi-zatyshok',true)
-ON CONFLICT (id) DO UPDATE SET active=true, region_id=EXCLUDED.region_id, place_id=EXCLUDED.place_id;
+-- Remove only the historical demo points that shipped with the prototype.
+-- Real partner/admin-created places use generated IDs and are never touched here.
+DELETE FROM qr_points WHERE id='qr-girskyi-zatyshok' OR start_param='hotel-girskyi-zatyshok';
+DELETE FROM places
+WHERE organization_id IS NULL AND id = ANY(ARRAY[
+  'place-girskyi-zatyshok','food-hutsulshchyna','food-kolyba','food-pizza','food-coffee',
+  'shop-smak','shop-souvenir','shop-pharmacy','shop-home','rest-tub','rest-sauna','rest-pool','rest-massage',
+  'fun-jeep','fun-quad','fun-rafting','fun-zipline','transfer-taxi','transfer-bus','transfer-gas','transfer-parking'
+]::text[]);
 
 INSERT INTO emergency_contacts (id, region_id, type, title, note, phone, tone, sort_order) VALUES
 ('em-112','region-tatariv','emergency','Єдиний номер допомоги','Поліція · швидка · рятувальники','112','red',10),
