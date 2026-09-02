@@ -454,8 +454,7 @@ const defaultProfile: PartnerProfile = {
   petPolicy: "Розміщення з домашніми тваринами за попереднім погодженням",
   cancellation:
     "Безкоштовне скасування бронювання можливе за 7 днів до дати заїзду. У разі пізнішого скасування стягується штраф у розмірі вартості першої доби.",
-  payment:
-    "Ми приймаємо готівку, банківські картки та безготівковий розрахунок.",
+  payment: "Готівка, Visa, Mastercard",
   otherRules:
     "Адміністрація готелю залишає за собою право змінювати правила проживання. Актуальні правила діють на момент поселення.",
   templateFields: { room_count: "18 номерів", opened_year: "2018", languages: "Українська, English, Polski", accommodation_type: "Готель" },
@@ -601,6 +600,7 @@ async function submitPartnerProfile(profile: PartnerProfile) {
       wifi_ssid: profile.hasWifi ? profile.wifiSsid : "",
       wifi_password: profile.hasWifi ? profile.wifiPassword : "",
       rules: [...profile.generalRules.map((item) => item.text), profile.cancellation, profile.payment, profile.otherRules].filter(Boolean),
+      payment_methods: paymentMethodsFromText(profile.payment),
       rule_items: profile.generalRules,
       room_count: profile.roomCount,
       opened_year: profile.openedYear,
@@ -952,18 +952,26 @@ function AddressAutocompleteRow({
   const [suggestions, setSuggestions] = useState<Stage2GeoSuggestion[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (disabled || value.trim().length < 1 || (mode !== "city" && !city)) { setSuggestions([]); setOpen(false); return; }
+    if (disabled || value.trim().length < 1 || (mode !== "city" && !city)) { setSuggestions([]); setOpen(false); setError(""); return; }
     let cancelled = false;
     const timer = window.setTimeout(() => {
       setLoading(true);
+      setError("");
       const params = new URLSearchParams({ input: value.trim(), mode });
       if (city) params.set("city", city);
       if (street) params.set("street", street);
       void stage2Fetch<Stage2GeoSuggestion[]>(`/geo/autocomplete?${params}`).then((items) => {
         if (!cancelled) { setSuggestions(items); setOpen(true); }
-      }).catch(() => { if (!cancelled) setSuggestions([]); }).finally(() => { if (!cancelled) setLoading(false); });
+      }).catch((requestError) => {
+        if (!cancelled) {
+          setSuggestions([]);
+          setOpen(true);
+          setError(requestError instanceof Error ? requestError.message : "Не вдалося отримати підказки Google");
+        }
+      }).finally(() => { if (!cancelled) setLoading(false); });
     }, 260);
     return () => { cancelled = true; window.clearTimeout(timer); };
   }, [value, mode, city, street, disabled]);
@@ -997,6 +1005,10 @@ function AddressAutocompleteRow({
                 <strong>{item.main_text || item.text}</strong><small>{item.secondary_text}</small>
               </button>
             ))}
+          </span>
+        ) : open && !loading && value.trim() ? (
+          <span className="gt-partner-address-suggestions gt-partner-address-suggestions--empty">
+            {error ? "Не вдалося завантажити підказки Google. Перевірте Places API (New) та ключ backend." : "Збігів не знайдено. Продовжуйте вводити назву."}
           </span>
         ) : null}
       </span>
@@ -1108,7 +1120,7 @@ function PartnerInfoScreen({ navigate, activated }: PartnerProps) {
     });
   };
 
-  const activeTemplate = placeTemplates.find((item) => item.category_slug === profile.categorySlug && item.place_type === profile.placeType);
+  const activeTemplate = placeTemplates.find((item) => item.place_type === profile.placeType);
   const activeTemplateFields = Object.entries(activeTemplate?.fields ?? {}).filter(([, label]) => typeof label === "string" && String(label).trim());
 
   return (
@@ -1147,45 +1159,20 @@ function PartnerInfoScreen({ navigate, activated }: PartnerProps) {
             value={profile.placeName}
             onChange={(placeName) => setProfile((prev) => ({ ...prev, placeName }))}
           />
-          {stage2Categories.length ? (
-            <>
-              <label className="gt-partner-input-row">
-                <span className="gt-partner-input-row__content">
-                  <small>Розділ у гіді</small>
-                  <select value={profile.categorySlug || categoryFromPlaceType(profile.placeType)} onChange={(event) => {
-                    const slug = event.target.value;
-                    const template = placeTemplates.find((item) => item.category_slug === slug);
-                    const category = stage2Categories.find((item) => item.slug === slug);
-                    const fallback = category?.subcategories?.[0];
-                    const placeType = template?.place_type || fallback || (slug === "hotel" ? "Готель" : profile.placeType);
-                    applyPlaceTemplate(template, slug, placeType);
-                  }}>
-                    {stage2Categories.map((item) => <option key={item.slug} value={item.slug}>{item.slug === "hotel" ? "Готель / точка входу" : item.name}</option>)}
-                  </select>
-                </span>
-                <i><ChevronRight size={16} /></i>
-              </label>
-              {(placeTemplates.filter((item) => item.category_slug === profile.categorySlug).length || stage2Categories.find((item) => item.slug === profile.categorySlug)?.subcategories?.length) ? (
-                <label className="gt-partner-input-row">
-                  <span className="gt-partner-input-row__content">
-                    <small>Тип закладу</small>
-                    <select value={profile.placeType} onChange={(event) => {
-                      const placeType = event.target.value;
-                      const template = placeTemplates.find((item) => item.place_type === placeType);
-                      applyPlaceTemplate(template, template?.category_slug || categoryFromPlaceType(placeType), placeType);
-                    }}>
-                      {placeTemplates.map((item) => {
-                        const sectionName = stage2Categories.find((category) => category.slug === item.category_slug)?.name || item.category_slug;
-                        return <option key={item.id} value={item.place_type}>{item.label} · {sectionName}</option>;
-                      })}
-                    </select>
-                  </span>
-                  <i><ChevronRight size={16} /></i>
-                </label>
-              ) : (
-                <InputRow label="Тип закладу" value={profile.placeType} onChange={(placeType) => setProfile((prev) => ({ ...prev, placeType }))} />
-              )}
-            </>
+          {placeTemplates.length ? (
+            <label className="gt-partner-input-row">
+              <span className="gt-partner-input-row__content">
+                <small>Тип закладу</small>
+                <select value={profile.placeType} onChange={(event) => {
+                  const placeType = event.target.value;
+                  const template = placeTemplates.find((item) => item.place_type === placeType);
+                  applyPlaceTemplate(template, template?.category_slug || categoryFromPlaceType(placeType), placeType);
+                }}>
+                  {placeTemplates.map((item) => <option key={item.id} value={item.place_type}>{item.label}</option>)}
+                </select>
+              </span>
+              <i><ChevronRight size={16} /></i>
+            </label>
           ) : (
             <InputRow
               label="Тип закладу"
@@ -1287,7 +1274,12 @@ function PartnerInfoScreen({ navigate, activated }: PartnerProps) {
               ? (prev.amenities.some((item) => /wi[\s‑-]*fi/i.test(item)) ? prev.amenities : [...prev.amenities, "Wi‑Fi"])
               : prev.amenities.filter((item) => !/wi[\s‑-]*fi/i.test(item)),
           }))} />
-          {activeTemplateFields.length ? activeTemplateFields.map(([key, label]) => (
+          {activeTemplateFields.length ? activeTemplateFields.map(([key, label]) => key === "payment_methods" ? (
+            <div className="gt-partner-template-payment" key={`${profile.placeType}-${key}`}>
+              <small>{String(label)}</small>
+              <PaymentMethodsSelector compact value={profile.payment} onChange={(payment) => setProfile((prev) => ({ ...prev, payment }))} />
+            </div>
+          ) : (
             <InputRow
               key={`${profile.categorySlug}-${profile.placeType}-${key}`}
               label={String(label)}
@@ -1385,28 +1377,52 @@ function EditableGeneralRule({
   );
 }
 
-function PaymentLogos() {
+const PAYMENT_METHOD_OPTIONS = ["Готівка", "Visa", "Mastercard"] as const;
+
+function paymentMethodsFromText(value: string) {
+  const normalized = value.toLocaleLowerCase("uk");
+  const result: string[] = [];
+  if (/готів/.test(normalized)) result.push("Готівка");
+  if (/visa|віза|карт/.test(normalized)) result.push("Visa");
+  if (/mastercard|мастеркард|карт/.test(normalized)) result.push("Mastercard");
+  return result.length ? Array.from(new Set(result)) : ["Готівка"];
+}
+
+function PaymentMethodsSelector({ value, onChange, compact = false }: { value: string; onChange: (value: string) => void; compact?: boolean }) {
+  const selected = paymentMethodsFromText(value);
+  const toggle = (method: string) => {
+    const next = selected.includes(method) ? selected.filter((item) => item !== method) : [...selected, method];
+    onChange((next.length ? next : ["Готівка"]).join(", "));
+  };
+  return (
+    <div className={`gt-partner-payment-methods ${compact ? "is-compact" : ""}`} role="group" aria-label="Способи оплати">
+      {PAYMENT_METHOD_OPTIONS.map((method) => (
+        <button type="button" key={method} className={selected.includes(method) ? "is-active" : ""} onClick={() => toggle(method)}>
+          <span className="gt-partner-payment-methods__check">{selected.includes(method) ? <Check size={14} /> : null}</span>
+          <span>{method}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function PaymentLogos({ value }: { value: string }) {
+  const selected = paymentMethodsFromText(value);
   return (
     <div className="gt-payment-logos" aria-label="Підтримувані способи оплати">
-      <span className="gt-payment-logo gt-payment-logo--visa" aria-label="Visa">
+      {selected.includes("Готівка") ? <span className="gt-payment-logo gt-payment-logo--cash" aria-label="Готівка">Готівка</span> : null}
+      {selected.includes("Visa") ? <span className="gt-payment-logo gt-payment-logo--visa" aria-label="Visa">
         <svg viewBox="0 0 76 26" role="img" aria-hidden="true">
           <text x="5" y="20" fontSize="20" fontWeight="900" fontStyle="italic" fontFamily="Arial Black, Arial, sans-serif">VISA</text>
         </svg>
-      </span>
-      <span className="gt-payment-logo gt-payment-logo--mastercard" aria-label="Mastercard">
+      </span> : null}
+      {selected.includes("Mastercard") ? <span className="gt-payment-logo gt-payment-logo--mastercard" aria-label="Mastercard">
         <svg viewBox="0 0 78 28" role="img" aria-hidden="true">
           <circle cx="31" cy="14" r="10.5" fill="#EB001B" />
           <circle cx="45" cy="14" r="10.5" fill="#F79E1B" />
           <path d="M38 5.8a10.5 10.5 0 0 1 0 16.4 10.5 10.5 0 0 1 0-16.4Z" fill="#FF5F00" />
         </svg>
-      </span>
-      <span className="gt-payment-logo gt-payment-logo--gpay" aria-label="Google Pay">
-        <svg viewBox="0 0 82 28" role="img" aria-hidden="true">
-          <text x="5" y="20" fontSize="18" fontWeight="800" fontFamily="Arial, sans-serif">
-            <tspan fill="#4285F4">G</tspan><tspan fill="#3C4043"> Pay</tspan>
-          </text>
-        </svg>
-      </span>
+      </span> : null}
     </div>
   );
 }
@@ -1470,13 +1486,9 @@ function RulesScreen({ navigate, activated }: PartnerProps) {
         </section>
 
         <section className="gt-partner-text-section gt-payment-section">
-          <strong>Оплата</strong>
-          <textarea
-            value={profile.payment}
-            onChange={(event) => setProfile((prev) => ({ ...prev, payment: event.target.value }))}
-            rows={2}
-          />
-          <PaymentLogos />
+          <strong>Спосіб оплати</strong>
+          <PaymentMethodsSelector value={profile.payment} onChange={(payment) => setProfile((prev) => ({ ...prev, payment }))} />
+          <PaymentLogos value={profile.payment} />
         </section>
 
         <section className="gt-partner-text-section is-last">

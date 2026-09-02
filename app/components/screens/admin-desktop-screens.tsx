@@ -957,7 +957,8 @@ function Stage2QrPreview({ value }: { value: string }) {
 
 function Stage2ContentScreen({ navigate }: AdminProps) {
   const [adminKey, setAdminKey] = useState("");
-  const [pending, setPending] = useState<Array<{ id: string; name: string; category_slug: string; address: string; status: string; organization_name?: string; region_name?: string; moderation_comment?: string | null }>>([]);
+  const [pending, setPending] = useState<Array<{ id: string; name: string; category_slug: string; subcategory?: string | null; address: string; status: string; organization_name?: string; region_name?: string; moderation_comment?: string | null }>>([]);
+  const [moderationCategories, setModerationCategories] = useState<Record<string, string>>({});
   const [qrRows, setQrRows] = useState<Array<{ id: string; start_param: string; type: string; source: string; active: boolean; region_name: string; place_name?: string | null; place_id?: string | null }>>([]);
   const [approvedPlaces, setApprovedPlaces] = useState<Array<{ id: string; name: string; category_slug: string; region_name: string }>>([]);
   const [stage2Categories, setStage2Categories] = useState<Stage2Category[]>([]);
@@ -997,7 +998,9 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
         adminStage2Fetch<Stage2Category[]>("/categories", key),
         adminStage2Fetch<Stage2PlaceTypeTemplate[]>("/place-type-templates", key),
       ]);
-      setPending(moderation); setQrRows(qr); setApprovedPlaces(approved); setStage2Categories(categories); setPlaceTemplates(templates);
+      setPending(moderation);
+      setModerationCategories((current) => Object.fromEntries(moderation.map((row) => [row.id, current[row.id] || row.category_slug])));
+      setQrRows(qr); setApprovedPlaces(approved); setStage2Categories(categories); setPlaceTemplates(templates);
       if (!qrPlaceId && approved[0]?.id) setQrPlaceId(approved[0].id);
       if (!qrPreviewParam && qr[0]?.start_param) setQrPreviewParam(qr[0].start_param);
       if (key) window.sessionStorage.setItem("gid-tourist-admin-stage2-key", key);
@@ -1008,8 +1011,9 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
 
   const moderate = async (id: string, status: "approved" | "rejected") => {
     const comment = status === "rejected" ? (window.prompt("Причина повернення на доопрацювання:") || "Потрібне доопрацювання") : undefined;
-    await adminStage2Fetch(`/admin/stage2/places/${encodeURIComponent(id)}/status`, adminKey, { method: "PATCH", body: JSON.stringify({ status, comment }) });
-    setMessage(status === "approved" ? "Заклад схвалено і він уже доступний туристам." : "Заклад повернуто на доопрацювання.");
+    const category_slug = status === "approved" ? moderationCategories[id] : undefined;
+    await adminStage2Fetch(`/admin/stage2/places/${encodeURIComponent(id)}/status`, adminKey, { method: "PATCH", body: JSON.stringify({ status, comment, category_slug }) });
+    setMessage(status === "approved" ? "Заклад схвалено і він уже доступний туристам у вибраному розділі." : "Заклад повернуто на доопрацювання.");
     await load();
   };
 
@@ -1043,10 +1047,18 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
       </section>
 
       <section className="ad-stage2-section">
-        <AdminPageHeader title="Модерація нових закладів" subtitle="Після підтвердження заклад автоматично з’являється у своїй категорії та на карті" />
-        <AdminTable columns={[{label:"Заклад",className:"1.4fr"},{label:"Категорія",className:".8fr"},{label:"Адреса",className:"1.3fr"},{label:"Статус",className:".7fr"},{label:"Дії",className:"1fr"}]}>
-          {pending.map((row) => <TableRow key={row.id} columns={["1.4fr",".8fr","1.3fr",".7fr","1fr"]}>
-            <div><strong>{row.name}</strong><small>{row.organization_name || row.region_name}</small></div><span>{row.category_slug}</span><span>{row.address}</span><Status tone={row.status === "rejected" ? "red" : "orange"}>{row.status}</Status>
+        <AdminPageHeader title="Модерація нових закладів" subtitle="Розділ визначається автоматично за типом закладу; перед Approve адміністратор може змінити його вручну" />
+        <AdminTable columns={[{label:"Заклад",className:"1.4fr"},{label:"Розділ у гіді",className:"1fr"},{label:"Адреса",className:"1.3fr"},{label:"Статус",className:".7fr"},{label:"Дії",className:"1fr"}]}>
+          {pending.map((row) => <TableRow key={row.id} columns={["1.4fr","1fr","1.3fr",".7fr","1fr"]}>
+            <div><strong>{row.name}</strong><small>{row.subcategory || row.organization_name || row.region_name}</small></div>
+            <div className="ad-stage2-moderation-category">
+              <select value={moderationCategories[row.id] || row.category_slug} onChange={(event) => setModerationCategories((current) => ({ ...current, [row.id]: event.target.value }))}>
+                {!stage2Categories.some((item) => item.slug === (moderationCategories[row.id] || row.category_slug)) ? <option value={moderationCategories[row.id] || row.category_slug}>{moderationCategories[row.id] || row.category_slug}</option> : null}
+                {stage2Categories.filter((item) => item.slug !== "emergency").map((item) => <option key={item.slug} value={item.slug}>{item.slug === "hotel" ? "Про заклад / готель" : item.name}</option>)}
+              </select>
+              <small>Тип: {row.subcategory || "не вказано"}</small>
+            </div>
+            <span>{row.address}</span><Status tone={row.status === "rejected" ? "red" : "orange"}>{row.status}</Status>
             <div className="ad-row-actions"><button className="ad-text-btn" onClick={() => void moderate(row.id,"approved")}>Approve</button><button className="ad-text-btn is-danger" onClick={() => void moderate(row.id,"rejected")}>Reject</button></div>
           </TableRow>)}
           {!pending.length ? <div className="ad-stage2-empty-row">Черга модерації порожня</div> : null}

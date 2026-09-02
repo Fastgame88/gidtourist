@@ -28067,3 +28067,113 @@ button.gt-amenities-row {
   font-size:10px;
   font-weight:800;
 }
+
+/* ===== Stage 2.3: automatic guide section + strict Google address + payment options ===== */
+.gt-partner-address-suggestions--empty {
+  min-height: 48px;
+  padding: 11px 12px;
+  color: #6f7973;
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+
+.gt-partner-payment-methods {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.gt-partner-payment-methods > button {
+  display: flex;
+  min-width: 0;
+  min-height: 42px;
+  padding: 8px 7px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #dfe7e2;
+  border-radius: 10px;
+  background: #fff;
+  color: #354139;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.gt-partner-payment-methods > button.is-active {
+  border-color: #0d9d59;
+  background: #effaf4;
+  color: #087b46;
+}
+
+.gt-partner-payment-methods__check {
+  display: grid;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+  place-items: center;
+  border: 1px solid #cfd8d2;
+  border-radius: 5px;
+  background: #fff;
+}
+
+.gt-partner-payment-methods > button.is-active .gt-partner-payment-methods__check {
+  border-color: #0d9d59;
+  background: #0d9d59;
+  color: #fff;
+}
+
+.gt-partner-payment-methods.is-compact {
+  margin-top: 7px;
+  margin-bottom: 3px;
+}
+
+.gt-partner-template-payment {
+  padding: 10px 14px 12px;
+  border-bottom: 1px solid #edf1ee;
+}
+
+.gt-partner-template-payment > small {
+  display: block;
+  margin-bottom: 1px;
+  color: #7c8780;
+  font-size: 10px;
+}
+
+.gt-payment-logo--cash {
+  width: auto !important;
+  min-width: 58px;
+  padding: 0 7px;
+  color: #26342b;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.ad-stage2-moderation-category {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ad-stage2-moderation-category select {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  padding: 0 28px 0 9px;
+  border: 1px solid #dce5df;
+  border-radius: 8px;
+  background: #fff;
+  color: #26332b;
+  font: inherit;
+  font-size: 11px;
+}
+
+.ad-stage2-moderation-category small {
+  overflow: hidden;
+  color: #7a857e;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

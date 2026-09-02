@@ -130,16 +130,50 @@ export class GooglePlacesService {
       includedRegionCodes: ["ua"],
       includeQueryPredictions: false,
     };
-    if (mode === "city") body.includedPrimaryTypes = ["(cities)"];
+
+    // `(cities)` excludes villages/smaller settlements. Use locality-compatible primary types instead,
+    // so typing from the first letter can return both cities and villages across Ukraine.
+    if (mode === "city") body.includedPrimaryTypes = ["locality", "postal_town", "administrative_area_level_3", "administrative_area_level_4", "administrative_area_level_5"];
     if (mode === "street") body.includedPrimaryTypes = ["route"];
     if (mode === "house") body.includedPrimaryTypes = ["street_address", "premise", "subpremise"];
-    const data = await this.googleFetch<{ suggestions?: Array<{ placePrediction?: { placeId?: string; text?: { text?: string }; structuredFormat?: { mainText?: { text?: string }; secondaryText?: { text?: string } } } }> }>(
+
+    type Prediction = {
+      placeId?: string;
+      text?: { text?: string };
+      structuredFormat?: { mainText?: { text?: string }; secondaryText?: { text?: string } };
+      types?: string[];
+    };
+    type AutocompleteResponse = { suggestions?: Array<{ placePrediction?: Prediction }> };
+    const request = (payload: Record<string, unknown>) => this.googleFetch<AutocompleteResponse>(
       "https://places.googleapis.com/v1/places:autocomplete",
-      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) },
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-FieldMask": "suggestions.placePrediction.placeId,suggestions.placePrediction.text.text,suggestions.placePrediction.structuredFormat.mainText.text,suggestions.placePrediction.structuredFormat.secondaryText.text,suggestions.placePrediction.types",
+        },
+        body: JSON.stringify(payload),
+      },
     );
+
+    let data = await request(body);
+    // A few Ukrainian villages are inconsistently classified by Google. If the strict locality
+    // request is empty, retry without a primary-type restriction and keep only settlement-like results.
+    if (mode === "city" && !(data.suggestions ?? []).some((item) => item.placePrediction?.placeId)) {
+      const fallbackBody = { ...body };
+      delete fallbackBody.includedPrimaryTypes;
+      data = await request(fallbackBody);
+    }
+
+    const settlementTypes = new Set([
+      "locality", "postal_town", "administrative_area_level_3", "administrative_area_level_4", "administrative_area_level_5",
+      "sublocality", "political",
+    ]);
+
     return (data.suggestions ?? []).flatMap((item) => {
       const prediction = item.placePrediction;
       if (!prediction?.placeId) return [];
+      if (mode === "city" && prediction.types?.length && !prediction.types.some((type) => settlementTypes.has(type))) return [];
       return [{
         place_id: prediction.placeId,
         text: prediction.text?.text || prediction.structuredFormat?.mainText?.text || "",

@@ -9,6 +9,16 @@ function num(value: unknown, fallback?: number) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function fallbackCategoryFromPlaceType(placeType: string) {
+  const value = placeType.toLocaleLowerCase("uk");
+  if (/ресторан|кафе|бар|кав|їж|food|піц/.test(value)) return "food";
+  if (/магаз|сувен|аптек|shop/.test(value)) return "shop";
+  if (/чан|саун|басейн|spa|масаж|відпоч|екскурс/.test(value)) return "rest";
+  if (/розваг|актив|квадро|рафт|зіп|джип|entertain/.test(value)) return "entertainment";
+  if (/трансфер|таксі|оренда авто|transfer/.test(value)) return "transfer";
+  return "hotel";
+}
+
 function distanceMeters(lat1: number, lng1: number, lat2: number, lng2: number) {
   const r = 6371000;
   const toRad = (v: number) => (v * Math.PI) / 180;
@@ -78,6 +88,16 @@ function partnerMatchesSubcategory(place: PlaceRow, label: string) {
 @Injectable()
 export class Stage2Service {
   constructor(private readonly db: DatabaseService, private readonly google: GooglePlacesService) {}
+
+  private async categoryForPlaceType(placeType: string, fallback = "hotel") {
+    const clean = placeType.trim();
+    if (!clean) return fallback;
+    const result = await this.db.query(
+      "SELECT category_slug FROM place_type_templates WHERE active=true AND lower(place_type)=lower($1) ORDER BY sort_order,label LIMIT 1",
+      [clean],
+    );
+    return String(result.rows[0]?.category_slug || fallbackCategoryFromPlaceType(clean) || fallback);
+  }
 
   private async verifiedAddressFromBody(body: Record<string, unknown>) {
     const details = body.details && typeof body.details === "object" ? body.details as Record<string, unknown> : {};
@@ -356,7 +376,8 @@ export class Stage2Service {
   async createPartnerPlace(user: AuthUser, body: Record<string, unknown>) {
     const name = String(body.name ?? "").trim();
     if (!name) throw new BadRequestException("name is required");
-    const category = String(body.category_slug ?? "hotel");
+    const placeType = String(body.subcategory ?? body.place_type ?? "Готель").trim() || "Готель";
+    const category = await this.categoryForPlaceType(placeType, "hotel");
     const verifiedAddress = await this.verifiedAddressFromBody(body);
     const lat = verifiedAddress.lat;
     const lng = verifiedAddress.lng;
@@ -373,7 +394,7 @@ export class Stage2Service {
       await client.query(
         `INSERT INTO places(id,organization_id,region_id,category_slug,subcategory,name,description,address,lat,lng,phone,telegram,website,image_url,price_level,work_hours,attributes,details,status,created_by_user_id)
          VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16::jsonb,$17::jsonb,$18::jsonb,'pending',$19)`,
-        [placeId, organizationId, regionId, category, body.subcategory ?? null, name, body.description ?? "", verifiedAddress.formatted_address || body.address || "", lat, lng, body.phone ?? null, body.telegram ?? null, body.website ?? null, body.image_url ?? null, num(body.price_level), JSON.stringify(body.work_hours ?? {}), JSON.stringify(body.attributes ?? {}), JSON.stringify(body.details ?? {}), user.id],
+        [placeId, organizationId, regionId, category, placeType, name, body.description ?? "", verifiedAddress.formatted_address || body.address || "", lat, lng, body.phone ?? null, body.telegram ?? null, body.website ?? null, body.image_url ?? null, num(body.price_level), JSON.stringify(body.work_hours ?? {}), JSON.stringify(body.attributes ?? {}), JSON.stringify(body.details ?? {}), user.id],
       );
       await client.query("UPDATE users SET role=CASE WHEN role='tourist' THEN 'partner' ELSE role END, updated_at=now() WHERE id=$1", [user.id]);
     });
@@ -387,10 +408,12 @@ export class Stage2Service {
     const nextLat = num(body.lat, Number(current.lat))!;
     const nextLng = num(body.lng, Number(current.lng))!;
     const nextRegionId = await this.ensureRegionForPlace(String(body.city ?? ""), String(body.region_name ?? ""), nextLat, nextLng, current.region_id);
+    const nextPlaceType = String(body.subcategory ?? current.subcategory ?? "Готель").trim() || "Готель";
+    const nextCategory = await this.categoryForPlaceType(nextPlaceType, current.category_slug);
     await this.db.query(
       `UPDATE places SET region_id=$2,category_slug=$3,subcategory=$4,name=$5,description=$6,address=$7,lat=$8,lng=$9,phone=$10,telegram=$11,website=$12,image_url=$13,
        price_level=$14,work_hours=$15::jsonb,attributes=$16::jsonb,details=$17::jsonb,status=CASE WHEN status='approved' THEN 'approved' ELSE 'pending' END,updated_at=now() WHERE id=$1`,
-      [placeId, nextRegionId, body.category_slug ?? current.category_slug, body.subcategory ?? current.subcategory, body.name ?? current.name, body.description ?? current.description, body.address ?? current.address, nextLat, nextLng, body.phone ?? current.phone, body.telegram ?? current.telegram, body.website ?? current.website, body.image_url ?? current.image_url, num(body.price_level, current.price_level ?? undefined) ?? null, JSON.stringify(body.work_hours ?? current.work_hours ?? {}), JSON.stringify(body.attributes ?? current.attributes ?? {}), JSON.stringify(body.details ?? current.details ?? {})],
+      [placeId, nextRegionId, nextCategory, nextPlaceType, body.name ?? current.name, body.description ?? current.description, body.address ?? current.address, nextLat, nextLng, body.phone ?? current.phone, body.telegram ?? current.telegram, body.website ?? current.website, body.image_url ?? current.image_url, num(body.price_level, current.price_level ?? undefined) ?? null, JSON.stringify(body.work_hours ?? current.work_hours ?? {}), JSON.stringify(body.attributes ?? current.attributes ?? {}), JSON.stringify(body.details ?? current.details ?? {})],
     );
     return this.place(placeId, false);
   }
@@ -428,11 +451,16 @@ export class Stage2Service {
     return result.rows;
   }
 
-  async adminStatus(placeId: string, status: string, comment?: string) {
+  async adminStatus(placeId: string, status: string, comment?: string, categorySlug?: string) {
     if (!["approved","rejected","pending","draft"].includes(status)) throw new BadRequestException("Invalid status");
+    const cleanCategory = String(categorySlug ?? "").trim();
+    if (cleanCategory) {
+      const category = await this.db.query("SELECT slug FROM categories WHERE slug=$1 AND active=true LIMIT 1", [cleanCategory]);
+      if (!category.rows[0]) throw new BadRequestException("Invalid category_slug");
+    }
     const result = await this.db.query(
-      `UPDATE places SET status=$2,moderation_comment=$3,approved_at=CASE WHEN $2='approved' THEN now() ELSE approved_at END,updated_at=now() WHERE id=$1 RETURNING id,name,status,moderation_comment`,
-      [placeId, status, comment ?? null],
+      `UPDATE places SET status=$2,moderation_comment=$3,category_slug=COALESCE($4,category_slug),approved_at=CASE WHEN $2='approved' THEN now() ELSE approved_at END,updated_at=now() WHERE id=$1 RETURNING id,name,status,category_slug,moderation_comment`,
+      [placeId, status, comment ?? null, cleanCategory || null],
     );
     if (!result.rows[0]) throw new NotFoundException("Place not found");
     return result.rows[0];

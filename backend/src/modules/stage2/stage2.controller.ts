@@ -87,7 +87,9 @@ export class Stage2Controller {
 
   @UseGuards(AdminKeyGuard)
   @Patch("admin/stage2/places/:id/status")
-  adminStatus(@Param("id") id: string, @Body() body: { status: string; comment?: string }) { return this.service.adminStatus(id, body.status, body.comment); }
+  adminStatus(@Param("id") id: string, @Body() body: { status: string; comment?: string; category_slug?: string }) {
+    return this.service.adminStatus(id, body.status, body.comment, body.category_slug);
+  }
 
   @UseGuards(AdminKeyGuard)
   @Get("admin/stage2/qr")
