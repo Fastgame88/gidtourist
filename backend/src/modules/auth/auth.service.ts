@@ -16,16 +16,19 @@ export class AuthService {
   constructor(private readonly db: DatabaseService) {}
 
   private parseAndValidate(initData: string): TelegramUser {
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const botToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
     if (!botToken) throw new UnauthorizedException("TELEGRAM_BOT_TOKEN is not configured");
 
     const params = new URLSearchParams(initData);
     const receivedHash = params.get("hash") ?? "";
     if (!receivedHash) throw new UnauthorizedException("Telegram hash is missing");
-    params.delete("hash");
-    params.delete("signature");
 
+    // Telegram's bot-token validation hashes every received initData field except `hash`.
+    // Modern Telegram clients also send the new `signature` field. It MUST stay in the
+    // data-check-string for HMAC validation; removing it makes otherwise valid initData
+    // fail with "Invalid Telegram initData signature".
     const dataCheckString = [...params.entries()]
+      .filter(([key]) => key !== "hash")
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, value]) => `${key}=${value}`)
       .join("\n");
@@ -34,7 +37,11 @@ export class AuthService {
     const calculated = createHmac("sha256", secretKey).update(dataCheckString).digest("hex");
     const a = Buffer.from(calculated, "hex");
     const b = Buffer.from(receivedHash, "hex");
-    if (a.length !== b.length || !timingSafeEqual(a, b)) throw new UnauthorizedException("Invalid Telegram initData signature");
+    if (a.length !== b.length || !timingSafeEqual(a, b)) {
+      throw new UnauthorizedException(
+        "Invalid Telegram initData signature. Перевірте, що TELEGRAM_BOT_TOKEN у backend належить саме боту, який відкрив Mini App.",
+      );
+    }
 
     const authDate = Number(params.get("auth_date") ?? 0);
     const maxAge = Number(process.env.TELEGRAM_INITDATA_MAX_AGE ?? 86400);
