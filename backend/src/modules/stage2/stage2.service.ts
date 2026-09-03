@@ -204,7 +204,7 @@ export class Stage2Service {
   }
 
   async googlePhoto(photoName: string) {
-    return this.google.photoUri(photoName);
+    return this.google.photoData(photoName);
   }
 
   async context(startParam: string) {

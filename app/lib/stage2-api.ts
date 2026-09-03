@@ -82,6 +82,7 @@ type TelegramWindow = Window & { Telegram?: { WebApp?: TelegramWebApp } };
 
 const TOKEN_KEY = "gid-tourist-stage2-session";
 const SELECTED_PLACE_KEY = "gid-tourist-selected-place";
+const PHOTO_HYDRATION_ATTEMPT_PREFIX = "gid-tourist-photo-hydration:";
 
 let lastTelegramAuthError = "";
 
@@ -226,8 +227,13 @@ export async function ensureTelegramSession(): Promise<{ token: string; user: St
           || (launchUser.last_name && launchUser.last_name !== user.last_name)
           || (launchUser.username && launchUser.username !== user.telegram_username)
         ));
-        if (!launchProfileChanged) return { token: existing, user };
-        // Re-run verified Telegram auth once when Telegram supplied fresher profile data.
+        const photoAttemptKey = `${PHOTO_HYDRATION_ATTEMPT_PREFIX}${currentTelegramId}`;
+        const avatarAttempted = Boolean(currentTelegramId && window.sessionStorage.getItem(photoAttemptKey) === "1");
+        const needsPhotoHydration = Boolean(currentTelegramId && !user.photo_url && !avatarAttempted);
+        if (!launchProfileChanged && !needsPhotoHydration) return { token: existing, user };
+        if (needsPhotoHydration) window.sessionStorage.setItem(photoAttemptKey, "1");
+        // Re-run verified Telegram auth when Telegram supplied fresher profile data or once
+        // when the backend still needs to hydrate the real Telegram avatar through Bot API.
         setSessionToken("");
       } else {
         // Telegram WebView/localStorage can keep an old session from another test account.

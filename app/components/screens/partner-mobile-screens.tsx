@@ -96,6 +96,7 @@ type PartnerProfile = {
   lat: string;
   lng: string;
   imageUrl: string;
+  logoUrl: string;
   description: string;
   roomCount: string;
   openedYear: string;
@@ -236,6 +237,7 @@ const defaultProfile: PartnerProfile = {
   lat: "",
   lng: "",
   imageUrl: "",
+  logoUrl: "",
   description: "",
   roomCount: "",
   openedYear: "",
@@ -322,6 +324,7 @@ function usePartnerProfile() {
 
 const PARTNER_STAGE2_PLACE_KEY = "gid-tourist-stage2-partner-place-id";
 const PARTNER_INVITE_KEY = "gid-tourist-stage2-partner-invite";
+const PARTNER_ACCESS_SESSION_PREFIX = "gid-tourist-stage2-partner-access:";
 
 function categoryFromPlaceType(placeType: string) {
   const value = placeType.toLocaleLowerCase("uk");
@@ -427,6 +430,7 @@ async function submitPartnerProfile(profile: PartnerProfile) {
       services: readPartnerServices(),
       cabinet_modules: profile.cabinetModules,
       template_fields: profile.templateFields,
+      logo_url: profile.logoUrl || null,
     },
   };
 
@@ -548,16 +552,16 @@ function PartnerBottomNav({
   );
 }
 
-function LogoCard({ name, placeType }: { name: string; placeType: string }) {
+function LogoCard({ name, placeType, logoUrl = "" }: { name: string; placeType: string; logoUrl?: string }) {
   const title = name.trim() || "Ваш заклад";
   return (
     <div className="gt-partner-logo-card">
       <div className="gt-partner-logo-card__icon">
-        <svg width="42" height="42" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        {logoUrl ? <img src={logoUrl} alt="Логотип закладу" /> : <svg width="42" height="42" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <path d="M6 28L18.5 12L26 20.5L31.5 14L36 19V28" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
           <path d="M10.5 27L23.5 10L34.5 23" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
           <path d="M4.5 31H37.5" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round"/>
-        </svg>
+        </svg>}
       </div>
       <strong>{title}</strong>
       <small>{placeType || "Партнер"}</small>
@@ -570,7 +574,7 @@ function Hero({ showCopy = true, cabinet = false }: { showCopy?: boolean; cabine
   return (
     <section className={`gt-partner-hero ${cabinet ? "is-cabinet" : ""}`}>
       {profile.imageUrl ? <img src={profile.imageUrl} alt={profile.placeName || "Фото закладу"} /> : <div className="gt-partner-hero__placeholder"><ImageIcon size={42} /><span>Фото закладу</span></div>}
-      <LogoCard name={profile.placeName} placeType={profile.placeType} />
+      <LogoCard name={profile.placeName} placeType={profile.placeType} logoUrl={profile.logoUrl} />
       {showCopy ? (
         <div className="gt-partner-hero__copy">
           <h1>{cabinet ? "Кабінет партнера" : "Стати партнером"}</h1>
@@ -766,9 +770,10 @@ function AddressAutocompleteRow({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
-    if (disabled || value.trim().length < 1 || (mode !== "city" && !city)) { setSuggestions([]); setOpen(false); setError(""); return; }
+    if (disabled || verified || !dirty || value.trim().length < 1 || (mode !== "city" && !city)) { setSuggestions([]); setOpen(false); setError(""); return; }
     let cancelled = false;
     const timer = window.setTimeout(() => {
       setLoading(true);
@@ -787,10 +792,11 @@ function AddressAutocompleteRow({
       }).finally(() => { if (!cancelled) setLoading(false); });
     }, 260);
     return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [value, mode, city, street, disabled]);
+  }, [value, mode, city, street, disabled, verified, dirty]);
 
   const choose = async (suggestion: Stage2GeoSuggestion) => {
     setOpen(false);
+    setDirty(false);
     try {
       const details = await stage2Fetch<Stage2GeoDetails>(`/geo/place/${encodeURIComponent(suggestion.place_id)}`);
       onSelect(details, suggestion);
@@ -808,8 +814,8 @@ function AddressAutocompleteRow({
           disabled={disabled}
           autoComplete="off"
           placeholder={disabled ? (mode === "street" ? "Спочатку виберіть місто" : "Спочатку виберіть вулицю") : "Почніть вводити — оберіть зі списку"}
-          onFocus={() => suggestions.length && setOpen(true)}
-          onChange={(event) => onText(event.target.value)}
+          onFocus={() => !verified && dirty && suggestions.length && setOpen(true)}
+          onChange={(event) => { setDirty(true); onText(event.target.value); }}
         />
         {open && suggestions.length ? (
           <span className="gt-partner-address-suggestions">
@@ -878,6 +884,7 @@ function PartnerInfoScreen({ navigate, activated }: PartnerProps) {
   const [addressError, setAddressError] = useState("");
   const [showAmenityEditor, setShowAmenityEditor] = useState(false);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const logoInputRef = useRef<HTMLInputElement | null>(null);
   const goBack = activated ? "partner-cabinet" : "partner-dashboard";
 
   useEffect(() => {
@@ -936,6 +943,20 @@ function PartnerInfoScreen({ navigate, activated }: PartnerProps) {
           <button type="button" onClick={() => photoInputRef.current?.click()}>
             <ImageIcon size={16} /> Змінити фото
           </button>
+        </section>
+
+        <section className="gt-partner-logo-editor">
+          <div className="gt-partner-logo-editor__preview">
+            {profile.logoUrl ? <img src={profile.logoUrl} alt="Логотип закладу" /> : <Building2 size={28} />}
+          </div>
+          <div><strong>Логотип закладу</strong><small>Відображається на головній картці партнера</small></div>
+          <input ref={logoInputRef} className="gt-visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            void resizePartnerImage(file).then((logoUrl) => setProfile((prev) => ({ ...prev, logoUrl })));
+            event.currentTarget.value = "";
+          }} />
+          <button type="button" onClick={() => logoInputRef.current?.click()}><ImageIcon size={15}/> Змінити</button>
         </section>
 
         <FormCard>
@@ -1836,6 +1857,24 @@ function UpdateScreen({ navigate, activated }: PartnerProps) {
   );
 }
 
+function PartnerHoursScreen({ navigate }: { navigate: Navigate }) {
+  const { profile, setProfile } = usePartnerProfile();
+  const save = async () => {
+    try { await submitPartnerProfile(profile); } catch { /* Keep local changes; next save will retry backend. */ }
+    navigate("partner", "partner-cabinet");
+  };
+  return <div className="gt-partner-mobile-screen has-bottom-nav">
+    <PartnerHeader title="Графік роботи" navigate={navigate} back="partner-cabinet" nextLabel="Зберегти" onNext={() => void save()} />
+    <main className="gt-partner-mobile-content gt-partner-form-page">
+      <FormCard>
+        <InputRow label="Режим роботи" value={profile.workMode} onChange={(workMode)=>setProfile((prev)=>({...prev,workMode}))} />
+        <InputRow label="Години роботи" value={profile.workHours} onChange={(workHours)=>setProfile((prev)=>({...prev,workHours}))} />
+      </FormCard>
+    </main>
+    <PartnerBottomNav active="home" activated navigate={navigate} />
+  </div>;
+}
+
 function CabinetScreen({ navigate }: { navigate: Navigate }) {
   const { profile } = usePartnerProfile();
   const definitions: Record<string, { slug: string; icon: typeof Hotel; title: string; note: string }> = {
@@ -1849,16 +1888,23 @@ function CabinetScreen({ navigate }: { navigate: Navigate }) {
     "Рецепція": { slug: "partner-update", icon: Building2, title: "Рецепція", note: "Інформація та налаштування рецепції" },
     "Парковка": { slug: "partner-update", icon: CircleParking, title: "Парковка", note: "Інформація про паркування для гостей" },
     "Сніданок": { slug: "partner-services", icon: UtensilsCrossed, title: "Сніданок", note: "Налаштування послуги сніданку" },
+    "Графік роботи": { slug: "partner-hours", icon: Clock3, title: "Графік роботи", note: "Змініть режим та години роботи закладу" },
+    "Статистика переходів": { slug: "partner-statistics", icon: BarChart3, title: "Статистика переходів", note: "Перегляди, переходи та активність гостей" },
+    "Налаштування": { slug: "partner-update", icon: SlidersHorizontal, title: "Налаштування", note: "Оновлення даних, фото та параметрів кабінету" },
   };
-  const inferredModules = [
+  const baseModules = [
     "Інформація про заклад",
-    ...(profile.generalRules.length ? ["Правила проживання"] : []),
+    "Послуги закладу",
+    "Графік роботи",
+    "Час заїзду / виїзду",
+    "Правила проживання",
     ...(profile.hasWifi ? ["Wi‑Fi"] : []),
-    ...(profile.phone || profile.email || profile.messenger ? ["Контакти"] : []),
-    ...(profile.checkIn || profile.checkOut ? ["Час заїзду / виїзду"] : []),
-    ...(readPartnerServices().length ? ["Послуги закладу"] : []),
+    "Контакти",
+    "Статистика переходів",
+    "Налаштування",
   ];
-  const moduleNames = (profile.cabinetModules ?? []).length ? profile.cabinetModules : inferredModules;
+  const configuredModules = profile.cabinetModules ?? [];
+  const moduleNames = configuredModules.length >= 3 ? configuredModules : baseModules;
   const enabled = moduleNames
     .filter((name) => profile.hasWifi || name !== "Wi‑Fi")
     .map((name) => definitions[name] ?? { slug: "partner-update", icon: Info, title: name, note: "Налаштування цього розділу кабінету" })
@@ -3031,6 +3077,7 @@ function hydratePartnerProfileFromDb(place: Record<string, any>) {
     lat: String(place.lat ?? ""),
     lng: String(place.lng ?? ""),
     imageUrl: String(place.image_url || (Array.isArray(details.gallery) ? details.gallery[0] : "") || ""),
+    logoUrl: String(details.logo_url || ""),
     description: String(place.description || ""),
     roomCount: String(details.room_count || ""),
     openedYear: String(details.opened_year || ""),
@@ -3073,72 +3120,101 @@ export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate
   useEffect(() => {
     let cancelled = false;
     setActivated(readPartnerActivated());
-    void ensureTelegramSession().then(async (session) => {
-      if (!session) {
+
+    const run = async () => {
+      const session = await ensureTelegramSession();
+      if (!session || cancelled) {
         if (!cancelled) {
           const authReason = telegramAuthLastError();
+          setPartnerDataReady(true);
           setInviteState("denied");
           setInviteError(authReason ? `Не вдалося авторизуватися через Telegram: ${authReason}` : "Не вдалося авторизуватися через Telegram");
         }
         return;
       }
+
       const startParam = telegramStartParam();
-      setSessionTelegramId(String(session.user.telegram_id ?? ""));
+      const telegramId = String(session.user.telegram_id ?? "");
+      setSessionTelegramId(telegramId);
       const isInvite = startParam.startsWith("partner-");
+      let grantedPlaceId = "";
+      let grantedStatus = "";
+      let usedCachedAccess = false;
+
       if (isInvite) {
+        const cacheKey = `${PARTNER_ACCESS_SESSION_PREFIX}${startParam}`;
+        let cached: { telegram_id?: string; place_id?: string; status?: string } | null = null;
         try {
-          const access = await stage2Fetch<{ place_id: string; status: string }>(`/partner/access/${encodeURIComponent(startParam)}`);
-          if (cancelled) return;
-          window.localStorage.setItem(PARTNER_STAGE2_PLACE_KEY, access.place_id);
-          window.localStorage.setItem(PARTNER_INVITE_KEY, startParam);
-          const accessStatus = access.status || "draft";
-          setInviteStatus(accessStatus);
-          if (accessStatus === "approved") {
-            savePartnerActivated(true);
-            setActivated(true);
-          }
-          setInviteDiagnostic(null);
-          setInviteState("allowed");
-        } catch (error) {
-          let diagnostic: PartnerAccessDiagnostic | null = null;
+          const raw = window.sessionStorage.getItem(cacheKey);
+          cached = raw ? JSON.parse(raw) as { telegram_id?: string; place_id?: string; status?: string } : null;
+        } catch { cached = null; }
+
+        if (cached?.telegram_id === telegramId && cached.place_id) {
+          usedCachedAccess = true;
+          grantedPlaceId = cached.place_id;
+          grantedStatus = cached.status || "draft";
+        } else {
           try {
-            diagnostic = await stage2Fetch<PartnerAccessDiagnostic>(`/partner/access-diagnostic/${encodeURIComponent(startParam)}`);
-          } catch {
-            diagnostic = null;
+            const access = await stage2Fetch<{ place_id: string; status: string }>(`/partner/access/${encodeURIComponent(startParam)}`);
+            if (cancelled) return;
+            grantedPlaceId = access.place_id;
+            grantedStatus = access.status || "draft";
+            try { window.sessionStorage.setItem(cacheKey, JSON.stringify({ telegram_id: telegramId, place_id: grantedPlaceId, status: grantedStatus })); } catch { /* ignore */ }
+          } catch (error) {
+            let diagnostic: PartnerAccessDiagnostic | null = null;
+            try { diagnostic = await stage2Fetch<PartnerAccessDiagnostic>(`/partner/access-diagnostic/${encodeURIComponent(startParam)}`); } catch { diagnostic = null; }
+            if (!cancelled) {
+              setPartnerDataReady(true);
+              setInviteDiagnostic(diagnostic);
+              setInviteState("denied");
+              setInviteError(error instanceof Error ? error.message : "Доступ за цим QR заборонений");
+            }
+            return;
           }
-          if (!cancelled) {
-            setInviteDiagnostic(diagnostic);
-            setInviteState("denied");
-            setInviteError(error instanceof Error ? error.message : "Доступ за цим QR заборонений");
-          }
-          return;
         }
-      } else if (!cancelled) {
+
+        const previousPlaceId = window.localStorage.getItem(PARTNER_STAGE2_PLACE_KEY) || "";
+        window.localStorage.setItem(PARTNER_STAGE2_PLACE_KEY, grantedPlaceId);
+        window.localStorage.setItem(PARTNER_INVITE_KEY, startParam);
+        setInviteStatus(grantedStatus);
+        if (grantedStatus === "approved") { savePartnerActivated(true); setActivated(true); }
+        setInviteDiagnostic(null);
+        setInviteState("allowed");
+
+        // When navigating inside the same open Mini App, use the already hydrated local profile immediately.
+        // Backend access is verified once per launch/start_param and not on every internal screen.
+        if (previousPlaceId === grantedPlaceId && readPartnerProfile().placeName) {
+          setPartnerDataReady(true);
+          if (usedCachedAccess) return;
+        }
+      } else {
         setInviteState("none");
       }
-      const places = await stage2Fetch<Array<Record<string, any>>>("/partner/places");
-      if (cancelled) return;
-      const storedId = typeof window !== "undefined" ? window.localStorage.getItem(PARTNER_STAGE2_PLACE_KEY) : null;
-      const place = places.find((item) => item.id === storedId) ?? places[0];
-      const approved = place?.status === "approved";
-      savePartnerActivated(Boolean(approved));
-      setActivated(Boolean(approved));
-      if (place?.id && typeof window !== "undefined") {
-        window.localStorage.setItem(PARTNER_STAGE2_PLACE_KEY, String(place.id));
-        hydratePartnerProfileFromDb(place);
-      }
-      if (!cancelled) setPartnerDataReady(true);
-    }).catch((error) => {
-      if (!cancelled) {
-        setPartnerDataReady(true);
-        // If Telegram/QR access already succeeded, a temporary data-loading failure must not be turned into "access denied".
-        if (telegramStartParam().startsWith("partner-") && inviteState === "checking") {
-          setInviteError(error instanceof Error ? `Доступ підтверджено, але не вдалося завантажити заклад: ${error.message}` : "Доступ підтверджено, але не вдалося завантажити заклад");
+
+      try {
+        const places = await stage2Fetch<Array<Record<string, any>>>("/partner/places");
+        if (cancelled) return;
+        const storedId = window.localStorage.getItem(PARTNER_STAGE2_PLACE_KEY);
+        const targetId = grantedPlaceId || storedId || "";
+        const place = places.find((item) => item.id === targetId) ?? places[0];
+        const approved = place?.status === "approved";
+        if (!isInvite) { savePartnerActivated(Boolean(approved)); setActivated(Boolean(approved)); }
+        if (place?.id) {
+          window.localStorage.setItem(PARTNER_STAGE2_PLACE_KEY, String(place.id));
+          hydratePartnerProfileFromDb(place);
         }
+      } catch (error) {
+        if (isInvite && !cancelled) {
+          setInviteError(error instanceof Error ? `Доступ підтверджено, але не вдалося оновити дані закладу: ${error.message}` : "Доступ підтверджено, але не вдалося оновити дані закладу");
+        }
+      } finally {
+        if (!cancelled) setPartnerDataReady(true);
       }
-    });
+    };
+
+    void run();
     return () => { cancelled = true; };
-  }, [slug]);
+  }, []);
 
   const resolvedSlug = useMemo(() => {
     if (inviteState === "allowed" && !activated && (slug === "partner-dashboard" || slug === "partner-onboarding")) {
@@ -3202,6 +3278,8 @@ export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate
       return <UpdateScreen navigate={navigate} activated={activated} />;
     case "partner-cabinet":
       return <CabinetScreen navigate={navigate} />;
+    case "partner-hours":
+      return <PartnerHoursScreen navigate={navigate} />;
     case "partner-services":
       return <ServicesScreen navigate={navigate} />;
     case "partner-services-hidden":

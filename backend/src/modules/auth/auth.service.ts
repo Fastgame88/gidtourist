@@ -57,6 +57,30 @@ export class AuthService {
     return user;
   }
 
+  private async telegramAvatarDataUrl(botToken: string, telegramId: number) {
+    try {
+      const listResponse = await fetch(`https://api.telegram.org/bot${botToken}/getUserProfilePhotos?user_id=${encodeURIComponent(String(telegramId))}&limit=1`);
+      if (!listResponse.ok) return null;
+      const list = await listResponse.json() as { ok?: boolean; result?: { photos?: Array<Array<{ file_id?: string }>> } };
+      const sizes = list.result?.photos?.[0] ?? [];
+      const fileId = sizes.at(-1)?.file_id || sizes[0]?.file_id;
+      if (!list.ok || !fileId) return null;
+      const fileResponse = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${encodeURIComponent(fileId)}`);
+      if (!fileResponse.ok) return null;
+      const file = await fileResponse.json() as { ok?: boolean; result?: { file_path?: string } };
+      const filePath = file.result?.file_path;
+      if (!file.ok || !filePath) return null;
+      const imageResponse = await fetch(`https://api.telegram.org/file/bot${botToken}/${filePath}`);
+      if (!imageResponse.ok) return null;
+      const bytes = Buffer.from(await imageResponse.arrayBuffer());
+      if (!bytes.length || bytes.length > 1_500_000) return null;
+      const contentType = imageResponse.headers.get("content-type") || "image/jpeg";
+      return `data:${contentType};base64,${bytes.toString("base64")}`;
+    } catch {
+      return null;
+    }
+  }
+
   private async createSession(userId: string) {
     const token = randomBytes(32).toString("base64url");
     const hash = createHash("sha256").update(token).digest("hex");
@@ -85,14 +109,15 @@ export class AuthService {
       throw new BadRequestException("initData is required outside DEV_AUTH_BYPASS mode");
     }
 
+    const resolvedPhotoUrl = tgUser.photo_url || await this.telegramAvatarDataUrl((process.env.TELEGRAM_BOT_TOKEN || "").trim(), tgUser.id);
     const existing = await this.db.query<{ id: string }>("SELECT id FROM users WHERE telegram_id=$1", [tgUser.id]);
     const userId = existing.rows[0]?.id ?? makeId("usr");
     await this.db.query(
       `INSERT INTO users(id,telegram_id,telegram_username,first_name,last_name,language_code,photo_url,selected_language,last_active_at)
        VALUES($1,$2,$3,$4,$5,$6,$7,$8,now())
        ON CONFLICT (telegram_id) DO UPDATE SET telegram_username=EXCLUDED.telegram_username, first_name=EXCLUDED.first_name,
-         last_name=EXCLUDED.last_name, language_code=EXCLUDED.language_code, photo_url=EXCLUDED.photo_url, last_active_at=now(), updated_at=now()`,
-      [userId, tgUser.id, tgUser.username ?? null, tgUser.first_name ?? null, tgUser.last_name ?? null, tgUser.language_code ?? "uk", tgUser.photo_url ?? null, tgUser.language_code?.startsWith("en") ? "en" : tgUser.language_code?.startsWith("pl") ? "pl" : "uk"],
+         last_name=EXCLUDED.last_name, language_code=EXCLUDED.language_code, photo_url=COALESCE(EXCLUDED.photo_url,users.photo_url), last_active_at=now(), updated_at=now()`,
+      [userId, tgUser.id, tgUser.username ?? null, tgUser.first_name ?? null, tgUser.last_name ?? null, tgUser.language_code ?? "uk", resolvedPhotoUrl ?? null, tgUser.language_code?.startsWith("en") ? "en" : tgUser.language_code?.startsWith("pl") ? "pl" : "uk"],
     );
 
     const sessionToken = await this.createSession(userId);

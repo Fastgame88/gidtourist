@@ -8,6 +8,8 @@ type LeafletApi = {
   tileLayer: (url: string, options?: Record<string, unknown>) => any;
   circleMarker: (coords: [number, number], options?: Record<string, unknown>) => any;
   circle: (coords: [number, number], options?: Record<string, unknown>) => any;
+  marker: (coords: [number, number], options?: Record<string, unknown>) => any;
+  icon: (options?: Record<string, unknown>) => any;
 };
 
 declare global {
@@ -74,11 +76,27 @@ function loadLeaflet(): Promise<LeafletApi> {
   return window.__gidLeafletPromise;
 }
 
-function partnerMarkerSvg(partner: boolean) {
-  const fill = partner ? "%2306a85a" : "%234285f4";
-  const ring = partner ? "%23ffffff" : "%23ffffff";
-  const star = partner ? `<path d='M16 7l2.4 4.8 5.3.8-3.9 3.8.9 5.3-4.7-2.5-4.7 2.5.9-5.3-3.9-3.8 5.3-.8z' fill='white'/>` : `<circle cx='16' cy='16' r='4.5' fill='white'/>`;
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='32' height='38' viewBox='0 0 32 38'><path d='M16 1C8.3 1 2 7.2 2 15c0 10.4 14 22 14 22s14-11.6 14-22C30 7.2 23.7 1 16 1z' fill='${fill.replace("%23", "#")}' stroke='${ring.replace("%23", "#")}' stroke-width='2'/>${star}</svg>`;
+function markerColor(place: Stage2Place) {
+  const category = String(place.category_slug || "").toLowerCase();
+  if (category === "food") return "#f28a22";
+  if (category === "shop") return "#2878d8";
+  if (category === "nature") return "#18a45b";
+  if (category === "rest") return "#8b5bd6";
+  if (category === "entertainment" || category === "fun") return "#d94c65";
+  if (category === "transfer") return "#159a9a";
+  if (category === "useful" || category === "emergency") return "#d5a11e";
+  if (category === "interesting") return "#8a67c7";
+  return "#64748b";
+}
+
+function placeMarkerSvg(place: Stage2Place) {
+  const partner = place.is_partner === true || place.source === "partner" || place.attributes?.partner === true;
+  const fill = markerColor(place);
+  const center = partner
+    ? `<path d='M16 7l2.4 4.8 5.3.8-3.9 3.8.9 5.3-4.7-2.5-4.7 2.5.9-5.3-3.9-3.8 5.3-.8z' fill='white'/>`
+    : `<circle cx='16' cy='16' r='4.5' fill='white'/>`;
+  const outer = partner ? `<circle cx='16' cy='15' r='13' fill='none' stroke='white' stroke-width='2.3' opacity='.95'/>` : "";
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='32' height='38' viewBox='0 0 32 38'><path d='M16 1C8.3 1 2 7.2 2 15c0 10.4 14 22 14 22s14-11.6 14-22C30 7.2 23.7 1 16 1z' fill='${fill}' stroke='white' stroke-width='2'/>${outer}${center}</svg>`;
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
@@ -157,7 +175,7 @@ export function RealMap({
           position: { lat: Number(place.lat), lng: Number(place.lng) },
           title: partner ? `Партнер · ${place.name}` : place.name,
           zIndex: partner ? 500 : 100,
-          icon: { url: partnerMarkerSvg(partner), scaledSize: new maps.Size(compact ? 21 : 28, compact ? 25 : 33), anchor: new maps.Point(compact ? 10 : 14, compact ? 24 : 32) },
+          icon: { url: placeMarkerSvg(place), scaledSize: new maps.Size(compact ? 21 : 28, compact ? 25 : 33), anchor: new maps.Point(compact ? 10 : 14, compact ? 24 : 32) },
         });
         if (!compact) marker.addListener("click", () => onSelect?.(place));
         return marker;
@@ -187,7 +205,8 @@ export function RealMap({
       }
       for (const place of places.slice(0, compact ? 8 : 40)) {
         const partner = place.is_partner === true || place.source === "partner" || place.attributes?.partner === true;
-        const marker = L.circleMarker([Number(place.lat), Number(place.lng)], { radius: partner ? 8 : 6, color: "#ffffff", weight: partner ? 3 : 2, fillColor: partner ? "#06a85a" : "#4285f4", fillOpacity: 1 }).addTo(map);
+        const icon = L.icon({ iconUrl: placeMarkerSvg(place), iconSize: compact ? [21,25] : [28,33], iconAnchor: compact ? [10,24] : [14,32] });
+        const marker = L.marker([Number(place.lat), Number(place.lng)], { icon }).addTo(map);
         marker.bindTooltip(partner ? `★ Партнер · ${place.name}` : place.name);
         if (!compact) marker.on("click", () => onSelect?.(place));
       }

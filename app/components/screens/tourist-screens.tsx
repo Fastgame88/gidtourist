@@ -1104,11 +1104,6 @@ function DynamicCategoryScreen({ navigate, config }: { navigate: Navigate; confi
   const [selectedChip, setSelectedChip] = useState("Усі");
   const [places, setPlaces] = useState<Stage2Place[]>([]);
   const [category, setCategory] = useState<Stage2Category | null>(null);
-  const [openNow, setOpenNow] = useState(false);
-  const [highRating, setHighRating] = useState(false);
-  const [parking, setParking] = useState(false);
-  const [kids, setKids] = useState(false);
-  const [budget, setBudget] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -1128,22 +1123,19 @@ function DynamicCategoryScreen({ navigate, config }: { navigate: Navigate; confi
       });
       if (query.trim()) params.set("q", query.trim());
       if (selectedChip !== "Усі") params.set("subcategory", selectedChip);
-      if (runtime.location) {
-        params.set("lat", String(runtime.location.lat));
-        params.set("lng", String(runtime.location.lng));
-      }
-      if (openNow) params.set("open_now", "true");
-      if (highRating) params.set("min_rating", "4.5");
-      if (parking) params.set("parking", "true");
-      if (kids) params.set("kids", "true");
-      if (budget) params.set("price_level", "1");
+      const point = runtime.location ?? { lat: Number(runtime.context!.place?.lat ?? runtime.context!.region.lat), lng: Number(runtime.context!.place?.lng ?? runtime.context!.region.lng) };
+      params.set("lat", String(point.lat));
+      params.set("lng", String(point.lng));
+      params.set("radius", "15000");
+      params.set("include_google", "true");
+      params.set("google_section", config.category);
       void stage2Fetch<Stage2Place[]>(`/places?${params}`).then((items) => {
         if (!cancelled) setPlaces(items);
       }).catch(() => undefined);
       if (query.trim()) void trackEvent("search_used", { regionId: runtime.context?.region.id, payload: { q: query.trim(), category: config.category } });
     }, 240);
     return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [runtime.context, runtime.location, query, selectedChip, openNow, highRating, parking, kids, budget, config.category]);
+  }, [runtime.context, runtime.location, query, selectedChip, config.category]);
 
   const chips = ["Усі", ...((category?.subcategories?.length ? category.subcategories : config.fallbackChips).filter((item) => item !== "Усі"))];
   const title = runtime.language === "en" ? config.titleEn : runtime.language === "pl" ? config.titlePl : config.title;
@@ -1161,13 +1153,6 @@ function DynamicCategoryScreen({ navigate, config }: { navigate: Navigate; confi
         <CategoryHeader icon={config.icon} title={title} subtitle={subtitle} tone={config.tone} onMap={() => navigate("tourist", "nearby")} />
         <SearchBar placeholder={config.placeholder} value={query} onChange={setQuery} />
         <Chips items={chips} selected={selectedChip} onSelect={setSelectedChip} />
-        <div className="gt-stage2-filter-pills" aria-label="Фільтри">
-          <button type="button" className={openNow ? "is-active" : ""} onClick={() => setOpenNow((v) => !v)}>Відкрито зараз</button>
-          <button type="button" className={highRating ? "is-active" : ""} onClick={() => setHighRating((v) => !v)}>★ 4.5+</button>
-          <button type="button" className={parking ? "is-active" : ""} onClick={() => setParking((v) => !v)}>Парковка</button>
-          <button type="button" className={kids ? "is-active" : ""} onClick={() => setKids((v) => !v)}>З дітьми</button>
-          <button type="button" className={budget ? "is-active" : ""} onClick={() => setBudget((v) => !v)}>Бюджетно</button>
-        </div>
         <MapStrip real places={places} />
         <SectionTitle title={config.sectionTitle} action={`${places.length}`} />
         <div className="gt-place-list">
@@ -1385,6 +1370,7 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
   const runtime = useTouristRuntime();
   const [place, setPlace] = useState<Stage2Place | null>(null);
   const [favorite, setFavorite] = useState(false);
+  const [showGoogleReviews, setShowGoogleReviews] = useState(false);
   const fallbackId = runtime.selectedPlaceId || runtime.context?.place?.id || "";
 
   useEffect(() => {
@@ -1425,7 +1411,9 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
 
   return (
     <div className="tourist-screen gt-screen">
-      <section className="gt-place-hero" style={current.image_url ? { backgroundImage: `linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.58)),url(${current.image_url})` } : undefined}>
+      <section className={`gt-place-hero ${current.image_url ? "has-real-photo" : ""}`}>
+        {current.image_url ? <img className="gt-place-hero__image" src={current.image_url} alt={current.name} /> : null}
+        <span className="gt-place-hero__shade" aria-hidden="true" />
         {current.attributes?.verified === true ? <span className="gt-pill gt-pill--glass"><BadgeCheck size={16} /> Перевірено</span> : null}
         <div>
           <h1>{current.name}</h1>
@@ -1434,7 +1422,7 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
       </section>
       <main className="gt-content gt-content--overlap">
         <div className="gt-place-summary">
-          <span><Star size={19} fill="currentColor" /><strong>{Number(current.rating || 0).toFixed(1)}</strong><small>{current.review_count || 0} відгуків</small></span>
+          <button type="button" className="gt-place-summary__reviews-button" onClick={() => setShowGoogleReviews((value) => !value)}><Star size={19} fill="currentColor" /><strong>{Number(current.rating || 0).toFixed(1)}</strong><small>{current.review_count || 0} відгуків · натисніть</small></button>
           <span><Clock3 size={19} /><strong>{current.is_open_now === true ? "Відкрито" : current.is_open_now === false ? "Зачинено" : "Графік"}</strong><small>{daily?.to ? `до ${daily.to}` : "див. нижче"}</small></span>
           <span><MapPin size={19} /><strong>{distance}</strong><small>від вашої точки</small></span>
         </div>
@@ -1456,11 +1444,11 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
         {current.website ? <a className="gt-detail-card gt-detail-card--link" href={current.website} target="_blank" rel="noreferrer"><span><Globe size={22} /></span><div><strong>Сайт</strong><small>{current.website}</small></div><ChevronRight size={19} /></a> : null}
         {googleWeekdays.length ? <section className="gt-google-hours"><strong>Графік роботи</strong>{googleWeekdays.map((line) => <small key={line}>{line}</small>)}</section> : null}
         {visiblePlaceTags(current).length ? <div className="gt-stage2-place-tags">{visiblePlaceTags(current).map((tag) => <span key={tag}>{tag}</span>)}</div> : null}
-        {googleReviews.length ? <section className="gt-google-reviews"><SectionTitle title="Відгуки Google" action={`${googleReviews.length}`} /><div className="gt-google-reviews__list">{googleReviews.slice(0,5).map((review,index) => {
+        {showGoogleReviews ? <section className="gt-google-reviews"><SectionTitle title="Відгуки Google" action={`${current.review_count || googleReviews.length}`} />{googleReviews.length ? <div className="gt-google-reviews__list">{googleReviews.slice(0,5).map((review,index) => {
           const author = review.authorAttribution && typeof review.authorAttribution === "object" ? review.authorAttribution : {};
           const text = review.text && typeof review.text === "object" ? review.text.text : review.originalText && typeof review.originalText === "object" ? review.originalText.text : "";
           return <article key={`${String(author.displayName || "review")}-${index}`}><div><strong>{String(author.displayName || "Користувач Google")}</strong><span><Star size={13} fill="currentColor" /> {Number(review.rating || 0).toFixed(1)}</span></div>{text ? <p>{String(text)}</p> : null}<small>{String(review.relativePublishTimeDescription || "")}</small></article>;
-        })}</div></section> : null}
+        })}</div> : <div className="gt-stage2-empty">Google не повернув тексти відгуків для цієї локації.</div>}</section> : null}
         <button type="button" className="gt-primary-button" onClick={openRoute}>Побудувати маршрут <Navigation size={20} /></button>
       </main>
     </div>
@@ -1534,7 +1522,6 @@ function TransferScreen({ navigate }: { navigate: Navigate }) {
   const [places, setPlaces] = useState<Stage2Place[]>([]);
   const [apiLoaded, setApiLoaded] = useState(false);
   const [transferCategory, setTransferCategory] = useState<Stage2Category | null>(null);
-  const [openNow, setOpenNow] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -1547,14 +1534,18 @@ function TransferScreen({ navigate }: { navigate: Navigate }) {
     let cancelled = false;
     const timer = window.setTimeout(() => {
       const params = new URLSearchParams({ region_id: runtime.context!.region.id, category: "transfer" });
-      if (runtime.location) { params.set("lat", String(runtime.location.lat)); params.set("lng", String(runtime.location.lng)); }
+      const point = runtime.location ?? { lat: Number(runtime.context!.place?.lat ?? runtime.context!.region.lat), lng: Number(runtime.context!.place?.lng ?? runtime.context!.region.lng) };
+      params.set("lat", String(point.lat));
+      params.set("lng", String(point.lng));
+      params.set("radius", "15000");
+      params.set("include_google", "true");
+      params.set("google_section", "transfer");
       if (query.trim()) params.set("q", query.trim());
       if (chip !== "Усі") params.set("subcategory", chip);
-      if (openNow) params.set("open_now", "true");
       void stage2Fetch<Stage2Place[]>(`/places?${params}`).then((items) => { if (!cancelled) { setPlaces(items); setApiLoaded(true); } }).catch(() => undefined);
     }, 200);
     return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [runtime.context, runtime.location, query, chip, openNow]);
+  }, [runtime.context, runtime.location, query, chip]);
 
   const display = places.map((place) => ({
     image: place.image_url || "",
@@ -1564,7 +1555,7 @@ function TransferScreen({ navigate }: { navigate: Navigate }) {
     distance: distanceLabel(place.distance_m),
     walk: walkLabel(place.distance_m),
     walking: false,
-    tags: (place.tags?.length ? place.tags : [place.subcategory || "Трансфер"]).slice(0, 3),
+    tags: (visiblePlaceTags(place).length ? visiblePlaceTags(place) : [place.subcategory || "Трансфер"]).slice(0, 3),
   }));
 
   return (
@@ -1573,7 +1564,6 @@ function TransferScreen({ navigate }: { navigate: Navigate }) {
         <CategoryHeader icon={CarFront} title="Трансфер" subtitle="Транспортні послуги та перевезення" tone="teal" onMap={() => navigate("tourist", "nearby")} />
         <SearchBar placeholder="Пошук трансферу або маршруту" value={query} onChange={setQuery} />
         <div className="gt-transfer-reference-chips"><Chips items={["Усі", ...((transferCategory?.subcategories?.length ? transferCategory.subcategories : ["Таксі", "Автостанції", "Парковки", "Оренда авто", "Заправки"]).filter((item) => item !== "Усі"))]} selected={chip} onSelect={setChip} /></div>
-        <div className="gt-stage2-filter-pills"><button type="button" className={openNow ? "is-active" : ""} onClick={() => setOpenNow((value) => !value)}>Відкрито зараз</button></div>
         <MapStrip real places={places} />
         <SectionTitle title="Трансфери поруч" action={`${display.length}`} />
         <div className="gt-transfer-reference-list">
@@ -2479,15 +2469,20 @@ function ProfileScreen({ navigate }: { navigate: Navigate }) {
   const username = runtime.user?.telegram_username ? `@${runtime.user.telegram_username}` : (runtime.context?.region.name || "Гід туриста");
   const languageLabel = runtime.language === "en" ? "English" : runtime.language === "pl" ? "Polski" : "Українська";
 
+  useEffect(() => {
+    if (runtime.location?.source !== "gps") void runtime.requestLocation();
+  }, []);
+
   return (
     <div className="tourist-screen gt-screen gt-profile-screen">
       <main className="gt-content gt-profile-content">
         <h1 className="gt-simple-title">Профіль</h1>
         <section className="gt-profile-card gt-profile-card--reference">
-          <div className="gt-avatar gt-avatar--photo" role="img" aria-label={name} />
+          <div className={`gt-avatar gt-avatar--photo ${runtime.user?.photo_url ? "has-photo" : ""}`} role="img" aria-label={name}>{runtime.user?.photo_url ? <img src={runtime.user.photo_url} alt={name} /> : <UserRound size={40} />}</div>
           <div><strong>{name}</strong><small><MapPin size={17} /> {username}</small></div>
         </section>
         <div className="gt-profile-list gt-profile-list--reference">
+          <button type="button" className="gt-profile-row--location" onClick={() => void runtime.requestLocation()}><LocateFixed size={27} /><span>{runtime.location?.source === "gps" ? "Геолокація дозволена" : "Надати доступ до геолокації"}</span><ChevronRight size={20} /></button>
           <button type="button" className="gt-profile-row--reviews" onClick={() => navigate("tourist", "review")}><MessageSquareMore size={27} /><span>Мої відгуки</span><ChevronRight size={20} /></button>
           <button type="button" className="gt-profile-row--favorites" onClick={() => navigate("tourist", "favorites")}><Heart size={27} /><span>Улюблені</span><ChevronRight size={20} /></button>
           <button type="button" onClick={() => navigate("tourist", "activity")}><Clock3 size={27} /><span>Історія активності</span><ChevronRight size={20} /></button>

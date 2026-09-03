@@ -464,6 +464,15 @@ export const screens: ScreenDefinition[] = [
   },
 
   {
+    id: "P01K",
+    slug: "partner-hours",
+    title: "Графік роботи закладу",
+    shortTitle: "Графік роботи",
+    description: "Режим та години роботи закладу",
+    role: "partner",
+  },
+
+  {
     id: "P02",
     slug: "scanner",
     title: "Сканер QR клієнта",

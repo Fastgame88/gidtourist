@@ -29,8 +29,10 @@ export class Stage2Controller {
 
   @Get("google/photo")
   async googlePhoto(@Query("name") name = "", @Res() response: any) {
-    const uri = await this.service.googlePhoto(name);
-    return response.redirect(uri);
+    const photo = await this.service.googlePhoto(name);
+    response.setHeader("Content-Type", photo.contentType);
+    response.setHeader("Cache-Control", "public, max-age=86400");
+    return response.send(photo.buffer);
   }
 
   @Get("places")

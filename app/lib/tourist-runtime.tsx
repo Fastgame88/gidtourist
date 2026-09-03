@@ -116,12 +116,43 @@ export function TouristRuntimeProvider({ children }: { children: ReactNode }) {
   };
 
   const requestLocation = async () => {
+    if (typeof window === "undefined") return null;
+
+    // Telegram native LocationManager is preferred inside Mini Apps because it can request
+    // Telegram's own location permission even when the embedded browser blocks a silent
+    // navigator.geolocation request. Browser geolocation remains the fallback.
+    const locationManager = (window as any).Telegram?.WebApp?.LocationManager;
+    if (locationManager) {
+      const nativePoint = await new Promise<Coordinates | null>((resolve) => {
+        const get = () => {
+          try {
+            locationManager.getLocation((data: any) => {
+              const lat = Number(data?.latitude);
+              const lng = Number(data?.longitude);
+              if (Number.isFinite(lat) && Number.isFinite(lng)) resolve({ lat, lng, source: "gps" as const });
+              else resolve(null);
+            });
+          } catch { resolve(null); }
+        };
+        try {
+          if (locationManager.isInited) get();
+          else locationManager.init(() => get());
+        } catch { resolve(null); }
+      });
+      if (nativePoint) {
+        setLocation(nativePoint);
+        try { window.localStorage.setItem("gid-tourist-geolocation-approved", "1"); } catch { /* ignore */ }
+        return nativePoint;
+      }
+    }
+
     if (typeof navigator === "undefined" || !navigator.geolocation) return null;
     return new Promise<Coordinates | null>((resolve) => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const next = { lat: position.coords.latitude, lng: position.coords.longitude, source: "gps" as const };
           setLocation(next);
+          try { window.localStorage.setItem("gid-tourist-geolocation-approved", "1"); } catch { /* ignore */ }
           resolve(next);
         },
         () => resolve(null),

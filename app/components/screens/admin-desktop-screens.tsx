@@ -496,14 +496,19 @@ async function adminImageToDataUrl(file: File) {
 const EMPTY_ADMIN_MAP_PLACES: never[] = [];
 
 const ADMIN_CABINET_MODULES = [
+  "Інформація про заклад",
+  "Послуги закладу",
+  "Графік роботи",
   "Час заїзду / виїзду",
   "Рецепція",
   "Wi‑Fi",
   "Парковка",
   "Правила проживання",
   "Сніданок",
+  "Контакти",
   "Оперативні контакти",
-  "Послуги закладу",
+  "Статистика переходів",
+  "Налаштування",
 ];
 
 function PartnerCreateScreen({ navigate }: AdminProps) {
@@ -1457,6 +1462,11 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
     }
   };
 
+  const previewQr = qrRows.find((row) => row.start_param === qrPreviewParam) ?? null;
+  const qrAudience = (row: { type: string; start_param?: string }) => row.type === "partner_access" || row.start_param?.startsWith("partner-")
+    ? { label: "Для партнера", tone: "partner" }
+    : { label: "Точка входу туриста", tone: "client" };
+
   return (
     <AdminShell active="content" navigate={navigate} contentClassName="ad-main--stage2">
       <AdminPageHeader title="Контент / QR — Етап 2" subtitle="Модерація закладів, QR-контекст, категорії та локальні контакти" action={<OutlineButton onClick={() => void load()}><RefreshCcw size={17}/> Оновити</OutlineButton>} />
@@ -1488,18 +1498,37 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
         </AdminTable>
       </section>
 
-      <section className="ad-stage2-grid">
-        <div className="ad-stage2-card">
-          <h2>Створити QR точки входу</h2><p>Оберіть схвалений заклад. Унікальний QR-контекст створиться автоматично.</p>
-          <select value={qrPlaceId} onChange={(e)=>{setQrPlaceId(e.target.value);setQrCreateLocked(false);setMessage("");}}>
-            <option value="">Публічна точка без закладу</option>
-            {approvedPlaces.map((place) => <option key={place.id} value={place.id}>{place.name} · {place.category_slug}</option>)}
-          </select>
-          <PrimaryButton disabled={qrCreating || qrCreateLocked} onClick={() => void createQr()}>{qrCreateLocked ? <Check size={16}/> : <Plus size={16}/>} {qrCreating ? "Створення…" : qrCreateLocked ? "QR створено" : "Створити QR-контекст"}</PrimaryButton>
-          {qrCreateLocked ? <div className="ad-stage2-qr-created"><Check size={16}/><span><strong>QR успішно створено</strong><small>Точка готова до використання</small></span></div> : null}
-          {qrCreateLocked ? <OutlineButton onClick={()=>{setQrCreateLocked(false);setQrPreviewParam("");setMessage("");}}>Створити ще один QR</OutlineButton> : null}
+      <section className="ad-stage2-grid ad-stage2-grid--content">
+        <div className="ad-stage2-card ad-stage2-card--stacked">
+          <div className="ad-stage2-card-section">
+            <h2>Створити QR точки входу</h2><p>Оберіть схвалений заклад. Унікальний QR-контекст створиться автоматично.</p>
+            <select value={qrPlaceId} onChange={(e)=>{setQrPlaceId(e.target.value);setQrCreateLocked(false);setMessage("");}}>
+              <option value="">Публічна точка без закладу</option>
+              {approvedPlaces.map((place) => <option key={place.id} value={place.id}>{place.name} · {place.category_slug}</option>)}
+            </select>
+            <PrimaryButton disabled={qrCreating || qrCreateLocked} onClick={() => void createQr()}>{qrCreateLocked ? <Check size={16}/> : <Plus size={16}/>} {qrCreating ? "Створення…" : qrCreateLocked ? "QR створено" : "Створити QR-контекст"}</PrimaryButton>
+            {qrCreateLocked ? <div className="ad-stage2-qr-created"><Check size={16}/><span><strong>QR успішно створено</strong><small>Точка готова до використання</small></span></div> : null}
+            {qrCreateLocked ? <OutlineButton onClick={()=>{setQrCreateLocked(false);setQrPreviewParam("");setMessage("");}}>Створити ще один QR</OutlineButton> : null}
+          </div>
+
+          <div className="ad-stage2-card-section">
+            <h2>Telegram-спільнота</h2><p>Посилання регіону відкриватиметься туристу на екрані «Спільнота».</p>
+            <input value={communityUrl} onChange={(e)=>setCommunityUrl(e.target.value)} placeholder="https://t.me/..." />
+            <PrimaryButton onClick={() => void adminStage2Fetch("/admin/stage2/regions/region-tatariv", adminKey,{method:"PATCH",body:JSON.stringify({community_url:communityUrl})}).then(()=>{setMessage("Telegram-спільноту регіону збережено");})}><Send size={16}/> Зберегти спільноту</PrimaryButton>
+          </div>
+
+          <div className="ad-stage2-card-section ad-stage2-card-section--emergency">
+            <h2>Екстрений контакт регіону</h2><p>Після збереження контакт з'явиться у «Халепа?» відповідного регіону.</p>
+            <input value={emergencyTitle} onChange={(e)=>setEmergencyTitle(e.target.value)} placeholder="Назва служби" />
+            <input value={emergencyPhone} onChange={(e)=>setEmergencyPhone(e.target.value)} placeholder="Телефон" />
+            <PrimaryButton onClick={() => void adminStage2Fetch("/admin/stage2/emergency", adminKey,{method:"POST",body:JSON.stringify({region_id:"region-tatariv",title:emergencyTitle,phone:emergencyPhone,type:"custom"})}).then(()=>{setMessage("Контакт збережено");setEmergencyTitle("");setEmergencyPhone("");return load();})}><Plus size={14}/> Додати контакт</PrimaryButton>
+            {emergencyContacts.length ? <div className="ad-stage2-emergency-list">
+              {emergencyContacts.map((contact) => <div key={contact.id}><span><strong>{contact.title}</strong><small>{contact.phone || "Телефон не вказано"}</small></span><button type="button" onClick={() => void deleteEmergency(contact.id, contact.title)}><Trash2 size={12}/> Видалити</button></div>)}
+            </div> : null}
+          </div>
         </div>
-        <div className="ad-stage2-card">
+
+        <div className="ad-stage2-card ad-stage2-card--categories">
           <h2>Категорії / підкатегорії</h2><p>Редагуйте основні розділи й їх фільтри без змін коду. Партнер побачить ці підкатегорії у формі.</p>
           <select value={categorySlug} onChange={(e)=>{
             const slug=e.target.value; const current=stage2Categories.find((item)=>item.slug===slug);
@@ -1529,34 +1558,21 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
             <PrimaryButton onClick={() => void adminStage2Fetch("/admin/stage2/place-type-templates", adminKey,{method:"POST",body:JSON.stringify({category_slug:templateCategory,place_type:templateType,label:templateType,default_title:templateTitle,default_description:templateDescription,default_amenities:templateAmenities.split(",").map((item)=>item.trim()).filter(Boolean),default_services:templateServices.split(",").map((item)=>item.trim()).filter(Boolean),fields:Object.fromEntries(templateFields.split(";").map((item)=>item.trim()).filter(Boolean).map((item)=>{const [key,...rest]=item.split("=");return [key.trim(),rest.join("=").trim()]}).filter(([key,label])=>key&&label))})}).then(()=>{setMessage("Шаблон типу закладу збережено");return load();})}><Plus size={16}/> Зберегти шаблон</PrimaryButton>
           </div>
         </div>
-        <div className="ad-stage2-card">
-          <h2>Екстрений контакт регіону</h2><p>Після збереження контакт з'явиться у «Халепа?» відповідного регіону.</p>
-          <input value={emergencyTitle} onChange={(e)=>setEmergencyTitle(e.target.value)} placeholder="Назва служби" />
-          <input value={emergencyPhone} onChange={(e)=>setEmergencyPhone(e.target.value)} placeholder="Телефон" />
-          <PrimaryButton onClick={() => void adminStage2Fetch("/admin/stage2/emergency", adminKey,{method:"POST",body:JSON.stringify({region_id:"region-tatariv",title:emergencyTitle,phone:emergencyPhone,type:"custom"})}).then(()=>{setMessage("Контакт збережено");setEmergencyTitle("");setEmergencyPhone("");return load();})}><Plus size={16}/> Додати контакт</PrimaryButton>
-          {emergencyContacts.length ? <div className="ad-stage2-emergency-list">
-            {emergencyContacts.map((contact) => <div key={contact.id}><span><strong>{contact.title}</strong><small>{contact.phone || "Телефон не вказано"}</small></span><button type="button" onClick={() => void deleteEmergency(contact.id, contact.title)}><Trash2 size={15}/> Видалити</button></div>)}
-          </div> : null}
-        </div>
-        <div className="ad-stage2-card">
-          <h2>Telegram-спільнота</h2><p>Посилання регіону відкриватиметься туристу на екрані «Спільнота».</p>
-          <input value={communityUrl} onChange={(e)=>setCommunityUrl(e.target.value)} placeholder="https://t.me/..." />
-          <PrimaryButton onClick={() => void adminStage2Fetch("/admin/stage2/regions/region-tatariv", adminKey,{method:"PATCH",body:JSON.stringify({community_url:communityUrl})}).then(()=>{setMessage("Telegram-спільноту регіону збережено");})}><Send size={16}/> Зберегти спільноту</PrimaryButton>
-        </div>
       </section>
 
       <section className="ad-stage2-section">
         <AdminPageHeader title="QR точки" subtitle="Посилання можна перетворити на друкований QR будь-яким QR-генератором; start_param зберігається у БД" />
-        <AdminTable columns={[{label:"Точка",className:"1.2fr"},{label:"start_param",className:"1.25fr"},{label:"Статус",className:".55fr"},{label:"Deep link",className:"2fr"}]}>
-          {qrRows.map((row)=><TableRow key={row.id} columns={["1.2fr","1.25fr",".55fr","2fr"]}><div className="ad-stage2-qr-place"><strong>{row.place_name || "Публічна точка"}</strong><small>{row.region_name}</small></div><code>{row.start_param}</code><Status tone={row.active?"green":"gray"}>{row.active?"Активний":"Вимкнено"}</Status><div className="ad-stage2-link"><input readOnly value={deepLink(row.start_param)}/><button onClick={() => void navigator.clipboard.writeText(deepLink(row.start_param))}>Копіювати</button><button onClick={() => setQrPreviewParam(row.start_param)}>QR</button><button onClick={() => void toggleQr(row.id,!row.active)}>{row.active?"Вимк.":"Увімк."}</button><button className="ad-stage2-delete-button" onClick={() => void deleteQr(row.id,row.start_param)}><Trash2 size={14}/> Видалити</button></div></TableRow>)}
+        <AdminTable columns={[{label:"Точка",className:"1.1fr"},{label:"Тип",className:".75fr"},{label:"start_param",className:"1.2fr"},{label:"Статус",className:".55fr"},{label:"Deep link",className:"2fr"}]}>
+          {qrRows.map((row)=>{ const audience = qrAudience(row); return <TableRow key={row.id} columns={["1.1fr",".75fr","1.2fr",".55fr","2fr"]}><div className="ad-stage2-qr-place"><strong>{row.place_name || "Публічна точка"}</strong><small>{row.region_name}</small></div><span className={`ad-stage2-qr-audience is-${audience.tone}`}>{audience.label}</span><code>{row.start_param}</code><Status tone={row.active?"green":"gray"}>{row.active?"Активний":"Вимкнено"}</Status><div className="ad-stage2-link"><input readOnly value={deepLink(row.start_param)}/><button onClick={() => void navigator.clipboard.writeText(deepLink(row.start_param))}>Копіювати</button><button onClick={() => setQrPreviewParam(row.start_param)}>QR</button><button onClick={() => void toggleQr(row.id,!row.active)}>{row.active?"Вимк.":"Увімк."}</button><button className="ad-stage2-delete-button" onClick={() => void deleteQr(row.id,row.start_param)}><Trash2 size={14}/> Видалити</button></div></TableRow>;})}
         </AdminTable>
       </section>
       {qrPreviewParam ? <div className="ad-stage2-qr-modal" role="dialog" aria-modal="true" aria-label="QR точки входу" onMouseDown={(event)=>{if(event.currentTarget===event.target)setQrPreviewParam("");}}>
         <div className="ad-stage2-qr-modal__card">
           <button type="button" className="ad-stage2-qr-modal__close" aria-label="Закрити" onClick={()=>setQrPreviewParam("")}><X size={22}/></button>
-          <h2>QR точки входу</h2>
+          <h2>QR-код</h2>
+          {previewQr ? <span className={`ad-stage2-qr-audience ad-stage2-qr-audience--modal is-${qrAudience(previewQr).tone}`}>{qrAudience(previewQr).label}</span> : null}
           <Stage2QrPreview value={deepLink(qrPreviewParam)} />
-          <p>Сканування відкриє Telegram Mini App у контексті цієї точки.</p>
+          <p>{previewQr && qrAudience(previewQr).tone === "partner" ? "QR відкриває партнерський кабінет і перевіряє Telegram ID." : "QR відкриває Telegram Mini App у контексті цієї точки входу."}</p>
           <div className="ad-stage2-qr-modal__actions">
             <PrimaryButton onClick={() => void shareQr(qrPreviewParam)}><Send size={17}/> Поділитись</PrimaryButton>
             <OutlineButton onClick={()=>setQrPreviewParam("")}><X size={17}/> Закрити</OutlineButton>

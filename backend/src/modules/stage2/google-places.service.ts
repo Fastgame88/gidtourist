@@ -42,6 +42,23 @@ const NEARBY_TYPES: Record<string, string[]> = {
 };
 
 const SUBCATEGORY_TYPES: Record<string, string[]> = {
+  // Client category chips used by the approved Gid Tourist design.
+  "Українська кухня": ["ukrainian_restaurant", "restaurant"],
+  "Неукраїнська кухня": ["restaurant", "italian_restaurant", "asian_restaurant", "chinese_restaurant", "japanese_restaurant"],
+  "Фаст фуд": ["fast_food_restaurant"],
+  "Кавʼярні": ["cafe", "coffee_shop", "coffee_stand"],
+  "Продовольчі": ["grocery_store", "supermarket", "convenience_store", "market"],
+  "Промтовари": ["store", "home_goods_store", "hardware_store", "electronics_store", "clothing_store"],
+  "Чани": ["spa", "sauna", "wellness_center"],
+  "Сауни": ["sauna", "spa"],
+  "Басейни": ["swimming_pool", "spa"],
+  "Масаж": ["massage", "spa"],
+  "Походи": ["hiking_area", "tourist_attraction"],
+  "Джипи": ["off_roading_area", "adventure_sports_center"],
+  "Рафтинг": ["adventure_sports_center", "tourist_attraction"],
+  "Зіплайн": ["adventure_sports_center", "amusement_center"],
+  "Для дітей": ["playground", "amusement_center", "amusement_park"],
+  "Коні": ["stable", "sports_activity_location"],
   "Ресторани": ["restaurant", "ukrainian_restaurant", "bistro"],
   "Кафе": ["cafe", "coffee_shop", "coffee_stand"],
   "Бари": ["bar", "cocktail_bar", "sports_bar", "wine_bar"],
@@ -205,6 +222,15 @@ export class GooglePlacesService {
     const data = await this.googleFetch<{ photoUri?: string }>(`https://places.googleapis.com/v1/${clean}/media?maxWidthPx=1200&maxHeightPx=900&skipHttpRedirect=true`, { method: "GET" });
     if (!data.photoUri) throw new BadGatewayException("Google photo is unavailable");
     return data.photoUri;
+  }
+
+  async photoData(photoName: string) {
+    const uri = await this.photoUri(photoName);
+    const response = await fetch(uri, { redirect: "follow" });
+    if (!response.ok) throw new BadGatewayException(`Google photo ${response.status}`);
+    const buffer = Buffer.from(await response.arrayBuffer());
+    if (!buffer.length) throw new BadGatewayException("Google photo is empty");
+    return { buffer, contentType: response.headers.get("content-type") || "image/jpeg" };
   }
 
 
