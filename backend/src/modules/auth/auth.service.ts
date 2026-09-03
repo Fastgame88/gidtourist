@@ -9,6 +9,7 @@ type TelegramUser = {
   last_name?: string;
   username?: string;
   language_code?: string;
+  photo_url?: string;
 };
 
 @Injectable()
@@ -78,6 +79,7 @@ export class AuthService {
         last_name: devUser?.last_name ?? "Користувач",
         username: devUser?.username ?? "gid_tourist_test",
         language_code: devUser?.language_code ?? "uk",
+        photo_url: devUser?.photo_url,
       };
     } else {
       throw new BadRequestException("initData is required outside DEV_AUTH_BYPASS mode");
@@ -86,16 +88,16 @@ export class AuthService {
     const existing = await this.db.query<{ id: string }>("SELECT id FROM users WHERE telegram_id=$1", [tgUser.id]);
     const userId = existing.rows[0]?.id ?? makeId("usr");
     await this.db.query(
-      `INSERT INTO users(id,telegram_id,telegram_username,first_name,last_name,language_code,selected_language,last_active_at)
-       VALUES($1,$2,$3,$4,$5,$6,$7,now())
+      `INSERT INTO users(id,telegram_id,telegram_username,first_name,last_name,language_code,photo_url,selected_language,last_active_at)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,now())
        ON CONFLICT (telegram_id) DO UPDATE SET telegram_username=EXCLUDED.telegram_username, first_name=EXCLUDED.first_name,
-         last_name=EXCLUDED.last_name, language_code=EXCLUDED.language_code, last_active_at=now(), updated_at=now()`,
-      [userId, tgUser.id, tgUser.username ?? null, tgUser.first_name ?? null, tgUser.last_name ?? null, tgUser.language_code ?? "uk", tgUser.language_code?.startsWith("en") ? "en" : tgUser.language_code?.startsWith("pl") ? "pl" : "uk"],
+         last_name=EXCLUDED.last_name, language_code=EXCLUDED.language_code, photo_url=EXCLUDED.photo_url, last_active_at=now(), updated_at=now()`,
+      [userId, tgUser.id, tgUser.username ?? null, tgUser.first_name ?? null, tgUser.last_name ?? null, tgUser.language_code ?? "uk", tgUser.photo_url ?? null, tgUser.language_code?.startsWith("en") ? "en" : tgUser.language_code?.startsWith("pl") ? "pl" : "uk"],
     );
 
     const sessionToken = await this.createSession(userId);
     const userResult = await this.db.query(
-      "SELECT id,telegram_id::text,telegram_username,first_name,last_name,selected_language,role FROM users WHERE id=$1",
+      "SELECT id,telegram_id::text,telegram_username,first_name,last_name,photo_url,selected_language,role FROM users WHERE id=$1",
       [userId],
     );
     return { token: sessionToken, user: userResult.rows[0] };

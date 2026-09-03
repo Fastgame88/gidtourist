@@ -146,9 +146,12 @@ export default function ProductApplication({ role, slug }: { role: RoleKey; slug
     if (role !== "tourist") return;
     let cancelled = false;
     const routePartnerInvite = async () => {
-      await waitForTelegramWebApp(1800).catch(() => undefined);
+      let startParam = telegramStartParam();
+      if (!startParam) {
+        await waitForTelegramWebApp(350).catch(() => undefined);
+        startParam = telegramStartParam();
+      }
       if (cancelled) return;
-      const startParam = telegramStartParam();
       if (startParam.startsWith("partner-")) {
         router.replace(`/partner/partner-dashboard?startapp=${encodeURIComponent(startParam)}`);
       }

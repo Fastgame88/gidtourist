@@ -15,11 +15,15 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
   if (authorization) headers.set("authorization", authorization);
   const body = request.method === "GET" || request.method === "HEAD" ? undefined : await request.text();
   try {
-    const response = await fetch(target, { method: request.method, headers, body, cache: "no-store" });
-    const text = await response.text();
-    return new NextResponse(text, {
+    const response = await fetch(target, { method: request.method, headers, body, cache: "no-store", redirect: "follow" });
+    const buffer = await response.arrayBuffer();
+    const responseHeaders = new Headers();
+    responseHeaders.set("content-type", response.headers.get("content-type") || "application/octet-stream");
+    const cacheControl = response.headers.get("cache-control");
+    if (cacheControl) responseHeaders.set("cache-control", cacheControl);
+    return new NextResponse(buffer, {
       status: response.status,
-      headers: { "content-type": response.headers.get("content-type") || "application/json; charset=utf-8" },
+      headers: responseHeaders,
     });
   } catch (error) {
     return NextResponse.json({ message: `Backend недоступний: ${error instanceof Error ? error.message : "network error"}`, target }, { status: 502 });

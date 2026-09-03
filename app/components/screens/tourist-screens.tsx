@@ -159,7 +159,7 @@ function Chips({ items, selected, onSelect }: { items: string[]; selected?: stri
 
 function MapStrip({ real = false, places = [] }: { real?: boolean; places?: Stage2Place[] } = {}) {
   const { context, location } = useTouristRuntime();
-  const address = location?.source === "gps" ? "Ваше поточне місцезнаходження" : (context?.place?.address || context?.region.name || "Татарів");
+  const address = location?.source === "gps" ? "Ваше поточне місцезнаходження" : (context?.place?.address || context?.region.name || "Визначаємо точку входу…");
   const center = location ?? (context ? { lat: Number(context.place?.lat ?? context.region.lat), lng: Number(context.place?.lng ?? context.region.lng), source: "qr" as const } : null);
   return (
     <div className={`gt-map-strip ${real ? "gt-map-strip--real" : ""}`.trim()}>
@@ -412,7 +412,7 @@ const categories: Array<{
 
 function HomeScreen({ navigate }: { navigate: Navigate }) {
   const { context, language } = useTouristRuntime();
-  const regionName = language === "en" ? (context?.region.nameEn || context?.region.name || "Tatariv") : language === "pl" ? (context?.region.namePl || context?.region.name || "Tatarów") : (context?.region.name || "Татарові");
+  const regionName = language === "en" ? (context?.region.nameEn || context?.region.name || "") : language === "pl" ? (context?.region.namePl || context?.region.name || "") : (context?.region.name || "");
   const contextPlace = context?.place;
   const localizedCategories = categories.map((item) => {
     const en: Record<string, [string, string]> = {
@@ -465,9 +465,9 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
         <span className="gt-current-place-copy">
           <strong>{language === "en" ? "Your QR point" : language === "pl" ? "Punkt z QR" : "Ви зараз тут"}</strong>
           <small>{contextPlace?.name || "Точка входу не визначена"}</small>
-          <b><Star size={14} fill="currentColor" /> {(contextPlace?.rating ?? 4.8).toFixed(1)} · {contextPlace?.review_count ?? 125} {language === "en" ? "reviews" : language === "pl" ? "opinii" : "відгуків"}</b>
+          {contextPlace ? <b><Star size={14} fill="currentColor" /> {Number(contextPlace.rating || 0).toFixed(1)} · {contextPlace.review_count || 0} {language === "en" ? "reviews" : language === "pl" ? "opinii" : "відгуків"}</b> : <b>{language === "en" ? "Loading QR context…" : language === "pl" ? "Wczytywanie kontekstu QR…" : "Завантажуємо контекст QR…"}</b>}
         </span>
-        {contextPlace?.image_url ? <img src={contextPlace.image_url} alt="" className="gt-photo gt-current-place-photo gt-current-place-photo--remote" /> : <Thumb name="hotel" className="gt-current-place-photo" />}
+        {contextPlace?.image_url ? <img src={contextPlace.image_url} alt="" className="gt-photo gt-current-place-photo gt-current-place-photo--remote" /> : <span className="gt-current-place-photo gt-current-place-photo--empty" aria-hidden="true" />}
         <i>{language === "en" ? "Details" : language === "pl" ? "Szczegóły" : "Деталі"}</i>
       </button>
 
@@ -738,21 +738,21 @@ function AboutScreen({ navigate }: { navigate: Navigate }) {
   const { context } = useTouristRuntime();
   const place = context?.place;
   const details = place?.details ?? {};
-  const checkIn = typeof details.check_in === "string" ? details.check_in : "14:00";
-  const checkOut = typeof details.check_out === "string" ? details.check_out : "11:00";
-  const wifiSsid = typeof details.wifi_ssid === "string" ? details.wifi_ssid : "Girskyi_Zatyshok_Guest";
+  const checkIn = typeof details.check_in === "string" ? details.check_in : "—";
+  const checkOut = typeof details.check_out === "string" ? details.check_out : "—";
+  const placeType = place?.subcategory || place?.category_name || "заклад";
 
   return (
     <div className="tourist-screen gt-screen gt-about-screen">
       <section className="gt-about-hero" style={place?.image_url ? { backgroundImage: `linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.56)),url(${place.image_url})` } : undefined}>
         <div className="gt-about-logo">
           <MountainSnow size={43} />
-          <strong>Гірський<br />затишок</strong>
-          <small>готель</small>
+          <strong>{place?.name || "Gid Tourist"}</strong>
+          <small>{placeType}</small>
         </div>
         <div className="gt-about-hero__copy">
           <h1>{place?.name || "Інформація про заклад"}</h1>
-          <p><MapPin size={18} /> {place?.address || "Татарів, вул. Незалежності, 15Б"}</p>
+          <p><MapPin size={18} /> {place?.address || "Адреса завантажується"}</p>
         </div>
         <div className="gt-checkin-card gt-checkin-card--hero">
           <p>
@@ -768,22 +768,67 @@ function AboutScreen({ navigate }: { navigate: Navigate }) {
           <i>Деталі <ChevronRight size={18} /></i>
         </button>
         <div className="gt-service-grid">
-          <a className="gt-service-card" href={place?.phone ? `tel:${place.phone}` : undefined}>
-            <span><Hotel size={24} /></span><div><strong>Рецепція</strong><small>{place?.phone || "Звʼяжіться з адміністратором"}</small></div><ChevronRight size={19} />
-          </a>
-          <button type="button" className="gt-service-card">
-            <span><Wifi size={24} /></span><div><strong>Wi‑Fi</strong><small>{wifiSsid}</small></div><ChevronRight size={19} />
+          <button type="button" className="gt-service-card" onClick={() => navigate("tourist", "about-reception")}>
+            <span><Hotel size={24} /></span><div><strong>Рецепція</strong><small>Зв’язок та інформація для гостей</small></div><ChevronRight size={19} />
+          </button>
+          <button type="button" className="gt-service-card" onClick={() => navigate("tourist", "about-wifi")}>
+            <span><Wifi size={24} /></span><div><strong>Wi‑Fi</strong><small>Дані мережі закладу</small></div><ChevronRight size={19} />
           </button>
         </div>
-        <button type="button" className="gt-service-card gt-service-card--wide">
+        <button type="button" className="gt-service-card gt-service-card--wide" onClick={() => navigate("tourist", "about-rules")}>
           <span><ReceiptText size={25} /></span>
-          <div><strong>Правила проживання</strong><small>{Array.isArray(details.rules) && details.rules.length ? String(details.rules[0]) : "Ознайомтесь з правилами перебування в нашому закладі"}</small></div>
+          <div><strong>Правила проживання</strong><small>Важлива інформація для комфортного перебування</small></div>
           <ChevronRight size={19} />
         </button>
-        <a className="gt-service-card gt-service-card--wide" href={place?.phone ? `tel:${place.phone}` : undefined}>
-          <span><Phone size={25} /></span><div><strong>Оперативні контакти</strong><small>{place?.phone || "Важливі номери телефонів для вашої зручності"}</small></div><ChevronRight size={19} />
-        </a>
+        <button type="button" className="gt-service-card gt-service-card--wide" onClick={() => navigate("tourist", "about-contacts")}>
+          <span><Phone size={25} /></span><div><strong>Оперативні контакти</strong><small>Контакти закладу та способи зв’язку</small></div><ChevronRight size={19} />
+        </button>
       </div>
+    </div>
+  );
+}
+
+type AboutInfoKind = "reception" | "wifi" | "rules" | "contacts";
+
+function AboutInfoScreen({ navigate, kind }: { navigate: Navigate; kind: AboutInfoKind }) {
+  const { context } = useTouristRuntime();
+  const place = context?.place;
+  const details = place?.details ?? {};
+  const ruleItems = Array.isArray(details.rule_items) ? details.rule_items as Array<Record<string, unknown>> : [];
+  const legacyRules = Array.isArray(details.rules) ? details.rules.map((item) => String(item)) : [];
+  const configs: Record<AboutInfoKind, { title: string; icon: LucideIcon }> = {
+    reception: { title: "Рецепція", icon: Hotel },
+    wifi: { title: "Wi‑Fi", icon: Wifi },
+    rules: { title: "Правила проживання", icon: ReceiptText },
+    contacts: { title: "Оперативні контакти", icon: Phone },
+  };
+  const config = configs[kind];
+  const Icon = config.icon;
+  return (
+    <div className="tourist-screen gt-screen gt-about-info-screen">
+      <main className="gt-content">
+        <button type="button" className="gt-back-button" onClick={() => navigate("tourist", "about")}><ArrowLeft size={20} /> Назад</button>
+        <section className="gt-about-info-head"><span><Icon size={26} /></span><div><h1>{config.title}</h1><p>{place?.name || "Ваш заклад"}</p></div></section>
+        {kind === "reception" ? <div className="gt-about-info-list">
+          <div><strong>Телефон рецепції</strong><small>{place?.phone || "Не вказано"}</small>{place?.phone ? <a href={`tel:${place.phone}`}>Подзвонити</a> : null}</div>
+          <div><strong>Графік</strong><small>{typeof details.reception_hours === "string" ? details.reception_hours : "Уточнюйте у закладі"}</small></div>
+        </div> : null}
+        {kind === "wifi" ? <div className="gt-about-info-list">
+          <div><strong>Назва мережі</strong><small>{typeof details.wifi_ssid === "string" && details.wifi_ssid ? details.wifi_ssid : "Wi‑Fi не вказано"}</small></div>
+          <div><strong>Пароль</strong><small>{typeof details.wifi_password === "string" && details.wifi_password ? details.wifi_password : "Не вказано"}</small></div>
+        </div> : null}
+        {kind === "rules" ? <div className="gt-about-info-list">
+          {ruleItems.map((rule, index) => <div key={`${String(rule.title || rule.text || "rule")}-${index}`}><strong>{String(rule.title || `Правило ${index + 1}`)}</strong><small>{String(rule.text || rule.description || "")}</small></div>)}
+          {!ruleItems.length && legacyRules.map((rule, index) => <div key={`${rule}-${index}`}><strong>Правило {index + 1}</strong><small>{rule}</small></div>)}
+          {!ruleItems.length && !legacyRules.length ? <div><strong>Правила</strong><small>Заклад ще не додав правила проживання.</small></div> : null}
+        </div> : null}
+        {kind === "contacts" ? <div className="gt-about-info-list">
+          <div><strong>Телефон</strong><small>{place?.phone || "Не вказано"}</small>{place?.phone ? <a href={`tel:${place.phone}`}>Подзвонити</a> : null}</div>
+          {place?.telegram ? <div><strong>Telegram</strong><small>{place.telegram}</small><a href={place.telegram} target="_blank" rel="noreferrer">Відкрити</a></div> : null}
+          {place?.website ? <div><strong>Сайт</strong><small>{place.website}</small><a href={place.website} target="_blank" rel="noreferrer">Відкрити</a></div> : null}
+          {typeof details.email === "string" && details.email ? <div><strong>Email</strong><small>{details.email}</small><a href={`mailto:${details.email}`}>Написати</a></div> : null}
+        </div> : null}
+      </main>
     </div>
   );
 }
@@ -1020,6 +1065,13 @@ function placePhotoFallback(place: Stage2Place): PhotoName {
   return "hotel";
 }
 
+function visiblePlaceTags(place: Stage2Place) {
+  if (place.source === "google" || place.attributes?.google === true) {
+    return [place.subcategory || place.category_name || ""].filter(Boolean).slice(0, 1);
+  }
+  return (place.tags ?? []).slice(0, 4);
+}
+
 function distanceLabel(distance?: number | null) {
   if (distance == null) return "—";
   return distance < 1000 ? `${Math.max(1, Math.round(distance / 10) * 10)} м` : `${(distance / 1000).toFixed(1).replace(".", ",")} км`;
@@ -1131,7 +1183,7 @@ function DynamicCategoryScreen({ navigate, config }: { navigate: Navigate; confi
               walk={walkLabel(place.distance_m)}
               walking
               verified={place.attributes?.verified === true}
-              tags={(place.tags ?? []).slice(0, 4)}
+              tags={visiblePlaceTags(place)}
               onClick={() => openPlace(place)}
             />
           ))}
@@ -1213,10 +1265,10 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
   const activeSubcategories = subcategoryGroups[activeCategory] ?? [];
   const activeCategoryMeta = categories.find((item) => item.label === activeCategory);
   const activeTone = activeCategoryMeta?.tone ?? "all";
-  const center = runtime.location ?? (runtime.context ? { lat: runtime.context.region.lat, lng: runtime.context.region.lng, source: "qr" as const } : { lat: 48.34535, lng: 24.57855, source: "qr" as const });
+  const center = runtime.location ?? (runtime.context ? { lat: Number(runtime.context.place?.lat ?? runtime.context.region.lat), lng: Number(runtime.context.place?.lng ?? runtime.context.region.lng), source: "qr" as const } : null);
 
   useEffect(() => {
-    if (!runtime.context) return;
+    if (!runtime.context || !center) return;
     let cancelled = false;
     const timer = window.setTimeout(() => {
       const params = new URLSearchParams({
@@ -1237,7 +1289,7 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
       }).catch(() => undefined);
     }, 180);
     return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [runtime.context, center.lat, center.lng, radius, activeCategoryMeta?.slug, activeCategory, activeTone, activeSubcategory, query]);
+  }, [runtime.context, center?.lat, center?.lng, radius, activeCategoryMeta?.slug, activeCategory, activeTone, activeSubcategory, query]);
 
   const openPlace = (place: Stage2Place) => {
     runtime.setSelectedPlaceId(place.id);
@@ -1289,7 +1341,7 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
         </section>
 
         <section className="gt-nearby-design__map gt-nearby-design__map--live" aria-label="Карта місць поруч">
-          <RealMap center={center} places={nearbyPlaces} radius={radius} className="gt-nearby-design__real-map" onSelect={openPlace} />
+          {center ? <RealMap center={center} places={nearbyPlaces} radius={radius} className="gt-nearby-design__real-map" onSelect={openPlace} /> : <div className="gt-nearby-design__map-loading">Визначаємо вашу точку входу…</div>}
           <div className="gt-nearby-design__map-controls">
             <button type="button" aria-label="Моє місцезнаходження" onClick={() => void runtime.requestLocation()}><LocateFixed size={22} /></button>
           </div>
@@ -1350,7 +1402,9 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
     return <div className="tourist-screen gt-screen"><main className="gt-content"><div className="gt-stage2-empty">Локацію не вибрано або вона відсутня в базі</div></main></div>;
   }
   const daily = current.work_hours?.daily as { from?: string; to?: string } | undefined;
-  const hours = current.work_hours?.always_open === true ? "Цілодобово" : daily?.from && daily?.to ? `Щодня · ${daily.from}–${daily.to}` : "Графік уточнюється";
+  const googleWeekdays = Array.isArray(current.details?.google_weekday_descriptions) ? current.details.google_weekday_descriptions.map(String) : [];
+  const hours = current.work_hours?.always_open === true ? "Цілодобово" : daily?.from && daily?.to ? `Щодня · ${daily.from}–${daily.to}` : googleWeekdays[0] || "Графік уточнюється";
+  const googleReviews = Array.isArray(current.details?.google_reviews) ? current.details.google_reviews as Array<Record<string, any>> : [];
   const distance = runtime.location ? distanceLabel(Math.round((() => {
     const r=6371000,toRad=(v:number)=>v*Math.PI/180,dLat=toRad(Number(current.lat)-runtime.location!.lat),dLng=toRad(Number(current.lng)-runtime.location!.lng);
     const a=Math.sin(dLat/2)**2+Math.cos(toRad(runtime.location!.lat))*Math.cos(toRad(Number(current.lat)))*Math.sin(dLng/2)**2; return 2*r*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
@@ -1375,7 +1429,7 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
         {current.attributes?.verified === true ? <span className="gt-pill gt-pill--glass"><BadgeCheck size={16} /> Перевірено</span> : null}
         <div>
           <h1>{current.name}</h1>
-          <p><MapPin size={17} /> {runtime.context?.region.name || "Татарів"} · {distance}</p>
+          <p><MapPin size={17} /> {runtime.context?.region.name || current.address || "Поточна локація"} · {distance}</p>
         </div>
       </section>
       <main className="gt-content gt-content--overlap">
@@ -1398,7 +1452,15 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
         <div className="gt-detail-card">
           <span><MapPin size={22} /></span><div><strong>Адреса</strong><small>{current.address}</small></div><ChevronRight size={19} />
         </div>
-        {current.tags?.length ? <div className="gt-stage2-place-tags">{current.tags.map((tag) => <span key={tag}>{tag}</span>)}</div> : null}
+        {current.phone ? <a className="gt-detail-card gt-detail-card--link" href={`tel:${current.phone}`}><span><Phone size={22} /></span><div><strong>Телефон</strong><small>{current.phone}</small></div><ChevronRight size={19} /></a> : null}
+        {current.website ? <a className="gt-detail-card gt-detail-card--link" href={current.website} target="_blank" rel="noreferrer"><span><Globe size={22} /></span><div><strong>Сайт</strong><small>{current.website}</small></div><ChevronRight size={19} /></a> : null}
+        {googleWeekdays.length ? <section className="gt-google-hours"><strong>Графік роботи</strong>{googleWeekdays.map((line) => <small key={line}>{line}</small>)}</section> : null}
+        {visiblePlaceTags(current).length ? <div className="gt-stage2-place-tags">{visiblePlaceTags(current).map((tag) => <span key={tag}>{tag}</span>)}</div> : null}
+        {googleReviews.length ? <section className="gt-google-reviews"><SectionTitle title="Відгуки Google" action={`${googleReviews.length}`} /><div className="gt-google-reviews__list">{googleReviews.slice(0,5).map((review,index) => {
+          const author = review.authorAttribution && typeof review.authorAttribution === "object" ? review.authorAttribution : {};
+          const text = review.text && typeof review.text === "object" ? review.text.text : review.originalText && typeof review.originalText === "object" ? review.originalText.text : "";
+          return <article key={`${String(author.displayName || "review")}-${index}`}><div><strong>{String(author.displayName || "Користувач Google")}</strong><span><Star size={13} fill="currentColor" /> {Number(review.rating || 0).toFixed(1)}</span></div>{text ? <p>{String(text)}</p> : null}<small>{String(review.relativePublishTimeDescription || "")}</small></article>;
+        })}</div></section> : null}
         <button type="button" className="gt-primary-button" onClick={openRoute}>Побудувати маршрут <Navigation size={20} /></button>
       </main>
     </div>
@@ -2458,7 +2520,7 @@ function FavoritesScreen({ navigate }: { navigate: Navigate }) {
       <main className="gt-content">
         <div className="gt-page-heading"><span className="gt-tone--red"><Heart size={23} /></span><div><h1>Улюблені</h1><p>Збережені місця</p></div></div>
         <div className="gt-place-list">
-          {places.map((place) => <PlaceRow key={place.id} photo={placePhotoFallback(place)} imageUrl={place.image_url} title={place.name} subtitle={place.subcategory || place.category_name || "Локація"} rating={`${Number(place.rating || 0).toFixed(1)} (${place.review_count || 0})`} distance="" walk="" tags={(place.tags ?? []).slice(0,4)} onClick={() => { runtime.setSelectedPlaceId(place.id); navigate("tourist", "place"); }} />)}
+          {places.map((place) => <PlaceRow key={place.id} photo={placePhotoFallback(place)} imageUrl={place.image_url} title={place.name} subtitle={place.subcategory || place.category_name || "Локація"} rating={`${Number(place.rating || 0).toFixed(1)} (${place.review_count || 0})`} distance="" walk="" tags={visiblePlaceTags(place)} onClick={() => { runtime.setSelectedPlaceId(place.id); navigate("tourist", "place"); }} />)}
           {!places.length ? <div className="gt-stage2-empty">Ще немає збережених місць. Відкрийте картку закладу та натисніть «Зберегти».</div> : null}
         </div>
       </main>
@@ -2550,6 +2612,14 @@ export function TouristScreen({
       return <HomeScreen navigate={navigate} />;
     case "about":
       return <AboutScreen navigate={navigate} />;
+    case "about-reception":
+      return <AboutInfoScreen navigate={navigate} kind="reception" />;
+    case "about-wifi":
+      return <AboutInfoScreen navigate={navigate} kind="wifi" />;
+    case "about-rules":
+      return <AboutInfoScreen navigate={navigate} kind="rules" />;
+    case "about-contacts":
+      return <AboutInfoScreen navigate={navigate} kind="contacts" />;
     case "hotel-services":
       return <HotelServicesScreen navigate={navigate} />;
     case "catalog":

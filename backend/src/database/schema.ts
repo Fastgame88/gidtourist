@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
   telegram_username text,
   first_name text,
   last_name text,
+  photo_url text,
   language_code text,
   selected_language text NOT NULL DEFAULT 'uk',
   role text NOT NULL DEFAULT 'tourist',
@@ -28,6 +29,8 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at timestamptz NOT NULL DEFAULT now(),
   last_active_at timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS photo_url text;
 
 CREATE TABLE IF NOT EXISTS user_sessions (
   token_hash text PRIMARY KEY,

@@ -156,13 +156,18 @@ export class Stage2Service {
       phone: place.nationalPhoneNumber ?? null,
       telegram: null,
       website: place.websiteUri ?? null,
-      image_url: null,
+      image_url: place.photos?.[0]?.name ? `/api/stage2/google/photo?name=${encodeURIComponent(place.photos[0].name)}` : null,
       rating: Number(place.rating ?? 0),
       review_count: Number(place.userRatingCount ?? 0),
       price_level: null,
       work_hours: place.regularOpeningHours ?? {},
       attributes: { partner: false, google: true, google_maps_uri: place.googleMapsUri ?? null },
-      details: { google_place_id: place.id, google_maps_uri: place.googleMapsUri ?? null },
+      details: {
+        google_place_id: place.id,
+        google_maps_uri: place.googleMapsUri ?? null,
+        google_reviews: place.reviews ?? [],
+        google_weekday_descriptions: place.regularOpeningHours?.weekdayDescriptions ?? [],
+      },
       translations: {},
       tags: place.types ?? [],
       distance_m: distance == null ? null : Math.round(distance),
@@ -196,6 +201,10 @@ export class Stage2Service {
       street: pick("route"),
       house: pick("street_number"),
     };
+  }
+
+  async googlePhoto(photoName: string) {
+    return this.google.photoUri(photoName);
   }
 
   async context(startParam: string) {
@@ -311,7 +320,7 @@ export class Stage2Service {
 
   async profile(user: AuthUser) {
     const result = await this.db.query(
-      `SELECT id,telegram_id::text,telegram_username,first_name,last_name,selected_language,role,phone,consent,created_at,last_active_at
+      `SELECT id,telegram_id::text,telegram_username,first_name,last_name,photo_url,selected_language,role,phone,consent,created_at,last_active_at
        FROM users WHERE id=$1`, [user.id],
     );
     return result.rows[0];
@@ -821,4 +830,10 @@ export class Stage2Service {
     );
     return { ok: true, id };
   }
+  async adminDeleteEmergency(id: string) {
+    const result = await this.db.query("UPDATE emergency_contacts SET active=false,updated_at=now() WHERE id=$1 RETURNING id", [id]);
+    if (!result.rows[0]) throw new NotFoundException("Emergency contact not found");
+    return { ok: true, id };
+  }
+
 }

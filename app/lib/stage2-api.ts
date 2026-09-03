@@ -6,6 +6,7 @@ export type Stage2User = {
   telegram_username?: string | null;
   first_name?: string | null;
   last_name?: string | null;
+  photo_url?: string | null;
   selected_language?: string;
   role?: string;
   phone?: string | null;
@@ -74,7 +75,7 @@ export type Stage2Context = {
 
 type TelegramWebApp = {
   initData?: string;
-  initDataUnsafe?: { start_param?: string; user?: { id?: number; first_name?: string; last_name?: string; username?: string; language_code?: string } };
+  initDataUnsafe?: { start_param?: string; user?: { id?: number; first_name?: string; last_name?: string; username?: string; language_code?: string; photo_url?: string } };
 };
 
 type TelegramWindow = Window & { Telegram?: { WebApp?: TelegramWebApp } };
@@ -105,7 +106,7 @@ function rawTelegramUser(initData: string) {
   try {
     const raw = new URLSearchParams(initData).get("user");
     if (!raw) return undefined;
-    return JSON.parse(raw) as { id?: number; first_name?: string; last_name?: string; username?: string; language_code?: string };
+    return JSON.parse(raw) as { id?: number; first_name?: string; last_name?: string; username?: string; language_code?: string; photo_url?: string };
   } catch {
     return undefined;
   }
@@ -194,7 +195,7 @@ export async function waitForTelegramWebApp(timeoutMs = 2500) {
 }
 
 export function telegramStartParam() {
-  if (typeof window === "undefined") return process.env.NEXT_PUBLIC_DEFAULT_QR_START_PARAM || "";
+  if (typeof window === "undefined") return "";
   const webApp = (window as TelegramWindow).Telegram?.WebApp;
   const fromTelegram = webApp?.initDataUnsafe?.start_param;
   let fromLaunch = "";
@@ -203,7 +204,7 @@ export function telegramStartParam() {
     fromLaunch ||= params.get("tgWebAppStartParam") || "";
     fromFallback ||= params.get("startapp") || params.get("start") || "";
   }
-  return fromTelegram || fromLaunch || fromFallback || process.env.NEXT_PUBLIC_DEFAULT_QR_START_PARAM || "";
+  return fromTelegram || fromLaunch || fromFallback || "";
 }
 
 export async function ensureTelegramSession(): Promise<{ token: string; user: Stage2User } | null> {
@@ -219,11 +220,20 @@ export async function ensureTelegramSession(): Promise<{ token: string; user: St
       const user = await stage2Fetch<Stage2User>("/me", {}, existing);
       const sessionTelegramId = String(user.telegram_id ?? "");
       if (!currentTelegramId || !sessionTelegramId || sessionTelegramId === currentTelegramId) {
-        return { token: existing, user };
+        const launchProfileChanged = Boolean(launchUser && (
+          (launchUser.photo_url && launchUser.photo_url !== user.photo_url)
+          || (launchUser.first_name && launchUser.first_name !== user.first_name)
+          || (launchUser.last_name && launchUser.last_name !== user.last_name)
+          || (launchUser.username && launchUser.username !== user.telegram_username)
+        ));
+        if (!launchProfileChanged) return { token: existing, user };
+        // Re-run verified Telegram auth once when Telegram supplied fresher profile data.
+        setSessionToken("");
+      } else {
+        // Telegram WebView/localStorage can keep an old session from another test account.
+        // Never reuse it for partner QR access when the actual Telegram user changed.
+        setSessionToken("");
       }
-      // Telegram WebView/localStorage can keep an old session from another test account.
-      // Never reuse it for partner QR access when the actual Telegram user changed.
-      setSessionToken("");
     } catch {
       setSessionToken("");
     }

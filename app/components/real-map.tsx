@@ -125,6 +125,11 @@ export function RealMap({
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: false,
+        // Keep only Gid Tourist markers/filters visible; hide Google's own POI layer so it never competes with our approved categories.
+        styles: [
+          { featureType: "poi", stylers: [{ visibility: "off" }] },
+          { featureType: "transit", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+        ],
       });
       const circle = compact ? null : new maps.Circle({ map, center, radius, strokeColor: "#13a55b", strokeOpacity: .38, strokeWeight: 1, fillColor: "#13a55b", fillOpacity: .04 });
       const user = new maps.Marker({

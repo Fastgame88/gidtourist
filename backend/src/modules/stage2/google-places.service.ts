@@ -17,6 +17,15 @@ export type GoogleNearbyPlace = {
   websiteUri?: string;
   nationalPhoneNumber?: string;
   photos?: Array<{ name?: string }>;
+  reviews?: Array<{
+    rating?: number;
+    text?: { text?: string; languageCode?: string };
+    originalText?: { text?: string; languageCode?: string };
+    authorAttribution?: { displayName?: string; uri?: string; photoUri?: string };
+    relativePublishTimeDescription?: string;
+    publishTime?: string;
+    googleMapsUri?: string;
+  }>;
   addressComponents?: Array<{ longText?: string; shortText?: string; types?: string[] }>;
 };
 
@@ -186,8 +195,16 @@ export class GooglePlacesService {
   async details(placeId: string): Promise<GoogleNearbyPlace> {
     return this.googleFetch<GoogleNearbyPlace>(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=uk&regionCode=UA`, {
       method: "GET",
-      headers: { "X-Goog-FieldMask": "id,displayName,formattedAddress,location,addressComponents,types,primaryType,primaryTypeDisplayName,rating,userRatingCount,priceLevel,regularOpeningHours,googleMapsUri,websiteUri,nationalPhoneNumber,photos" },
+      headers: { "X-Goog-FieldMask": "id,displayName,formattedAddress,location,addressComponents,types,primaryType,primaryTypeDisplayName,rating,userRatingCount,priceLevel,regularOpeningHours,googleMapsUri,websiteUri,nationalPhoneNumber,photos,reviews" },
     });
+  }
+
+  async photoUri(photoName: string) {
+    const clean = photoName.trim().replace(/^\/+/, "");
+    if (!clean || !/^places\/[^/]+\/photos\/[^/]+/.test(clean)) throw new BadGatewayException("Invalid Google photo name");
+    const data = await this.googleFetch<{ photoUri?: string }>(`https://places.googleapis.com/v1/${clean}/media?maxWidthPx=1200&maxHeightPx=900&skipHttpRedirect=true`, { method: "GET" });
+    if (!data.photoUri) throw new BadGatewayException("Google photo is unavailable");
+    return data.photoUri;
   }
 
 

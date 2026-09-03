@@ -8,7 +8,6 @@ import {
   stage2Fetch,
   telegramStartParam,
   trackEvent,
-  waitForTelegramWebApp,
   type Stage2Context,
   type Stage2User,
 } from "./stage2-api";
@@ -31,10 +30,31 @@ type TouristRuntimeValue = {
 
 const TouristRuntimeContext = createContext<TouristRuntimeValue | null>(null);
 
+function contextCacheKey(startParam: string) {
+  return `gid-tourist-stage2-context:${startParam}`;
+}
+
+function readCachedContext() {
+  if (typeof window === "undefined") return null;
+  const startParam = telegramStartParam();
+  if (!startParam) return null;
+  try {
+    const raw = window.sessionStorage.getItem(contextCacheKey(startParam));
+    return raw ? JSON.parse(raw) as Stage2Context : null;
+  } catch {
+    return null;
+  }
+}
+
 export function TouristRuntimeProvider({ children }: { children: ReactNode }) {
-  const [context, setContext] = useState<Stage2Context | null>(null);
+  const initialContext = readCachedContext();
+  const [context, setContext] = useState<Stage2Context | null>(initialContext);
   const [user, setUser] = useState<Stage2User | null>(null);
-  const [location, setLocation] = useState<Coordinates | null>(null);
+  const [location, setLocation] = useState<Coordinates | null>(() => initialContext ? {
+    lat: Number(initialContext.place?.lat ?? initialContext.region.lat),
+    lng: Number(initialContext.place?.lng ?? initialContext.region.lng),
+    source: "qr",
+  } : null);
   const [loading, setLoading] = useState(true);
   const [apiOnline, setApiOnline] = useState(false);
   const [selected, setSelected] = useState("");
@@ -43,23 +63,36 @@ export function TouristRuntimeProvider({ children }: { children: ReactNode }) {
     setSelected(selectedPlaceId());
     let cancelled = false;
     void (async () => {
-      let resolvedContext: Stage2Context | null = null;
-      await waitForTelegramWebApp(1500);
       const startParam = telegramStartParam();
-      if (startParam) {
-        try {
-          const ctx = await stage2Fetch<Stage2Context>(`/context/${encodeURIComponent(startParam)}`);
-          resolvedContext = ctx;
-          if (cancelled) return;
-          setContext(ctx);
-          setLocation({ lat: Number(ctx.place?.lat ?? ctx.region.lat), lng: Number(ctx.place?.lng ?? ctx.region.lng), source: "qr" });
-          setApiOnline(true);
-        } catch {
-          if (!cancelled) setApiOnline(false);
-        }
-      }
+      let resolvedContext: Stage2Context | null = readCachedContext();
 
-      const auth = await ensureTelegramSession();
+      // Resolve the QR context immediately from the launch URL. Telegram authorization runs in
+      // parallel, so the UI never needs to render a hardcoded region while waiting for initData.
+      const contextPromise = startParam
+        ? stage2Fetch<Stage2Context>(`/context/${encodeURIComponent(startParam)}`)
+            .then((ctx) => {
+              resolvedContext = ctx;
+              if (!cancelled) {
+                setContext(ctx);
+                setLocation((current) => current?.source === "gps" ? current : {
+                  lat: Number(ctx.place?.lat ?? ctx.region.lat),
+                  lng: Number(ctx.place?.lng ?? ctx.region.lng),
+                  source: "qr",
+                });
+                setApiOnline(true);
+                try { window.sessionStorage.setItem(contextCacheKey(startParam), JSON.stringify(ctx)); } catch { /* ignore storage restrictions */ }
+              }
+              return ctx;
+            })
+            .catch(() => {
+              if (!cancelled && !resolvedContext) setApiOnline(false);
+              return null;
+            })
+        : Promise.resolve(null);
+
+      const authPromise = ensureTelegramSession();
+      const [ctx, auth] = await Promise.all([contextPromise, authPromise]);
+      if (ctx) resolvedContext = ctx;
       if (!cancelled && auth?.user) {
         setUser(auth.user);
         const trackKey = `gid-tourist-stage2-opened:${startParam}`;

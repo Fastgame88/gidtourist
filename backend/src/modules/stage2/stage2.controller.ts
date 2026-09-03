@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, Res, UseGuards } from "@nestjs/common";
 import { AdminKeyGuard, type AuthRequest, SessionGuard } from "../../common/auth.guard.js";
 import { Stage2Service } from "./stage2.service.js";
 
@@ -26,6 +26,12 @@ export class Stage2Controller {
 
   @Get("geo/reverse")
   geoReverse(@Query("lat") lat = "", @Query("lng") lng = "") { return this.service.geoReverse(Number(lat), Number(lng)); }
+
+  @Get("google/photo")
+  async googlePhoto(@Query("name") name = "", @Res() response: any) {
+    const uri = await this.service.googlePhoto(name);
+    return response.redirect(uri);
+  }
 
   @Get("places")
   places(@Query() query: Record<string, unknown>) { return this.service.places(query); }
@@ -143,6 +149,14 @@ export class Stage2Controller {
   adminTemplate(@Body() body: Record<string, unknown>) { return this.service.adminSaveTemplate(body); }
 
   @UseGuards(AdminKeyGuard)
+  @Get("admin/stage2/emergency")
+  adminEmergencyList(@Query("region_id") regionId = "region-tatariv") { return this.service.emergency(regionId); }
+
+  @UseGuards(AdminKeyGuard)
   @Post("admin/stage2/emergency")
   adminEmergency(@Body() body: Record<string, unknown>) { return this.service.adminEmergency(body); }
+
+  @UseGuards(AdminKeyGuard)
+  @Delete("admin/stage2/emergency/:id")
+  adminDeleteEmergency(@Param("id") id: string) { return this.service.adminDeleteEmergency(id); }
 }

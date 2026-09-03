@@ -52,7 +52,7 @@ import {
   LockKeyhole,
 } from "lucide-react";
 import type { RoleKey } from "../../lib/navigation";
-import { ensureTelegramSession, setSessionToken, stage2Fetch, telegramAuthLastError, telegramLaunchDiagnostic, telegramStartParam, type Stage2Category, type Stage2GeoDetails, type Stage2GeoSuggestion, type Stage2PlaceTypeTemplate } from "../../lib/stage2-api";
+import { ensureTelegramSession, setSessionToken, stage2Fetch, telegramAuthLastError, telegramLaunchDiagnostic, telegramStartParam, type Stage2Category, type Stage2GeoDetails, type Stage2GeoSuggestion, type Stage2PlaceTypeTemplate, type Stage2User } from "../../lib/stage2-api";
 
 type Navigate = (role: RoleKey, slug: string) => void;
 type PartnerProps = { navigate: Navigate; activated: boolean };
@@ -1850,9 +1850,18 @@ function CabinetScreen({ navigate }: { navigate: Navigate }) {
     "Парковка": { slug: "partner-update", icon: CircleParking, title: "Парковка", note: "Інформація про паркування для гостей" },
     "Сніданок": { slug: "partner-services", icon: UtensilsCrossed, title: "Сніданок", note: "Налаштування послуги сніданку" },
   };
-  const enabled = (profile.cabinetModules ?? [])
+  const inferredModules = [
+    "Інформація про заклад",
+    ...(profile.generalRules.length ? ["Правила проживання"] : []),
+    ...(profile.hasWifi ? ["Wi‑Fi"] : []),
+    ...(profile.phone || profile.email || profile.messenger ? ["Контакти"] : []),
+    ...(profile.checkIn || profile.checkOut ? ["Час заїзду / виїзду"] : []),
+    ...(readPartnerServices().length ? ["Послуги закладу"] : []),
+  ];
+  const moduleNames = (profile.cabinetModules ?? []).length ? profile.cabinetModules : inferredModules;
+  const enabled = moduleNames
     .filter((name) => profile.hasWifi || name !== "Wi‑Fi")
-    .map((name, index) => definitions[name] ?? { slug: "partner-update", icon: Info, title: name, note: "Налаштування цього розділу кабінету" })
+    .map((name) => definitions[name] ?? { slug: "partner-update", icon: Info, title: name, note: "Налаштування цього розділу кабінету" })
     .map((item, index) => ({ ...item, key: `${item.title}-${index}` }));
 
   return (
@@ -2651,36 +2660,51 @@ function ProfileInfoRow({
 
 function PartnerProfileScreen({ navigate }: { navigate: Navigate }) {
   const { profile } = usePartnerProfile();
+  const [telegramUser, setTelegramUser] = useState<Stage2User | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void ensureTelegramSession().then((session) => {
+      if (!cancelled && session?.user) setTelegramUser(session.user);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  const fullName = [telegramUser?.first_name, telegramUser?.last_name].filter(Boolean).join(" ").trim()
+    || (telegramUser?.telegram_username ? `@${telegramUser.telegram_username}` : "Партнер");
+  const telegramLabel = telegramUser?.telegram_username
+    ? `@${telegramUser.telegram_username}`
+    : telegramUser?.telegram_id ? `ID ${telegramUser.telegram_id}` : "Telegram не визначено";
 
   return (
     <div className="gt-partner-mobile-screen has-bottom-nav gt-partner-profile-screen">
       <main className="gt-partner-mobile-content gt-partner-form-page gt-profile-page-content">
         <section className="gt-profile-user-card">
           <div className="gt-profile-user-card__avatar">
-            <img src="/images/partner-profile-avatar.png" alt="Іван Петренко" />
+            {telegramUser?.photo_url
+              ? <img src={telegramUser.photo_url} alt={fullName} />
+              : <span className="gt-profile-user-card__avatar-placeholder"><UserRound size={26} /></span>}
             <i><UserRound size={10} /></i>
           </div>
           <div className="gt-profile-user-card__copy">
-            <strong>Іван Петренко</strong>
-            <small>Адміністратор</small>
+            <strong>{fullName}</strong>
+            <small>Партнер · {telegramLabel}</small>
           </div>
         </section>
 
         <section className="gt-profile-section">
           <h3>Особиста інформація</h3>
           <div className="gt-profile-section__card">
-            <ProfileInfoRow label="Ім'я" value="Іван Петренко" />
-            <ProfileInfoRow label="Телефон" value={profile.phone} />
-            <ProfileInfoRow label="Email" value="ivan.petrenko@girskiy-zatyshok.ua" />
+            <ProfileInfoRow label="Ім'я" value={fullName} />
+            <ProfileInfoRow label="Telegram" value={telegramLabel} />
+            {profile.phone ? <ProfileInfoRow label="Телефон закладу" value={profile.phone} /> : null}
+            {profile.email ? <ProfileInfoRow label="Email закладу" value={profile.email} /> : null}
           </div>
         </section>
 
         <section className="gt-profile-section gt-profile-security-section">
           <h3>Безпека</h3>
-          <button type="button" className="gt-profile-security-row">
-            <span>Змінити пароль</span>
-            <ChevronRight size={17} />
-          </button>
+          <div className="gt-profile-security-row"><span>Вхід через Telegram</span><ShieldCheck size={17} /></div>
         </section>
 
         <button type="button" className="gt-profile-logout" onClick={() => {
@@ -3044,6 +3068,7 @@ export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate
   const [inviteStatus, setInviteStatus] = useState("");
   const [inviteDiagnostic, setInviteDiagnostic] = useState<PartnerAccessDiagnostic | null>(null);
   const [sessionTelegramId, setSessionTelegramId] = useState("");
+  const [partnerDataReady, setPartnerDataReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -3066,7 +3091,12 @@ export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate
           if (cancelled) return;
           window.localStorage.setItem(PARTNER_STAGE2_PLACE_KEY, access.place_id);
           window.localStorage.setItem(PARTNER_INVITE_KEY, startParam);
-          setInviteStatus(access.status || "draft");
+          const accessStatus = access.status || "draft";
+          setInviteStatus(accessStatus);
+          if (accessStatus === "approved") {
+            savePartnerActivated(true);
+            setActivated(true);
+          }
           setInviteDiagnostic(null);
           setInviteState("allowed");
         } catch (error) {
@@ -3097,10 +3127,14 @@ export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate
         window.localStorage.setItem(PARTNER_STAGE2_PLACE_KEY, String(place.id));
         hydratePartnerProfileFromDb(place);
       }
+      if (!cancelled) setPartnerDataReady(true);
     }).catch((error) => {
-      if (!cancelled && inviteState === "checking") {
-        setInviteState("denied");
-        setInviteError(error instanceof Error ? error.message : "Помилка доступу до партнерського кабінету");
+      if (!cancelled) {
+        setPartnerDataReady(true);
+        // If Telegram/QR access already succeeded, a temporary data-loading failure must not be turned into "access denied".
+        if (telegramStartParam().startsWith("partner-") && inviteState === "checking") {
+          setInviteError(error instanceof Error ? `Доступ підтверджено, але не вдалося завантажити заклад: ${error.message}` : "Доступ підтверджено, але не вдалося завантажити заклад");
+        }
       }
     });
     return () => { cancelled = true; };
@@ -3125,6 +3159,10 @@ export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate
   if (inviteState === "checking" && telegramStartParam().startsWith("partner-")) {
     return <div className="gt-partner-mobile-screen"><main className="gt-partner-mobile-content gt-partner-form-page"><div className="gt-simple-partner-section"><RefreshCcw size={42} /><h2>Перевіряємо доступ</h2><p>Звіряємо ваш Telegram ID із партнерським QR.</p></div></main></div>;
   }
+  if (inviteState === "allowed" && activated && !partnerDataReady) {
+    return <div className="gt-partner-mobile-screen"><main className="gt-partner-mobile-content gt-partner-form-page"><div className="gt-simple-partner-section"><RefreshCcw size={42} /><h2>Завантажуємо кабінет</h2><p>Отримуємо актуальні дані вашого закладу з бази.</p></div></main></div>;
+  }
+
   if (inviteState === "denied") {
     const startParam = telegramStartParam();
     const launchDiagnostic = telegramLaunchDiagnostic();

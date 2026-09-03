@@ -8,6 +8,7 @@ export type AuthUser = {
   telegram_username: string | null;
   first_name: string | null;
   last_name: string | null;
+  photo_url: string | null;
   selected_language: string;
   role: string;
 };
@@ -30,7 +31,7 @@ export class SessionGuard implements CanActivate {
 
     const tokenHash = createHash("sha256").update(token).digest("hex");
     const result = await this.db.query<AuthUser>(
-      `SELECT u.id, u.telegram_id::text, u.telegram_username, u.first_name, u.last_name, u.selected_language, u.role
+      `SELECT u.id, u.telegram_id::text, u.telegram_username, u.first_name, u.last_name, u.photo_url, u.selected_language, u.role
        FROM user_sessions s
        JOIN users u ON u.id=s.user_id
        WHERE s.token_hash=$1 AND s.expires_at>now()`,
