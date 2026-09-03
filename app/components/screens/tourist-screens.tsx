@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Ambulance,
   ArrowDownToLine,
@@ -298,6 +298,14 @@ function CurrentPlaceSticker() {
   );
 }
 
+
+function RemotePlaceImage({ url, alt = "", className, google = false, eager = false, fallback }: { url?: string | null; alt?: string; className: string; google?: boolean; eager?: boolean; fallback?: ReactNode }) {
+  const [failed, setFailed] = useState(false);
+  if (url && !failed) return <img src={url} alt={alt} className={className} loading={eager ? "eager" : "lazy"} decoding="async" onError={() => setFailed(true)} />;
+  if (google) return <span className={`${className} gt-real-place-image-placeholder`} aria-label="Фото Google недоступне"><ImageIcon size={25} /></span>;
+  return <>{fallback ?? <span className={`${className} gt-real-place-image-placeholder`}><ImageIcon size={25} /></span>}</>;
+}
+
 function PlaceRow({
   photo = "hotel",
   imageUrl,
@@ -309,6 +317,8 @@ function PlaceRow({
   walking = false,
   verified = false,
   tags = [],
+  google = false,
+  eager = false,
   onClick,
 }: {
   photo?: PhotoName;
@@ -321,11 +331,13 @@ function PlaceRow({
   walking?: boolean;
   verified?: boolean;
   tags?: string[];
+  google?: boolean;
+  eager?: boolean;
   onClick?: () => void;
 }) {
   return (
     <button type="button" className="gt-place-row" onClick={onClick}>
-      {imageUrl ? <img src={imageUrl} alt="" className="gt-photo gt-place-row__remote-photo" /> : <Thumb name={photo} />}
+      <RemotePlaceImage url={imageUrl} className="gt-photo gt-place-row__remote-photo" google={google} eager={eager} fallback={<Thumb name={photo} />} />
       <span className="gt-place-row__body">
         <span className="gt-place-row__title">
           <strong>{title}{verified ? <BadgeCheck className="gt-place-row__verified" size={15} /> : null}</strong>
@@ -1074,10 +1086,11 @@ function visiblePlaceTags(place: Stage2Place) {
 
 function distanceLabel(distance?: number | null) {
   if (distance == null) return "—";
-  return distance < 1000 ? `${Math.max(1, Math.round(distance / 10) * 10)} м` : `${(distance / 1000).toFixed(1).replace(".", ",")} км`;
+  return distance < 1000 ? `${Math.max(1, Math.round(distance))} м` : `${(distance / 1000).toFixed(1).replace(".", ",")} км`;
 }
 
-function walkLabel(distance?: number | null) {
+function walkLabel(distance?: number | null, durationSeconds?: number | null) {
+  if (durationSeconds != null && durationSeconds > 0) return `${Math.max(1, Math.round(durationSeconds / 60))} хв`;
   if (distance == null) return "—";
   return `${Math.max(1, Math.round(distance / 80))} хв`;
 }
@@ -1104,6 +1117,7 @@ function DynamicCategoryScreen({ navigate, config }: { navigate: Navigate; confi
   const [selectedChip, setSelectedChip] = useState("Усі");
   const [places, setPlaces] = useState<Stage2Place[]>([]);
   const [category, setCategory] = useState<Stage2Category | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -1116,24 +1130,46 @@ function DynamicCategoryScreen({ navigate, config }: { navigate: Navigate; confi
   useEffect(() => {
     if (!runtime.context) return;
     let cancelled = false;
+    let fullResolved = false;
     const timer = window.setTimeout(() => {
-      const params = new URLSearchParams({
-        region_id: runtime.context!.region.id,
-        category: config.category,
-      });
-      if (query.trim()) params.set("q", query.trim());
-      if (selectedChip !== "Усі") params.set("subcategory", selectedChip);
       const point = runtime.location ?? { lat: Number(runtime.context!.place?.lat ?? runtime.context!.region.lat), lng: Number(runtime.context!.place?.lng ?? runtime.context!.region.lng) };
-      params.set("lat", String(point.lat));
-      params.set("lng", String(point.lng));
-      params.set("radius", "15000");
-      params.set("include_google", "true");
-      params.set("google_section", config.category);
-      void stage2Fetch<Stage2Place[]>(`/places?${params}`).then((items) => {
-        if (!cancelled) setPlaces(items);
+      const makeParams = (limit: number) => {
+        const params = new URLSearchParams({ region_id: runtime.context!.region.id, category: config.category });
+        if (query.trim()) params.set("q", query.trim());
+        if (selectedChip !== "Усі") params.set("subcategory", selectedChip);
+        params.set("lat", String(point.lat));
+        params.set("lng", String(point.lng));
+        params.set("radius", "15000");
+        params.set("include_google", "true");
+        params.set("google_section", config.category);
+        params.set("google_limit", String(limit));
+        return params;
+      };
+      const cacheKey = `gid-category-cache:${config.category}:${point.lat.toFixed(3)}:${point.lng.toFixed(3)}:${selectedChip}:${query.trim().toLocaleLowerCase("uk")}`;
+      try {
+        const cached = window.sessionStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached) as Stage2Place[];
+          if (Array.isArray(parsed) && parsed.length) { setPlaces(parsed); setLoading(false); }
+        } else { setLoading(true); }
+      } catch { setLoading(true); }
+
+      // First four places use a smaller Google request so useful content appears as early as possible.
+      void stage2Fetch<Stage2Place[]>(`/places?${makeParams(4)}`).then((items) => {
+        if (!cancelled && !fullResolved && items.length) { setPlaces(items); setLoading(false); }
       }).catch(() => undefined);
+
+      // Full set continues in parallel and replaces the first four as soon as it is ready.
+      void stage2Fetch<Stage2Place[]>(`/places?${makeParams(20)}`).then((items) => {
+        if (cancelled) return;
+        fullResolved = true;
+        setPlaces(items);
+        setLoading(false);
+        try { window.sessionStorage.setItem(cacheKey, JSON.stringify(items)); } catch { /* cache is optional */ }
+      }).catch(() => { if (!cancelled) setLoading(false); });
+
       if (query.trim()) void trackEvent("search_used", { regionId: runtime.context?.region.id, payload: { q: query.trim(), category: config.category } });
-    }, 240);
+    }, query.trim() ? 180 : 0);
     return () => { cancelled = true; window.clearTimeout(timer); };
   }, [runtime.context, runtime.location, query, selectedChip, config.category]);
 
@@ -1156,23 +1192,26 @@ function DynamicCategoryScreen({ navigate, config }: { navigate: Navigate; confi
         <MapStrip real places={places} />
         <SectionTitle title={config.sectionTitle} action={`${places.length}`} />
         <div className="gt-place-list">
-          {places.map((place) => (
+          {places.map((place, index) => (
             <PlaceRow
               key={place.id}
               photo={placePhotoFallback(place)}
               imageUrl={place.image_url}
+              google={place.source === "google" || place.attributes?.google === true}
+              eager={index < 4}
               title={place.name}
               subtitle={place.subcategory || place.category_name || "Локація"}
               rating={`${Number(place.rating || 0).toFixed(1)} (${place.review_count || 0})`}
               distance={distanceLabel(place.distance_m)}
-              walk={walkLabel(place.distance_m)}
+              walk={walkLabel(place.distance_m, place.walking_duration_s)}
               walking
               verified={place.attributes?.verified === true}
               tags={visiblePlaceTags(place)}
               onClick={() => openPlace(place)}
             />
           ))}
-          {!places.length ? <div className="gt-stage2-empty">За цими фільтрами місць не знайдено</div> : null}
+          {loading && !places.length ? Array.from({ length: 4 }).map((_, index) => <div className="gt-place-row gt-place-row--skeleton" key={`loading-${index}`}><span className="gt-place-row__skeleton-photo"/><span className="gt-place-row__skeleton-copy"><i/><i/><i/></span></div>) : null}
+          {!loading && !places.length ? <div className="gt-stage2-empty">За цими фільтрами місць не знайдено</div> : null}
         </div>
       </main>
     </div>
@@ -1196,6 +1235,8 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
   const [query, setQuery] = useState("");
   const [radius, setRadius] = useState(500);
   const [nearbyPlaces, setNearbyPlaces] = useState<Stage2Place[]>([]);
+  const [nearbyLoading, setNearbyLoading] = useState(true);
+  const [previewPlace, setPreviewPlace] = useState<Stage2Place | null>(null);
   const categoryScrollRef = useRef<HTMLDivElement | null>(null);
   const subcategoryScrollRef = useRef<HTMLDivElement | null>(null);
   const sheetTouchStartY = useRef<number | null>(null);
@@ -1255,24 +1296,41 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
   useEffect(() => {
     if (!runtime.context || !center) return;
     let cancelled = false;
+    let fullResolved = false;
     const timer = window.setTimeout(() => {
-      const params = new URLSearchParams({
-        region_id: runtime.context!.region.id,
-        lat: String(center.lat),
-        lng: String(center.lng),
-        radius: String(radius),
-      });
-      const googleSection = activeTone === "fun" ? "entertainment" : activeTone === "all" ? "all" : activeTone;
-      params.set("include_google", "true");
-      params.set("google_section", googleSection);
-      if (activeCategoryMeta?.slug) params.set("category", activeCategoryMeta.slug);
-      else if (activeCategory !== "Усі") params.set("category", "__google__");
-      if (activeSubcategory) params.set("subcategory", activeSubcategory);
-      if (query.trim()) params.set("q", query.trim());
-      void stage2Fetch<Stage2Place[]>(`/places?${params}`).then((items) => {
-        if (!cancelled) setNearbyPlaces(items);
+      const makeParams = (limit: number) => {
+        const params = new URLSearchParams({ region_id: runtime.context!.region.id, lat: String(center.lat), lng: String(center.lng), radius: String(radius) });
+        const googleSection = activeTone === "fun" ? "entertainment" : activeTone === "all" ? "all" : activeTone;
+        params.set("include_google", "true");
+        params.set("google_section", googleSection);
+        params.set("google_limit", String(limit));
+        if (limit >= 20 && radius >= 1000 && !activeSubcategory) params.set("google_spread", "true");
+        if (activeCategoryMeta?.slug) params.set("category", activeCategoryMeta.slug);
+        else if (activeCategory !== "Усі") params.set("category", "__google__");
+        if (activeSubcategory) params.set("subcategory", activeSubcategory);
+        if (query.trim()) params.set("q", query.trim());
+        return params;
+      };
+      const cacheKey = `gid-nearby-cache:${center.lat.toFixed(3)}:${center.lng.toFixed(3)}:${radius}:${activeCategory}:${activeSubcategory}:${query.trim().toLocaleLowerCase("uk")}`;
+      try {
+        const cached = window.sessionStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached) as Stage2Place[];
+          if (Array.isArray(parsed) && parsed.length) { setNearbyPlaces(parsed); setNearbyLoading(false); }
+        } else setNearbyLoading(true);
+      } catch { setNearbyLoading(true); }
+
+      void stage2Fetch<Stage2Place[]>(`/places?${makeParams(4)}`).then((items) => {
+        if (!cancelled && !fullResolved && items.length) { setNearbyPlaces(items); setNearbyLoading(false); }
       }).catch(() => undefined);
-    }, 180);
+      void stage2Fetch<Stage2Place[]>(`/places?${makeParams(20)}`).then((items) => {
+        if (cancelled) return;
+        fullResolved = true;
+        setNearbyPlaces(items);
+        setNearbyLoading(false);
+        try { window.sessionStorage.setItem(cacheKey, JSON.stringify(items)); } catch { /* optional cache */ }
+      }).catch(() => { if (!cancelled) setNearbyLoading(false); });
+    }, query.trim() ? 160 : 0);
     return () => { cancelled = true; window.clearTimeout(timer); };
   }, [runtime.context, center?.lat, center?.lng, radius, activeCategoryMeta?.slug, activeCategory, activeTone, activeSubcategory, query]);
 
@@ -1326,7 +1384,7 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
         </section>
 
         <section className="gt-nearby-design__map gt-nearby-design__map--live" aria-label="Карта місць поруч">
-          {center ? <RealMap center={center} places={nearbyPlaces} radius={radius} className="gt-nearby-design__real-map" onSelect={openPlace} /> : <div className="gt-nearby-design__map-loading">Визначаємо вашу точку входу…</div>}
+          {center ? <RealMap center={center} places={nearbyPlaces} radius={radius} className="gt-nearby-design__real-map" onSelect={setPreviewPlace} /> : <div className="gt-nearby-design__map-loading">Визначаємо вашу точку входу…</div>}
           <div className="gt-nearby-design__map-controls">
             <button type="button" aria-label="Моє місцезнаходження" onClick={() => void runtime.requestLocation()}><LocateFixed size={22} /></button>
           </div>
@@ -1335,6 +1393,16 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
               <button type="button" key={value} className={radius === value ? "is-active" : ""} onClick={() => setRadius(value)}>{value < 1000 ? `${value} м` : `${value / 1000} км`}</button>
             ))}
           </div>
+          {previewPlace ? <div className="gt-map-place-preview" role="dialog" aria-label={`Перегляд ${previewPlace.name}`}>
+            <RemotePlaceImage url={previewPlace.image_url} className="gt-map-place-preview__image" google={previewPlace.source === "google" || previewPlace.attributes?.google === true} eager fallback={<Thumb name={placePhotoFallback(previewPlace)} />} />
+            <div className="gt-map-place-preview__copy">
+              <strong>{previewPlace.name}</strong>
+              <small>{previewPlace.subcategory || previewPlace.category_name || previewPlace.address}</small>
+              <span><b><Star size={13} fill="currentColor" /> {Number(previewPlace.rating || 0).toFixed(1)} · {previewPlace.review_count || 0}</b><em>{previewPlace.is_open_now === true ? "Відкрито" : previewPlace.is_open_now === false ? "Зачинено" : "Графік уточнюється"}</em></span>
+              <span><b>{distanceLabel(previewPlace.distance_m)}</b><em><WalkingIcon size={13} /> {walkLabel(previewPlace.distance_m, previewPlace.walking_duration_s)}</em></span>
+              <div><button type="button" onClick={() => setPreviewPlace(null)}>Закрити</button><button type="button" className="is-primary" onClick={() => openPlace(previewPlace)}>Відкрити</button></div>
+            </div>
+          </div> : null}
         </section>
 
         <section className={`gt-nearby-design__sheet ${resultsExpanded ? "is-expanded" : ""}`}
@@ -1350,14 +1418,15 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
             <div className="gt-nearby-design__cards">
               {nearbyPlaces.map((place) => (
                 <button type="button" className="gt-nearby-design__card" key={place.id} onClick={() => openPlace(place)}>
-                  {place.image_url ? <img src={place.image_url} alt="" className="gt-photo gt-nearby-design__remote-photo" /> : <Thumb name={placePhotoFallback(place)} />}
+                  <RemotePlaceImage url={place.image_url} className="gt-photo gt-nearby-design__remote-photo" google={place.source === "google" || place.attributes?.google === true} fallback={<Thumb name={placePhotoFallback(place)} />} />
                   <span className="gt-nearby-design__card-copy">
                     <strong>{place.name}{place.is_partner || place.attributes?.partner === true ? <i className="gt-nearby-partner-badge">Партнер</i> : null}</strong><small>{place.subcategory || place.category_name}</small>
-                    <span><b><Star size={12} fill="currentColor" /> {Number(place.rating || 0).toFixed(1)}</b><em>{distanceLabel(place.distance_m)}</em></span>
+                    <span><b><Star size={12} fill="currentColor" /> {Number(place.rating || 0).toFixed(1)}</b><em>{distanceLabel(place.distance_m)} · {walkLabel(place.distance_m, place.walking_duration_s)}</em></span>
                   </span>
                 </button>
               ))}
-              {!nearbyPlaces.length ? <div className="gt-stage2-empty">У цьому радіусі місць не знайдено</div> : null}
+              {nearbyLoading && !nearbyPlaces.length ? <div className="gt-stage2-empty">Завантажуємо місця поруч…</div> : null}
+              {!nearbyLoading && !nearbyPlaces.length ? <div className="gt-stage2-empty">У цьому радіусі місць не знайдено</div> : null}
             </div>
           ) : null}
         </section>
@@ -1371,17 +1440,20 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
   const [place, setPlace] = useState<Stage2Place | null>(null);
   const [favorite, setFavorite] = useState(false);
   const [showGoogleReviews, setShowGoogleReviews] = useState(false);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
   const fallbackId = runtime.selectedPlaceId || runtime.context?.place?.id || "";
 
   useEffect(() => {
     if (!fallbackId) return;
     let cancelled = false;
-    void stage2Fetch<Stage2Place>(`/places/${encodeURIComponent(fallbackId)}`).then((next) => { if (!cancelled) setPlace(next); }).catch(() => {
+    const point = runtime.location ?? (runtime.context ? { lat: Number(runtime.context.place?.lat ?? runtime.context.region.lat), lng: Number(runtime.context.place?.lng ?? runtime.context.region.lng) } : null);
+    const suffix = point ? `?lat=${encodeURIComponent(String(point.lat))}&lng=${encodeURIComponent(String(point.lng))}` : "";
+    void stage2Fetch<Stage2Place>(`/places/${encodeURIComponent(fallbackId)}${suffix}`).then((next) => { if (!cancelled) setPlace(next); }).catch(() => {
       if (!cancelled && runtime.context?.place?.id === fallbackId) setPlace(runtime.context.place);
     });
     void stage2Fetch<Stage2Place[]>("/me/favorites").then((items) => { if (!cancelled) setFavorite(items.some((item) => item.id === fallbackId)); }).catch(() => undefined);
     return () => { cancelled = true; };
-  }, [fallbackId, runtime.context?.place]);
+  }, [fallbackId, runtime.context?.place, runtime.location?.lat, runtime.location?.lng]);
 
   const current = place ?? runtime.context?.place ?? null;
   if (!current) {
@@ -1391,10 +1463,13 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
   const googleWeekdays = Array.isArray(current.details?.google_weekday_descriptions) ? current.details.google_weekday_descriptions.map(String) : [];
   const hours = current.work_hours?.always_open === true ? "Цілодобово" : daily?.from && daily?.to ? `Щодня · ${daily.from}–${daily.to}` : googleWeekdays[0] || "Графік уточнюється";
   const googleReviews = Array.isArray(current.details?.google_reviews) ? current.details.google_reviews as Array<Record<string, any>> : [];
-  const distance = runtime.location ? distanceLabel(Math.round((() => {
+  const fallbackStraightDistance = runtime.location ? Math.round((() => {
     const r=6371000,toRad=(v:number)=>v*Math.PI/180,dLat=toRad(Number(current.lat)-runtime.location!.lat),dLng=toRad(Number(current.lng)-runtime.location!.lng);
     const a=Math.sin(dLat/2)**2+Math.cos(toRad(runtime.location!.lat))*Math.cos(toRad(Number(current.lat)))*Math.sin(dLng/2)**2; return 2*r*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-  })())) : "—";
+  })()) : null;
+  const currentDistance = current.distance_m ?? fallbackStraightDistance;
+  const distance = distanceLabel(currentDistance);
+  const walkingTime = walkLabel(currentDistance, current.walking_duration_s);
 
   const openRoute = () => {
     void trackEvent("route_clicked", { regionId: current.region_id, placeId: current.id });
@@ -1409,10 +1484,23 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
     }
   };
 
+  const openReviews = async () => {
+    setShowGoogleReviews(true);
+    if (!(current.source === "google" || current.attributes?.google === true) || googleReviews.length) return;
+    setReviewsLoading(true);
+    try {
+      const point = runtime.location ?? (runtime.context ? { lat: Number(runtime.context.place?.lat ?? runtime.context.region.lat), lng: Number(runtime.context.place?.lng ?? runtime.context.region.lng) } : null);
+      const suffix = point ? `?lat=${encodeURIComponent(String(point.lat))}&lng=${encodeURIComponent(String(point.lng))}` : "";
+      const refreshed = await stage2Fetch<Stage2Place>(`/places/${encodeURIComponent(current.id)}${suffix}`);
+      setPlace(refreshed);
+    } catch { /* reviews modal still opens with the available rating/count */ }
+    finally { setReviewsLoading(false); }
+  };
+
   return (
     <div className="tourist-screen gt-screen">
       <section className={`gt-place-hero ${current.image_url ? "has-real-photo" : ""}`}>
-        {current.image_url ? <img className="gt-place-hero__image" src={current.image_url} alt={current.name} /> : null}
+        {current.image_url || current.source === "google" ? <RemotePlaceImage url={current.image_url} alt={current.name} className="gt-place-hero__image" google={current.source === "google" || current.attributes?.google === true} eager /> : null}
         <span className="gt-place-hero__shade" aria-hidden="true" />
         {current.attributes?.verified === true ? <span className="gt-pill gt-pill--glass"><BadgeCheck size={16} /> Перевірено</span> : null}
         <div>
@@ -1422,9 +1510,9 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
       </section>
       <main className="gt-content gt-content--overlap">
         <div className="gt-place-summary">
-          <button type="button" className="gt-place-summary__reviews-button" onClick={() => setShowGoogleReviews((value) => !value)}><Star size={19} fill="currentColor" /><strong>{Number(current.rating || 0).toFixed(1)}</strong><small>{current.review_count || 0} відгуків · натисніть</small></button>
+          <button type="button" className="gt-place-summary__reviews-button" onClick={() => void openReviews()}><Star size={19} fill="currentColor" /><strong>{Number(current.rating || 0).toFixed(1)}</strong><small>{current.review_count || 0} відгуків · читати</small></button>
           <span><Clock3 size={19} /><strong>{current.is_open_now === true ? "Відкрито" : current.is_open_now === false ? "Зачинено" : "Графік"}</strong><small>{daily?.to ? `до ${daily.to}` : "див. нижче"}</small></span>
-          <span><MapPin size={19} /><strong>{distance}</strong><small>від вашої точки</small></span>
+          <span><MapPin size={19} /><strong>{distance}</strong><small><WalkingIcon size={12} /> {walkingTime} пішки</small></span>
         </div>
         <div className="gt-action-grid">
           <button type="button" onClick={openRoute}><Navigation size={22} /><span>Маршрут</span></button>
@@ -1444,12 +1532,16 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
         {current.website ? <a className="gt-detail-card gt-detail-card--link" href={current.website} target="_blank" rel="noreferrer"><span><Globe size={22} /></span><div><strong>Сайт</strong><small>{current.website}</small></div><ChevronRight size={19} /></a> : null}
         {googleWeekdays.length ? <section className="gt-google-hours"><strong>Графік роботи</strong>{googleWeekdays.map((line) => <small key={line}>{line}</small>)}</section> : null}
         {visiblePlaceTags(current).length ? <div className="gt-stage2-place-tags">{visiblePlaceTags(current).map((tag) => <span key={tag}>{tag}</span>)}</div> : null}
-        {showGoogleReviews ? <section className="gt-google-reviews"><SectionTitle title="Відгуки Google" action={`${current.review_count || googleReviews.length}`} />{googleReviews.length ? <div className="gt-google-reviews__list">{googleReviews.slice(0,5).map((review,index) => {
-          const author = review.authorAttribution && typeof review.authorAttribution === "object" ? review.authorAttribution : {};
-          const text = review.text && typeof review.text === "object" ? review.text.text : review.originalText && typeof review.originalText === "object" ? review.originalText.text : "";
-          return <article key={`${String(author.displayName || "review")}-${index}`}><div><strong>{String(author.displayName || "Користувач Google")}</strong><span><Star size={13} fill="currentColor" /> {Number(review.rating || 0).toFixed(1)}</span></div>{text ? <p>{String(text)}</p> : null}<small>{String(review.relativePublishTimeDescription || "")}</small></article>;
-        })}</div> : <div className="gt-stage2-empty">Google не повернув тексти відгуків для цієї локації.</div>}</section> : null}
         <button type="button" className="gt-primary-button" onClick={openRoute}>Побудувати маршрут <Navigation size={20} /></button>
+        {showGoogleReviews ? <div className="gt-reviews-modal" role="dialog" aria-modal="true" aria-label="Відгуки Google" onClick={() => setShowGoogleReviews(false)}><section onClick={(event) => event.stopPropagation()}>
+          <header><div><strong>Відгуки Google</strong><small>{Number(current.rating || 0).toFixed(1)} · {current.review_count || googleReviews.length} відгуків</small></div><button type="button" onClick={() => setShowGoogleReviews(false)} aria-label="Закрити"><X size={21}/></button></header>
+          {reviewsLoading ? <div className="gt-stage2-empty">Завантажуємо відгуки…</div> : googleReviews.length ? <div className="gt-google-reviews__list">{googleReviews.slice(0,5).map((review,index) => {
+            const author = review.authorAttribution && typeof review.authorAttribution === "object" ? review.authorAttribution : {};
+            const text = review.text && typeof review.text === "object" ? review.text.text : review.originalText && typeof review.originalText === "object" ? review.originalText.text : "";
+            return <article key={`${String(author.displayName || "review")}-${index}`}><div><strong>{String(author.displayName || "Користувач Google")}</strong><span><Star size={13} fill="currentColor" /> {Number(review.rating || 0).toFixed(1)}</span></div>{text ? <p>{String(text)}</p> : null}<small>{String(review.relativePublishTimeDescription || "")}</small></article>;
+          })}</div> : <div className="gt-stage2-empty">Для цієї точки Google не повернув тексти відгуків.</div>}
+          {current.attributes?.google_maps_uri ? <button type="button" className="gt-primary-button" onClick={() => window.open(String(current.attributes?.google_maps_uri), "_blank", "noopener,noreferrer")}>Відкрити всі відгуки в Google</button> : null}
+        </section></div> : null}
       </main>
     </div>
   );
@@ -1491,12 +1583,14 @@ type TransferDisplayPlace = {
   walk: string;
   walking: boolean;
   tags: string[];
+  google?: boolean;
+  eager?: boolean;
 };
 
 function TransferReferenceRow({ place, onClick }: { place: TransferDisplayPlace; onClick?: () => void }) {
   return (
     <article className="gt-transfer-reference-row" onClick={onClick} role={onClick ? "button" : undefined} tabIndex={onClick ? 0 : undefined}>
-      {place.image ? <img src={place.image} alt="" className="gt-transfer-reference-row__image" /> : <div className="gt-transfer-reference-row__image gt-real-place-image-placeholder"><CarFront size={24} /></div>}
+      <RemotePlaceImage url={place.image} className="gt-transfer-reference-row__image" google={place.google} eager={place.eager} fallback={<div className="gt-transfer-reference-row__image gt-real-place-image-placeholder"><CarFront size={24} /></div>} />
       <div className="gt-transfer-reference-row__body">
         <div className="gt-transfer-reference-row__title">
           <strong>{place.title}</strong>
@@ -1521,6 +1615,7 @@ function TransferScreen({ navigate }: { navigate: Navigate }) {
   const [chip, setChip] = useState("Усі");
   const [places, setPlaces] = useState<Stage2Place[]>([]);
   const [apiLoaded, setApiLoaded] = useState(false);
+  const [transferLoading, setTransferLoading] = useState(true);
   const [transferCategory, setTransferCategory] = useState<Stage2Category | null>(null);
 
   useEffect(() => {
@@ -1532,29 +1627,42 @@ function TransferScreen({ navigate }: { navigate: Navigate }) {
   useEffect(() => {
     if (!runtime.context) return;
     let cancelled = false;
+    let fullResolved = false;
     const timer = window.setTimeout(() => {
-      const params = new URLSearchParams({ region_id: runtime.context!.region.id, category: "transfer" });
       const point = runtime.location ?? { lat: Number(runtime.context!.place?.lat ?? runtime.context!.region.lat), lng: Number(runtime.context!.place?.lng ?? runtime.context!.region.lng) };
-      params.set("lat", String(point.lat));
-      params.set("lng", String(point.lng));
-      params.set("radius", "15000");
-      params.set("include_google", "true");
-      params.set("google_section", "transfer");
-      if (query.trim()) params.set("q", query.trim());
-      if (chip !== "Усі") params.set("subcategory", chip);
-      void stage2Fetch<Stage2Place[]>(`/places?${params}`).then((items) => { if (!cancelled) { setPlaces(items); setApiLoaded(true); } }).catch(() => undefined);
-    }, 200);
+      const makeParams = (limit: number) => {
+        const params = new URLSearchParams({ region_id: runtime.context!.region.id, category: "transfer" });
+        params.set("lat", String(point.lat)); params.set("lng", String(point.lng)); params.set("radius", "15000");
+        params.set("include_google", "true"); params.set("google_section", "transfer"); params.set("google_limit", String(limit));
+        if (query.trim()) params.set("q", query.trim());
+        if (chip !== "Усі") params.set("subcategory", chip);
+        return params;
+      };
+      const cacheKey = `gid-transfer-cache:${point.lat.toFixed(3)}:${point.lng.toFixed(3)}:${chip}:${query.trim().toLocaleLowerCase("uk")}`;
+      try {
+        const cached = window.sessionStorage.getItem(cacheKey);
+        if (cached) { const parsed = JSON.parse(cached) as Stage2Place[]; if (Array.isArray(parsed) && parsed.length) { setPlaces(parsed); setApiLoaded(true); setTransferLoading(false); } }
+        else setTransferLoading(true);
+      } catch { setTransferLoading(true); }
+      void stage2Fetch<Stage2Place[]>(`/places?${makeParams(4)}`).then((items) => { if (!cancelled && !fullResolved && items.length) { setPlaces(items); setApiLoaded(true); setTransferLoading(false); } }).catch(() => undefined);
+      void stage2Fetch<Stage2Place[]>(`/places?${makeParams(20)}`).then((items) => {
+        if (cancelled) return; fullResolved = true; setPlaces(items); setApiLoaded(true); setTransferLoading(false);
+        try { window.sessionStorage.setItem(cacheKey, JSON.stringify(items)); } catch { /* ignore */ }
+      }).catch(() => { if (!cancelled) { setApiLoaded(true); setTransferLoading(false); } });
+    }, query.trim() ? 160 : 0);
     return () => { cancelled = true; window.clearTimeout(timer); };
   }, [runtime.context, runtime.location, query, chip]);
 
-  const display = places.map((place) => ({
+  const display = places.map((place, index) => ({
     image: place.image_url || "",
     title: place.name,
     subtitle: place.description || place.subcategory || "Транспортна послуга",
     rating: `${Number(place.rating || 0).toFixed(1)} (${place.review_count || 0})`,
     distance: distanceLabel(place.distance_m),
-    walk: walkLabel(place.distance_m),
+    walk: walkLabel(place.distance_m, place.walking_duration_s),
     walking: false,
+    google: place.source === "google" || place.attributes?.google === true,
+    eager: index < 4,
     tags: (visiblePlaceTags(place).length ? visiblePlaceTags(place) : [place.subcategory || "Трансфер"]).slice(0, 3),
   }));
 
@@ -1568,8 +1676,9 @@ function TransferScreen({ navigate }: { navigate: Navigate }) {
         <SectionTitle title="Трансфери поруч" action={`${display.length}`} />
         <div className="gt-transfer-reference-list">
           {display.map((place, index) => <TransferReferenceRow key={`${place.title}-${index}`} place={place} onClick={places[index] ? () => { runtime.setSelectedPlaceId(places[index].id); navigate("tourist", "place"); } : undefined} />)}
+          {transferLoading && !display.length ? Array.from({ length: 4 }).map((_, index) => <div className="gt-transfer-reference-row gt-place-row--skeleton" key={`transfer-loading-${index}`}><span className="gt-place-row__skeleton-photo"/><span className="gt-place-row__skeleton-copy"><i/><i/><i/></span></div>) : null}
         </div>
-        {apiLoaded && !places.length ? <div className="gt-stage2-empty">За цими фільтрами трансферів не знайдено</div> : null}
+        {apiLoaded && !transferLoading && !places.length ? <div className="gt-stage2-empty">За цими фільтрами трансферів не знайдено</div> : null}
       </main>
     </div>
   );

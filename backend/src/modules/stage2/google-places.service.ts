@@ -233,6 +233,16 @@ export class GooglePlacesService {
     return { buffer, contentType: response.headers.get("content-type") || "image/jpeg" };
   }
 
+  async placePhotoData(placeId: string) {
+    const place = await this.googleFetch<{ photos?: Array<{ name?: string }> }>(
+      `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=uk&regionCode=UA`,
+      { method: "GET", headers: { "X-Goog-FieldMask": "photos" } },
+    );
+    const photoName = place.photos?.find((photo) => Boolean(photo.name))?.name;
+    if (!photoName) throw new BadGatewayException("Google place has no photo");
+    return this.photoData(photoName);
+  }
+
 
   async reverse(lat: number, lng: number) {
     const key = this.key();
@@ -258,26 +268,104 @@ export class GooglePlacesService {
     };
   }
 
-  async nearby(lat: number, lng: number, radius: number, section = "all", subcategory = ""): Promise<GoogleNearbyPlace[]> {
+  async nearby(lat: number, lng: number, radius: number, section = "all", subcategory = "", limit = 20, spread = false): Promise<GoogleNearbyPlace[]> {
     const subcategoryTypes = SUBCATEGORY_TYPES[subcategory] ?? [];
     const types = subcategoryTypes.length ? subcategoryTypes : section === "all" ? Array.from(new Set(Object.values(NEARBY_TYPES).flat())).slice(0, 50) : (NEARBY_TYPES[section] ?? []);
     if (!types.length) return [];
-    const data = await this.googleFetch<{ places?: GoogleNearbyPlace[] }>("https://places.googleapis.com/v1/places:searchNearby", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.types,places.primaryType,places.primaryTypeDisplayName,places.rating,places.userRatingCount,places.priceLevel,places.regularOpeningHours,places.googleMapsUri,places.websiteUri,places.nationalPhoneNumber,places.photos",
+
+    const search = async (centerLat: number, centerLng: number, searchRadius: number, maxResultCount: number, rankPreference: "DISTANCE" | "POPULARITY") => {
+      const data = await this.googleFetch<{ places?: GoogleNearbyPlace[] }>("https://places.googleapis.com/v1/places:searchNearby", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.types,places.primaryType,places.primaryTypeDisplayName,places.rating,places.userRatingCount,places.priceLevel,places.regularOpeningHours,places.googleMapsUri,places.websiteUri,places.nationalPhoneNumber,places.photos",
+        },
+        body: JSON.stringify({
+          includedTypes: types,
+          maxResultCount: Math.max(1, Math.min(maxResultCount, 20)),
+          rankPreference,
+          languageCode: "uk",
+          regionCode: "UA",
+          locationRestriction: { circle: { center: { latitude: centerLat, longitude: centerLng }, radius: Math.max(100, Math.min(searchRadius, 50000)) } },
+        }),
+      });
+      return data.places ?? [];
+    };
+
+    if (!spread || radius < 1000 || limit < 12 || subcategory) {
+      return search(lat, lng, radius, limit, radius >= 1000 ? "POPULARITY" : "DISTANCE");
+    }
+
+    // A single Nearby Search returns at most 20 results and often fills them with the densest
+    // 200–300 m around the origin. For the user-selected 1–5 km radius sample several sectors
+    // in parallel, then keep only places that truly belong to the original circle.
+    const earth = 6371000;
+    const distance = (aLat: number, aLng: number, bLat: number, bLng: number) => {
+      const rad = (v: number) => v * Math.PI / 180;
+      const dLat = rad(bLat-aLat), dLng = rad(bLng-aLng);
+      const h = Math.sin(dLat/2)**2 + Math.cos(rad(aLat))*Math.cos(rad(bLat))*Math.sin(dLng/2)**2;
+      return 2*earth*Math.atan2(Math.sqrt(h),Math.sqrt(1-h));
+    };
+    const offset = radius * 0.48;
+    const dLat = offset / 111320;
+    const dLng = offset / (111320 * Math.max(.2, Math.cos(lat * Math.PI / 180)));
+    const sectorRadius = Math.max(450, radius * 0.62);
+    const [center, north, south, east, west] = await Promise.all([
+      search(lat, lng, radius, 8, "POPULARITY"),
+      search(lat+dLat, lng, sectorRadius, 5, "POPULARITY"),
+      search(lat-dLat, lng, sectorRadius, 5, "POPULARITY"),
+      search(lat, lng+dLng, sectorRadius, 5, "POPULARITY"),
+      search(lat, lng-dLng, sectorRadius, 5, "POPULARITY"),
+    ]);
+    const selected: GoogleNearbyPlace[] = [];
+    const seen = new Set<string>();
+    for (const group of [center, north, south, east, west]) {
+      let groupCount = 0;
+      for (const place of group) {
+        if (!place.id || seen.has(place.id)) continue;
+        const pLat = Number(place.location?.latitude);
+        const pLng = Number(place.location?.longitude);
+        if (!Number.isFinite(pLat) || !Number.isFinite(pLng) || distance(lat,lng,pLat,pLng) > radius) continue;
+        seen.add(place.id);
+        selected.push(place);
+        groupCount += 1;
+        if (selected.length >= limit || groupCount >= (group === center ? 8 : 3)) break;
+      }
+      if (selected.length >= limit) break;
+    }
+    return selected.slice(0, limit);
+  }
+
+  async walkingMatrix(originLat: number, originLng: number, destinations: Array<{ id: string; lat: number; lng: number }>) {
+    const clean = destinations.filter((item) => Number.isFinite(item.lat) && Number.isFinite(item.lng)).slice(0, 20);
+    if (!clean.length) return [] as Array<{ id: string; distance_m: number; walking_duration_s: number }>;
+    const data = await this.googleFetch<Array<{
+      originIndex?: number; destinationIndex?: number; distanceMeters?: number; duration?: string; condition?: string; status?: { code?: number; message?: string };
+    }>>(
+      "https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-FieldMask": "originIndex,destinationIndex,distanceMeters,duration,status,condition",
+        },
+        body: JSON.stringify({
+          origins: [{ waypoint: { location: { latLng: { latitude: originLat, longitude: originLng } } } }],
+          destinations: clean.map((item) => ({ waypoint: { location: { latLng: { latitude: item.lat, longitude: item.lng } } } })),
+          travelMode: "WALK",
+        }),
       },
-      body: JSON.stringify({
-        includedTypes: types,
-        maxResultCount: 20,
-        rankPreference: "DISTANCE",
-        languageCode: "uk",
-        regionCode: "UA",
-        locationRestriction: { circle: { center: { latitude: lat, longitude: lng }, radius: Math.max(100, Math.min(radius, 50000)) } },
-      }),
+    );
+    return data.flatMap((item) => {
+      const index = Number(item.destinationIndex ?? 0);
+      const destination = clean[index];
+      const distance = Number(item.distanceMeters ?? 0);
+      const durationMatch = String(item.duration ?? "").match(/^([0-9.]+)s$/);
+      const duration = durationMatch ? Math.round(Number(durationMatch[1])) : 0;
+      const statusCode = Number(item.status?.code ?? 0);
+      if (!destination || statusCode !== 0 || item.condition === "ROUTE_NOT_FOUND" || !distance || !duration) return [];
+      return [{ id: destination.id, distance_m: Math.round(distance), walking_duration_s: duration }];
     });
-    return data.places ?? [];
   }
 
   mapSection(primaryType = "", types: string[] = []) {

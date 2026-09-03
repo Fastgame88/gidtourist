@@ -156,7 +156,7 @@ export class Stage2Service {
       phone: place.nationalPhoneNumber ?? null,
       telegram: null,
       website: place.websiteUri ?? null,
-      image_url: place.photos?.[0]?.name ? `/api/stage2/google/photo?name=${encodeURIComponent(place.photos[0].name)}` : null,
+      image_url: place.photos?.[0]?.name ? `/api/stage2/google/photo?name=${encodeURIComponent(place.photos[0].name)}` : place.id ? `/api/stage2/google/place-photo?id=${encodeURIComponent(place.id)}` : null,
       rating: Number(place.rating ?? 0),
       review_count: Number(place.userRatingCount ?? 0),
       price_level: null,
@@ -205,6 +205,11 @@ export class Stage2Service {
 
   async googlePhoto(photoName: string) {
     return this.google.photoData(photoName);
+  }
+
+  async googlePlacePhoto(placeId: string) {
+    if (!placeId.trim()) throw new BadRequestException("Google place id is required");
+    return this.google.placePhotoData(placeId.trim());
   }
 
   async context(startParam: string) {
@@ -267,6 +272,8 @@ export class Stage2Service {
     const kids = String(params.kids ?? "") === "true";
     const parking = String(params.parking ?? "") === "true";
     const partner = String(params.partner ?? "") === "true";
+    const googleLimit = Math.max(1, Math.min(Number(params.google_limit ?? 20) || 20, 20));
+    const googleSpread = String(params.google_spread ?? "") === "true";
 
     let rows = await this.rawPlaces(regionId);
     rows = rows.filter((p) => !category || p.category_slug === category);
@@ -289,33 +296,62 @@ export class Stage2Service {
     if (includeGoogle) {
       const googleSection = String(params.google_section ?? (category || "all"));
       try {
-        const googlePlaces = await this.google.nearby(lat!, lng!, radius!, googleSection, subcategory);
+        const googlePlaces = await this.google.nearby(lat!, lng!, radius!, googleSection, subcategory, googleLimit, googleSpread);
         const external = googlePlaces.map((item) => this.googlePlaceToStage2(item, lat!, lng!));
         const selectedQuery = q.toLocaleLowerCase("uk");
         const filteredExternal = external.filter((place) => !subcategory || this.google.matchesSubcategory(subcategory, String(place.tags[0] ?? ""), place.tags))
           .filter((place) => !selectedQuery || [place.name, place.description, place.address, place.subcategory, ...place.tags].join(" ").toLocaleLowerCase("uk").includes(selectedQuery));
         const deduped = filteredExternal.filter((googlePlace) => !partnerRows.some((partnerPlace) => distanceMeters(Number(partnerPlace.lat), Number(partnerPlace.lng), googlePlace.lat, googlePlace.lng) < 35 && partnerPlace.name.toLocaleLowerCase("uk").includes(googlePlace.name.toLocaleLowerCase("uk").split(" ")[0] || "___")));
-        const combined = [...partnerRows, ...deduped];
+        let combined = [...partnerRows, ...deduped];
+        try {
+          const routeMetrics = await this.google.walkingMatrix(lat!, lng!, combined.slice(0, 20).map((place) => ({ id: place.id, lat: Number(place.lat), lng: Number(place.lng) })));
+          const byId = new Map(routeMetrics.map((item) => [item.id, item]));
+          combined = combined.map((place) => {
+            const route = byId.get(place.id);
+            return route ? { ...place, distance_m: route.distance_m, walking_duration_s: route.walking_duration_s } : place;
+          });
+        } catch {
+          // Routes API is optional at runtime. Straight-line values remain available if it is not enabled.
+        }
         combined.sort((a, b) => (a.distance_m ?? 1e12) - (b.distance_m ?? 1e12) || Number(b.rating) - Number(a.rating));
         return combined;
       } catch {
         // Google Places is optional; partner catalog must remain available if quota/key is unavailable.
       }
     }
-    partnerRows.sort((a, b) => (a.distance_m ?? 1e12) - (b.distance_m ?? 1e12) || Number(b.rating) - Number(a.rating));
-    return partnerRows;
+    let routedPartnerRows = partnerRows;
+    if (lat != null && lng != null && partnerRows.length && this.google.enabled()) {
+      try {
+        const routeMetrics = await this.google.walkingMatrix(lat, lng, partnerRows.slice(0, 20).map((place) => ({ id: place.id, lat: Number(place.lat), lng: Number(place.lng) })));
+        const byId = new Map(routeMetrics.map((item) => [item.id, item]));
+        routedPartnerRows = partnerRows.map((place) => {
+          const route = byId.get(place.id);
+          return route ? { ...place, distance_m: route.distance_m, walking_duration_s: route.walking_duration_s } : place;
+        });
+      } catch { /* leave geometric distance when Routes API is unavailable */ }
+    }
+    routedPartnerRows.sort((a, b) => (a.distance_m ?? 1e12) - (b.distance_m ?? 1e12) || Number(b.rating) - Number(a.rating));
+    return routedPartnerRows;
   }
 
-  async place(id: string, publicOnly = true) {
+  async place(id: string, publicOnly = true, originLat?: number, originLng?: number) {
+    const withRoute = async <T extends { id: string; lat: number; lng: number; distance_m?: number | null }>(place: T) => {
+      if (!Number.isFinite(originLat) || !Number.isFinite(originLng) || !this.google.enabled()) return place;
+      try {
+        const [route] = await this.google.walkingMatrix(Number(originLat), Number(originLng), [{ id: place.id, lat: Number(place.lat), lng: Number(place.lng) }]);
+        return route ? { ...place, distance_m: route.distance_m, walking_duration_s: route.walking_duration_s } : place;
+      } catch { return place; }
+    };
     if (id.startsWith("google_")) {
       const googleId = id.slice("google_".length);
       const result = await this.google.details(googleId);
-      return this.googlePlaceToStage2(result);
+      return withRoute(this.googlePlaceToStage2(result, originLat, originLng));
     }
     const rows = await this.rawPlaces(undefined, !publicOnly);
     const place = rows.find((row) => row.id === id && (!publicOnly || row.status === "approved"));
     if (!place) throw new NotFoundException("Place not found");
-    return { ...place, rating: Number(place.rating), is_open_now: isOpenNow(place.work_hours) };
+    const distance = Number.isFinite(originLat) && Number.isFinite(originLng) ? Math.round(distanceMeters(Number(originLat), Number(originLng), Number(place.lat), Number(place.lng))) : null;
+    return withRoute({ ...place, rating: Number(place.rating), distance_m: distance, is_open_now: isOpenNow(place.work_hours) });
   }
 
   async profile(user: AuthUser) {

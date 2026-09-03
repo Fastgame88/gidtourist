@@ -52,7 +52,7 @@ import {
   LockKeyhole,
 } from "lucide-react";
 import type { RoleKey } from "../../lib/navigation";
-import { ensureTelegramSession, setSessionToken, stage2Fetch, telegramAuthLastError, telegramLaunchDiagnostic, telegramStartParam, type Stage2Category, type Stage2GeoDetails, type Stage2GeoSuggestion, type Stage2PlaceTypeTemplate, type Stage2User } from "../../lib/stage2-api";
+import { ensureTelegramSession, setSessionToken, stage2Fetch, telegramAuthLastError, telegramLaunchDiagnostic, telegramLaunchKey, telegramStartParam, type Stage2Category, type Stage2GeoDetails, type Stage2GeoSuggestion, type Stage2PlaceTypeTemplate, type Stage2User } from "../../lib/stage2-api";
 
 type Navigate = (role: RoleKey, slug: string) => void;
 type PartnerProps = { navigate: Navigate; activated: boolean };
@@ -325,6 +325,25 @@ function usePartnerProfile() {
 const PARTNER_STAGE2_PLACE_KEY = "gid-tourist-stage2-partner-place-id";
 const PARTNER_INVITE_KEY = "gid-tourist-stage2-partner-invite";
 const PARTNER_ACCESS_SESSION_PREFIX = "gid-tourist-stage2-partner-access:";
+
+type PartnerLaunchAccessCache = { telegram_id?: string; place_id?: string; status?: string; launch_key?: string };
+
+function readPartnerLaunchAccessCache(): PartnerLaunchAccessCache | null {
+  if (typeof window === "undefined") return null;
+  const startParam = telegramStartParam();
+  if (!startParam.startsWith("partner-")) return null;
+  try {
+    const raw = window.sessionStorage.getItem(`${PARTNER_ACCESS_SESSION_PREFIX}${startParam}`);
+    if (!raw) return null;
+    const cached = JSON.parse(raw) as PartnerLaunchAccessCache;
+    const launchKey = telegramLaunchKey();
+    if (!cached.place_id || !cached.launch_key) return null;
+    if (launchKey && cached.launch_key !== launchKey) return null;
+    return cached;
+  } catch {
+    return null;
+  }
+}
 
 function categoryFromPlaceType(placeType: string) {
   const value = placeType.toLocaleLowerCase("uk");
@@ -3109,19 +3128,45 @@ function hydratePartnerProfileFromDb(place: Record<string, any>) {
 }
 
 export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate: Navigate }) {
-  const [activated, setActivated] = useState(false);
-  const [inviteState, setInviteState] = useState<"checking" | "none" | "allowed" | "denied">("checking");
+  const initialLaunchAccess = useMemo(() => readPartnerLaunchAccessCache(), []);
+  const [activated, setActivated] = useState(() => readPartnerActivated());
+  const [inviteState, setInviteState] = useState<"checking" | "none" | "allowed" | "denied">(() => initialLaunchAccess ? "allowed" : (telegramStartParam().startsWith("partner-") ? "checking" : "none"));
   const [inviteError, setInviteError] = useState("");
-  const [inviteStatus, setInviteStatus] = useState("");
+  const [inviteStatus, setInviteStatus] = useState(() => initialLaunchAccess?.status || "");
   const [inviteDiagnostic, setInviteDiagnostic] = useState<PartnerAccessDiagnostic | null>(null);
-  const [sessionTelegramId, setSessionTelegramId] = useState("");
-  const [partnerDataReady, setPartnerDataReady] = useState(false);
+  const [sessionTelegramId, setSessionTelegramId] = useState(() => initialLaunchAccess?.telegram_id || "");
+  const [partnerDataReady, setPartnerDataReady] = useState(() => Boolean(initialLaunchAccess && readPartnerProfile().placeName));
 
   useEffect(() => {
     let cancelled = false;
     setActivated(readPartnerActivated());
 
     const run = async () => {
+      // Partner QR access is checked only once for the current Telegram Mini App launch.
+      // Internal Next.js route changes remount this screen, so restore the verified launch
+      // synchronously from sessionStorage instead of flashing the access-check screen again.
+      const verifiedLaunch = readPartnerLaunchAccessCache();
+      if (verifiedLaunch?.place_id) {
+        setSessionTelegramId(verifiedLaunch.telegram_id || "");
+        setInviteStatus(verifiedLaunch.status || "draft");
+        setInviteState("allowed");
+        window.localStorage.setItem(PARTNER_STAGE2_PLACE_KEY, verifiedLaunch.place_id);
+        window.localStorage.setItem(PARTNER_INVITE_KEY, telegramStartParam());
+        if (verifiedLaunch.status === "approved") { savePartnerActivated(true); setActivated(true); }
+        if (readPartnerProfile().placeName) {
+          setPartnerDataReady(true);
+          return;
+        }
+        try {
+          const places = await stage2Fetch<Array<Record<string, any>>>("/partner/places");
+          if (cancelled) return;
+          const place = places.find((item) => String(item.id) === verifiedLaunch.place_id) ?? places[0];
+          if (place?.id) hydratePartnerProfileFromDb(place);
+        } catch { /* access was already verified for this launch; keep local state */ }
+        if (!cancelled) setPartnerDataReady(true);
+        return;
+      }
+
       const session = await ensureTelegramSession();
       if (!session || cancelled) {
         if (!cancelled) {
@@ -3143,13 +3188,14 @@ export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate
 
       if (isInvite) {
         const cacheKey = `${PARTNER_ACCESS_SESSION_PREFIX}${startParam}`;
-        let cached: { telegram_id?: string; place_id?: string; status?: string } | null = null;
+        let cached: PartnerLaunchAccessCache | null = null;
         try {
           const raw = window.sessionStorage.getItem(cacheKey);
-          cached = raw ? JSON.parse(raw) as { telegram_id?: string; place_id?: string; status?: string } : null;
+          cached = raw ? JSON.parse(raw) as PartnerLaunchAccessCache : null;
         } catch { cached = null; }
+        const currentLaunchKey = telegramLaunchKey();
 
-        if (cached?.telegram_id === telegramId && cached.place_id) {
+        if (cached?.telegram_id === telegramId && cached.place_id && cached.launch_key && (!currentLaunchKey || cached.launch_key === currentLaunchKey)) {
           usedCachedAccess = true;
           grantedPlaceId = cached.place_id;
           grantedStatus = cached.status || "draft";
@@ -3159,7 +3205,7 @@ export function PartnerMobileScreen({ slug, navigate }: { slug: string; navigate
             if (cancelled) return;
             grantedPlaceId = access.place_id;
             grantedStatus = access.status || "draft";
-            try { window.sessionStorage.setItem(cacheKey, JSON.stringify({ telegram_id: telegramId, place_id: grantedPlaceId, status: grantedStatus })); } catch { /* ignore */ }
+            try { window.sessionStorage.setItem(cacheKey, JSON.stringify({ telegram_id: telegramId, place_id: grantedPlaceId, status: grantedStatus, launch_key: telegramLaunchKey() })); } catch { /* ignore */ }
           } catch (error) {
             let diagnostic: PartnerAccessDiagnostic | null = null;
             try { diagnostic = await stage2Fetch<PartnerAccessDiagnostic>(`/partner/access-diagnostic/${encodeURIComponent(startParam)}`); } catch { diagnostic = null; }

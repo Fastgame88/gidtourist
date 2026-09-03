@@ -28704,3 +28704,113 @@ button.gt-amenities-row {
 }
 .gt-profile-screen .gt-avatar--photo.has-photo { background:#eef6f2 !important; }
 .gt-profile-screen .gt-avatar--photo img { width:100%; height:100%; display:block; object-fit:cover; }
+
+/* ===== 2026-09-04 Stage 2.13: fast real Google places, map preview, reviews ===== */
+.gt-place-row--skeleton {
+  pointer-events: none;
+  min-height: 108px;
+  opacity: .72;
+}
+.gt-place-row__skeleton-photo {
+  width: 104px;
+  height: 94px;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  background: linear-gradient(100deg,#edf2ef 20%,#f7f9f8 40%,#edf2ef 60%);
+  background-size: 220% 100%;
+  animation: gt-stage2-skeleton 1.2s linear infinite;
+}
+.gt-place-row__skeleton-copy {
+  display: grid;
+  flex: 1;
+  gap: 9px;
+  padding: 10px 2px;
+}
+.gt-place-row__skeleton-copy i {
+  display: block;
+  height: 11px;
+  border-radius: 999px;
+  background: linear-gradient(100deg,#edf2ef 20%,#f7f9f8 40%,#edf2ef 60%);
+  background-size: 220% 100%;
+  animation: gt-stage2-skeleton 1.2s linear infinite;
+}
+.gt-place-row__skeleton-copy i:nth-child(1) { width: 72%; }
+.gt-place-row__skeleton-copy i:nth-child(2) { width: 91%; }
+.gt-place-row__skeleton-copy i:nth-child(3) { width: 54%; }
+@keyframes gt-stage2-skeleton { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+
+.gt-map-place-preview {
+  position: absolute;
+  z-index: 950;
+  left: 12px;
+  right: 12px;
+  bottom: 48px;
+  display: grid;
+  grid-template-columns: 92px minmax(0,1fr);
+  gap: 10px;
+  padding: 9px;
+  border: 1px solid rgba(220,230,224,.95);
+  border-radius: 16px;
+  background: rgba(255,255,255,.98);
+  box-shadow: 0 12px 32px rgba(25,45,33,.2);
+  backdrop-filter: blur(8px);
+}
+.gt-map-place-preview__image {
+  width: 92px;
+  height: 104px;
+  object-fit: cover;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.gt-map-place-preview__copy { min-width: 0; display: grid; align-content: start; gap: 4px; }
+.gt-map-place-preview__copy > strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#16271e; font-size:14px; line-height:1.2; }
+.gt-map-place-preview__copy > small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#6b776f; font-size:10px; }
+.gt-map-place-preview__copy > span { display:flex; align-items:center; justify-content:space-between; gap:8px; color:#526058; font-size:10px; font-style:normal; }
+.gt-map-place-preview__copy > span b,.gt-map-place-preview__copy > span em { display:flex; align-items:center; gap:3px; min-width:0; font-style:normal; white-space:nowrap; }
+.gt-map-place-preview__copy > div { display:flex; gap:7px; margin-top:3px; }
+.gt-map-place-preview__copy > div button { flex:1; min-height:30px; border:1px solid #dce6e0; border-radius:9px; background:#fff; color:#405047; font-size:10px; font-weight:700; }
+.gt-map-place-preview__copy > div button.is-primary { border-color:#079351; background:#079351; color:#fff; }
+
+.gt-reviews-modal {
+  position: fixed;
+  z-index: 7000;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 18px 10px max(18px,env(safe-area-inset-bottom));
+  background: rgba(8,20,13,.46);
+}
+.gt-reviews-modal > section {
+  width: min(560px,100%);
+  max-height: min(74vh,680px);
+  overflow: auto;
+  padding: 16px;
+  box-sizing: border-box;
+  border-radius: 22px;
+  background:#fff;
+  box-shadow:0 22px 60px rgba(0,0,0,.24);
+}
+.gt-reviews-modal header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:13px; }
+.gt-reviews-modal header > div strong,.gt-reviews-modal header > div small { display:block; }
+.gt-reviews-modal header > div strong { color:#17281f; font-size:17px; }
+.gt-reviews-modal header > div small { margin-top:2px; color:#78847d; font-size:11px; }
+.gt-reviews-modal header > button { display:grid; width:34px; height:34px; place-items:center; border:0; border-radius:50%; background:#f0f4f2; color:#445148; }
+.gt-reviews-modal .gt-google-reviews__list { display:grid; gap:9px; }
+.gt-reviews-modal .gt-primary-button { margin-top:12px; }
+
+.gt-place-row__remote-photo.gt-real-place-image-placeholder,
+.gt-nearby-design__remote-photo.gt-real-place-image-placeholder,
+.gt-transfer-reference-row__image.gt-real-place-image-placeholder,
+.gt-map-place-preview__image.gt-real-place-image-placeholder,
+.gt-place-hero__image.gt-real-place-image-placeholder {
+  flex: 0 0 auto;
+  background: #eef3ef !important;
+  color:#6c7971;
+}
+
+@media (max-width:390px) {
+  .gt-map-place-preview { grid-template-columns: 82px minmax(0,1fr); left:8px; right:8px; bottom:45px; padding:7px; }
+  .gt-map-place-preview__image { width:82px; height:96px; }
+  .gt-place-row__skeleton-photo { width:92px; height:86px; }
+}

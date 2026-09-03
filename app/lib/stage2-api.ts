@@ -36,6 +36,7 @@ export type Stage2Place = {
   translations?: Record<string, unknown>;
   tags?: string[];
   distance_m?: number | null;
+  walking_duration_s?: number | null;
   is_open_now?: boolean | null;
   status?: string;
   source?: "partner" | "google";
@@ -206,6 +207,18 @@ export function telegramStartParam() {
     fromFallback ||= params.get("startapp") || params.get("start") || "";
   }
   return fromTelegram || fromLaunch || fromFallback || "";
+}
+
+export function telegramLaunchKey() {
+  if (typeof window === "undefined") return "";
+  const webApp = (window as TelegramWindow).Telegram?.WebApp;
+  const initData = webApp?.initData || rawTelegramInitData();
+  const params = new URLSearchParams(initData);
+  const authDate = params.get("auth_date") || "";
+  const queryId = params.get("query_id") || "";
+  const hash = params.get("hash") || "";
+  const user = webApp?.initDataUnsafe?.user || rawTelegramUser(initData);
+  return [telegramStartParam(), authDate, queryId, user?.id ? String(user.id) : "", hash.slice(0, 16)].join(":");
 }
 
 export async function ensureTelegramSession(): Promise<{ token: string; user: Stage2User } | null> {

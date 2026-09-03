@@ -35,11 +35,23 @@ export class Stage2Controller {
     return response.send(photo.buffer);
   }
 
+  @Get("google/place-photo")
+  async googlePlacePhoto(@Query("id") id = "", @Res() response: any) {
+    const photo = await this.service.googlePlacePhoto(id);
+    response.setHeader("Content-Type", photo.contentType);
+    response.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+    return response.send(photo.buffer);
+  }
+
   @Get("places")
   places(@Query() query: Record<string, unknown>) { return this.service.places(query); }
 
   @Get("places/:id")
-  place(@Param("id") id: string) { return this.service.place(id); }
+  place(@Param("id") id: string, @Query("lat") lat = "", @Query("lng") lng = "") {
+    const originLat = lat === "" ? undefined : Number(lat);
+    const originLng = lng === "" ? undefined : Number(lng);
+    return this.service.place(id, true, originLat, originLng);
+  }
 
   @Get("emergency")
   emergency(@Query("region_id") regionId = "region-tatariv") { return this.service.emergency(regionId); }
