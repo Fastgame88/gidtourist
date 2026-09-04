@@ -139,6 +139,13 @@ export class GooglePlacesService {
 
   enabled() { return Boolean(this.key()); }
 
+  // Short-lived in-memory caches prevent repeated paid Google calls caused by UI re-renders
+  // while keeping Places data fresh. These caches disappear on backend restart.
+  private readonly detailsCache = new Map<string, { value: GoogleNearbyPlace; expiresAt: number }>();
+  private readonly nearbyCache = new Map<string, { value: GoogleNearbyPlace[]; expiresAt: number }>();
+  private readonly detailsCacheTtlMs = 10 * 60 * 1000;
+  private readonly nearbyCacheTtlMs = 5 * 60 * 1000;
+
   private async googleFetch<T>(url: string, init: RequestInit): Promise<T> {
     const key = this.key();
     if (!key) throw new BadGatewayException("GOOGLE_MAPS_SERVER_API_KEY is not configured");
@@ -217,22 +224,35 @@ export class GooglePlacesService {
   }
 
   async details(placeId: string): Promise<GoogleNearbyPlace> {
+    const cleanId = placeId.trim();
+    const cached = this.detailsCache.get(cleanId);
+    if (cached && cached.expiresAt > Date.now()) return cached.value;
+
     const fieldMask = "id,displayName,formattedAddress,location,addressComponents,types,primaryType,primaryTypeDisplayName,rating,userRatingCount,priceLevel,regularOpeningHours,googleMapsUri,googleMapsLinks,websiteUri,nationalPhoneNumber,photos,reviews";
     const fetchDetails = (localized: boolean) => this.googleFetch<GoogleNearbyPlace>(
-      `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?${localized ? "languageCode=uk&" : ""}regionCode=UA`,
+      `https://places.googleapis.com/v1/places/${encodeURIComponent(cleanId)}?${localized ? "languageCode=uk&" : ""}regionCode=UA`,
       { method: "GET", headers: { "X-Goog-FieldMask": fieldMask } },
     );
     const primary = await fetchDetails(true);
     const hasReviewText = primary.reviews?.some((review) => Boolean(review.text?.text?.trim() || review.originalText?.text?.trim()));
+    let resolved = primary;
     if (Number(primary.userRatingCount ?? 0) > 0 && !hasReviewText) {
       try {
         const fallback = await fetchDetails(false);
         if (fallback.reviews?.some((review) => Boolean(review.text?.text?.trim() || review.originalText?.text?.trim()))) {
-          return { ...primary, reviews: fallback.reviews };
+          resolved = { ...primary, reviews: fallback.reviews };
         }
       } catch { /* localized details remain usable */ }
     }
-    return primary;
+    this.detailsCache.set(cleanId, { value: resolved, expiresAt: Date.now() + this.detailsCacheTtlMs });
+    return resolved;
+  }
+
+  async addressDetails(placeId: string): Promise<GoogleNearbyPlace> {
+    return this.googleFetch<GoogleNearbyPlace>(
+      `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=uk&regionCode=UA`,
+      { method: "GET", headers: { "X-Goog-FieldMask": "id,formattedAddress,location,addressComponents" } },
+    );
   }
 
   async photoUri(photoName: string) {
@@ -246,14 +266,15 @@ export class GooglePlacesService {
   async photoData(photoName: string) {
     const clean = photoName.trim().replace(/^\/+/, "");
     if (!clean || !/^places\/[^/]+\/photos\/[^/]+/.test(clean)) throw new BadGatewayException("Invalid Google photo name");
-    const key = this.key();
-    if (!key) throw new BadGatewayException("GOOGLE_MAPS_SERVER_API_KEY is not configured");
 
-    // Request the media endpoint directly with a fresh photo resource name. This avoids keeping
-    // short-lived Google image URLs in the client and lets the server follow Google's redirect.
-    const mediaUrl = `https://places.googleapis.com/v1/${clean}/media?maxWidthPx=1200&maxHeightPx=900&key=${encodeURIComponent(key)}`;
-    const response = await fetch(mediaUrl, { redirect: "follow", headers: { Accept: "image/avif,image/webp,image/*,*/*" } });
-    if (!response.ok) throw new BadGatewayException(`Google photo ${response.status}`);
+    // Ask Places Photos for the current Google-hosted media URL, then download that URL.
+    // This avoids relying on redirect/header behaviour and keeps the API key off the image host.
+    const mediaUrl = await this.photoUri(clean);
+    const response = await fetch(mediaUrl, { headers: { Accept: "image/avif,image/webp,image/*,*/*" } });
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      throw new BadGatewayException(`Google photo media ${response.status}: ${body || response.statusText}`);
+    }
     const buffer = Buffer.from(await response.arrayBuffer());
     if (!buffer.length) throw new BadGatewayException("Google photo is empty");
     const contentType = response.headers.get("content-type") || "image/jpeg";
@@ -261,11 +282,11 @@ export class GooglePlacesService {
     return { buffer, contentType };
   }
 
+
   async placePhotoData(placeId: string) {
-    const place = await this.googleFetch<{ photos?: Array<{ name?: string }> }>(
-      `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=uk&regionCode=UA`,
-      { method: "GET", headers: { "X-Goog-FieldMask": "photos" } },
-    );
+    // Reuse the cached full Place Details response when available. This avoids a second
+    // Place Details call just to obtain photos after the user has opened the same place.
+    const place = await this.details(placeId);
     const photoNames = (place.photos ?? []).map((photo) => photo.name?.trim() || "").filter(Boolean).slice(0, 5);
     if (!photoNames.length) throw new BadGatewayException("Google place has no photo");
     let lastError: unknown;
@@ -302,73 +323,165 @@ export class GooglePlacesService {
   }
 
   async nearby(lat: number, lng: number, radius: number, section = "all", subcategory = "", limit = 20, spread = false): Promise<GoogleNearbyPlace[]> {
-    const subcategoryTypes = SUBCATEGORY_TYPES[subcategory] ?? [];
-    const types = subcategoryTypes.length ? subcategoryTypes : section === "all" ? Array.from(new Set(Object.values(NEARBY_TYPES).flat())).slice(0, 50) : (NEARBY_TYPES[section] ?? []);
-    if (!types.length) return [];
+    const cacheKey = [lat.toFixed(4), lng.toFixed(4), Math.round(radius), section, subcategory, limit, spread ? "spread" : "near"].join(":");
+    const cached = this.nearbyCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) return cached.value;
+    const staleCached = cached?.value;
 
-    const search = async (centerLat: number, centerLng: number, searchRadius: number, maxResultCount: number, rankPreference: "DISTANCE" | "POPULARITY") => {
+    const remember = (value: GoogleNearbyPlace[]) => {
+      this.nearbyCache.set(cacheKey, { value, expiresAt: Date.now() + this.nearbyCacheTtlMs });
+      return value;
+    };
+
+    const subcategoryTypes = SUBCATEGORY_TYPES[subcategory] ?? [];
+    // For "Усі" do not send a giant includedTypes list. Google officially supports omitting
+    // all type restrictions, which returns places of all supported types inside the circle.
+    // This also avoids one outdated/unsupported type invalidating the whole request.
+    const types = subcategoryTypes.length ? subcategoryTypes : section === "all" ? [] : (NEARBY_TYPES[section] ?? []);
+    if (section !== "all" && !types.length) return remember([]);
+
+    const richFieldMask = "places.id,places.displayName,places.formattedAddress,places.location,places.types,places.primaryType,places.primaryTypeDisplayName,places.rating,places.userRatingCount,places.priceLevel,places.regularOpeningHours,places.googleMapsUri,places.googleMapsLinks,places.websiteUri,places.nationalPhoneNumber,places.photos";
+    const basicFieldMask = "places.id,places.displayName,places.formattedAddress,places.location,places.types,places.primaryType,places.primaryTypeDisplayName,places.googleMapsUri,places.googleMapsLinks,places.photos";
+
+    const requestNearby = async (
+      centerLat: number,
+      centerLng: number,
+      searchRadius: number,
+      maxResultCount: number,
+      rankPreference: "DISTANCE" | "POPULARITY",
+      fieldMask: string,
+    ) => {
+      const body: Record<string, unknown> = {
+        maxResultCount: Math.max(1, Math.min(maxResultCount, 20)),
+        rankPreference,
+        languageCode: "uk",
+        regionCode: "UA",
+        locationRestriction: {
+          circle: {
+            center: { latitude: centerLat, longitude: centerLng },
+            radius: Math.max(100, Math.min(searchRadius, 50000)),
+          },
+        },
+      };
+      if (types.length) body.includedTypes = types;
+
       const data = await this.googleFetch<{ places?: GoogleNearbyPlace[] }>("https://places.googleapis.com/v1/places:searchNearby", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.types,places.primaryType,places.primaryTypeDisplayName,places.rating,places.userRatingCount,places.priceLevel,places.regularOpeningHours,places.googleMapsUri,places.googleMapsLinks,places.websiteUri,places.nationalPhoneNumber,places.photos",
+          "X-Goog-FieldMask": fieldMask,
         },
-        body: JSON.stringify({
-          includedTypes: types,
-          maxResultCount: Math.max(1, Math.min(maxResultCount, 20)),
-          rankPreference,
-          languageCode: "uk",
-          regionCode: "UA",
-          locationRestriction: { circle: { center: { latitude: centerLat, longitude: centerLng }, radius: Math.max(100, Math.min(searchRadius, 50000)) } },
-        }),
+        body: JSON.stringify(body),
       });
       return data.places ?? [];
     };
 
-    if (!spread || radius < 1000 || limit < 12 || subcategory) {
-      // Lists in the tourist UI are proximity-first. Keeping DISTANCE here prevents a larger
-      // radius from replacing nearby 300–500 m places with more popular but farther results.
-      return search(lat, lng, radius, limit, "DISTANCE");
-    }
+    const mergeCachedDetails = (items: GoogleNearbyPlace[]) => items.map((item) => {
+      const detail = item.id ? this.detailsCache.get(item.id) : undefined;
+      if (!detail || detail.expiresAt <= Date.now()) return item;
+      return { ...item, ...detail.value };
+    });
 
-    // For 1–5 km discovery always reserve the center query for the nearest places first, then
-    // enrich the rest of the result set from surrounding sectors. This guarantees that increasing
-    // the selected radius cannot make already-nearby markers disappear just because of popularity.
-    const earth = 6371000;
-    const distance = (aLat: number, aLng: number, bLat: number, bLng: number) => {
-      const rad = (v: number) => v * Math.PI / 180;
-      const dLat = rad(bLat-aLat), dLng = rad(bLng-aLng);
-      const h = Math.sin(dLat/2)**2 + Math.cos(rad(aLat))*Math.cos(rad(bLat))*Math.sin(dLng/2)**2;
-      return 2*earth*Math.atan2(Math.sqrt(h),Math.sqrt(1-h));
-    };
-    const offset = radius * 0.48;
-    const dLat = offset / 111320;
-    const dLng = offset / (111320 * Math.max(.2, Math.cos(lat * Math.PI / 180)));
-    const sectorRadius = Math.max(450, radius * 0.62);
-    const [center, north, south, east, west] = await Promise.all([
-      search(lat, lng, radius, Math.min(20, limit), "DISTANCE"),
-      search(lat+dLat, lng, sectorRadius, 5, "POPULARITY"),
-      search(lat-dLat, lng, sectorRadius, 5, "POPULARITY"),
-      search(lat, lng+dLng, sectorRadius, 5, "POPULARITY"),
-      search(lat, lng-dLng, sectorRadius, 5, "POPULARITY"),
-    ]);
-    const selected: GoogleNearbyPlace[] = [];
-    const seen = new Set<string>();
-    for (const group of [center, north, south, east, west]) {
-      let groupCount = 0;
-      for (const place of group) {
-        if (!place.id || seen.has(place.id)) continue;
-        const pLat = Number(place.location?.latitude);
-        const pLng = Number(place.location?.longitude);
-        if (!Number.isFinite(pLat) || !Number.isFinite(pLng) || distance(lat,lng,pLat,pLng) > radius) continue;
-        seen.add(place.id);
-        selected.push(place);
-        groupCount += 1;
-        if (selected.length >= limit || groupCount >= (group === center ? Math.min(20, limit) : 3)) break;
+    // First try the previous rich payload so rating, phone and opening hours remain available.
+    // If that SKU/rate limit is temporarily rejected, retry once with the safe Pro field set.
+    // The map therefore still gets markers instead of becoming completely empty.
+    const safeSearch = async (
+      centerLat: number,
+      centerLng: number,
+      searchRadius: number,
+      maxResultCount: number,
+      rankPreference: "DISTANCE" | "POPULARITY",
+    ) => {
+      try {
+        return await requestNearby(centerLat, centerLng, searchRadius, maxResultCount, rankPreference, richFieldMask);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.warn(`[Google Nearby] rich search failed: ${message}`);
+        if (message.includes("429")) {
+          // One controlled backoff/retry keeps the old rating/phone/opening-hours payload whenever
+          // the rejection was only a short rate spike. Never retry in a loop.
+          await new Promise((resolve) => setTimeout(resolve, 850));
+          try {
+            return await requestNearby(centerLat, centerLng, searchRadius, maxResultCount, rankPreference, richFieldMask);
+          } catch (retryError) {
+            console.warn(`[Google Nearby] rich retry failed, using basic fallback: ${retryError instanceof Error ? retryError.message : String(retryError)}`);
+          }
+        }
+        const basic = await requestNearby(centerLat, centerLng, searchRadius, maxResultCount, rankPreference, basicFieldMask);
+        return mergeCachedDetails(basic);
       }
-      if (selected.length >= limit) break;
+    };
+
+    try {
+      if (!spread || radius < 1000 || limit < 12 || subcategory) {
+        return remember(await safeSearch(lat, lng, radius, limit, "DISTANCE"));
+      }
+
+      // Radius 1–5 km: keep the nearest center results and then add geographically distributed
+      // sector results. Sector failures are isolated, so one 429/temporary Google error can no
+      // longer erase all markers from the map.
+      const earth = 6371000;
+      const distance = (aLat: number, aLng: number, bLat: number, bLng: number) => {
+        const rad = (v: number) => v * Math.PI / 180;
+        const dLat = rad(bLat - aLat);
+        const dLng = rad(bLng - aLng);
+        const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(aLat)) * Math.cos(rad(bLat)) * Math.sin(dLng / 2) ** 2;
+        return 2 * earth * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+      };
+
+      const center = await safeSearch(lat, lng, radius, Math.min(20, limit), "DISTANCE");
+      const offset = radius * 0.48;
+      const dLat = offset / 111320;
+      const dLng = offset / (111320 * Math.max(.2, Math.cos(lat * Math.PI / 180)));
+      const sectorRadius = Math.max(450, radius * 0.62);
+      const sectorCenters = [
+        { lat: lat + dLat, lng },
+        { lat: lat - dLat, lng },
+        { lat, lng: lng + dLng },
+        { lat, lng: lng - dLng },
+      ];
+
+      const groups: GoogleNearbyPlace[][] = [center];
+      for (const sector of sectorCenters) {
+        if (groups.reduce((sum, group) => sum + group.length, 0) >= limit) break;
+        try {
+          // Sequential calls avoid the previous five-request burst that could trigger 429.
+          const group = await safeSearch(sector.lat, sector.lng, sectorRadius, 8, "DISTANCE");
+          groups.push(group);
+        } catch (error) {
+          console.warn(`[Google Nearby] sector skipped: ${error instanceof Error ? error.message : String(error)}`);
+        }
+        await new Promise((resolve) => setTimeout(resolve, 120));
+      }
+
+      const selected: GoogleNearbyPlace[] = [];
+      const seen = new Set<string>();
+      for (let groupIndex = 0; groupIndex < groups.length; groupIndex += 1) {
+        const group = groups[groupIndex];
+        let groupCount = 0;
+        for (const place of group) {
+          if (!place.id || seen.has(place.id)) continue;
+          const pLat = Number(place.location?.latitude);
+          const pLng = Number(place.location?.longitude);
+          if (!Number.isFinite(pLat) || !Number.isFinite(pLng) || distance(lat, lng, pLat, pLng) > radius) continue;
+          seen.add(place.id);
+          selected.push(place);
+          groupCount += 1;
+          const perGroupLimit = groupIndex === 0 ? Math.min(20, limit) : 5;
+          if (selected.length >= limit || groupCount >= perGroupLimit) break;
+        }
+        if (selected.length >= limit) break;
+      }
+
+      return remember(selected.slice(0, limit));
+    } catch (error) {
+      // A recently successful result is better than an empty map during a temporary quota spike.
+      if (staleCached?.length) {
+        console.warn(`[Google Nearby] returning stale cached places after failure: ${error instanceof Error ? error.message : String(error)}`);
+        return staleCached;
+      }
+      throw error;
     }
-    return selected.slice(0, limit);
   }
 
   async walkingMatrix(originLat: number, originLng: number, destinations: Array<{ id: string; lat: number; lng: number }>) {
