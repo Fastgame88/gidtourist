@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Stage2Place } from "../lib/stage2-api";
 
 type LeafletApi = {
@@ -10,6 +10,17 @@ type LeafletApi = {
   circle: (coords: [number, number], options?: Record<string, unknown>) => any;
   marker: (coords: [number, number], options?: Record<string, unknown>) => any;
   icon: (options?: Record<string, unknown>) => any;
+};
+
+type MapRuntime = {
+  provider: "google" | "leaflet";
+  map: any;
+  api: any;
+  user: any;
+  circle: any;
+  picked: any;
+  markers: any[];
+  clickListener?: any;
 };
 
 declare global {
@@ -100,6 +111,30 @@ function placeMarkerSvg(place: Stage2Place) {
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
+function zoomForRadius(radius: number, compact: boolean) {
+  if (compact) return 15;
+  if (radius <= 500) return 16;
+  if (radius <= 1000) return 15;
+  if (radius <= 2000) return 14;
+  return 13;
+}
+
+const GOOGLE_MAP_STYLES = [
+  { elementType: "geometry", stylers: [{ color: "#f4f7f2" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#526058" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#ffffff" }, { weight: 2 }] },
+  { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: "#d6ded9" }] },
+  { featureType: "landscape.natural", elementType: "geometry", stylers: [{ color: "#edf5ea" }] },
+  { featureType: "poi", stylers: [{ visibility: "off" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
+  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#dfe6e1" }] },
+  { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: "#fff7dc" }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#f8e8b7" }] },
+  { featureType: "transit", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#cfe8f4" }] },
+  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#6f94a6" }] },
+];
+
 export function RealMap({
   center,
   places,
@@ -123,33 +158,53 @@ export function RealMap({
   preferLeaflet?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const cleanupRef = useRef<(() => void) | null>(null);
+  const runtimeRef = useRef<MapRuntime | null>(null);
+  const onSelectRef = useRef(onSelect);
+  const onPickRef = useRef(onPick);
+  const [readyVersion, setReadyVersion] = useState(0);
+
+  useEffect(() => { onSelectRef.current = onSelect; }, [onSelect]);
+  useEffect(() => { onPickRef.current = onPick; }, [onPick]);
 
   useEffect(() => {
     let cancelled = false;
-    cleanupRef.current?.();
-    cleanupRef.current = null;
+    const host = ref.current;
+    if (!host) return;
+
+    const cleanupRuntime = () => {
+      const runtime = runtimeRef.current;
+      runtimeRef.current = null;
+      if (!runtime) return;
+      if (runtime.provider === "google") {
+        runtime.markers.forEach((marker) => marker.setMap?.(null));
+        runtime.user?.setMap?.(null);
+        runtime.circle?.setMap?.(null);
+        runtime.picked?.setMap?.(null);
+        runtime.clickListener?.remove?.();
+      } else {
+        runtime.map?.remove?.();
+      }
+    };
+
+    cleanupRuntime();
+    host.replaceChildren();
 
     const renderGoogle = async () => {
       const maps = await loadGoogleMaps();
       if (cancelled || !ref.current) return;
-      const zoom = compact ? 15 : radius <= 500 ? 16 : radius <= 1000 ? 15 : radius <= 2000 ? 14 : 13;
       const map = new maps.Map(ref.current, {
         center: { lat: center.lat, lng: center.lng },
-        zoom,
+        zoom: zoomForRadius(radius, compact),
         disableDefaultUI: true,
         gestureHandling: compact ? "none" : "greedy",
         clickableIcons: false,
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: false,
-        // Keep only Gid Tourist markers/filters visible; hide Google's own POI layer so it never competes with our approved categories.
-        styles: [
-          { featureType: "poi", stylers: [{ visibility: "off" }] },
-          { featureType: "transit", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
-        ],
+        backgroundColor: "#edf4ef",
+        styles: GOOGLE_MAP_STYLES,
       });
-      const circle = compact ? null : new maps.Circle({ map, center, radius, strokeColor: "#13a55b", strokeOpacity: .38, strokeWeight: 1, fillColor: "#13a55b", fillOpacity: .04 });
+      const circle = compact ? null : new maps.Circle({ map, center, radius, strokeColor: "#13a55b", strokeOpacity: .42, strokeWeight: 1, fillColor: "#13a55b", fillOpacity: .045 });
       const user = new maps.Marker({
         map,
         position: center,
@@ -157,70 +212,106 @@ export function RealMap({
         zIndex: 1000,
         icon: { path: maps.SymbolPath.CIRCLE, scale: compact ? 5 : 7, fillColor: "#1677ff", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 3 },
       });
-      let pickedMarker: any = null;
+      const runtime: MapRuntime = { provider: "google", map, api: maps, user, circle, picked: null, markers: [] };
       if (pickable && !compact) {
-        map.addListener("click", (event: any) => {
+        runtime.clickListener = map.addListener("click", (event: any) => {
           const lat = Number(event.latLng?.lat?.() ?? 0);
           const lng = Number(event.latLng?.lng?.() ?? 0);
           if (!lat || !lng) return;
-          pickedMarker?.setMap(null);
-          pickedMarker = new maps.Marker({ map, position: { lat, lng }, title: "Обрана точка", zIndex: 1200 });
-          onPick?.({ lat, lng });
+          runtime.picked?.setMap?.(null);
+          runtime.picked = new maps.Marker({ map, position: { lat, lng }, title: "Обрана точка", zIndex: 1200 });
+          onPickRef.current?.({ lat, lng });
         });
       }
-      const markers = places.slice(0, compact ? 8 : 40).map((place) => {
-        const partner = place.is_partner === true || place.source === "partner" || place.attributes?.partner === true;
-        const marker = new maps.Marker({
-          map,
-          position: { lat: Number(place.lat), lng: Number(place.lng) },
-          title: partner ? `Партнер · ${place.name}` : place.name,
-          zIndex: partner ? 500 : 100,
-          icon: { url: placeMarkerSvg(place), scaledSize: new maps.Size(compact ? 21 : 28, compact ? 25 : 33), anchor: new maps.Point(compact ? 10 : 14, compact ? 24 : 32) },
-        });
-        if (!compact) marker.addListener("click", () => onSelect?.(place));
-        return marker;
-      });
-      cleanupRef.current = () => {
-        user.setMap(null); pickedMarker?.setMap(null); markers.forEach((marker: any) => marker.setMap(null)); circle?.setMap(null);
-      };
+      runtimeRef.current = runtime;
+      setReadyVersion((value) => value + 1);
     };
 
     const renderFallback = async () => {
       const L = await loadLeaflet();
       if (cancelled || !ref.current) return;
-      const map = L.map(ref.current, { zoomControl: false, attributionControl: !compact, dragging: !compact, scrollWheelZoom: !compact }).setView([center.lat, center.lng], compact ? 15 : radius <= 500 ? 16 : radius <= 1000 ? 15 : 14);
+      const map = L.map(ref.current, { zoomControl: false, attributionControl: !compact, dragging: !compact, scrollWheelZoom: !compact }).setView([center.lat, center.lng], zoomForRadius(radius, compact));
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap contributors" }).addTo(map);
-      if (!compact) L.circle([center.lat, center.lng], { radius, color: "#20b364", weight: 1, opacity: 0.35, fillOpacity: 0.04 }).addTo(map);
-      L.circleMarker([center.lat, center.lng], { radius: compact ? 5 : 8, color: "#ffffff", weight: 3, fillColor: "#1677ff", fillOpacity: 1 }).addTo(map).bindTooltip("Ваше місцезнаходження");
-      let picked: any = null;
+      const circle = compact ? null : L.circle([center.lat, center.lng], { radius, color: "#20b364", weight: 1, opacity: 0.4, fillOpacity: 0.04 }).addTo(map);
+      const user = L.circleMarker([center.lat, center.lng], { radius: compact ? 5 : 8, color: "#ffffff", weight: 3, fillColor: "#1677ff", fillOpacity: 1 }).addTo(map).bindTooltip("Ваше місцезнаходження");
+      const runtime: MapRuntime = { provider: "leaflet", map, api: L, user, circle, picked: null, markers: [] };
       if (pickable && !compact) {
         map.on("click", (event: any) => {
           const lat = Number(event.latlng?.lat ?? 0);
           const lng = Number(event.latlng?.lng ?? 0);
           if (!lat || !lng) return;
-          if (picked) map.removeLayer(picked);
-          picked = L.circleMarker([lat, lng], { radius: 8, color: "#ffffff", weight: 3, fillColor: "#111827", fillOpacity: 1 }).addTo(map);
-          onPick?.({ lat, lng });
+          if (runtime.picked) map.removeLayer(runtime.picked);
+          runtime.picked = L.circleMarker([lat, lng], { radius: 8, color: "#ffffff", weight: 3, fillColor: "#111827", fillOpacity: 1 }).addTo(map);
+          onPickRef.current?.({ lat, lng });
         });
       }
-      for (const place of places.slice(0, compact ? 8 : 40)) {
-        const partner = place.is_partner === true || place.source === "partner" || place.attributes?.partner === true;
-        const icon = L.icon({ iconUrl: placeMarkerSvg(place), iconSize: compact ? [21,25] : [28,33], iconAnchor: compact ? [10,24] : [14,32] });
-        const marker = L.marker([Number(place.lat), Number(place.lng)], { icon }).addTo(map);
-        marker.bindTooltip(partner ? `★ Партнер · ${place.name}` : place.name);
-        if (!compact) marker.on("click", () => onSelect?.(place));
-      }
-      setTimeout(() => map.invalidateSize(), 50);
-      cleanupRef.current = () => map.remove();
+      runtimeRef.current = runtime;
+      window.setTimeout(() => map.invalidateSize(), 50);
+      setReadyVersion((value) => value + 1);
     };
 
-    if (preferLeaflet) {
-      void renderFallback().catch(() => renderGoogle().catch(() => undefined));
+    if (preferLeaflet) void renderFallback().catch(() => renderGoogle().catch(() => undefined));
+    else void renderGoogle().catch(() => renderFallback().catch(() => undefined));
+
+    return () => {
+      cancelled = true;
+      cleanupRuntime();
+      host.replaceChildren();
+    };
+  // The map canvas is intentionally initialized once. Data/filters update markers below without rebuilding tiles.
+  }, [compact, pickable, preferLeaflet]);
+
+  useEffect(() => {
+    const runtime = runtimeRef.current;
+    if (!runtime) return;
+    const zoom = zoomForRadius(radius, compact);
+    if (runtime.provider === "google") {
+      runtime.map.setCenter({ lat: center.lat, lng: center.lng });
+      runtime.map.setZoom(zoom);
+      runtime.user?.setPosition?.({ lat: center.lat, lng: center.lng });
+      runtime.circle?.setCenter?.({ lat: center.lat, lng: center.lng });
+      runtime.circle?.setRadius?.(radius);
     } else {
-      void renderGoogle().catch(() => renderFallback().catch(() => undefined));
+      runtime.map.setView([center.lat, center.lng], zoom, { animate: false });
+      runtime.user?.setLatLng?.([center.lat, center.lng]);
+      runtime.circle?.setLatLng?.([center.lat, center.lng]);
+      runtime.circle?.setRadius?.(radius);
+      window.setTimeout(() => runtime.map.invalidateSize?.(), 0);
     }
-    return () => { cancelled = true; cleanupRef.current?.(); cleanupRef.current = null; };
-  }, [center.lat, center.lng, radius, places, onSelect, onPick, pickable, compact, preferLeaflet]);
+  }, [center.lat, center.lng, radius, compact, readyVersion]);
+
+  useEffect(() => {
+    const runtime = runtimeRef.current;
+    if (!runtime) return;
+    const visible = places.filter((place) => Number.isFinite(Number(place.lat)) && Number.isFinite(Number(place.lng))).slice(0, compact ? 8 : 40);
+
+    if (runtime.provider === "google") {
+      runtime.markers.forEach((marker) => marker.setMap?.(null));
+      runtime.markers = visible.map((place) => {
+        const partner = place.is_partner === true || place.source === "partner" || place.attributes?.partner === true;
+        const marker = new runtime.api.Marker({
+          map: runtime.map,
+          position: { lat: Number(place.lat), lng: Number(place.lng) },
+          title: partner ? `Партнер · ${place.name}` : place.name,
+          zIndex: partner ? 500 : 100,
+          icon: { url: placeMarkerSvg(place), scaledSize: new runtime.api.Size(compact ? 21 : 28, compact ? 25 : 33), anchor: new runtime.api.Point(compact ? 10 : 14, compact ? 24 : 32) },
+        });
+        if (!compact) marker.addListener("click", () => onSelectRef.current?.(place));
+        return marker;
+      });
+      return;
+    }
+
+    runtime.markers.forEach((marker) => runtime.map.removeLayer?.(marker));
+    runtime.markers = visible.map((place) => {
+      const partner = place.is_partner === true || place.source === "partner" || place.attributes?.partner === true;
+      const icon = runtime.api.icon({ iconUrl: placeMarkerSvg(place), iconSize: compact ? [21, 25] : [28, 33], iconAnchor: compact ? [10, 24] : [14, 32] });
+      const marker = runtime.api.marker([Number(place.lat), Number(place.lng)], { icon }).addTo(runtime.map);
+      marker.bindTooltip(partner ? `★ Партнер · ${place.name}` : place.name);
+      if (!compact) marker.on("click", () => onSelectRef.current?.(place));
+      return marker;
+    });
+  }, [places, compact, readyVersion]);
 
   return <div ref={ref} className={`gt-real-map ${className}`.trim()} aria-label="Інтерактивна карта" />;
 }

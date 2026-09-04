@@ -137,6 +137,14 @@ CREATE TABLE IF NOT EXISTS favorites (
   PRIMARY KEY(user_id, place_id)
 );
 
+CREATE TABLE IF NOT EXISTS external_favorites (
+  user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  place_id text NOT NULL,
+  place_snapshot jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY(user_id, place_id)
+);
+
 CREATE TABLE IF NOT EXISTS activity_events (
   id text PRIMARY KEY,
   user_id text REFERENCES users(id) ON DELETE SET NULL,

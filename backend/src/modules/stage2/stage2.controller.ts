@@ -46,6 +46,9 @@ export class Stage2Controller {
   @Get("places")
   places(@Query() query: Record<string, unknown>) { return this.service.places(query); }
 
+  @Get("weather")
+  weather(@Query("lat") lat = "", @Query("lng") lng = "") { return this.service.weather(Number(lat), Number(lng)); }
+
   @Get("places/:id")
   place(@Param("id") id: string, @Query("lat") lat = "", @Query("lng") lng = "") {
     const originLat = lat === "" ? undefined : Number(lat);

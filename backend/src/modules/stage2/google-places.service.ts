@@ -210,10 +210,22 @@ export class GooglePlacesService {
   }
 
   async details(placeId: string): Promise<GoogleNearbyPlace> {
-    return this.googleFetch<GoogleNearbyPlace>(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=uk&regionCode=UA`, {
-      method: "GET",
-      headers: { "X-Goog-FieldMask": "id,displayName,formattedAddress,location,addressComponents,types,primaryType,primaryTypeDisplayName,rating,userRatingCount,priceLevel,regularOpeningHours,googleMapsUri,websiteUri,nationalPhoneNumber,photos,reviews" },
-    });
+    const fieldMask = "id,displayName,formattedAddress,location,addressComponents,types,primaryType,primaryTypeDisplayName,rating,userRatingCount,priceLevel,regularOpeningHours,googleMapsUri,websiteUri,nationalPhoneNumber,photos,reviews";
+    const fetchDetails = (localized: boolean) => this.googleFetch<GoogleNearbyPlace>(
+      `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?${localized ? "languageCode=uk&" : ""}regionCode=UA`,
+      { method: "GET", headers: { "X-Goog-FieldMask": fieldMask } },
+    );
+    const primary = await fetchDetails(true);
+    const hasReviewText = primary.reviews?.some((review) => Boolean(review.text?.text?.trim() || review.originalText?.text?.trim()));
+    if (Number(primary.userRatingCount ?? 0) > 0 && !hasReviewText) {
+      try {
+        const fallback = await fetchDetails(false);
+        if (fallback.reviews?.some((review) => Boolean(review.text?.text?.trim() || review.originalText?.text?.trim()))) {
+          return { ...primary, reviews: fallback.reviews };
+        }
+      } catch { /* localized details remain usable */ }
+    }
+    return primary;
   }
 
   async photoUri(photoName: string) {
@@ -293,12 +305,14 @@ export class GooglePlacesService {
     };
 
     if (!spread || radius < 1000 || limit < 12 || subcategory) {
-      return search(lat, lng, radius, limit, radius >= 1000 ? "POPULARITY" : "DISTANCE");
+      // Lists in the tourist UI are proximity-first. Keeping DISTANCE here prevents a larger
+      // radius from replacing nearby 300–500 m places with more popular but farther results.
+      return search(lat, lng, radius, limit, "DISTANCE");
     }
 
-    // A single Nearby Search returns at most 20 results and often fills them with the densest
-    // 200–300 m around the origin. For the user-selected 1–5 km radius sample several sectors
-    // in parallel, then keep only places that truly belong to the original circle.
+    // For 1–5 km discovery always reserve the center query for the nearest places first, then
+    // enrich the rest of the result set from surrounding sectors. This guarantees that increasing
+    // the selected radius cannot make already-nearby markers disappear just because of popularity.
     const earth = 6371000;
     const distance = (aLat: number, aLng: number, bLat: number, bLng: number) => {
       const rad = (v: number) => v * Math.PI / 180;
@@ -311,7 +325,7 @@ export class GooglePlacesService {
     const dLng = offset / (111320 * Math.max(.2, Math.cos(lat * Math.PI / 180)));
     const sectorRadius = Math.max(450, radius * 0.62);
     const [center, north, south, east, west] = await Promise.all([
-      search(lat, lng, radius, 8, "POPULARITY"),
+      search(lat, lng, radius, Math.min(20, limit), "DISTANCE"),
       search(lat+dLat, lng, sectorRadius, 5, "POPULARITY"),
       search(lat-dLat, lng, sectorRadius, 5, "POPULARITY"),
       search(lat, lng+dLng, sectorRadius, 5, "POPULARITY"),
@@ -329,7 +343,7 @@ export class GooglePlacesService {
         seen.add(place.id);
         selected.push(place);
         groupCount += 1;
-        if (selected.length >= limit || groupCount >= (group === center ? 8 : 3)) break;
+        if (selected.length >= limit || groupCount >= (group === center ? Math.min(20, limit) : 3)) break;
       }
       if (selected.length >= limit) break;
     }

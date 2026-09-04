@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { BadGatewayException, BadRequestException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { DatabaseService } from "../../database/database.service.js";
 import { makeId } from "../../common/id.js";
 import type { AuthUser } from "../../common/auth.guard.js";
@@ -212,6 +212,45 @@ export class Stage2Service {
     return this.google.placePhotoData(placeId.trim());
   }
 
+
+  async weather(lat: number, lng: number) {
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      throw new BadRequestException("Valid lat/lng are required");
+    }
+    const params = new URLSearchParams({
+      latitude: String(lat),
+      longitude: String(lng),
+      current: "temperature_2m,wind_speed_10m,weather_code",
+      hourly: "precipitation_probability",
+      daily: "sunset",
+      forecast_days: "1",
+      timezone: "auto",
+    });
+    const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`, { headers: { Accept: "application/json" } });
+    if (!response.ok) throw new BadGatewayException(`Weather API ${response.status}`);
+    const data = await response.json() as {
+      current?: { time?: string; temperature_2m?: number; wind_speed_10m?: number; weather_code?: number };
+      hourly?: { time?: string[]; precipitation_probability?: number[] };
+      daily?: { sunset?: string[] };
+    };
+    const temperature = Number(data.current?.temperature_2m);
+    const windSpeed = Number(data.current?.wind_speed_10m);
+    if (!data.current || !Number.isFinite(temperature) || !Number.isFinite(windSpeed)) throw new BadGatewayException("Weather API returned incomplete current conditions");
+    const currentTime = String(data.current.time ?? "");
+    const currentHour = currentTime ? `${currentTime.slice(0, 13)}:00` : "";
+    const foundHourIndex = data.hourly?.time?.findIndex((item) => item === currentHour) ?? -1;
+    const hourIndex = foundHourIndex >= 0 ? foundHourIndex : 0;
+    const precipitation = Number(data.hourly?.precipitation_probability?.[hourIndex] ?? 0);
+    return {
+      temperature_c: temperature,
+      precipitation_probability: Number.isFinite(precipitation) ? precipitation : 0,
+      wind_speed_kmh: windSpeed,
+      sunset: String(data.daily?.sunset?.[0] ?? ""),
+      weather_code: Number(data.current?.weather_code ?? 0),
+      observed_at: currentTime,
+    };
+  }
+
   async context(startParam: string) {
     const qr = await this.db.query(
       `SELECT q.id,q.start_param,q.type,q.source,q.region_id,q.place_id,q.active,
@@ -272,8 +311,9 @@ export class Stage2Service {
     const kids = String(params.kids ?? "") === "true";
     const parking = String(params.parking ?? "") === "true";
     const partner = String(params.partner ?? "") === "true";
-    const googleLimit = Math.max(1, Math.min(Number(params.google_limit ?? 20) || 20, 20));
+    const googleLimit = Math.max(1, Math.min(Number(params.google_limit ?? 20) || 20, 40));
     const googleSpread = String(params.google_spread ?? "") === "true";
+    const includeRoutes = String(params.include_routes ?? "true") !== "false";
 
     let rows = await this.rawPlaces(regionId);
     rows = rows.filter((p) => !category || p.category_slug === category);
@@ -303,15 +343,17 @@ export class Stage2Service {
           .filter((place) => !selectedQuery || [place.name, place.description, place.address, place.subcategory, ...place.tags].join(" ").toLocaleLowerCase("uk").includes(selectedQuery));
         const deduped = filteredExternal.filter((googlePlace) => !partnerRows.some((partnerPlace) => distanceMeters(Number(partnerPlace.lat), Number(partnerPlace.lng), googlePlace.lat, googlePlace.lng) < 35 && partnerPlace.name.toLocaleLowerCase("uk").includes(googlePlace.name.toLocaleLowerCase("uk").split(" ")[0] || "___")));
         let combined = [...partnerRows, ...deduped];
-        try {
-          const routeMetrics = await this.google.walkingMatrix(lat!, lng!, combined.slice(0, 20).map((place) => ({ id: place.id, lat: Number(place.lat), lng: Number(place.lng) })));
-          const byId = new Map(routeMetrics.map((item) => [item.id, item]));
-          combined = combined.map((place) => {
-            const route = byId.get(place.id);
-            return route ? { ...place, distance_m: route.distance_m, walking_duration_s: route.walking_duration_s } : place;
-          });
-        } catch {
-          // Routes API is optional at runtime. Straight-line values remain available if it is not enabled.
+        if (includeRoutes) {
+          try {
+            const routeMetrics = await this.google.walkingMatrix(lat!, lng!, combined.slice(0, 20).map((place) => ({ id: place.id, lat: Number(place.lat), lng: Number(place.lng) })));
+            const byId = new Map(routeMetrics.map((item) => [item.id, item]));
+            combined = combined.map((place) => {
+              const route = byId.get(place.id);
+              return route ? { ...place, distance_m: route.distance_m, walking_duration_s: route.walking_duration_s } : place;
+            });
+          } catch {
+            // Routes API is optional at runtime. Straight-line values remain available if it is not enabled.
+          }
         }
         combined.sort((a, b) => (a.distance_m ?? 1e12) - (b.distance_m ?? 1e12) || Number(b.rating) - Number(a.rating));
         return combined;
@@ -320,7 +362,7 @@ export class Stage2Service {
       }
     }
     let routedPartnerRows = partnerRows;
-    if (lat != null && lng != null && partnerRows.length && this.google.enabled()) {
+    if (includeRoutes && lat != null && lng != null && partnerRows.length && this.google.enabled()) {
       try {
         const routeMetrics = await this.google.walkingMatrix(lat, lng, partnerRows.slice(0, 20).map((place) => ({ id: place.id, lat: Number(place.lat), lng: Number(place.lng) })));
         const byId = new Map(routeMetrics.map((item) => [item.id, item]));
@@ -374,22 +416,39 @@ export class Stage2Service {
   }
 
   async favorites(user: AuthUser) {
-    const result = await this.db.query(
-      `SELECT p.*,c.name category_name,COALESCE((SELECT json_agg(t.tag ORDER BY t.tag) FROM place_tags t WHERE t.place_id=p.id),'[]'::json)::jsonb AS tags
+    const local = await this.db.query(
+      `SELECT p.*,c.name category_name,COALESCE((SELECT json_agg(t.tag ORDER BY t.tag) FROM place_tags t WHERE t.place_id=p.id),'[]'::json)::jsonb AS tags,f.created_at AS favorite_created_at
        FROM favorites f JOIN places p ON p.id=f.place_id JOIN categories c ON c.slug=p.category_slug
-       WHERE f.user_id=$1 AND p.status='approved' ORDER BY f.created_at DESC`, [user.id],
+       WHERE f.user_id=$1 AND p.status='approved'`, [user.id],
     );
-    return result.rows;
+    const external = await this.db.query<{ place_snapshot: Record<string, unknown>; created_at: Date | string }>(
+      "SELECT place_snapshot,created_at FROM external_favorites WHERE user_id=$1", [user.id],
+    );
+    const merged: Array<Record<string, unknown>> = [
+      ...local.rows.map((row: Record<string, unknown>) => ({ ...row, rating: Number(row.rating ?? 0) })),
+      ...external.rows.map((row) => ({ ...row.place_snapshot, favorite_created_at: row.created_at })),
+    ];
+    return merged.sort((a, b) => new Date(String(b.favorite_created_at ?? 0)).getTime() - new Date(String(a.favorite_created_at ?? 0)).getTime())
+      .map(({ favorite_created_at: _favoriteCreatedAt, ...place }) => place);
   }
 
   async addFavorite(user: AuthUser, placeId: string) {
-    await this.place(placeId);
-    await this.db.query("INSERT INTO favorites(user_id,place_id) VALUES($1,$2) ON CONFLICT DO NOTHING", [user.id, placeId]);
+    const place = await this.place(placeId);
+    if (placeId.startsWith("google_")) {
+      await this.db.query(
+        `INSERT INTO external_favorites(user_id,place_id,place_snapshot) VALUES($1,$2,$3::jsonb)
+         ON CONFLICT(user_id,place_id) DO UPDATE SET place_snapshot=EXCLUDED.place_snapshot`,
+        [user.id, placeId, JSON.stringify(place)],
+      );
+    } else {
+      await this.db.query("INSERT INTO favorites(user_id,place_id) VALUES($1,$2) ON CONFLICT DO NOTHING", [user.id, placeId]);
+    }
     return { ok: true };
   }
 
   async removeFavorite(user: AuthUser, placeId: string) {
-    await this.db.query("DELETE FROM favorites WHERE user_id=$1 AND place_id=$2", [user.id, placeId]);
+    if (placeId.startsWith("google_")) await this.db.query("DELETE FROM external_favorites WHERE user_id=$1 AND place_id=$2", [user.id, placeId]);
+    else await this.db.query("DELETE FROM favorites WHERE user_id=$1 AND place_id=$2", [user.id, placeId]);
     return { ok: true };
   }
 

@@ -68,6 +68,15 @@ export type Stage2PlaceTypeTemplate = {
 export type Stage2GeoSuggestion = { place_id: string; text: string; main_text: string; secondary_text: string };
 export type Stage2GeoDetails = { place_id: string; formatted_address: string; lat: number; lng: number; city: string; region: string; street: string; house: string };
 
+export type Stage2Weather = {
+  temperature_c: number;
+  precipitation_probability: number;
+  wind_speed_kmh: number;
+  sunset: string;
+  weather_code: number;
+  observed_at: string;
+};
+
 export type Stage2Context = {
   qr: { id: string; startParam: string; type: string; source: string };
   region: { id: string; name: string; nameEn?: string; namePl?: string; lat: number; lng: number; communityUrl?: string | null };
