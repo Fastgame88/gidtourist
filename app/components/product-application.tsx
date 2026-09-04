@@ -37,7 +37,8 @@ import { AmbassadorScreen, RegionalScreen } from "./screens/admin-screens";
 import { AdminDesktopScreen } from "./screens/admin-desktop-screens";
 import { PartnerMobileScreen } from "./screens/partner-mobile-screens";
 import { TouristScreen } from "./screens/tourist-screens";
-import { TouristRuntimeProvider } from "../lib/tourist-runtime";
+import { TouristRuntimeProvider, useTouristRuntime } from "../lib/tourist-runtime";
+import { tr } from "../lib/tourist-i18n";
 import { telegramStartParam, waitForTelegramWebApp } from "../lib/stage2-api";
 import { Avatar, IconButton } from "./ui";
 
@@ -110,17 +111,18 @@ function TouristBottomNav({
   activeSlug: string;
   navigate: (role: RoleKey, slug: string) => void;
 }) {
+  const { language } = useTouristRuntime();
   const normalizedActiveSlug = activeSlug === "welcome" ? "home" : activeSlug;
   const items = [
-    ["home", "Головна", Home],
-    ["plan", "Мій план", BookOpenCheck],
+    ["home", tr(language, "Головна", "Home", "Główna"), Home],
+    ["plan", tr(language, "Мій план", "My plan", "Mój plan"), BookOpenCheck],
     ["qr", "QR", QrCode],
-    ["add-location", "Додати локацію", AddLocationIcon],
-    ["profile", "Профіль", UserRound],
+    ["add-location", tr(language, "Додати локацію", "Add place", "Dodaj miejsce"), AddLocationIcon],
+    ["profile", tr(language, "Профіль", "Profile", "Profil"), UserRound],
   ] as const;
 
   return (
-    <nav className="tourist-bottom-nav" aria-label="Основна навігація">
+    <nav className="tourist-bottom-nav" aria-label={tr(language, "Основна навігація", "Main navigation", "Nawigacja główna")}>
       {items.map(([itemSlug, label, Icon]) => (
         <button
           key={itemSlug}
@@ -245,10 +247,12 @@ export default function ProductApplication({ role, slug }: { role: RoleKey; slug
     return (
       <main className={`tourist-app-shell ${isAndroidTelegram ? "tourist-app-shell--android" : ""}`}>
         <div className={`tourist-app-frame ${slug === "welcome" ? "tourist-app-frame--welcome" : ""} ${isHomeScreen ? "tourist-app-frame--home" : ""}`}>
-          <div className="phone-content">
-            <TouristRuntimeProvider><TouristScreen slug={activeScreen.slug} navigate={navigate} /></TouristRuntimeProvider>
-          </div>
-          <TouristBottomNav activeSlug={slug} navigate={navigate} />
+          <TouristRuntimeProvider>
+            <div className="phone-content">
+              <TouristScreen slug={activeScreen.slug} navigate={navigate} />
+            </div>
+            <TouristBottomNav activeSlug={slug} navigate={navigate} />
+          </TouristRuntimeProvider>
         </div>
       </main>
     );

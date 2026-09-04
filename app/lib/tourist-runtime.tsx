@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import type { TouristLanguage } from "./tourist-i18n";
 import {
   ensureTelegramSession,
   selectedPlaceId,
@@ -25,11 +26,11 @@ type TouristRuntimeValue = {
   apiOnline: boolean;
   selectedPlaceId: string;
   selectedPlace: Stage2Place | null;
-  language: "uk" | "en" | "pl";
+  language: TouristLanguage;
   setSelectedPlaceId: (id: string) => void;
   setSelectedPlace: (place: Stage2Place | null) => void;
   requestLocation: () => Promise<Coordinates | null>;
-  setLanguage: (language: "uk" | "en" | "pl") => Promise<void>;
+  setLanguage: (language: TouristLanguage) => Promise<void>;
   refreshProfile: () => Promise<void>;
 };
 
@@ -64,6 +65,11 @@ export function TouristRuntimeProvider({ children }: { children: ReactNode }) {
   const [apiOnline, setApiOnline] = useState(false);
   const [selected, setSelected] = useState(() => selectedPlaceId());
   const [selectedPlace, setSelectedPlaceState] = useState<Stage2Place | null>(() => selectedPlacePreview());
+  const [localLanguage, setLocalLanguage] = useState<TouristLanguage>(() => {
+    if (typeof window === "undefined") return "uk";
+    const saved = window.localStorage.getItem("gid-tourist-language");
+    return saved === "en" || saved === "pl" ? saved : "uk";
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -205,7 +211,9 @@ export function TouristRuntimeProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const setLanguage = async (language: "uk" | "en" | "pl") => {
+  const setLanguage = async (language: TouristLanguage) => {
+    setLocalLanguage(language);
+    try { window.localStorage.setItem("gid-tourist-language", language); } catch { /* optional local preference */ }
     setUser((prev) => prev ? { ...prev, selected_language: language } : prev);
     try {
       const next = await stage2Fetch<Stage2User>("/me", { method: "PATCH", body: JSON.stringify({ selected_language: language }) });
@@ -223,13 +231,13 @@ export function TouristRuntimeProvider({ children }: { children: ReactNode }) {
     apiOnline,
     selectedPlaceId: selected,
     selectedPlace,
-    language: (user?.selected_language === "en" || user?.selected_language === "pl") ? user.selected_language : "uk",
+    language: (user?.selected_language === "en" || user?.selected_language === "pl") ? user.selected_language : user?.selected_language === "uk" ? "uk" : localLanguage,
     setSelectedPlaceId,
     setSelectedPlace,
     requestLocation,
     setLanguage,
     refreshProfile,
-  }), [context, user, location, loading, apiOnline, selected, selectedPlace]);
+  }), [context, user, location, loading, apiOnline, selected, selectedPlace, localLanguage]);
 
   return <TouristRuntimeContext.Provider value={value}>{children}</TouristRuntimeContext.Provider>;
 }

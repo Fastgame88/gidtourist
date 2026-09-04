@@ -136,6 +136,16 @@ export class Stage2Service {
     return id;
   }
 
+  private googlePriceLevel(value?: string) {
+    const normalized = String(value ?? "").toUpperCase();
+    if (normalized.includes("INEXPENSIVE")) return 1;
+    if (normalized.includes("MODERATE")) return 2;
+    if (normalized.includes("VERY_EXPENSIVE")) return 4;
+    if (normalized.includes("EXPENSIVE")) return 3;
+    if (normalized.includes("FREE")) return 1;
+    return null;
+  }
+
   private googlePlaceToStage2(place: GoogleNearbyPlace, lat?: number, lng?: number) {
     const location = place.location;
     const placeLat = Number(location?.latitude ?? 0);
@@ -161,7 +171,7 @@ export class Stage2Service {
       image_url: place.id ? `/api/stage2/google/place-photo?id=${encodeURIComponent(place.id)}` : null,
       rating: Number(place.rating ?? 0),
       review_count: Number(place.userRatingCount ?? 0),
-      price_level: null,
+      price_level: this.googlePriceLevel(place.priceLevel),
       work_hours: place.regularOpeningHours ?? {},
       attributes: {
         partner: false,
@@ -370,7 +380,13 @@ export class Stage2Service {
         const external = googlePlaces.map((item) => this.googlePlaceToStage2(item, lat!, lng!));
         const selectedQuery = q.toLocaleLowerCase("uk");
         const filteredExternal = external.filter((place) => !subcategory || this.google.matchesSubcategory(subcategory, String(place.tags[0] ?? ""), place.tags))
-          .filter((place) => !selectedQuery || [place.name, place.description, place.address, place.subcategory, ...place.tags].join(" ").toLocaleLowerCase("uk").includes(selectedQuery));
+          .filter((place) => !selectedQuery || [place.name, place.description, place.address, place.subcategory, ...place.tags].join(" ").toLocaleLowerCase("uk").includes(selectedQuery))
+          .filter((place) => minRating == null || Number(place.rating) >= minRating)
+          .filter((place) => priceLevel == null || place.price_level === priceLevel)
+          .filter((place) => !openNow || place.is_open_now === true)
+          // Google Nearby does not return the partner/kids/parking attributes used by our local catalog.
+          // Treat unknown values as not matching instead of showing incorrect results.
+          .filter(() => !partner && !kids && !parking);
         const deduped = filteredExternal.filter((googlePlace) => !partnerRows.some((partnerPlace) => distanceMeters(Number(partnerPlace.lat), Number(partnerPlace.lng), googlePlace.lat, googlePlace.lng) < 35 && partnerPlace.name.toLocaleLowerCase("uk").includes(googlePlace.name.toLocaleLowerCase("uk").split(" ")[0] || "___")));
         let combined = [...partnerRows, ...deduped];
         if (includeRoutes) {
