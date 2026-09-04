@@ -342,50 +342,27 @@ function googleReviewsUri(place?: Stage2Place | null) {
   return placeId ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name || place.address || `${place.lat},${place.lng}`)}&query_place_id=${encodeURIComponent(placeId)}` : "";
 }
 
-function googlePhotoName(place?: Stage2Place | null) {
-  if (!place) return "";
-  const value = place.details?.google_photo_name;
-  return typeof value === "string" ? value.trim() : "";
-}
-
-const PLACE_LIST_CACHE_TTL_MS = 10 * 60 * 1000;
-const PLACE_DETAIL_CACHE_TTL_MS = 10 * 60 * 1000;
-const GOOGLE_PHOTO_URI_CACHE_TTL_MS = 30 * 60 * 1000;
-const GOOGLE_PHOTO_URI_CACHE_PREFIX = "gid-google-photo-uri:";
 const GOOGLE_PLACE_DETAIL_CACHE_PREFIX = "gid-google-place-detail:";
+const GOOGLE_PLACE_DETAIL_CACHE_TTL_MS = 10 * 60 * 1000;
 
-function readPlacesCache(key: string) {
-  try {
-    const raw = window.sessionStorage.getItem(key);
-    if (!raw) return null as Stage2Place[] | null;
-    const parsed = JSON.parse(raw) as Stage2Place[] | { items?: Stage2Place[]; at?: number };
-    if (Array.isArray(parsed)) return parsed;
-    if (Array.isArray(parsed.items) && Date.now() - Number(parsed.at || 0) < PLACE_LIST_CACHE_TTL_MS) return parsed.items;
-  } catch { /* session cache is optional */ }
-  return null;
-}
-
-function writePlacesCache(key: string, items: Stage2Place[]) {
-  try { window.sessionStorage.setItem(key, JSON.stringify({ items, at: Date.now() })); } catch { /* session cache is optional */ }
-}
-
-function placeDetailCacheKey(placeId: string, lat?: number, lng?: number) {
+function googlePlaceDetailCacheKey(placeId: string, lat?: number, lng?: number) {
   const origin = Number.isFinite(lat) && Number.isFinite(lng) ? `${Number(lat).toFixed(3)}:${Number(lng).toFixed(3)}` : "no-origin";
   return `${GOOGLE_PLACE_DETAIL_CACHE_PREFIX}${placeId}:${origin}`;
 }
 
-function readPlaceDetailCache(key: string) {
+function readGooglePlaceDetailCache(key: string) {
   try {
     const raw = window.sessionStorage.getItem(key);
     if (!raw) return null as Stage2Place | null;
     const parsed = JSON.parse(raw) as { value?: Stage2Place; at?: number };
-    if (parsed.value && Date.now() - Number(parsed.at || 0) < PLACE_DETAIL_CACHE_TTL_MS) return parsed.value;
-  } catch { /* session cache is optional */ }
+    if (parsed.value && Date.now() - Number(parsed.at || 0) < GOOGLE_PLACE_DETAIL_CACHE_TTL_MS) return parsed.value;
+    window.sessionStorage.removeItem(key);
+  } catch { /* cache is optional */ }
   return null;
 }
 
-function writePlaceDetailCache(key: string, value: Stage2Place) {
-  try { window.sessionStorage.setItem(key, JSON.stringify({ value, at: Date.now() })); } catch { /* session cache is optional */ }
+function writeGooglePlaceDetailCache(key: string, value: Stage2Place) {
+  try { window.sessionStorage.setItem(key, JSON.stringify({ value, at: Date.now() })); } catch { /* cache is optional */ }
 }
 
 function photoDiagnosticMessage(raw: string, status?: number, contentType?: string) {
@@ -405,110 +382,63 @@ function photoDiagnosticMessage(raw: string, status?: number, contentType?: stri
   return "Причину не вдалося визначити. Перевірте Google Places API та серверні логи.";
 }
 
-function photoNameFromLegacyUrl(url?: string | null) {
-  if (!url || !url.includes("/google/photo?")) return "";
+async function diagnoseRemoteImage(url: string) {
   try {
-    const base = typeof window !== "undefined" ? window.location.origin : "https://gid-tourist.local";
-    return new URL(url, base).searchParams.get("name")?.trim() || "";
-  } catch { return ""; }
-}
-
-function googlePhotoUriCacheKey(googleId: string, photoName: string) {
-  return `${GOOGLE_PHOTO_URI_CACHE_PREFIX}${googleId || photoName}`;
-}
-
-function readGooglePhotoUriCache(key: string) {
-  try {
-    const raw = window.sessionStorage.getItem(key);
-    if (!raw) return "";
-    const parsed = JSON.parse(raw) as { url?: string; at?: number };
-    if (parsed.url && Date.now() - Number(parsed.at || 0) < GOOGLE_PHOTO_URI_CACHE_TTL_MS) return parsed.url;
-    window.sessionStorage.removeItem(key);
-  } catch { /* session cache is optional */ }
-  return "";
-}
-
-function writeGooglePhotoUriCache(key: string, url: string) {
-  try { window.sessionStorage.setItem(key, JSON.stringify({ url, at: Date.now() })); } catch { /* session cache is optional */ }
-}
-
-async function resolveGooglePhotoUri(photoName: string) {
-  const response = await fetch(`/api/stage2/google/photo-uri?name=${encodeURIComponent(photoName)}`, { cache: "no-store" });
-  const contentType = response.headers.get("content-type") || "";
-  const body = await response.text().catch(() => "");
-  if (!response.ok) {
-    let message = body;
-    try {
-      const json = JSON.parse(body) as { message?: string | string[]; error?: string };
-      if (Array.isArray(json.message)) message = json.message.join("; ");
-      else if (typeof json.message === "string") message = json.message;
-      else if (typeof json.error === "string") message = json.error;
-    } catch { /* keep raw body */ }
-    const error = new Error(photoDiagnosticMessage(message, response.status, contentType)) as Error & { status?: number };
-    error.status = response.status;
-    throw error;
+    const separator = url.includes("?") ? "&" : "?";
+    const response = await fetch(`${url}${separator}diagnostic=1&_=${Date.now()}`, { cache: "no-store" });
+    const contentType = response.headers.get("content-type") || "";
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      let message = body;
+      try {
+        const json = JSON.parse(body) as { message?: string | string[]; error?: string };
+        if (Array.isArray(json.message)) message = json.message.join("; ");
+        else if (typeof json.message === "string") message = json.message;
+        else if (typeof json.error === "string") message = json.error;
+      } catch { /* keep raw response text */ }
+      return photoDiagnosticMessage(message, response.status, contentType);
+    }
+    const buffer = await response.arrayBuffer();
+    if (!buffer.byteLength) return "Сервер повернув порожній файл фотографії.";
+    if (!contentType.toLowerCase().startsWith("image/")) return photoDiagnosticMessage("", response.status, contentType);
+    return `Сервер отримав фото (${contentType}, ${Math.max(1, Math.round(buffer.byteLength / 1024))} КБ), але Telegram/Safari не зміг його відобразити. Перевірте формат зображення та заголовки відповіді.`;
+  } catch (error) {
+    return `Не вдалося звернутися до сервісу фото: ${error instanceof Error ? error.message : "мережева помилка"}.`;
   }
-  const data = JSON.parse(body) as { photo_url?: string };
-  if (!data.photo_url) throw new Error("Google не повернув URL фотографії.");
-  return data.photo_url;
 }
 
-function RemotePlaceImage({ url, alt = "", className, google = false, googlePlaceId: googleId = "", googlePhotoName: explicitPhotoName = "", eager = false, fallback, diagnostics = false }: { url?: string | null; alt?: string; className: string; google?: boolean; googlePlaceId?: string; googlePhotoName?: string; eager?: boolean; fallback?: ReactNode; diagnostics?: boolean }) {
-  const resolvedPhotoName = google ? (explicitPhotoName.trim() || photoNameFromLegacyUrl(url)) : "";
-  const photoCacheKey = google && resolvedPhotoName ? googlePhotoUriCacheKey(googleId, resolvedPhotoName) : "";
-  const [resolvedGoogleUrl, setResolvedGoogleUrl] = useState("");
+function RemotePlaceImage({ url, alt = "", className, google = false, googlePlaceId: googleId = "", eager = false, fallback, diagnostics = false }: { url?: string | null; alt?: string; className: string; google?: boolean; googlePlaceId?: string; eager?: boolean; fallback?: ReactNode; diagnostics?: boolean }) {
+  const fallbackUrl = google && googleId ? `/api/stage2/google/place-photo?id=${encodeURIComponent(googleId)}` : "";
+  // Prefer the fresh photo resource already returned with Nearby Search / Place Details.
+  // If it fails or is absent, fall back to resolving a fresh resource by stable Place ID.
+  const candidates = (google ? [url || "", fallbackUrl] : [url || ""])
+    .filter((value, index, list) => Boolean(value) && list.indexOf(value) === index);
+  const [candidateIndex, setCandidateIndex] = useState(0);
   const [diagnostic, setDiagnostic] = useState("");
-  const [resolving, setResolving] = useState(false);
-  const [refreshNonce, setRefreshNonce] = useState(0);
-  const [imageRefreshAttempted, setImageRefreshAttempted] = useState(false);
-  const [localImageFailed, setLocalImageFailed] = useState(false);
-
+  const [diagnosing, setDiagnosing] = useState(false);
   useEffect(() => {
+    setCandidateIndex(0);
     setDiagnostic("");
-    setImageRefreshAttempted(false);
-    setLocalImageFailed(false);
-    if (!google) { setResolvedGoogleUrl(""); return; }
-    if (!resolvedPhotoName) { setResolvedGoogleUrl(""); setResolving(false); return; }
+    setDiagnosing(false);
+  }, [url, fallbackUrl]);
+  const activeUrl = candidates[candidateIndex];
 
-    const cached = photoCacheKey ? readGooglePhotoUriCache(photoCacheKey) : "";
-    if (cached) { setResolvedGoogleUrl(cached); setResolving(false); return; }
+  const handleImageError = () => {
+    const failedUrl = activeUrl;
+    const nextIndex = candidateIndex + 1;
+    setCandidateIndex(nextIndex);
+    if (!diagnostics || !google || nextIndex < candidates.length || !failedUrl) return;
+    setDiagnosing(true);
+    void diagnoseRemoteImage(failedUrl).then((message) => setDiagnostic(message)).finally(() => setDiagnosing(false));
+  };
 
-    let cancelled = false;
-    setResolvedGoogleUrl("");
-    setResolving(true);
-    void resolveGooglePhotoUri(resolvedPhotoName).then((photoUrl) => {
-      if (cancelled) return;
-      setResolvedGoogleUrl(photoUrl);
-      if (photoCacheKey) writeGooglePhotoUriCache(photoCacheKey, photoUrl);
-    }).catch((error) => {
-      if (!cancelled) setDiagnostic(error instanceof Error ? error.message : "Не вдалося отримати Google-фото.");
-    }).finally(() => { if (!cancelled) setResolving(false); });
-    return () => { cancelled = true; };
-  }, [google, resolvedPhotoName, photoCacheKey, refreshNonce]);
-
-  if (google) {
-    if (resolvedGoogleUrl) return <img src={resolvedGoogleUrl} alt={alt} className={className} loading={eager ? "eager" : "lazy"} decoding="async" onError={() => {
-      if (photoCacheKey) {
-        try { window.sessionStorage.removeItem(photoCacheKey); } catch { /* optional cache */ }
-      }
-      setResolvedGoogleUrl("");
-      if (!imageRefreshAttempted && resolvedPhotoName) {
-        setImageRefreshAttempted(true);
-        setRefreshNonce((value) => value + 1);
-      } else if (diagnostics) {
-        setDiagnostic("Google повернув URL фото, але саме зображення не вдалося відобразити.");
-      }
-    }} />;
-    if (!diagnostics && fallback) return <>{fallback}</>;
-    return (
-      <span className={`${className} gt-real-place-image-placeholder ${diagnostics ? "gt-real-place-image-placeholder--diagnostic" : ""}`} aria-label="Фото Google недоступне">
-        <ImageIcon size={25} />
-        {diagnostics ? <span className="gt-photo-diagnostic"><strong>{resolving ? "Завантажуємо фото…" : "Фото не завантажилось"}</strong><small>{resolving ? "Отримуємо одне головне фото Google…" : diagnostic || (resolvedPhotoName ? "Google не повернув зображення." : "Для цієї локації Google не повернув фото.")}</small></span> : null}
-      </span>
-    );
-  }
-
-  if (url && !localImageFailed) return <img src={url} alt={alt} className={className} loading={eager ? "eager" : "lazy"} decoding="async" onError={() => setLocalImageFailed(true)} />;
+  if (activeUrl) return <img src={activeUrl} alt={alt} className={className} loading={eager ? "eager" : "lazy"} decoding="async" onError={handleImageError} />;
+  if (google) return (
+    <span className={`${className} gt-real-place-image-placeholder ${diagnostics ? "gt-real-place-image-placeholder--diagnostic" : ""}`} aria-label="Фото Google недоступне">
+      <ImageIcon size={25} />
+      {diagnostics ? <span className="gt-photo-diagnostic"><strong>Фото не завантажилось</strong><small>{diagnosing ? "Перевіряємо причину…" : diagnostic || "Google не повернув зображення."}</small></span> : null}
+    </span>
+  );
   return <>{fallback ?? <span className={`${className} gt-real-place-image-placeholder`}><ImageIcon size={25} /></span>}</>;
 }
 
@@ -1394,24 +1324,25 @@ function DynamicCategoryScreen({ navigate, config }: { navigate: Navigate; confi
       params.set("google_limit", "20");
       params.set("include_routes", "false");
       const cacheKey = `gid-category-cache:${config.category}:${point.lat.toFixed(3)}:${point.lng.toFixed(3)}:${selectedChip}:${query.trim().toLocaleLowerCase("uk")}`;
-      const cachedPlaces = readPlacesCache(cacheKey);
-      if (cachedPlaces) {
-        setPlaces(cachedPlaces);
-        setLoading(false);
-        if (query.trim()) void trackEvent("search_used", { regionId: runtime.context?.region.id, payload: { q: query.trim(), category: config.category, cached: true } });
-        return;
-      }
-      setLoading(true);
+      let hasCachedPlaces = false;
+      try {
+        const cached = window.sessionStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached) as Stage2Place[];
+          if (Array.isArray(parsed) && parsed.length) { hasCachedPlaces = true; setPlaces(parsed); setLoading(false); }
+        }
+      } catch { /* cache is optional */ }
+      if (!hasCachedPlaces) setLoading(true);
 
       void stage2Fetch<Stage2Place[]>(`/places?${params}`).then((items) => {
         if (cancelled) return;
         setPlaces(items);
         setLoading(false);
-        writePlacesCache(cacheKey, items);
+        try { window.sessionStorage.setItem(cacheKey, JSON.stringify(items)); } catch { /* cache is optional */ }
       }).catch(() => { if (!cancelled) setLoading(false); });
 
       if (query.trim()) void trackEvent("search_used", { regionId: runtime.context?.region.id, payload: { q: query.trim(), category: config.category } });
-    }, query.trim() ? 350 : 0);
+    }, query.trim() ? 180 : 0);
     return () => { cancelled = true; window.clearTimeout(timer); };
   }, [runtime.context, runtime.location, query, selectedChip, config.category]);
 
@@ -1444,7 +1375,7 @@ function DynamicCategoryScreen({ navigate, config }: { navigate: Navigate; confi
               eager={index < 4}
               title={place.name}
               subtitle={place.subcategory || place.category_name || "Локація"}
-              rating={Number(place.rating || 0) > 0 ? `${Number(place.rating).toFixed(1)} (${place.review_count || 0})` : "—"}
+              rating={`${Number(place.rating || 0).toFixed(1)} (${place.review_count || 0})`}
               distance={distanceLabel(place.distance_m)}
               walk={walkLabel(place.distance_m, place.walking_duration_s)}
               walking
@@ -1544,29 +1475,31 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
       const googleSection = activeTone === "fun" ? "entertainment" : activeTone === "all" ? "all" : activeTone;
       params.set("include_google", "true");
       params.set("google_section", googleSection);
-      // A single proximity-ranked Nearby Search is enough for every radius and keeps costs predictable.
-      params.set("google_limit", "20");
+      params.set("google_limit", radius >= 1000 && !activeSubcategory ? "40" : "20");
       params.set("include_routes", "false");
+      if (radius >= 1000 && !activeSubcategory) params.set("google_spread", "true");
       if (activeCategoryMeta?.slug) params.set("category", activeCategoryMeta.slug);
       else if (activeCategory !== "Усі") params.set("category", "__google__");
       if (activeSubcategory) params.set("subcategory", activeSubcategory);
       if (query.trim()) params.set("q", query.trim());
       const cacheKey = `gid-nearby-cache:${center.lat.toFixed(3)}:${center.lng.toFixed(3)}:${radius}:${activeCategory}:${activeSubcategory}:${query.trim().toLocaleLowerCase("uk")}`;
-      const cachedPlaces = readPlacesCache(cacheKey);
-      if (cachedPlaces) {
-        setNearbyPlaces(cachedPlaces);
-        setNearbyLoading(false);
-        return;
-      }
-      setNearbyLoading(true);
+      let hasCachedPlaces = false;
+      try {
+        const cached = window.sessionStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached) as Stage2Place[];
+          if (Array.isArray(parsed) && parsed.length) { hasCachedPlaces = true; setNearbyPlaces(parsed); setNearbyLoading(false); }
+        }
+      } catch { /* optional cache */ }
+      if (!hasCachedPlaces) setNearbyLoading(true);
 
       void stage2Fetch<Stage2Place[]>(`/places?${params}`).then((items) => {
         if (cancelled) return;
         setNearbyPlaces(items);
         setNearbyLoading(false);
-        writePlacesCache(cacheKey, items);
+        try { window.sessionStorage.setItem(cacheKey, JSON.stringify(items)); } catch { /* optional cache */ }
       }).catch(() => { if (!cancelled) setNearbyLoading(false); });
-    }, query.trim() ? 350 : 0);
+    }, query.trim() ? 160 : 0);
     return () => { cancelled = true; window.clearTimeout(timer); };
   }, [runtime.context, center?.lat, center?.lng, radius, activeCategoryMeta?.slug, activeCategory, activeTone, activeSubcategory, query]);
 
@@ -1579,15 +1512,17 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
   const previewMapPlace = (place: Stage2Place) => {
     setPreviewPlace(place);
     if (!center) return;
-    const detailKey = placeDetailCacheKey(place.id, center.lat, center.lng);
-    const cached = readPlaceDetailCache(detailKey);
-    if (cached) {
-      setPreviewPlace(cached);
-      return;
+    const cacheKey = googlePlaceDetailCacheKey(place.id, center.lat, center.lng);
+    if (place.source === "google" || place.attributes?.google === true) {
+      const cached = readGooglePlaceDetailCache(cacheKey);
+      if (cached) {
+        setPreviewPlace(cached);
+        return;
+      }
     }
     const suffix = `?lat=${encodeURIComponent(String(center.lat))}&lng=${encodeURIComponent(String(center.lng))}`;
     void stage2Fetch<Stage2Place>(`/places/${encodeURIComponent(place.id)}${suffix}`).then((details) => {
-      writePlaceDetailCache(detailKey, details);
+      if (details.source === "google" || details.attributes?.google === true) writeGooglePlaceDetailCache(cacheKey, details);
       setPreviewPlace((current) => current?.id === place.id ? details : current);
     }).catch(() => undefined);
   };
@@ -1646,11 +1581,11 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
             ))}
           </div>
           {previewPlace ? <div className="gt-map-place-preview" role="dialog" aria-label={`Перегляд ${previewPlace.name}`}>
-            <RemotePlaceImage url={previewPlace.image_url} className="gt-map-place-preview__image" google={previewPlace.source === "google" || previewPlace.attributes?.google === true} googlePlaceId={googlePlaceId(previewPlace)} googlePhotoName={googlePhotoName(previewPlace)} eager />
+            <RemotePlaceImage url={previewPlace.image_url} className="gt-map-place-preview__image" google={previewPlace.source === "google" || previewPlace.attributes?.google === true} googlePlaceId={googlePlaceId(previewPlace)} eager fallback={<Thumb name={placePhotoFallback(previewPlace)} />} />
             <div className="gt-map-place-preview__copy">
               <strong>{previewPlace.name}</strong>
               <small>{previewPlace.subcategory || previewPlace.category_name || previewPlace.address}</small>
-              <span><b><Star size={13} fill="currentColor" /> {Number(previewPlace.rating || 0) > 0 ? Number(previewPlace.rating).toFixed(1) : "—"} · {previewPlace.review_count || 0}</b><em>{previewPlace.is_open_now === true ? "Відкрито" : previewPlace.is_open_now === false ? "Зачинено" : "Графік"} · {placeHoursLabel(previewPlace)}</em></span>
+              <span><b><Star size={13} fill="currentColor" /> {Number(previewPlace.rating || 0).toFixed(1)} · {previewPlace.review_count || 0}</b><em>{previewPlace.is_open_now === true ? "Відкрито" : previewPlace.is_open_now === false ? "Зачинено" : "Графік"} · {placeHoursLabel(previewPlace)}</em></span>
               <span><b>{distanceLabel(previewPlace.distance_m)}</b><em><WalkingIcon size={13} /> {walkLabel(previewPlace.distance_m, previewPlace.walking_duration_s)}</em></span>
               <div><button type="button" onClick={() => setPreviewPlace(null)}>Закрити</button><button type="button" className="is-primary" onClick={() => openPlace(previewPlace)}>Відкрити</button></div>
             </div>
@@ -1673,7 +1608,7 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
                   <RemotePlaceImage url={place.image_url} className="gt-photo gt-nearby-design__remote-photo" google={place.source === "google" || place.attributes?.google === true} googlePlaceId={googlePlaceId(place)} fallback={<Thumb name={placePhotoFallback(place)} />} />
                   <span className="gt-nearby-design__card-copy">
                     <strong>{place.name}{place.is_partner || place.attributes?.partner === true ? <i className="gt-nearby-partner-badge">Партнер</i> : null}</strong><small>{place.subcategory || place.category_name}</small>
-                    <span><b><Star size={12} fill="currentColor" /> {Number(place.rating || 0) > 0 ? Number(place.rating).toFixed(1) : "—"}</b><em>{distanceLabel(place.distance_m)} · {walkLabel(place.distance_m, place.walking_duration_s)}</em></span>
+                    <span><b><Star size={12} fill="currentColor" /> {Number(place.rating || 0).toFixed(1)}</b><em>{distanceLabel(place.distance_m)} · {walkLabel(place.distance_m, place.walking_duration_s)}</em></span>
                   </span>
                 </button>
               ))}
@@ -1690,7 +1625,7 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
 function PlaceScreen({ navigate }: { navigate: Navigate }) {
   const runtime = useTouristRuntime();
   const [place, setPlace] = useState<Stage2Place | null>(() => runtime.selectedPlace);
-  const [placeLoading, setPlaceLoading] = useState(() => Boolean(runtime.selectedPlace?.id?.startsWith("google_")));
+  const [placeLoading, setPlaceLoading] = useState(false);
   const [favorite, setFavorite] = useState(false);
   const fallbackId = runtime.selectedPlaceId || runtime.selectedPlace?.id || runtime.context?.place?.id || "";
 
@@ -1698,27 +1633,24 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
     if (!fallbackId) return;
     let cancelled = false;
     const immediate = runtime.selectedPlace?.id === fallbackId ? runtime.selectedPlace : null;
-    setPlace((current) => current?.id === fallbackId ? current : immediate);
     const point = runtime.location ?? (runtime.context ? { lat: Number(runtime.context.place?.lat ?? runtime.context.region.lat), lng: Number(runtime.context.place?.lng ?? runtime.context.region.lng) } : null);
-    const detailKey = placeDetailCacheKey(fallbackId, point?.lat, point?.lng);
-    const cachedDetails = fallbackId.startsWith("google_") ? readPlaceDetailCache(detailKey) : null;
-    if (cachedDetails) {
-      setPlace(cachedDetails);
-      setPlaceLoading(false);
-    } else {
-      setPlaceLoading(true);
-      const suffix = point ? `?lat=${encodeURIComponent(String(point.lat))}&lng=${encodeURIComponent(String(point.lng))}` : "";
+    const cacheKey = googlePlaceDetailCacheKey(fallbackId, point?.lat, point?.lng);
+    const isGoogle = fallbackId.startsWith("google_") || immediate?.source === "google" || immediate?.attributes?.google === true;
+    const cached = isGoogle ? readGooglePlaceDetailCache(cacheKey) : null;
+    setPlace((current) => current?.id === fallbackId ? current : cached ?? immediate);
+    setPlaceLoading(!cached);
+    const suffix = point ? `?lat=${encodeURIComponent(String(point.lat))}&lng=${encodeURIComponent(String(point.lng))}` : "";
+    if (!cached) {
       void stage2Fetch<Stage2Place>(`/places/${encodeURIComponent(fallbackId)}${suffix}`).then((next) => {
-        if (cancelled) return;
-        setPlace(next);
-        if (fallbackId.startsWith("google_")) writePlaceDetailCache(detailKey, next);
+        if (next.source === "google" || next.attributes?.google === true) writeGooglePlaceDetailCache(cacheKey, next);
+        if (!cancelled) setPlace(next);
       }).catch(() => {
         if (!cancelled && runtime.context?.place?.id === fallbackId) setPlace(runtime.context.place);
       }).finally(() => { if (!cancelled) setPlaceLoading(false); });
     }
     void stage2Fetch<Stage2Place[]>("/me/favorites").then((items) => { if (!cancelled) setFavorite(items.some((item) => item.id === fallbackId)); }).catch(() => undefined);
     return () => { cancelled = true; };
-  }, [fallbackId, runtime.context?.place?.id, runtime.context?.region.lat, runtime.context?.region.lng, runtime.location?.lat, runtime.location?.lng, runtime.selectedPlace?.id]);
+  }, [fallbackId, runtime.context?.place, runtime.location?.lat, runtime.location?.lng, runtime.selectedPlace]);
 
   const loadedPlace = place?.id === fallbackId ? place : null;
   const selectedFallback = runtime.selectedPlace?.id === fallbackId ? runtime.selectedPlace : null;
@@ -1774,7 +1706,7 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
   return (
     <div className="tourist-screen gt-screen">
       <section className={`gt-place-hero ${current.image_url ? "has-real-photo" : ""}`}>
-        {current.image_url || current.source === "google" ? <RemotePlaceImage key={current.id} url={current.image_url} alt={current.name} className="gt-place-hero__image" google={current.source === "google" || current.attributes?.google === true} googlePlaceId={googlePlaceId(current)} googlePhotoName={googlePhotoName(current)} eager diagnostics={!placeLoading} /> : null}
+        {current.image_url || current.source === "google" ? <RemotePlaceImage key={current.id} url={current.image_url} alt={current.name} className="gt-place-hero__image" google={current.source === "google" || current.attributes?.google === true} googlePlaceId={googlePlaceId(current)} eager diagnostics /> : null}
         <span className="gt-place-hero__shade" aria-hidden="true" />
         {current.attributes?.verified === true ? <span className="gt-pill gt-pill--glass"><BadgeCheck size={16} /> Перевірено</span> : null}
         <div>
@@ -1784,7 +1716,7 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
       </section>
       <main className="gt-content gt-content--overlap">
         <div className="gt-place-summary">
-          <button type="button" className="gt-place-summary__reviews-button" onClick={openReviews} aria-disabled={!reviewsHref}><Star size={19} fill="currentColor" /><strong>{Number(current.rating || 0) > 0 ? Number(current.rating).toFixed(1) : "—"}</strong><small>{current.review_count || 0} відгуків · Google</small></button>
+          <button type="button" className="gt-place-summary__reviews-button" onClick={openReviews} aria-disabled={!reviewsHref}><Star size={19} fill="currentColor" /><strong>{Number(current.rating || 0).toFixed(1)}</strong><small>{current.review_count || 0} відгуків · Google</small></button>
           <span><Clock3 size={19} /><strong>{current.is_open_now === true ? "Відкрито" : current.is_open_now === false ? "Зачинено" : "Графік"}</strong><small>{daily?.to ? `до ${daily.to}` : "див. нижче"}</small></span>
           <span><MapPin size={19} /><strong>{distance}</strong><small><WalkingIcon size={12} /> {walkingTime} пішки</small></span>
         </div>
@@ -1901,17 +1833,17 @@ function TransferScreen({ navigate }: { navigate: Navigate }) {
       if (query.trim()) params.set("q", query.trim());
       if (chip !== "Усі") params.set("subcategory", chip);
       const cacheKey = `gid-transfer-cache:${point.lat.toFixed(3)}:${point.lng.toFixed(3)}:${chip}:${query.trim().toLocaleLowerCase("uk")}`;
-      const cachedPlaces = readPlacesCache(cacheKey);
-      if (cachedPlaces) {
-        setPlaces(cachedPlaces); setApiLoaded(true); setTransferLoading(false);
-        return;
-      }
-      setTransferLoading(true);
+      let hasCachedPlaces = false;
+      try {
+        const cached = window.sessionStorage.getItem(cacheKey);
+        if (cached) { const parsed = JSON.parse(cached) as Stage2Place[]; if (Array.isArray(parsed) && parsed.length) { hasCachedPlaces = true; setPlaces(parsed); setApiLoaded(true); setTransferLoading(false); } }
+      } catch { /* optional cache */ }
+      if (!hasCachedPlaces) setTransferLoading(true);
       void stage2Fetch<Stage2Place[]>(`/places?${params}`).then((items) => {
         if (cancelled) return; setPlaces(items); setApiLoaded(true); setTransferLoading(false);
-        writePlacesCache(cacheKey, items);
+        try { window.sessionStorage.setItem(cacheKey, JSON.stringify(items)); } catch { /* ignore */ }
       }).catch(() => { if (!cancelled) { setApiLoaded(true); setTransferLoading(false); } });
-    }, query.trim() ? 350 : 0);
+    }, query.trim() ? 160 : 0);
     return () => { cancelled = true; window.clearTimeout(timer); };
   }, [runtime.context, runtime.location, query, chip]);
 
@@ -1919,7 +1851,7 @@ function TransferScreen({ navigate }: { navigate: Navigate }) {
     image: place.image_url || "",
     title: place.name,
     subtitle: place.description || place.subcategory || "Транспортна послуга",
-    rating: Number(place.rating || 0) > 0 ? `${Number(place.rating).toFixed(1)} (${place.review_count || 0})` : "—",
+    rating: `${Number(place.rating || 0).toFixed(1)} (${place.review_count || 0})`,
     distance: distanceLabel(place.distance_m),
     walk: walkLabel(place.distance_m, place.walking_duration_s),
     walking: false,
@@ -2887,7 +2819,7 @@ function FavoritesScreen({ navigate }: { navigate: Navigate }) {
       <main className="gt-content">
         <div className="gt-page-heading"><span className="gt-tone--red"><Heart size={23} /></span><div><h1>Улюблені</h1><p>Збережені місця</p></div></div>
         <div className="gt-place-list">
-          {places.map((place) => <PlaceRow key={place.id} photo={placePhotoFallback(place)} imageUrl={place.image_url} google={place.source === "google" || place.attributes?.google === true} googlePlaceId={googlePlaceId(place)} title={place.name} subtitle={place.subcategory || place.category_name || "Локація"} rating={Number(place.rating || 0) > 0 ? `${Number(place.rating).toFixed(1)} (${place.review_count || 0})` : "—"} distance="" walk="" tags={visiblePlaceTags(place)} onClick={() => { runtime.setSelectedPlace(place); navigate("tourist", "place"); }} />)}
+          {places.map((place) => <PlaceRow key={place.id} photo={placePhotoFallback(place)} imageUrl={place.image_url} google={place.source === "google" || place.attributes?.google === true} googlePlaceId={googlePlaceId(place)} title={place.name} subtitle={place.subcategory || place.category_name || "Локація"} rating={`${Number(place.rating || 0).toFixed(1)} (${place.review_count || 0})`} distance="" walk="" tags={visiblePlaceTags(place)} onClick={() => { runtime.setSelectedPlace(place); navigate("tourist", "place"); }} />)}
           {!places.length ? <div className="gt-stage2-empty">Ще немає збережених місць. Відкрийте картку закладу та натисніть «Зберегти».</div> : null}
         </div>
       </main>

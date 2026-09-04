@@ -157,9 +157,11 @@ export class Stage2Service {
       phone: place.nationalPhoneNumber ?? null,
       telegram: null,
       website: place.websiteUri ?? null,
-      // Google list/map payloads never auto-load media. After a user opens one place, the
-      // fresh resource name below is resolved once by the dedicated photo-URI endpoint.
-      image_url: null,
+      // Prefer the fresh photo resource name already returned by Nearby Search / Place Details.
+      // If Google did not return photos in that payload, fall back to resolving by stable Place ID.
+      image_url: googlePhotoName
+        ? `/api/stage2/google/photo?name=${encodeURIComponent(googlePhotoName)}`
+        : place.id ? `/api/stage2/google/place-photo?id=${encodeURIComponent(place.id)}` : null,
       rating: Number(place.rating ?? 0),
       review_count: Number(place.userRatingCount ?? 0),
       price_level: null,
@@ -178,7 +180,7 @@ export class Stage2Service {
         google_photos_uri: place.googleMapsLinks?.photosUri ?? null,
         google_phone: place.nationalPhoneNumber ?? null,
         google_photo_name: googlePhotoName || null,
-        google_reviews: [],
+        google_reviews: place.reviews ?? [],
         google_weekday_descriptions: place.regularOpeningHours?.weekdayDescriptions ?? [],
       },
       translations: {},
