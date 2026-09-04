@@ -4,11 +4,14 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import {
   ensureTelegramSession,
   selectedPlaceId,
+  selectedPlacePreview,
   setSelectedPlaceIdStorage,
+  setSelectedPlacePreviewStorage,
   stage2Fetch,
   telegramStartParam,
   trackEvent,
   type Stage2Context,
+  type Stage2Place,
   type Stage2User,
 } from "./stage2-api";
 
@@ -21,8 +24,10 @@ type TouristRuntimeValue = {
   loading: boolean;
   apiOnline: boolean;
   selectedPlaceId: string;
+  selectedPlace: Stage2Place | null;
   language: "uk" | "en" | "pl";
   setSelectedPlaceId: (id: string) => void;
+  setSelectedPlace: (place: Stage2Place | null) => void;
   requestLocation: () => Promise<Coordinates | null>;
   setLanguage: (language: "uk" | "en" | "pl") => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -57,10 +62,10 @@ export function TouristRuntimeProvider({ children }: { children: ReactNode }) {
   } : null);
   const [loading, setLoading] = useState(true);
   const [apiOnline, setApiOnline] = useState(false);
-  const [selected, setSelected] = useState("");
+  const [selected, setSelected] = useState(() => selectedPlaceId());
+  const [selectedPlace, setSelectedPlaceState] = useState<Stage2Place | null>(() => selectedPlacePreview());
 
   useEffect(() => {
-    setSelected(selectedPlaceId());
     let cancelled = false;
     void (async () => {
       const startParam = telegramStartParam();
@@ -113,6 +118,16 @@ export function TouristRuntimeProvider({ children }: { children: ReactNode }) {
   const setSelectedPlaceId = (id: string) => {
     setSelected(id);
     setSelectedPlaceIdStorage(id);
+    setSelectedPlaceState((current) => current?.id === id ? current : null);
+    if (selectedPlace?.id !== id) setSelectedPlacePreviewStorage(null);
+  };
+
+  const setSelectedPlace = (place: Stage2Place | null) => {
+    const id = place?.id ?? "";
+    setSelected(id);
+    setSelectedPlaceIdStorage(id);
+    setSelectedPlaceState(place);
+    setSelectedPlacePreviewStorage(place);
   };
 
   const requestLocation = async () => {
@@ -207,12 +222,14 @@ export function TouristRuntimeProvider({ children }: { children: ReactNode }) {
     loading,
     apiOnline,
     selectedPlaceId: selected,
+    selectedPlace,
     language: (user?.selected_language === "en" || user?.selected_language === "pl") ? user.selected_language : "uk",
     setSelectedPlaceId,
+    setSelectedPlace,
     requestLocation,
     setLanguage,
     refreshProfile,
-  }), [context, user, location, loading, apiOnline, selected]);
+  }), [context, user, location, loading, apiOnline, selected, selectedPlace]);
 
   return <TouristRuntimeContext.Provider value={value}>{children}</TouristRuntimeContext.Provider>;
 }

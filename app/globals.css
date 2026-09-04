@@ -28745,6 +28745,7 @@ button.gt-amenities-row {
   left: 12px;
   right: 12px;
   bottom: 48px;
+  transform: translateY(-10%);
   display: grid;
   grid-template-columns: 92px minmax(0,1fr);
   gap: 10px;

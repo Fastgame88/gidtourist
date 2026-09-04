@@ -78,7 +78,6 @@ import {
   WalletCards,
   Wifi,
   Wrench,
-  X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -331,15 +330,24 @@ function placeHoursLabel(place?: Stage2Place | null) {
   return directWeekdays[0] || detailWeekdays[0] || "Графік уточнюється";
 }
 
-function googleReviewText(review: Record<string, any>) {
-  const translated = review.text && typeof review.text === "object" ? review.text.text : "";
-  const original = review.originalText && typeof review.originalText === "object" ? review.originalText.text : "";
-  return String(translated || original || "").trim();
+function googleReviewsUri(place?: Stage2Place | null) {
+  if (!place) return "";
+  const details = place.details ?? {};
+  const attributes = place.attributes ?? {};
+  const direct = [details.google_reviews_uri, attributes.google_reviews_uri]
+    .map((value) => typeof value === "string" ? value.trim() : "")
+    .find(Boolean);
+  if (direct) return direct;
+  const placeId = googlePlaceId(place);
+  return placeId ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name || place.address || `${place.lat},${place.lng}`)}&query_place_id=${encodeURIComponent(placeId)}` : "";
 }
 
 function RemotePlaceImage({ url, alt = "", className, google = false, googlePlaceId: googleId = "", eager = false, fallback }: { url?: string | null; alt?: string; className: string; google?: boolean; googlePlaceId?: string; eager?: boolean; fallback?: ReactNode }) {
   const fallbackUrl = google && googleId ? `/api/stage2/google/place-photo?id=${encodeURIComponent(googleId)}` : "";
-  const candidates = [url || "", fallbackUrl].filter((value, index, list) => Boolean(value) && list.indexOf(value) === index);
+  // For Google places prefer the Place-ID endpoint. It asks Google for a fresh photo resource name
+  // and avoids stale photo URLs cached from an earlier Nearby Search response.
+  const candidates = (google ? [fallbackUrl, url || ""] : [url || ""])
+    .filter((value, index, list) => Boolean(value) && list.indexOf(value) === index);
   const [candidateIndex, setCandidateIndex] = useState(0);
   useEffect(() => { setCandidateIndex(0); }, [url, fallbackUrl]);
   const activeUrl = candidates[candidateIndex];
@@ -1257,7 +1265,7 @@ function DynamicCategoryScreen({ navigate, config }: { navigate: Navigate; confi
   const subtitle = runtime.language === "en" ? config.subtitleEn : runtime.language === "pl" ? config.subtitlePl : config.subtitle;
 
   const openPlace = (place: Stage2Place) => {
-    runtime.setSelectedPlaceId(place.id);
+    runtime.setSelectedPlace(place);
     void trackEvent("place_viewed", { regionId: runtime.context?.region.id, placeId: place.id, payload: { source: config.category } });
     navigate("tourist", "place");
   };
@@ -1410,7 +1418,7 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
   }, [runtime.context, center?.lat, center?.lng, radius, activeCategoryMeta?.slug, activeCategory, activeTone, activeSubcategory, query]);
 
   const openPlace = (place: Stage2Place) => {
-    runtime.setSelectedPlaceId(place.id);
+    runtime.setSelectedPlace(place);
     void trackEvent("place_viewed", { regionId: runtime.context?.region.id, placeId: place.id, payload: { source: "nearby" } });
     navigate("tourist", "place");
   };
@@ -1521,19 +1529,17 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
 
 function PlaceScreen({ navigate }: { navigate: Navigate }) {
   const runtime = useTouristRuntime();
-  const [place, setPlace] = useState<Stage2Place | null>(null);
+  const [place, setPlace] = useState<Stage2Place | null>(() => runtime.selectedPlace);
   const [placeLoading, setPlaceLoading] = useState(false);
   const [favorite, setFavorite] = useState(false);
-  const [showGoogleReviews, setShowGoogleReviews] = useState(false);
-  const [reviewsLoading, setReviewsLoading] = useState(false);
-  const fallbackId = runtime.selectedPlaceId || runtime.context?.place?.id || "";
+  const fallbackId = runtime.selectedPlaceId || runtime.selectedPlace?.id || runtime.context?.place?.id || "";
 
   useEffect(() => {
     if (!fallbackId) return;
     let cancelled = false;
-    setPlace((current) => current?.id === fallbackId ? current : null);
+    const immediate = runtime.selectedPlace?.id === fallbackId ? runtime.selectedPlace : null;
+    setPlace((current) => current?.id === fallbackId ? current : immediate);
     setPlaceLoading(true);
-    setShowGoogleReviews(false);
     const point = runtime.location ?? (runtime.context ? { lat: Number(runtime.context.place?.lat ?? runtime.context.region.lat), lng: Number(runtime.context.place?.lng ?? runtime.context.region.lng) } : null);
     const suffix = point ? `?lat=${encodeURIComponent(String(point.lat))}&lng=${encodeURIComponent(String(point.lng))}` : "";
     void stage2Fetch<Stage2Place>(`/places/${encodeURIComponent(fallbackId)}${suffix}`).then((next) => {
@@ -1543,21 +1549,21 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
     }).finally(() => { if (!cancelled) setPlaceLoading(false); });
     void stage2Fetch<Stage2Place[]>("/me/favorites").then((items) => { if (!cancelled) setFavorite(items.some((item) => item.id === fallbackId)); }).catch(() => undefined);
     return () => { cancelled = true; };
-  }, [fallbackId, runtime.context?.place, runtime.location?.lat, runtime.location?.lng]);
+  }, [fallbackId, runtime.context?.place, runtime.location?.lat, runtime.location?.lng, runtime.selectedPlace]);
 
   const loadedPlace = place?.id === fallbackId ? place : null;
+  const selectedFallback = runtime.selectedPlace?.id === fallbackId ? runtime.selectedPlace : null;
   const contextFallback = runtime.context?.place?.id === fallbackId ? runtime.context.place : null;
-  const current = loadedPlace ?? contextFallback;
+  const current = loadedPlace ?? selectedFallback ?? contextFallback;
   if (!current) {
-    return <div className="tourist-screen gt-screen"><main className="gt-content"><div className="gt-stage2-empty">{placeLoading ? "Завантажуємо локацію…" : "Локацію не вибрано або вона відсутня в базі"}</div></main></div>;
+    return <div className="tourist-screen gt-screen"><main className="gt-content">{!placeLoading ? <div className="gt-stage2-empty">Локацію не вибрано або вона відсутня в базі</div> : null}</main></div>;
   }
   const daily = current.work_hours?.daily as { from?: string; to?: string } | undefined;
   const googleWeekdays = Array.isArray(current.details?.google_weekday_descriptions) ? current.details.google_weekday_descriptions.map(String) : [];
   const hours = current.work_hours?.always_open === true ? "Цілодобово" : daily?.from && daily?.to ? `Щодня · ${daily.from}–${daily.to}` : googleWeekdays[0] || "Графік уточнюється";
-  const googleReviews = Array.isArray(current.details?.google_reviews) ? current.details.google_reviews as Array<Record<string, any>> : [];
-  const textualGoogleReviews = googleReviews.filter((review) => Boolean(googleReviewText(review)));
   const phone = phoneForPlace(current);
   const phoneHref = telHref(phone);
+  const reviewsHref = googleReviewsUri(current) || (typeof current.attributes?.google_maps_uri === "string" ? current.attributes.google_maps_uri : "");
   const fallbackStraightDistance = runtime.location ? Math.round((() => {
     const r=6371000,toRad=(v:number)=>v*Math.PI/180,dLat=toRad(Number(current.lat)-runtime.location!.lat),dLng=toRad(Number(current.lng)-runtime.location!.lng);
     const a=Math.sin(dLat/2)**2+Math.cos(toRad(runtime.location!.lat))*Math.cos(toRad(Number(current.lat)))*Math.sin(dLng/2)**2; return 2*r*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
@@ -1579,17 +1585,21 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
     }
   };
 
-  const openReviews = async () => {
-    setShowGoogleReviews(true);
-    if (!(current.source === "google" || current.attributes?.google === true) || textualGoogleReviews.length) return;
-    setReviewsLoading(true);
+  const openReviews = () => {
+    if (!reviewsHref) return;
+    window.open(reviewsHref, "_blank", "noopener,noreferrer");
+  };
+
+  const callPlace = () => {
+    if (!phoneHref) return;
+    void trackEvent("call_clicked", { regionId: current.region_id, placeId: current.id });
     try {
-      const point = runtime.location ?? (runtime.context ? { lat: Number(runtime.context.place?.lat ?? runtime.context.region.lat), lng: Number(runtime.context.place?.lng ?? runtime.context.region.lng) } : null);
-      const suffix = point ? `?lat=${encodeURIComponent(String(point.lat))}&lng=${encodeURIComponent(String(point.lng))}` : "";
-      const refreshed = await stage2Fetch<Stage2Place>(`/places/${encodeURIComponent(current.id)}${suffix}`);
-      setPlace(refreshed);
-    } catch { /* reviews modal still opens with the available rating/count */ }
-    finally { setReviewsLoading(false); }
+      window.location.href = phoneHref;
+    } catch {
+      const link = document.createElement("a");
+      link.href = phoneHref;
+      link.click();
+    }
   };
 
   return (
@@ -1605,13 +1615,13 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
       </section>
       <main className="gt-content gt-content--overlap">
         <div className="gt-place-summary">
-          <button type="button" className="gt-place-summary__reviews-button" onClick={() => void openReviews()}><Star size={19} fill="currentColor" /><strong>{Number(current.rating || 0).toFixed(1)}</strong><small>{current.review_count || 0} відгуків · читати</small></button>
+          <button type="button" className="gt-place-summary__reviews-button" onClick={openReviews} aria-disabled={!reviewsHref}><Star size={19} fill="currentColor" /><strong>{Number(current.rating || 0).toFixed(1)}</strong><small>{current.review_count || 0} відгуків · Google</small></button>
           <span><Clock3 size={19} /><strong>{current.is_open_now === true ? "Відкрито" : current.is_open_now === false ? "Зачинено" : "Графік"}</strong><small>{daily?.to ? `до ${daily.to}` : "див. нижче"}</small></span>
           <span><MapPin size={19} /><strong>{distance}</strong><small><WalkingIcon size={12} /> {walkingTime} пішки</small></span>
         </div>
         <div className="gt-action-grid">
           <button type="button" onClick={openRoute}><Navigation size={22} /><span>Маршрут</span></button>
-          <a className="gt-action-grid__link" href={phoneHref} aria-disabled={!phoneHref} onClick={(event) => { if (!phoneHref) event.preventDefault(); else void trackEvent("call_clicked", { regionId: current.region_id, placeId: current.id }); }}><Phone size={22} /><span>Дзвінок</span></a>
+          <button type="button" onClick={callPlace} aria-disabled={!phoneHref}><Phone size={22} /><span>Дзвінок</span></button>
           <button type="button" onClick={() => current.telegram ? window.open(current.telegram, "_blank", "noopener,noreferrer") : undefined}><MessageCircle size={22} /><span>Telegram</span></button>
           <button type="button" className={favorite ? "is-active" : ""} onClick={() => void toggleFavorite()}><Heart size={22} fill={favorite ? "currentColor" : "none"} /><span>{favorite ? "Збережено" : "Зберегти"}</span></button>
         </div>
@@ -1623,20 +1633,11 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
         <div className="gt-detail-card">
           <span><MapPin size={22} /></span><div><strong>Адреса</strong><small>{current.address}</small></div><ChevronRight size={19} />
         </div>
-        {phone && phoneHref ? <a className="gt-detail-card gt-detail-card--link" href={phoneHref}><span><Phone size={22} /></span><div><strong>Телефон</strong><small>{phone}</small></div><ChevronRight size={19} /></a> : null}
+        {phone && phoneHref ? <a className="gt-detail-card gt-detail-card--link" href={phoneHref} onClick={(event) => { event.preventDefault(); callPlace(); }}><span><Phone size={22} /></span><div><strong>Телефон</strong><small>{phone}</small></div><ChevronRight size={19} /></a> : null}
         {current.website ? <a className="gt-detail-card gt-detail-card--link" href={current.website} target="_blank" rel="noreferrer"><span><Globe size={22} /></span><div><strong>Сайт</strong><small>{current.website}</small></div><ChevronRight size={19} /></a> : null}
         {googleWeekdays.length ? <section className="gt-google-hours"><strong>Графік роботи</strong>{googleWeekdays.map((line) => <small key={line}>{line}</small>)}</section> : null}
         {visiblePlaceTags(current).length ? <div className="gt-stage2-place-tags">{visiblePlaceTags(current).map((tag) => <span key={tag}>{tag}</span>)}</div> : null}
         <button type="button" className="gt-primary-button" onClick={openRoute}>Побудувати маршрут <Navigation size={20} /></button>
-        {showGoogleReviews ? <div className="gt-reviews-modal" role="dialog" aria-modal="true" aria-label="Відгуки Google" onClick={() => setShowGoogleReviews(false)}><section onClick={(event) => event.stopPropagation()}>
-          <header><div><strong>Відгуки Google</strong><small>{Number(current.rating || 0).toFixed(1)} · {current.review_count || googleReviews.length} відгуків</small></div><button type="button" onClick={() => setShowGoogleReviews(false)} aria-label="Закрити"><X size={21}/></button></header>
-          {reviewsLoading ? <div className="gt-stage2-empty">Завантажуємо відгуки…</div> : textualGoogleReviews.length ? <div className="gt-google-reviews__list">{textualGoogleReviews.slice(0,5).map((review,index) => {
-            const author = review.authorAttribution && typeof review.authorAttribution === "object" ? review.authorAttribution : {};
-            const text = googleReviewText(review);
-            return <article key={`${String(author.displayName || "review")}-${index}`}><div><strong>{String(author.displayName || "Користувач Google")}</strong><span><Star size={13} fill="currentColor" /> {Number(review.rating || 0).toFixed(1)}</span></div>{text ? <p>{String(text)}</p> : null}<small>{String(review.relativePublishTimeDescription || "")}</small></article>;
-          })}</div> : <div className="gt-stage2-empty">Для цієї точки Google не повернув тексти відгуків.</div>}
-          {current.attributes?.google_maps_uri ? <button type="button" className="gt-primary-button" onClick={() => window.open(String(current.attributes?.google_maps_uri), "_blank", "noopener,noreferrer")}>Відкрити всі відгуки в Google</button> : null}
-        </section></div> : null}
       </main>
     </div>
   );
@@ -1768,7 +1769,7 @@ function TransferScreen({ navigate }: { navigate: Navigate }) {
         <MapStrip real places={places} />
         <SectionTitle title="Трансфери поруч" action={`${display.length}`} />
         <div className="gt-transfer-reference-list">
-          {display.map((place, index) => <TransferReferenceRow key={`${place.title}-${index}`} place={place} onClick={places[index] ? () => { runtime.setSelectedPlaceId(places[index].id); navigate("tourist", "place"); } : undefined} />)}
+          {display.map((place, index) => <TransferReferenceRow key={`${place.title}-${index}`} place={place} onClick={places[index] ? () => { runtime.setSelectedPlace(places[index]); navigate("tourist", "place"); } : undefined} />)}
           {transferLoading && !display.length ? Array.from({ length: 4 }).map((_, index) => <div className="gt-transfer-reference-row gt-place-row--skeleton" key={`transfer-loading-${index}`}><span className="gt-place-row__skeleton-photo"/><span className="gt-place-row__skeleton-copy"><i/><i/><i/></span></div>) : null}
         </div>
         {apiLoaded && !transferLoading && !places.length ? <div className="gt-stage2-empty">За цими фільтрами трансферів не знайдено</div> : null}
@@ -2717,7 +2718,7 @@ function FavoritesScreen({ navigate }: { navigate: Navigate }) {
       <main className="gt-content">
         <div className="gt-page-heading"><span className="gt-tone--red"><Heart size={23} /></span><div><h1>Улюблені</h1><p>Збережені місця</p></div></div>
         <div className="gt-place-list">
-          {places.map((place) => <PlaceRow key={place.id} photo={placePhotoFallback(place)} imageUrl={place.image_url} google={place.source === "google" || place.attributes?.google === true} googlePlaceId={googlePlaceId(place)} title={place.name} subtitle={place.subcategory || place.category_name || "Локація"} rating={`${Number(place.rating || 0).toFixed(1)} (${place.review_count || 0})`} distance="" walk="" tags={visiblePlaceTags(place)} onClick={() => { runtime.setSelectedPlaceId(place.id); navigate("tourist", "place"); }} />)}
+          {places.map((place) => <PlaceRow key={place.id} photo={placePhotoFallback(place)} imageUrl={place.image_url} google={place.source === "google" || place.attributes?.google === true} googlePlaceId={googlePlaceId(place)} title={place.name} subtitle={place.subcategory || place.category_name || "Локація"} rating={`${Number(place.rating || 0).toFixed(1)} (${place.review_count || 0})`} distance="" walk="" tags={visiblePlaceTags(place)} onClick={() => { runtime.setSelectedPlace(place); navigate("tourist", "place"); }} />)}
           {!places.length ? <div className="gt-stage2-empty">Ще немає збережених місць. Відкрийте картку закладу та натисніть «Зберегти».</div> : null}
         </div>
       </main>

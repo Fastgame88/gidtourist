@@ -92,6 +92,7 @@ type TelegramWindow = Window & { Telegram?: { WebApp?: TelegramWebApp } };
 
 const TOKEN_KEY = "gid-tourist-stage2-session";
 const SELECTED_PLACE_KEY = "gid-tourist-selected-place";
+const SELECTED_PLACE_PREVIEW_KEY = "gid-tourist-selected-place-preview";
 const PHOTO_HYDRATION_ATTEMPT_PREFIX = "gid-tourist-photo-hydration:";
 
 let lastTelegramAuthError = "";
@@ -162,10 +163,26 @@ export function selectedPlaceId() {
   return window.sessionStorage.getItem(SELECTED_PLACE_KEY) ?? "";
 }
 
+export function selectedPlacePreview() {
+  if (typeof window === "undefined") return null as Stage2Place | null;
+  try {
+    const raw = window.sessionStorage.getItem(SELECTED_PLACE_PREVIEW_KEY);
+    return raw ? JSON.parse(raw) as Stage2Place : null;
+  } catch {
+    return null;
+  }
+}
+
 export function setSelectedPlaceIdStorage(id: string) {
   if (typeof window === "undefined") return;
   if (id) window.sessionStorage.setItem(SELECTED_PLACE_KEY, id);
   else window.sessionStorage.removeItem(SELECTED_PLACE_KEY);
+}
+
+export function setSelectedPlacePreviewStorage(place: Stage2Place | null) {
+  if (typeof window === "undefined") return;
+  if (place) window.sessionStorage.setItem(SELECTED_PLACE_PREVIEW_KEY, JSON.stringify(place));
+  else window.sessionStorage.removeItem(SELECTED_PLACE_PREVIEW_KEY);
 }
 
 async function stage2Request(path: string, init: RequestInit = {}, token = "") {

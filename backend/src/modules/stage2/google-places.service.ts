@@ -14,9 +14,16 @@ export type GoogleNearbyPlace = {
   priceLevel?: string;
   regularOpeningHours?: { openNow?: boolean; weekdayDescriptions?: string[] };
   googleMapsUri?: string;
+  googleMapsLinks?: {
+    placeUri?: string;
+    directionsUri?: string;
+    writeAReviewUri?: string;
+    reviewsUri?: string;
+    photosUri?: string;
+  };
   websiteUri?: string;
   nationalPhoneNumber?: string;
-  photos?: Array<{ name?: string }>;
+  photos?: Array<{ name?: string; authorAttributions?: Array<{ displayName?: string; uri?: string; photoUri?: string }> }>;
   reviews?: Array<{
     rating?: number;
     text?: { text?: string; languageCode?: string };
@@ -210,7 +217,7 @@ export class GooglePlacesService {
   }
 
   async details(placeId: string): Promise<GoogleNearbyPlace> {
-    const fieldMask = "id,displayName,formattedAddress,location,addressComponents,types,primaryType,primaryTypeDisplayName,rating,userRatingCount,priceLevel,regularOpeningHours,googleMapsUri,websiteUri,nationalPhoneNumber,photos,reviews";
+    const fieldMask = "id,displayName,formattedAddress,location,addressComponents,types,primaryType,primaryTypeDisplayName,rating,userRatingCount,priceLevel,regularOpeningHours,googleMapsUri,googleMapsLinks,websiteUri,nationalPhoneNumber,photos,reviews";
     const fetchDetails = (localized: boolean) => this.googleFetch<GoogleNearbyPlace>(
       `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?${localized ? "languageCode=uk&" : ""}regionCode=UA`,
       { method: "GET", headers: { "X-Goog-FieldMask": fieldMask } },
@@ -237,12 +244,21 @@ export class GooglePlacesService {
   }
 
   async photoData(photoName: string) {
-    const uri = await this.photoUri(photoName);
-    const response = await fetch(uri, { redirect: "follow" });
+    const clean = photoName.trim().replace(/^\/+/, "");
+    if (!clean || !/^places\/[^/]+\/photos\/[^/]+/.test(clean)) throw new BadGatewayException("Invalid Google photo name");
+    const key = this.key();
+    if (!key) throw new BadGatewayException("GOOGLE_MAPS_SERVER_API_KEY is not configured");
+
+    // Request the media endpoint directly with a fresh photo resource name. This avoids keeping
+    // short-lived Google image URLs in the client and lets the server follow Google's redirect.
+    const mediaUrl = `https://places.googleapis.com/v1/${clean}/media?maxWidthPx=1200&maxHeightPx=900&key=${encodeURIComponent(key)}`;
+    const response = await fetch(mediaUrl, { redirect: "follow", headers: { Accept: "image/avif,image/webp,image/*,*/*" } });
     if (!response.ok) throw new BadGatewayException(`Google photo ${response.status}`);
     const buffer = Buffer.from(await response.arrayBuffer());
     if (!buffer.length) throw new BadGatewayException("Google photo is empty");
-    return { buffer, contentType: response.headers.get("content-type") || "image/jpeg" };
+    const contentType = response.headers.get("content-type") || "image/jpeg";
+    if (!contentType.toLowerCase().startsWith("image/")) throw new BadGatewayException("Google photo response is not an image");
+    return { buffer, contentType };
   }
 
   async placePhotoData(placeId: string) {
@@ -250,9 +266,14 @@ export class GooglePlacesService {
       `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=uk&regionCode=UA`,
       { method: "GET", headers: { "X-Goog-FieldMask": "photos" } },
     );
-    const photoName = place.photos?.find((photo) => Boolean(photo.name))?.name;
-    if (!photoName) throw new BadGatewayException("Google place has no photo");
-    return this.photoData(photoName);
+    const photoNames = (place.photos ?? []).map((photo) => photo.name?.trim() || "").filter(Boolean).slice(0, 5);
+    if (!photoNames.length) throw new BadGatewayException("Google place has no photo");
+    let lastError: unknown;
+    for (const photoName of photoNames) {
+      try { return await this.photoData(photoName); }
+      catch (error) { lastError = error; }
+    }
+    throw lastError instanceof Error ? lastError : new BadGatewayException("Google place photos are unavailable");
   }
 
 
@@ -290,7 +311,7 @@ export class GooglePlacesService {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.types,places.primaryType,places.primaryTypeDisplayName,places.rating,places.userRatingCount,places.priceLevel,places.regularOpeningHours,places.googleMapsUri,places.websiteUri,places.nationalPhoneNumber,places.photos",
+          "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.types,places.primaryType,places.primaryTypeDisplayName,places.rating,places.userRatingCount,places.priceLevel,places.regularOpeningHours,places.googleMapsUri,places.googleMapsLinks,places.websiteUri,places.nationalPhoneNumber,places.photos",
         },
         body: JSON.stringify({
           includedTypes: types,
