@@ -329,6 +329,8 @@ export class Stage2Service {
     const googleLimit = Math.max(1, Math.min(Number(params.google_limit ?? 20) || 20, 40));
     const googleSpread = String(params.google_spread ?? "") === "true";
     const includeRoutes = String(params.include_routes ?? "true") !== "false";
+    const debugGoogle = String(params.debug_google ?? "") === "true";
+    const googleRequested = String(params.include_google ?? "") === "true";
 
     let rows = await this.rawPlaces(regionId);
     rows = rows.filter((p) => !category || p.category_slug === category);
@@ -347,11 +349,24 @@ export class Stage2Service {
     });
     const filtered = radius != null ? mapped.filter((p) => p.distance_m != null && p.distance_m <= radius) : mapped;
     const partnerRows = filtered.map((p) => ({ ...p, source: "partner" as const, is_partner: p.attributes?.partner === true }));
-    const includeGoogle = String(params.include_google ?? "") === "true" && lat != null && lng != null && radius != null && this.google.enabled();
+
+    if (debugGoogle && googleRequested) {
+      if (lat == null || lng == null || radius == null) {
+        throw new BadRequestException(`Google Places не запущено: некоректні координати або радіус (lat=${String(params.lat ?? "")}, lng=${String(params.lng ?? "")}, radius=${String(params.radius ?? "")})`);
+      }
+      if (!this.google.enabled()) {
+        throw new BadGatewayException("Google Places не запущено: на backend відсутній GOOGLE_MAPS_SERVER_API_KEY / GOOGLE_MAPS_API_KEY");
+      }
+    }
+
+    const includeGoogle = googleRequested && lat != null && lng != null && radius != null && this.google.enabled();
     if (includeGoogle) {
       const googleSection = String(params.google_section ?? (category || "all"));
       try {
         const googlePlaces = await this.google.nearby(lat!, lng!, radius!, googleSection, subcategory, googleLimit, googleSpread);
+        if (debugGoogle && googlePlaces.length === 0 && partnerRows.length === 0) {
+          throw new BadGatewayException(`Google Places повернув 0 місць (section=${googleSection}, subcategory=${subcategory || "—"}, radius=${Math.round(radius!)} м, lat=${lat!.toFixed(6)}, lng=${lng!.toFixed(6)})`);
+        }
         const external = googlePlaces.map((item) => this.googlePlaceToStage2(item, lat!, lng!));
         const selectedQuery = q.toLocaleLowerCase("uk");
         const filteredExternal = external.filter((place) => !subcategory || this.google.matchesSubcategory(subcategory, String(place.tags[0] ?? ""), place.tags))
@@ -372,7 +387,13 @@ export class Stage2Service {
         }
         combined.sort((a, b) => (a.distance_m ?? 1e12) - (b.distance_m ?? 1e12) || Number(b.rating) - Number(a.rating));
         return combined;
-      } catch {
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`[Google Places /places diagnostic] ${message}`);
+        if (debugGoogle) {
+          if (error instanceof BadGatewayException || error instanceof BadRequestException) throw error;
+          throw new BadGatewayException(`Google Places не завантажив місця: ${message}`);
+        }
         // Google Places is optional; partner catalog must remain available if quota/key is unavailable.
       }
     }
