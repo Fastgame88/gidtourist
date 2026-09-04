@@ -218,6 +218,10 @@ export class Stage2Service {
     return this.google.photoData(photoName);
   }
 
+  async googlePhotoUri(photoName: string) {
+    return { photo_url: await this.google.photoUri(photoName) };
+  }
+
   async googlePlacePhoto(placeId: string) {
     if (!placeId.trim()) throw new BadRequestException("Google place id is required");
     return this.google.placePhotoData(placeId.trim());
