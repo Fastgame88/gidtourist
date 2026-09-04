@@ -342,17 +342,80 @@ function googleReviewsUri(place?: Stage2Place | null) {
   return placeId ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name || place.address || `${place.lat},${place.lng}`)}&query_place_id=${encodeURIComponent(placeId)}` : "";
 }
 
-function RemotePlaceImage({ url, alt = "", className, google = false, googlePlaceId: googleId = "", eager = false, fallback }: { url?: string | null; alt?: string; className: string; google?: boolean; googlePlaceId?: string; eager?: boolean; fallback?: ReactNode }) {
+function photoDiagnosticMessage(raw: string, status?: number, contentType?: string) {
+  const clean = raw.replace(/\s+/g, " ").trim();
+  const lower = clean.toLowerCase();
+  if (lower.includes("google_maps_server_api_key is not configured")) return "На сервері не налаштовано GOOGLE_MAPS_SERVER_API_KEY.";
+  if (status === 403 || lower.includes("permission_denied") || lower.includes("forbidden") || lower.includes("api key")) return "Google заборонив доступ до фото (403). Перевірте API key, Places API (New), Billing та API restrictions.";
+  if (status === 429 || lower.includes("resource_exhausted") || lower.includes("quota")) return "Вичерпано квоту Google Places / Place Photos (429). Перевірте Billing і ліміти API.";
+  if (status === 404 || lower.includes("not found")) return "Google не знайшов це фото або ресурс фото вже недоступний (404).";
+  if (lower.includes("has no photo") || lower.includes("no photo")) return "Для цього Place ID Google не повернув жодної фотографії.";
+  if (lower.includes("invalid google photo name")) return "Google повернув некоректний ідентифікатор фотографії.";
+  if (lower.includes("response is not an image")) return "Google відповів успішно, але повернув не зображення.";
+  if (lower.includes("photo is empty")) return "Google повернув порожній файл фотографії.";
+  if (status && status >= 500) return `Помилка сервера фото (HTTP ${status})${clean ? `: ${clean}` : "."}`;
+  if (clean) return `Помилка фото${status ? ` (HTTP ${status})` : ""}: ${clean.slice(0, 220)}`;
+  if (contentType && !contentType.toLowerCase().startsWith("image/")) return `Сервер повернув неправильний Content-Type: ${contentType}.`;
+  return "Причину не вдалося визначити. Перевірте Google Places API та серверні логи.";
+}
+
+async function diagnoseRemoteImage(url: string) {
+  try {
+    const separator = url.includes("?") ? "&" : "?";
+    const response = await fetch(`${url}${separator}diagnostic=1&_=${Date.now()}`, { cache: "no-store" });
+    const contentType = response.headers.get("content-type") || "";
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      let message = body;
+      try {
+        const json = JSON.parse(body) as { message?: string | string[]; error?: string };
+        if (Array.isArray(json.message)) message = json.message.join("; ");
+        else if (typeof json.message === "string") message = json.message;
+        else if (typeof json.error === "string") message = json.error;
+      } catch { /* keep raw response text */ }
+      return photoDiagnosticMessage(message, response.status, contentType);
+    }
+    const buffer = await response.arrayBuffer();
+    if (!buffer.byteLength) return "Сервер повернув порожній файл фотографії.";
+    if (!contentType.toLowerCase().startsWith("image/")) return photoDiagnosticMessage("", response.status, contentType);
+    return `Сервер отримав фото (${contentType}, ${Math.max(1, Math.round(buffer.byteLength / 1024))} КБ), але Telegram/Safari не зміг його відобразити. Перевірте формат зображення та заголовки відповіді.`;
+  } catch (error) {
+    return `Не вдалося звернутися до сервісу фото: ${error instanceof Error ? error.message : "мережева помилка"}.`;
+  }
+}
+
+function RemotePlaceImage({ url, alt = "", className, google = false, googlePlaceId: googleId = "", eager = false, fallback, diagnostics = false }: { url?: string | null; alt?: string; className: string; google?: boolean; googlePlaceId?: string; eager?: boolean; fallback?: ReactNode; diagnostics?: boolean }) {
   const fallbackUrl = google && googleId ? `/api/stage2/google/place-photo?id=${encodeURIComponent(googleId)}` : "";
   // For Google places prefer the Place-ID endpoint. It asks Google for a fresh photo resource name
   // and avoids stale photo URLs cached from an earlier Nearby Search response.
   const candidates = (google ? [fallbackUrl, url || ""] : [url || ""])
     .filter((value, index, list) => Boolean(value) && list.indexOf(value) === index);
   const [candidateIndex, setCandidateIndex] = useState(0);
-  useEffect(() => { setCandidateIndex(0); }, [url, fallbackUrl]);
+  const [diagnostic, setDiagnostic] = useState("");
+  const [diagnosing, setDiagnosing] = useState(false);
+  useEffect(() => {
+    setCandidateIndex(0);
+    setDiagnostic("");
+    setDiagnosing(false);
+  }, [url, fallbackUrl]);
   const activeUrl = candidates[candidateIndex];
-  if (activeUrl) return <img src={activeUrl} alt={alt} className={className} loading={eager ? "eager" : "lazy"} decoding="async" onError={() => setCandidateIndex((index) => index + 1)} />;
-  if (google) return <span className={`${className} gt-real-place-image-placeholder`} aria-label="Фото Google недоступне"><ImageIcon size={25} /></span>;
+
+  const handleImageError = () => {
+    const failedUrl = activeUrl;
+    const nextIndex = candidateIndex + 1;
+    setCandidateIndex(nextIndex);
+    if (!diagnostics || !google || nextIndex < candidates.length || !failedUrl) return;
+    setDiagnosing(true);
+    void diagnoseRemoteImage(failedUrl).then((message) => setDiagnostic(message)).finally(() => setDiagnosing(false));
+  };
+
+  if (activeUrl) return <img src={activeUrl} alt={alt} className={className} loading={eager ? "eager" : "lazy"} decoding="async" onError={handleImageError} />;
+  if (google) return (
+    <span className={`${className} gt-real-place-image-placeholder ${diagnostics ? "gt-real-place-image-placeholder--diagnostic" : ""}`} aria-label="Фото Google недоступне">
+      <ImageIcon size={25} />
+      {diagnostics ? <span className="gt-photo-diagnostic"><strong>Фото не завантажилось</strong><small>{diagnosing ? "Перевіряємо причину…" : diagnostic || "Google не повернув зображення."}</small></span> : null}
+    </span>
+  );
   return <>{fallback ?? <span className={`${className} gt-real-place-image-placeholder`}><ImageIcon size={25} /></span>}</>;
 }
 
@@ -1605,7 +1668,7 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
   return (
     <div className="tourist-screen gt-screen">
       <section className={`gt-place-hero ${current.image_url ? "has-real-photo" : ""}`}>
-        {current.image_url || current.source === "google" ? <RemotePlaceImage key={current.id} url={current.image_url} alt={current.name} className="gt-place-hero__image" google={current.source === "google" || current.attributes?.google === true} googlePlaceId={googlePlaceId(current)} eager /> : null}
+        {current.image_url || current.source === "google" ? <RemotePlaceImage key={current.id} url={current.image_url} alt={current.name} className="gt-place-hero__image" google={current.source === "google" || current.attributes?.google === true} googlePlaceId={googlePlaceId(current)} eager diagnostics /> : null}
         <span className="gt-place-hero__shade" aria-hidden="true" />
         {current.attributes?.verified === true ? <span className="gt-pill gt-pill--glass"><BadgeCheck size={16} /> Перевірено</span> : null}
         <div>

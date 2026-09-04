@@ -253,7 +253,15 @@ export class GooglePlacesService {
     // short-lived Google image URLs in the client and lets the server follow Google's redirect.
     const mediaUrl = `https://places.googleapis.com/v1/${clean}/media?maxWidthPx=1200&maxHeightPx=900&key=${encodeURIComponent(key)}`;
     const response = await fetch(mediaUrl, { redirect: "follow", headers: { Accept: "image/avif,image/webp,image/*,*/*" } });
-    if (!response.ok) throw new BadGatewayException(`Google photo ${response.status}`);
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      let detail = body.trim();
+      try {
+        const parsed = JSON.parse(body) as { error?: { message?: string; status?: string }; message?: string };
+        detail = parsed.error?.message?.trim() || parsed.error?.status?.trim() || parsed.message?.trim() || detail;
+      } catch { /* keep raw Google response */ }
+      throw new BadGatewayException(`Google Place Photos ${response.status}: ${detail || response.statusText || "request failed"}`);
+    }
     const buffer = Buffer.from(await response.arrayBuffer());
     if (!buffer.length) throw new BadGatewayException("Google photo is empty");
     const contentType = response.headers.get("content-type") || "image/jpeg";

@@ -28815,3 +28815,35 @@ button.gt-amenities-row {
   .gt-map-place-preview__image { width:82px; height:96px; }
   .gt-place-row__skeleton-photo { width:92px; height:86px; }
 }
+
+/* ===== 2026-09-04 Google place photo diagnostics (venue hero only) ===== */
+.gt-place-hero__image.gt-real-place-image-placeholder--diagnostic {
+  flex-direction: column;
+  gap: 9px;
+  padding: 28px 24px 74px;
+  box-sizing: border-box;
+  text-align: center;
+}
+.gt-place-hero__image.gt-real-place-image-placeholder--diagnostic > svg {
+  flex: 0 0 auto;
+  opacity: .75;
+}
+.gt-photo-diagnostic {
+  display: grid;
+  max-width: 330px;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.78);
+  color: #38453d;
+  box-shadow: 0 4px 14px rgba(21,38,28,.08);
+}
+.gt-photo-diagnostic strong {
+  font-size: 12px;
+  line-height: 1.2;
+}
+.gt-photo-diagnostic small {
+  font-size: 9.5px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
