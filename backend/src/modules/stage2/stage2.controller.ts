@@ -35,6 +35,11 @@ export class Stage2Controller {
     return response.send(photo.buffer);
   }
 
+  @Get("google/photo-uri")
+  googlePhotoUri(@Query("name") name = "") {
+    return this.service.googlePhotoUri(name);
+  }
+
   @Get("google/place-photo")
   async googlePlacePhoto(@Query("id") id = "", @Res() response: any) {
     const photo = await this.service.googlePlacePhoto(id);

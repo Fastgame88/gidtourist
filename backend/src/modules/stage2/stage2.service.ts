@@ -142,6 +142,7 @@ export class Stage2Service {
     const placeLng = Number(location?.longitude ?? 0);
     const section = this.google.mapSection(place.primaryType ?? "", place.types ?? []);
     const distance = lat != null && lng != null && placeLat && placeLng ? distanceMeters(lat, lng, placeLat, placeLng) : null;
+    const googlePhotoName = place.photos?.[0]?.name?.trim() || "";
     return {
       id: `google_${place.id}`,
       region_id: "google",
@@ -156,9 +157,9 @@ export class Stage2Service {
       phone: place.nationalPhoneNumber ?? null,
       telegram: null,
       website: place.websiteUri ?? null,
-      // Resolve photos by Place ID on every image request instead of persisting a photo resource
-      // name in the client. Google photo names can expire, while Place IDs remain the stable key.
-      image_url: place.id ? `/api/stage2/google/place-photo?id=${encodeURIComponent(place.id)}` : null,
+      // Google list/map payloads never auto-load media. After a user opens one place, the
+      // fresh resource name below is resolved once by the dedicated photo-URI endpoint.
+      image_url: null,
       rating: Number(place.rating ?? 0),
       review_count: Number(place.userRatingCount ?? 0),
       price_level: null,
@@ -176,7 +177,8 @@ export class Stage2Service {
         google_reviews_uri: place.googleMapsLinks?.reviewsUri ?? null,
         google_photos_uri: place.googleMapsLinks?.photosUri ?? null,
         google_phone: place.nationalPhoneNumber ?? null,
-        google_reviews: place.reviews ?? [],
+        google_photo_name: googlePhotoName || null,
+        google_reviews: [],
         google_weekday_descriptions: place.regularOpeningHours?.weekdayDescriptions ?? [],
       },
       translations: {},
@@ -199,7 +201,7 @@ export class Stage2Service {
   }
 
   async geoDetails(placeId: string) {
-    const place = await this.google.details(placeId);
+    const place = await this.google.addressDetails(placeId);
     const components = place.addressComponents ?? [];
     const pick = (...types: string[]) => components.find((item) => types.some((type) => item.types?.includes(type)))?.longText ?? "";
     return {
@@ -216,6 +218,10 @@ export class Stage2Service {
 
   async googlePhoto(photoName: string) {
     return this.google.photoData(photoName);
+  }
+
+  async googlePhotoUri(photoName: string) {
+    return { photo_url: await this.google.photoUri(photoName) };
   }
 
   async googlePlacePhoto(placeId: string) {
