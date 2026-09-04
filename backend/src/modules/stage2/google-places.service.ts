@@ -139,13 +139,6 @@ export class GooglePlacesService {
 
   enabled() { return Boolean(this.key()); }
 
-  // Short-lived in-memory caches prevent repeated paid Google calls caused by UI re-renders
-  // while keeping Places data fresh. These caches disappear on backend restart.
-  private readonly detailsCache = new Map<string, { value: GoogleNearbyPlace; expiresAt: number }>();
-  private readonly nearbyCache = new Map<string, { value: GoogleNearbyPlace[]; expiresAt: number }>();
-  private readonly detailsCacheTtlMs = 10 * 60 * 1000;
-  private readonly nearbyCacheTtlMs = 5 * 60 * 1000;
-
   private async googleFetch<T>(url: string, init: RequestInit): Promise<T> {
     const key = this.key();
     if (!key) throw new BadGatewayException("GOOGLE_MAPS_SERVER_API_KEY is not configured");
@@ -224,35 +217,22 @@ export class GooglePlacesService {
   }
 
   async details(placeId: string): Promise<GoogleNearbyPlace> {
-    const cleanId = placeId.trim();
-    const cached = this.detailsCache.get(cleanId);
-    if (cached && cached.expiresAt > Date.now()) return cached.value;
-
     const fieldMask = "id,displayName,formattedAddress,location,addressComponents,types,primaryType,primaryTypeDisplayName,rating,userRatingCount,priceLevel,regularOpeningHours,googleMapsUri,googleMapsLinks,websiteUri,nationalPhoneNumber,photos,reviews";
     const fetchDetails = (localized: boolean) => this.googleFetch<GoogleNearbyPlace>(
-      `https://places.googleapis.com/v1/places/${encodeURIComponent(cleanId)}?${localized ? "languageCode=uk&" : ""}regionCode=UA`,
+      `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?${localized ? "languageCode=uk&" : ""}regionCode=UA`,
       { method: "GET", headers: { "X-Goog-FieldMask": fieldMask } },
     );
     const primary = await fetchDetails(true);
     const hasReviewText = primary.reviews?.some((review) => Boolean(review.text?.text?.trim() || review.originalText?.text?.trim()));
-    let resolved = primary;
     if (Number(primary.userRatingCount ?? 0) > 0 && !hasReviewText) {
       try {
         const fallback = await fetchDetails(false);
         if (fallback.reviews?.some((review) => Boolean(review.text?.text?.trim() || review.originalText?.text?.trim()))) {
-          resolved = { ...primary, reviews: fallback.reviews };
+          return { ...primary, reviews: fallback.reviews };
         }
       } catch { /* localized details remain usable */ }
     }
-    this.detailsCache.set(cleanId, { value: resolved, expiresAt: Date.now() + this.detailsCacheTtlMs });
-    return resolved;
-  }
-
-  async addressDetails(placeId: string): Promise<GoogleNearbyPlace> {
-    return this.googleFetch<GoogleNearbyPlace>(
-      `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=uk&regionCode=UA`,
-      { method: "GET", headers: { "X-Goog-FieldMask": "id,formattedAddress,location,addressComponents" } },
-    );
+    return primary;
   }
 
   async photoUri(photoName: string) {
@@ -266,15 +246,14 @@ export class GooglePlacesService {
   async photoData(photoName: string) {
     const clean = photoName.trim().replace(/^\/+/, "");
     if (!clean || !/^places\/[^/]+\/photos\/[^/]+/.test(clean)) throw new BadGatewayException("Invalid Google photo name");
+    const key = this.key();
+    if (!key) throw new BadGatewayException("GOOGLE_MAPS_SERVER_API_KEY is not configured");
 
-    // Ask Places Photos for the current Google-hosted media URL, then download that URL.
-    // This avoids relying on redirect/header behaviour and keeps the API key off the image host.
-    const mediaUrl = await this.photoUri(clean);
-    const response = await fetch(mediaUrl, { headers: { Accept: "image/avif,image/webp,image/*,*/*" } });
-    if (!response.ok) {
-      const body = await response.text().catch(() => "");
-      throw new BadGatewayException(`Google photo media ${response.status}: ${body || response.statusText}`);
-    }
+    // Request the media endpoint directly with a fresh photo resource name. This avoids keeping
+    // short-lived Google image URLs in the client and lets the server follow Google's redirect.
+    const mediaUrl = `https://places.googleapis.com/v1/${clean}/media?maxWidthPx=1200&maxHeightPx=900&key=${encodeURIComponent(key)}`;
+    const response = await fetch(mediaUrl, { redirect: "follow", headers: { Accept: "image/avif,image/webp,image/*,*/*" } });
+    if (!response.ok) throw new BadGatewayException(`Google photo ${response.status}`);
     const buffer = Buffer.from(await response.arrayBuffer());
     if (!buffer.length) throw new BadGatewayException("Google photo is empty");
     const contentType = response.headers.get("content-type") || "image/jpeg";
@@ -282,11 +261,11 @@ export class GooglePlacesService {
     return { buffer, contentType };
   }
 
-
   async placePhotoData(placeId: string) {
-    // Reuse the cached full Place Details response when available. This avoids a second
-    // Place Details call just to obtain photos after the user has opened the same place.
-    const place = await this.details(placeId);
+    const place = await this.googleFetch<{ photos?: Array<{ name?: string }> }>(
+      `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=uk&regionCode=UA`,
+      { method: "GET", headers: { "X-Goog-FieldMask": "photos" } },
+    );
     const photoNames = (place.photos ?? []).map((photo) => photo.name?.trim() || "").filter(Boolean).slice(0, 5);
     if (!photoNames.length) throw new BadGatewayException("Google place has no photo");
     let lastError: unknown;
@@ -323,17 +302,9 @@ export class GooglePlacesService {
   }
 
   async nearby(lat: number, lng: number, radius: number, section = "all", subcategory = "", limit = 20, spread = false): Promise<GoogleNearbyPlace[]> {
-    const cacheKey = [lat.toFixed(3), lng.toFixed(3), Math.round(radius), section, subcategory, limit, spread ? "spread" : "near"].join(":");
-    const cached = this.nearbyCache.get(cacheKey);
-    if (cached && cached.expiresAt > Date.now()) return cached.value;
-
-    const remember = (value: GoogleNearbyPlace[]) => {
-      this.nearbyCache.set(cacheKey, { value, expiresAt: Date.now() + this.nearbyCacheTtlMs });
-      return value;
-    };
     const subcategoryTypes = SUBCATEGORY_TYPES[subcategory] ?? [];
     const types = subcategoryTypes.length ? subcategoryTypes : section === "all" ? Array.from(new Set(Object.values(NEARBY_TYPES).flat())).slice(0, 50) : (NEARBY_TYPES[section] ?? []);
-    if (!types.length) return remember([]);
+    if (!types.length) return [];
 
     const search = async (centerLat: number, centerLng: number, searchRadius: number, maxResultCount: number, rankPreference: "DISTANCE" | "POPULARITY") => {
       const data = await this.googleFetch<{ places?: GoogleNearbyPlace[] }>("https://places.googleapis.com/v1/places:searchNearby", {
@@ -357,7 +328,7 @@ export class GooglePlacesService {
     if (!spread || radius < 1000 || limit < 12 || subcategory) {
       // Lists in the tourist UI are proximity-first. Keeping DISTANCE here prevents a larger
       // radius from replacing nearby 300–500 m places with more popular but farther results.
-      return remember(await search(lat, lng, radius, limit, "DISTANCE"));
+      return search(lat, lng, radius, limit, "DISTANCE");
     }
 
     // For 1–5 km discovery always reserve the center query for the nearest places first, then
@@ -397,7 +368,7 @@ export class GooglePlacesService {
       }
       if (selected.length >= limit) break;
     }
-    return remember(selected.slice(0, limit));
+    return selected.slice(0, limit);
   }
 
   async walkingMatrix(originLat: number, originLng: number, destinations: Array<{ id: string; lat: number; lng: number }>) {
