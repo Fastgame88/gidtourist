@@ -146,6 +146,8 @@ export function RealMap({
   pickable = false,
   compact = false,
   preferLeaflet = false,
+  showCenterMarker = true,
+  showRadius = true,
 }: {
   center: { lat: number; lng: number };
   places: Stage2Place[];
@@ -157,6 +159,10 @@ export function RealMap({
   compact?: boolean;
   /** Use OpenStreetMap/Leaflet first. Useful for the admin point picker so it works even when a browser Google key is restricted. */
   preferLeaflet?: boolean;
+  /** Hide the blue center marker for a clean point-picking map. */
+  showCenterMarker?: boolean;
+  /** Hide the distance-radius circle for a clean point-picking map. */
+  showRadius?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const runtimeRef = useRef<MapRuntime | null>(null);
@@ -205,14 +211,14 @@ export function RealMap({
         backgroundColor: "#edf4ef",
         styles: GOOGLE_MAP_STYLES,
       });
-      const circle = compact ? null : new maps.Circle({ map, center, radius, strokeColor: "#13a55b", strokeOpacity: .42, strokeWeight: 1, fillColor: "#13a55b", fillOpacity: .045 });
-      const user = new maps.Marker({
+      const circle = compact || !showRadius ? null : new maps.Circle({ map, center, radius, strokeColor: "#13a55b", strokeOpacity: .42, strokeWeight: 1, fillColor: "#13a55b", fillOpacity: .045 });
+      const user = showCenterMarker ? new maps.Marker({
         map,
         position: center,
         title: "Ваше місцезнаходження",
         zIndex: 1000,
         icon: { path: maps.SymbolPath.CIRCLE, scale: compact ? 5 : 7, fillColor: "#1677ff", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 3 },
-      });
+      }) : null;
       const runtime: MapRuntime = { provider: "google", map, api: maps, user, circle, picked: null, markers: [], markerById: new Map() };
       if (pickable && !compact) {
         runtime.clickListener = map.addListener("click", (event: any) => {
@@ -233,8 +239,8 @@ export function RealMap({
       if (cancelled || !ref.current) return;
       const map = L.map(ref.current, { zoomControl: false, attributionControl: !compact, dragging: !compact, scrollWheelZoom: !compact }).setView([center.lat, center.lng], zoomForRadius(radius, compact));
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap contributors" }).addTo(map);
-      const circle = compact ? null : L.circle([center.lat, center.lng], { radius, color: "#20b364", weight: 1, opacity: 0.4, fillOpacity: 0.04 }).addTo(map);
-      const user = L.circleMarker([center.lat, center.lng], { radius: compact ? 5 : 8, color: "#ffffff", weight: 3, fillColor: "#1677ff", fillOpacity: 1 }).addTo(map).bindTooltip("Ваше місцезнаходження");
+      const circle = compact || !showRadius ? null : L.circle([center.lat, center.lng], { radius, color: "#20b364", weight: 1, opacity: 0.4, fillOpacity: 0.04 }).addTo(map);
+      const user = showCenterMarker ? L.circleMarker([center.lat, center.lng], { radius: compact ? 5 : 8, color: "#ffffff", weight: 3, fillColor: "#1677ff", fillOpacity: 1 }).addTo(map).bindTooltip("Ваше місцезнаходження") : null;
       const runtime: MapRuntime = { provider: "leaflet", map, api: L, user, circle, picked: null, markers: [], markerById: new Map() };
       if (pickable && !compact) {
         map.on("click", (event: any) => {
@@ -260,7 +266,7 @@ export function RealMap({
       host.replaceChildren();
     };
   // The map canvas is intentionally initialized once. Data/filters update markers below without rebuilding tiles.
-  }, [compact, pickable, preferLeaflet]);
+  }, [compact, pickable, preferLeaflet, showCenterMarker, showRadius]);
 
   useEffect(() => {
     const runtime = runtimeRef.current;

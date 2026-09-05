@@ -87,7 +87,7 @@ import {
 } from "../../lib/emergency-services";
 import type { RoleKey } from "../../lib/navigation";
 import { RealMap } from "../real-map";
-import { stage2Fetch, trackEvent, type Stage2Category, type Stage2Place, type Stage2Weather } from "../../lib/stage2-api";
+import { stage2Fetch, trackEvent, type Stage2Category, type Stage2GeoDetails, type Stage2Place, type Stage2Weather } from "../../lib/stage2-api";
 import { useTouristRuntime } from "../../lib/tourist-runtime";
 import { tr, translateKnownLabel, type TouristLanguage } from "../../lib/tourist-i18n";
 
@@ -597,7 +597,7 @@ function RemotePlaceImage({ url, alt = "", className, google = false, googlePlac
   if (google || diagnostics) return (
     <span className={`${className} gt-real-place-image-placeholder ${diagnostics ? "gt-real-place-image-placeholder--diagnostic" : ""}`} aria-label="Фото недоступне">
       <ImageIcon size={25} />
-      {diagnostics ? <span className="gt-photo-diagnostic"><strong>Фото не завантажилось</strong><small>{diagnosing ? "Перевіряємо причину…" : diagnostic || diagnosticHint || "Geoapify / OSM / Wikimedia / Outscraper не повернули зображення для цієї локації."}</small></span> : null}
+      {diagnostics ? <span className="gt-photo-diagnostic"><strong>Фото не завантажилось</strong><small>{diagnosing ? "Перевіряємо причину…" : diagnostic || diagnosticHint || "Geoapify / Wikipedia / Openverse / Outscraper не повернули зображення для цієї локації."}</small></span> : null}
     </span>
   );
   return <>{fallback ?? <span className={`${className} gt-real-place-image-placeholder`}><ImageIcon size={25} /></span>}</>;
@@ -2993,16 +2993,153 @@ function EmergencyScreen() {
   );
 }
 
+async function touristLocationImageToDataUrl(file: File) {
+  if (!file.type.startsWith("image/")) throw new Error("Оберіть JPG, PNG або WEBP");
+  if (file.size > 12 * 1024 * 1024) throw new Error("Одне фото має бути менше 12 МБ");
+  const source = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Не вдалося прочитати фото"));
+    reader.readAsDataURL(file);
+  });
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Не вдалося обробити фото"));
+    img.src = source;
+  });
+  const maxSide = 1280;
+  const scale = Math.min(1, maxSide / Math.max(image.naturalWidth || 1, image.naturalHeight || 1));
+  const width = Math.max(1, Math.round(image.naturalWidth * scale));
+  const height = Math.max(1, Math.round(image.naturalHeight * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  if (!context) return source;
+  context.drawImage(image, 0, 0, width, height);
+  return canvas.toDataURL("image/jpeg", 0.78);
+}
+
 function AddLocationScreen({ navigate }: { navigate: Navigate }) {
-  const [category, setCategory] = useState("Де поїсти");
-  const categories: Array<{ label: string; icon: LucideIcon; tone: string }> = [
-    { label: "Де поїсти", icon: Utensils, tone: "orange" },
-    { label: "Де купити", icon: ShoppingBag, tone: "blue" },
-    { label: "Відпочинок", icon: BedDouble, tone: "purple" },
-    { label: "Розваги", icon: Bike, tone: "violet" },
-    { label: "Природа", icon: MountainSnow, tone: "green" },
-    { label: "Корисне", icon: Info, tone: "yellow" },
+  const runtime = useTouristRuntime();
+  const categories: Array<{ label: string; slug: string; icon: LucideIcon; tone: string }> = [
+    { label: "Де поїсти", slug: "food", icon: Utensils, tone: "orange" },
+    { label: "Де купити", slug: "shop", icon: ShoppingBag, tone: "blue" },
+    { label: "Відпочинок", slug: "rest", icon: BedDouble, tone: "purple" },
+    { label: "Розваги", slug: "entertainment", icon: Bike, tone: "violet" },
+    { label: "Природа", slug: "nature", icon: MountainSnow, tone: "green" },
+    { label: "Корисне", slug: "useful", icon: Info, tone: "yellow" },
   ];
+  const initialCenter = useMemo(() => ({
+    lat: Number(runtime.location?.lat ?? runtime.context?.place?.lat ?? runtime.context?.region.lat ?? 48.34535),
+    lng: Number(runtime.location?.lng ?? runtime.context?.place?.lng ?? runtime.context?.region.lng ?? 24.57855),
+  }), [runtime.location?.lat, runtime.location?.lng, runtime.context?.place?.lat, runtime.context?.place?.lng, runtime.context?.region.lat, runtime.context?.region.lng]);
+
+  const [category, setCategory] = useState(categories[0]);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [phone, setPhone] = useState("");
+  const [website, setWebsite] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [regionName, setRegionName] = useState("");
+  const [selectedPoint, setSelectedPoint] = useState<{ lat: number; lng: number } | null>(null);
+  const [mapDraft, setMapDraft] = useState(initialCenter);
+  const [mapOpen, setMapOpen] = useState(false);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [locating, setLocating] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const photoInput = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!selectedPoint) setMapDraft(initialCenter);
+  }, [initialCenter.lat, initialCenter.lng]);
+
+  const resolvePoint = async (point: { lat: number; lng: number }, closeMap = false) => {
+    setSelectedPoint(point);
+    setMapDraft(point);
+    setError("");
+    try {
+      const details = await stage2Fetch<Stage2GeoDetails>(`/geo/reverse?lat=${encodeURIComponent(String(point.lat))}&lng=${encodeURIComponent(String(point.lng))}`);
+      setAddress(details.formatted_address || `${point.lat.toFixed(6)}, ${point.lng.toFixed(6)}`);
+      setCity(details.city || "");
+      setRegionName(details.region || "");
+    } catch (reason) {
+      setAddress(`${point.lat.toFixed(6)}, ${point.lng.toFixed(6)}`);
+      setError(`Точку обрано, але адресу не вдалося визначити автоматично: ${reason instanceof Error ? reason.message : "помилка геокодування"}`);
+    }
+    if (closeMap) setMapOpen(false);
+  };
+
+  const useMyLocation = async () => {
+    setLocating(true);
+    setError("");
+    try {
+      const point = await runtime.requestLocation();
+      if (!point) {
+        setError("Не вдалося отримати геолокацію. Дозвольте доступ до місцезнаходження в Telegram/браузері та повторіть.");
+        return;
+      }
+      await resolvePoint({ lat: point.lat, lng: point.lng });
+    } finally {
+      setLocating(false);
+    }
+  };
+
+  const choosePhotos = async (files: FileList | null) => {
+    if (!files?.length) return;
+    setError("");
+    try {
+      const remaining = Math.max(0, 6 - photos.length);
+      const selected = Array.from(files).slice(0, remaining);
+      const encoded = await Promise.all(selected.map(touristLocationImageToDataUrl));
+      setPhotos((current) => [...current, ...encoded].slice(0, 6));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Не вдалося додати фото");
+    } finally {
+      if (photoInput.current) photoInput.current.value = "";
+    }
+  };
+
+  const submit = async () => {
+    setError("");
+    setSuccess("");
+    if (!runtime.user) return setError("Щоб додати локацію, відкрийте Mini App через Telegram та авторизуйтеся.");
+    if (!name.trim()) return setError("Вкажіть назву локації.");
+    if (!selectedPoint) return setError("Оберіть точку на мапі або натисніть «Моє місце».");
+    setSaving(true);
+    try {
+      await stage2Fetch<{ ok: true; id: string; status: string }>("/me/place-submissions", {
+        method: "POST",
+        body: JSON.stringify({
+          name: name.trim(),
+          category_slug: category.slug,
+          subcategory: category.label,
+          description: description.trim(),
+          address: address.trim(),
+          city,
+          region_name: regionName,
+          region_id: runtime.context?.region.id,
+          lat: selectedPoint.lat,
+          lng: selectedPoint.lng,
+          phone: phone.trim(),
+          website: website.trim(),
+          image_url: photos[0] || null,
+          gallery: photos,
+        }),
+      });
+      setSuccess("Локацію надіслано на модерацію. Після перевірки вона зʼявиться у гіді.");
+      setName(""); setDescription(""); setPhone(""); setWebsite(""); setPhotos([]);
+      setSelectedPoint(null); setAddress(""); setCity(""); setRegionName("");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Не вдалося надіслати локацію");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="tourist-screen gt-screen gt-add-location-screen">
@@ -3017,6 +3154,9 @@ function AddLocationScreen({ navigate }: { navigate: Navigate }) {
           <em><ShieldCheck size={15} /> Модерація</em>
         </header>
 
+        {error ? <div className="gt-add-location-feedback is-error"><CircleHelp size={18} /><span>{error}</span></div> : null}
+        {success ? <div className="gt-add-location-feedback is-success"><Check size={18} /><span>{success}</span></div> : null}
+
         <section className="gt-add-location-section">
           <div className="gt-add-location-section__head">
             <span>1</span>
@@ -3025,24 +3165,27 @@ function AddLocationScreen({ navigate }: { navigate: Navigate }) {
 
           <label className="gt-add-location-field">
             <span>Назва локації <b>*</b></span>
-            <input type="text" placeholder="Наприклад, оглядовий майданчик Ягідна" />
+            <input type="text" value={name} onChange={(event) => setName(event.target.value)} placeholder="Наприклад, оглядовий майданчик Ягідна" />
           </label>
 
           <div className="gt-add-location-field">
             <span>Категорія <b>*</b></span>
             <div className="gt-add-location-categories">
-              {categories.map(({ label, icon: Icon, tone }) => (
-                <button
-                  type="button"
-                  key={label}
-                  className={`${category === label ? "is-active" : ""} is-${tone}`}
-                  onClick={() => setCategory(label)}
-                >
-                  <i><Icon size={19} /></i>
-                  <strong>{label}</strong>
-                  {category === label ? <Check size={16} /> : null}
-                </button>
-              ))}
+              {categories.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    type="button"
+                    key={item.slug}
+                    className={`${category.slug === item.slug ? "is-active" : ""} is-${item.tone}`}
+                    onClick={() => setCategory(item)}
+                  >
+                    <i><Icon size={19} /></i>
+                    <strong>{item.label}</strong>
+                    {category.slug === item.slug ? <Check size={16} /> : null}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </section>
@@ -3053,18 +3196,18 @@ function AddLocationScreen({ navigate }: { navigate: Navigate }) {
             <div><strong>Де знаходиться</strong><small>Вкажіть точку та адресу</small></div>
           </div>
 
-          <div className="gt-add-location-map-card">
+          <div className={`gt-add-location-map-card ${selectedPoint ? "has-point" : ""}`}>
             <div className="gt-add-location-map-card__map" aria-hidden="true">
               <i className="gt-add-location-map-card__river" />
               <i className="gt-add-location-map-card__road" />
               <span><MapPin size={22} /></span>
             </div>
             <div className="gt-add-location-map-card__copy">
-              <strong>Позначте місце на мапі</strong>
-              <small>Перетягніть точку або використайте поточну геолокацію.</small>
+              <strong>{selectedPoint ? "Точку обрано" : "Позначте місце на мапі"}</strong>
+              <small>{selectedPoint ? `${selectedPoint.lat.toFixed(5)}, ${selectedPoint.lng.toFixed(5)}` : "Оберіть свою геолокацію або поставте точку на чистій мапі."}</small>
               <div>
-                <button type="button"><LocateFixed size={17} /> Моє місце</button>
-                <button type="button" onClick={() => navigate("tourist", "nearby")}><Map size={17} /> Відкрити мапу</button>
+                <button type="button" disabled={locating} onClick={() => void useMyLocation()}><LocateFixed size={17} /> {locating ? "Визначаємо…" : "Моє місце"}</button>
+                <button type="button" onClick={() => { setMapDraft(selectedPoint || initialCenter); setMapOpen(true); }}><Map size={17} /> Обрати на мапі</button>
               </div>
             </div>
           </div>
@@ -3072,7 +3215,7 @@ function AddLocationScreen({ navigate }: { navigate: Navigate }) {
           <label className="gt-add-location-field gt-add-location-field--icon">
             <MapPin size={18} />
             <span>Адреса</span>
-            <input type="text" placeholder="вул., номер, населений пункт" />
+            <input type="text" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="вул., номер, населений пункт" />
           </label>
         </section>
 
@@ -3082,16 +3225,18 @@ function AddLocationScreen({ navigate }: { navigate: Navigate }) {
             <div><strong>Фото та опис</strong><small>Допоможіть туристам зрозуміти, що тут цікавого</small></div>
           </div>
 
-          <button type="button" className="gt-add-location-upload">
+          <input ref={photoInput} type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={(event) => void choosePhotos(event.target.files)} />
+          <button type="button" className="gt-add-location-upload" onClick={() => photoInput.current?.click()}>
             <i><Plus size={24} /></i>
-            <span><strong>Додати фотографії</strong><small>До 6 фото · JPG, PNG або WEBP</small></span>
+            <span><strong>{photos.length ? `Додано фото: ${photos.length}/6` : "Додати фотографії"}</strong><small>До 6 фото · JPG, PNG або WEBP</small></span>
             <ChevronRight size={19} />
           </button>
+          {photos.length ? <div className="gt-add-location-photo-grid">{photos.map((src, index) => <figure key={`${src.slice(0, 32)}-${index}`}><img src={src} alt={`Фото локації ${index + 1}`} /><button type="button" aria-label="Видалити фото" onClick={() => setPhotos((current) => current.filter((_, itemIndex) => itemIndex !== index))}><X size={14} /></button></figure>)}</div> : null}
 
           <label className="gt-add-location-field">
             <span>Короткий опис</span>
-            <textarea maxLength={500} placeholder="Що варто знати про це місце, чим воно цікаве, коли краще відвідати..." />
-            <small className="gt-add-location-counter">до 500 символів</small>
+            <textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={500} placeholder="Що варто знати про це місце, чим воно цікаве, коли краще відвідати..." />
+            <small className="gt-add-location-counter">{description.length}/500</small>
           </label>
         </section>
 
@@ -3101,8 +3246,8 @@ function AddLocationScreen({ navigate }: { navigate: Navigate }) {
             <div><strong>Контакти <em>необовʼязково</em></strong><small>Якщо місце має контакти або сайт</small></div>
           </div>
           <div className="gt-add-location-contact-grid">
-            <label><Phone size={18} /><input type="tel" placeholder="Телефон" /></label>
-            <label><Globe size={18} /><input type="url" placeholder="Сайт або соцмережа" /></label>
+            <label><Phone size={18} /><input value={phone} onChange={(event) => setPhone(event.target.value)} type="tel" placeholder="Телефон" /></label>
+            <label><Globe size={18} /><input value={website} onChange={(event) => setWebsite(event.target.value)} type="url" placeholder="Сайт або соцмережа" /></label>
           </div>
         </section>
 
@@ -3111,10 +3256,19 @@ function AddLocationScreen({ navigate }: { navigate: Navigate }) {
           <p><strong>Перед публікацією ми перевіримо локацію.</strong><span>Це допомагає уникати дублів та некоректних місць.</span></p>
         </div>
 
-        <button type="button" className="gt-primary-button gt-add-location-submit">
-          <Send size={19} /> Надіслати на модерацію
+        <button type="button" disabled={saving} className="gt-primary-button gt-add-location-submit" onClick={() => void submit()}>
+          <Send size={19} /> {saving ? "Надсилаємо…" : "Надіслати на модерацію"}
         </button>
+        <button type="button" className="gt-outline-button" onClick={() => navigate("tourist", "profile")}><ArrowLeft size={18} /> Назад до профілю</button>
       </main>
+
+      {mapOpen ? <div className="gt-add-location-map-modal" role="dialog" aria-modal="true" aria-label="Вибір точки на мапі">
+        <div className="gt-add-location-map-modal__sheet">
+          <header><div><strong>Оберіть точку</strong><small>На цій мапі немає закладів поруч — лише карта і ваша обрана точка.</small></div><button type="button" onClick={() => setMapOpen(false)}><X size={22} /></button></header>
+          <RealMap center={mapDraft} places={[]} radius={0} pickable preferLeaflet showCenterMarker={false} showRadius={false} onPick={setMapDraft} />
+          <footer><span><MapPin size={16} /> {mapDraft.lat.toFixed(6)}, {mapDraft.lng.toFixed(6)}</span><div><button type="button" onClick={() => setMapOpen(false)}>Скасувати</button><button type="button" onClick={() => void resolvePoint(mapDraft, true)}>Обрати цю точку</button></div></footer>
+        </div>
+      </div> : null}
     </div>
   );
 }
@@ -3139,6 +3293,7 @@ function ProfileScreen({ navigate }: { navigate: Navigate }) {
         </section>
         <div className="gt-profile-list gt-profile-list--reference">
           <button type="button" className="gt-profile-row--location" onClick={() => void runtime.requestLocation()}><LocateFixed size={27} /><span>{runtime.location?.source === "gps" ? tr(runtime.language, "Геолокація дозволена", "Location enabled", "Lokalizacja włączona") : tr(runtime.language, "Надати доступ до геолокації", "Enable location", "Włącz lokalizację")}</span><ChevronRight size={20} /></button>
+          <button type="button" className="gt-profile-row--add-location" onClick={() => navigate("tourist", "add-location")}><MapPin size={27} /><span>{tr(runtime.language, "Додати локацію", "Add place", "Dodaj miejsce")}</span><ChevronRight size={20} /></button>
           <button type="button" className="gt-profile-row--reviews" onClick={() => navigate("tourist", "review")}><MessageSquareMore size={27} /><span>{tr(runtime.language, "Мої відгуки", "My reviews", "Moje opinie")}</span><ChevronRight size={20} /></button>
           <button type="button" className="gt-profile-row--favorites" onClick={() => navigate("tourist", "favorites")}><Heart size={27} /><span>{tr(runtime.language, "Улюблені", "Favorites", "Ulubione")}</span><ChevronRight size={20} /></button>
           <button type="button" onClick={() => navigate("tourist", "activity")}><Clock3 size={27} /><span>{tr(runtime.language, "Історія активності", "Activity history", "Historia aktywności")}</span><ChevronRight size={20} /></button>

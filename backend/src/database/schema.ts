@@ -206,6 +206,8 @@ INSERT INTO categories (slug, name, name_en, name_pl, sort_order, subcategories,
 ('rest','Де відпочити','Relax','Wypoczynek',40,'["Чани","Сауни","Басейни","Масаж","Походи","Екскурсії"]'::jsonb,'{"rating":true,"price":true,"open_now":true}'::jsonb),
 ('entertainment','Розваги','Entertainment','Rozrywka',50,'["Джипи","Квадроцикли","Рафтинг","Зіплайн","Для дітей","Коні"]'::jsonb,'{"rating":true,"price":true,"kids":true}'::jsonb),
 ('transfer','Трансфер','Transfer','Transfer',60,'["Таксі","Автостанції","Парковки","Оренда авто","Заправки"]'::jsonb,'{"distance":true,"open_now":true}'::jsonb),
+('nature','Природа','Nature','Natura',65,'["Гори","Річки","Водоспади","Озера","Оглядові точки","Печери","Ліси"]'::jsonb,'{"distance":true}'::jsonb),
+('useful','Корисне','Useful','Przydatne',66,'["Банкомати","Обмін валют","Пошта","Лікарні","Туалети","Wi‑Fi","Поліція","Інформаційні центри"]'::jsonb,'{"distance":true,"open_now":true}'::jsonb),
 ('emergency','Халепа?','Emergency','Pomoc',70,'[]'::jsonb,'{}'::jsonb)
 ON CONFLICT (slug) DO UPDATE SET name=EXCLUDED.name, name_en=EXCLUDED.name_en, name_pl=EXCLUDED.name_pl, subcategories=EXCLUDED.subcategories, filter_config=EXCLUDED.filter_config;
 

@@ -217,6 +217,26 @@ export class GeoapifyPlacesService {
     return response.json() as Promise<T>;
   }
 
+  async reverse(lat: number, lng: number) {
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new NotFoundException("Geoapify reverse coordinates are invalid");
+    const params = new URLSearchParams({ lat: String(lat), lon: String(lng), apiKey: this.key() });
+    const data = await this.requestJson<GeoapifyFeatureCollection>(`https://api.geoapify.com/v1/geocode/reverse?${params.toString()}`);
+    const feature = data.features?.[0];
+    const props = feature?.properties ?? {};
+    const formatted = asString(props.formatted) || asString(props.address_line1) || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    const city = asString(props.city) || asString(props.town) || asString(props.village) || asString(props.municipality) || asString(props.county);
+    return {
+      place_id: asString(props.place_id) || `geoapify_reverse_${lat.toFixed(6)}_${lng.toFixed(6)}`,
+      formatted_address: formatted,
+      lat: asNumber(props.lat) ?? lat,
+      lng: asNumber(props.lon) ?? lng,
+      city,
+      region: asString(props.state) || asString(props.region),
+      street: asString(props.street) || asString(props.address_line1),
+      house: asString(props.housenumber),
+    };
+  }
+
   categoriesFor(section = "all", subcategory = "") {
     const specific = SUBCATEGORY_CATEGORIES[subcategory];
     if (specific?.length) return specific;

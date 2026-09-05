@@ -5,6 +5,7 @@ import { Stage2Service } from "./stage2.service.js";
 import { GooglePlacesService } from "./google-places.service.js";
 import { GeoapifyPlacesService } from "./geoapify-places.service.js";
 import { OutscraperPlacesService } from "./outscraper-places.service.js";
+import { PublicPlaceMediaService } from "./public-place-media.service.js";
 
-@Module({ controllers: [Stage2Controller], providers: [Stage2Service, GooglePlacesService, GeoapifyPlacesService, OutscraperPlacesService, SessionGuard, AdminKeyGuard] })
+@Module({ controllers: [Stage2Controller], providers: [Stage2Service, GooglePlacesService, GeoapifyPlacesService, OutscraperPlacesService, PublicPlaceMediaService, SessionGuard, AdminKeyGuard] })
 export class Stage2Module {}

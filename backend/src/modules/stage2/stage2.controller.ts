@@ -92,6 +92,10 @@ export class Stage2Controller {
   activity(@Req() request: AuthRequest) { return this.service.recentActivity(request.user!); }
 
   @UseGuards(SessionGuard)
+  @Post("me/place-submissions")
+  createPlaceSubmission(@Req() request: AuthRequest, @Body() body: Record<string, unknown>) { return this.service.createUserPlaceSubmission(request.user!, body); }
+
+  @UseGuards(SessionGuard)
   @Post("events")
   event(@Req() request: AuthRequest, @Body() body: Record<string, unknown>) { return this.service.addEvent(request.user!, body); }
 

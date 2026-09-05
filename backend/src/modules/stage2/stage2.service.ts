@@ -5,6 +5,7 @@ import type { AuthUser } from "../../common/auth.guard.js";
 import { GooglePlacesService, type GoogleNearbyPlace } from "./google-places.service.js";
 import { GeoapifyPlacesService, type GeoapifyPlace } from "./geoapify-places.service.js";
 import { OutscraperPlacesService, type OutscraperPlace } from "./outscraper-places.service.js";
+import { PublicPlaceMediaService } from "./public-place-media.service.js";
 
 function num(value: unknown, fallback?: number) {
   const parsed = Number(value);
@@ -120,7 +121,13 @@ export class Stage2Service {
     observed_at: string;
   }; expiresAt: number }>();
 
-  constructor(private readonly db: DatabaseService, private readonly google: GooglePlacesService, private readonly geoapify: GeoapifyPlacesService, private readonly outscraper: OutscraperPlacesService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly google: GooglePlacesService,
+    private readonly geoapify: GeoapifyPlacesService,
+    private readonly outscraper: OutscraperPlacesService,
+    private readonly publicMedia: PublicPlaceMediaService,
+  ) {}
 
   private async categoryForPlaceType(placeType: string, fallback = "hotel") {
     const clean = placeType.trim();
@@ -284,6 +291,8 @@ export class Stage2Service {
         outscraper_enriched: false,
         outscraper_enrichment_error: null as string | null,
         photo_error: place.imageUrl ? null : "Geoapify Place Details не повернув фото для цієї локації.",
+        photo_source_url: null as string | null,
+        photo_attribution: null as string | null,
         phone: place.phone ?? null,
         google_weekday_descriptions: rawOpeningHours ? [rawOpeningHours] : [],
         geoapify_categories: place.categories,
@@ -304,7 +313,14 @@ export class Stage2Service {
 
   async geoReverse(lat: number, lng: number) {
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new BadRequestException("lat/lng are required");
-    return this.google.reverse(lat, lng);
+    if (this.geoapify.enabled()) {
+      try { return await this.geoapify.reverse(lat, lng); }
+      catch (error) {
+        if (!this.google.enabled()) throw error;
+      }
+    }
+    if (this.google.enabled()) return this.google.reverse(lat, lng);
+    return { place_id: "", formatted_address: `${lat.toFixed(6)}, ${lng.toFixed(6)}`, lat, lng, city: "", region: "", street: "", house: "" };
   }
 
   async geoDetails(placeId: string) {
@@ -614,6 +630,8 @@ export class Stage2Service {
       let imageUrl = typeof base.image_url === "string" && base.image_url.trim() ? base.image_url.trim() : "";
       let photoProvider = imageUrl ? "geoapify_wikimedia" : null;
       let photoError: string | null = imageUrl ? null : "Geoapify Place Details ще не перевірявся для цього фото.";
+      let photoSourceUrl: string | null = null;
+      let photoAttribution: string | null = null;
 
       if (!imageUrl) {
         try {
@@ -630,6 +648,26 @@ export class Stage2Service {
         }
       }
 
+      // Free public-media fallback: Wikipedia nearby/page images first, then Openverse.
+      // It does not require another API key and only accepts title/coordinate matches that are sufficiently close,
+      // so we avoid showing a random stock photo for a similarly named business.
+      if (!imageUrl && name) {
+        try {
+          const publicMedia = await this.publicMedia.lookup({ name, address, lat, lng });
+          if (publicMedia.imageUrl) {
+            imageUrl = publicMedia.imageUrl;
+            photoProvider = publicMedia.provider;
+            photoSourceUrl = publicMedia.sourceUrl;
+            photoAttribution = publicMedia.attribution;
+            photoError = null;
+          } else if (publicMedia.error) {
+            photoError = [photoError, publicMedia.error].filter(Boolean).join(" ").slice(0, 500);
+          }
+        } catch (error) {
+          photoError = [photoError, `Public media: ${error instanceof Error ? error.message : String(error)}`].filter(Boolean).join(" ").slice(0, 500);
+        }
+      }
+
       let result: Record<string, unknown> = {
         ...base,
         image_url: imageUrl || null,
@@ -639,6 +677,8 @@ export class Stage2Service {
           google_photo_name: null,
           google_photo_attributions: [],
           photo_error: photoError,
+          photo_source_url: photoSourceUrl,
+          photo_attribution: photoAttribution,
           outscraper_enrichment_error: outscraperError || null,
         },
       };
@@ -758,6 +798,35 @@ export class Stage2Service {
       const base = this.geoapifyPlaceToStage2(result, originLat, originLng);
       let enriched = base;
 
+      if (!enriched.image_url) {
+        try {
+          const publicMedia = await this.publicMedia.lookup({ name: base.name, address: base.address, lat: Number(base.lat), lng: Number(base.lng) });
+          if (publicMedia.imageUrl) {
+            enriched = {
+              ...enriched,
+              image_url: publicMedia.imageUrl,
+              attributes: { ...enriched.attributes, photo_provider: publicMedia.provider },
+              details: {
+                ...enriched.details,
+                photo_error: null,
+                photo_source_url: publicMedia.sourceUrl,
+                photo_attribution: publicMedia.attribution,
+              },
+            };
+          } else if (publicMedia.error) {
+            enriched = {
+              ...enriched,
+              details: { ...enriched.details, photo_error: [enriched.details.photo_error, publicMedia.error].filter(Boolean).join(" ").slice(0, 500) },
+            };
+          }
+        } catch (error) {
+          enriched = {
+            ...enriched,
+            details: { ...enriched.details, photo_error: [enriched.details.photo_error, `Public media: ${error instanceof Error ? error.message : String(error)}`].filter(Boolean).join(" ").slice(0, 500) },
+          };
+        }
+      }
+
       // Outscraper is an optional low-cost Google Maps enrichment fallback. Geoapify itself does not
       // expose user review ratings for normal POIs, and many OSM records do not contain photos.
       // Keep the POI/navigation source Geoapify, but fill rating/review count/main photo from Outscraper
@@ -766,27 +835,27 @@ export class Stage2Service {
         try {
           const scraped = await this.outscraper.lookup({ name: base.name, address: base.address, lat: Number(base.lat), lng: Number(base.lng) });
           if (scraped) {
-            const imageUrl = base.image_url || scraped.photo || null;
-            const mapsUri = scraped.locationLink ?? base.attributes.google_maps_uri;
-            const reviewsUri = scraped.reviewsLink ?? mapsUri ?? base.attributes.google_reviews_uri;
+            const imageUrl = enriched.image_url || scraped.photo || null;
+            const mapsUri = scraped.locationLink ?? enriched.attributes.google_maps_uri;
+            const reviewsUri = scraped.reviewsLink ?? mapsUri ?? enriched.attributes.google_reviews_uri;
             enriched = {
-              ...base,
+              ...enriched,
               image_url: imageUrl,
               rating: Number(scraped.rating ?? base.rating ?? 0),
               review_count: Number(scraped.reviews ?? base.review_count ?? 0),
               phone: base.phone || scraped.phone || null,
               website: base.website || scraped.site || null,
               attributes: {
-                ...base.attributes,
+                ...enriched.attributes,
                 google_review_enriched: Boolean(scraped.rating != null || scraped.reviews > 0),
                 google_place_id: scraped.placeId,
                 google_maps_uri: mapsUri,
                 google_reviews_uri: reviewsUri,
-                photo_provider: imageUrl ? (base.image_url ? (base.attributes.photo_provider ?? "geoapify_wikimedia") : "outscraper_google_maps") : null,
+                photo_provider: imageUrl ? (enriched.image_url ? (enriched.attributes.photo_provider ?? "public_media") : "outscraper_google_maps") : null,
                 enrichment_provider: "outscraper",
               },
               details: {
-                ...base.details,
+                ...enriched.details,
                 google_place_id: scraped.placeId,
                 google_maps_uri: mapsUri,
                 google_reviews_uri: reviewsUri,
@@ -815,7 +884,7 @@ export class Stage2Service {
             const googleMapsUri = google.googleMapsLinks?.placeUri ?? google.googleMapsUri ?? base.attributes.google_maps_uri;
             const googleReviewsUri = google.googleMapsLinks?.reviewsUri ?? googleMapsUri ?? base.attributes.google_reviews_uri;
             enriched = {
-              ...base,
+              ...enriched,
               image_url: enriched.image_url || null,
               rating: Number(google.rating ?? enriched.rating ?? 0),
               review_count: Number(google.userRatingCount ?? enriched.review_count ?? 0),
@@ -824,7 +893,7 @@ export class Stage2Service {
               work_hours: google.regularOpeningHours ?? base.work_hours,
               is_open_now: google.regularOpeningHours?.openNow ?? base.is_open_now,
               attributes: {
-                ...base.attributes,
+                ...enriched.attributes,
                 google_review_enriched: true,
                 google_place_id: google.id,
                 google_maps_uri: googleMapsUri,
@@ -832,7 +901,7 @@ export class Stage2Service {
                 photo_provider: enriched.image_url ? (enriched.attributes.photo_provider ?? "outscraper_google_maps") : null,
               },
               details: {
-                ...base.details,
+                ...enriched.details,
                 google_place_id: google.id,
                 google_maps_uri: googleMapsUri,
                 google_reviews_uri: googleReviewsUri,
@@ -937,6 +1006,70 @@ export class Stage2Service {
       [user.id],
     );
     return result.rows;
+  }
+
+  async createUserPlaceSubmission(user: AuthUser, body: Record<string, unknown>) {
+    const name = String(body.name ?? "").trim();
+    if (!name) throw new BadRequestException("Вкажіть назву локації");
+
+    const lat = num(body.lat);
+    const lng = num(body.lng);
+    if (lat == null || lng == null || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+      throw new BadRequestException("Оберіть місце на мапі або використайте поточну геолокацію");
+    }
+
+    let categorySlug = String(body.category_slug ?? "entertainment").trim().toLowerCase();
+    const categoryExists = await this.db.query("SELECT slug FROM categories WHERE slug=$1 AND active=true LIMIT 1", [categorySlug]);
+    if (!categoryExists.rows[0]) {
+      categorySlug = categorySlug === "nature" ? "rest" : categorySlug === "useful" ? "transfer" : "entertainment";
+    }
+
+    let address = String(body.address ?? "").trim();
+    let city = String(body.city ?? "").trim();
+    let regionName = String(body.region_name ?? "").trim();
+    try {
+      const reverse = await this.geoReverse(lat, lng);
+      address ||= reverse.formatted_address || "";
+      city ||= reverse.city || "";
+      regionName ||= reverse.region || "";
+    } catch {
+      // Coordinates are sufficient for moderation even when reverse geocoding is temporarily unavailable.
+    }
+    address ||= `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+
+    const requestedRegion = String(body.region_id ?? "region-tatariv");
+    const regionId = await this.ensureRegionForPlace(city, regionName, lat, lng, requestedRegion);
+    const rawGallery = Array.isArray(body.gallery) ? body.gallery : [];
+    const gallery = rawGallery
+      .map((item) => String(item ?? "").trim())
+      .filter((item) => item.startsWith("data:image/") || /^https?:\/\//i.test(item))
+      .slice(0, 6);
+    const imageUrl = gallery[0] || (typeof body.image_url === "string" ? String(body.image_url).trim() : "") || null;
+    const placeId = makeId("place");
+    const description = String(body.description ?? "").trim().slice(0, 2000);
+    const phone = String(body.phone ?? "").trim() || null;
+    const website = String(body.website ?? "").trim() || null;
+    const subcategory = String(body.subcategory ?? "").trim() || null;
+    const details = {
+      submission_source: "tourist",
+      submitted_at: new Date().toISOString(),
+      city,
+      region_name: regionName,
+      gallery,
+      map_selected: true,
+    };
+    const attributes = { user_submitted: true, partner: false };
+
+    await this.db.query(
+      `INSERT INTO places(id,organization_id,region_id,category_slug,subcategory,name,description,address,lat,lng,phone,website,image_url,attributes,details,status,created_by_user_id)
+       VALUES($1,NULL,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13::jsonb,$14::jsonb,'pending',$15)`,
+      [placeId, regionId, categorySlug, subcategory, name, description, address, lat, lng, phone, website, imageUrl, JSON.stringify(attributes), JSON.stringify(details), user.id],
+    );
+    await this.db.query(
+      "INSERT INTO activity_events(id,user_id,region_id,place_id,event_type,payload) VALUES($1,$2,$3,$4,'place_submission_created',$5::jsonb)",
+      [makeId("evt"), user.id, regionId, placeId, JSON.stringify({ category_slug: categorySlug, name })],
+    );
+    return { ok: true, id: placeId, status: "pending", name, address, lat, lng, category_slug: categorySlug };
   }
 
   async emergency(regionId: string) {
@@ -1288,7 +1421,7 @@ export class Stage2Service {
     const result = await this.db.query(
       `SELECT p.id,p.name,p.category_slug,p.subcategory,p.address,p.status,p.moderation_comment,p.created_at,p.updated_at,
               o.name organization_name,u.telegram_username,u.first_name,u.last_name,r.name region_name
-       FROM places p LEFT JOIN organizations o ON o.id=p.organization_id LEFT JOIN users u ON u.id=o.owner_user_id JOIN regions r ON r.id=p.region_id
+       FROM places p LEFT JOIN organizations o ON o.id=p.organization_id LEFT JOIN users u ON u.id=COALESCE(o.owner_user_id,p.created_by_user_id) JOIN regions r ON r.id=p.region_id
        WHERE p.status IN ('draft','pending','rejected') ORDER BY p.updated_at DESC`,
     );
     return result.rows;
