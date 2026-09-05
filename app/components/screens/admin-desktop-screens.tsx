@@ -1462,9 +1462,37 @@ function AdminTemplateFieldsSelect({ value, onChange }: { value: string; onChang
   );
 }
 
+type ModerationPlace = {
+  id: string;
+  name: string;
+  category_slug: string;
+  subcategory?: string | null;
+  description?: string | null;
+  address: string;
+  lat?: number | null;
+  lng?: number | null;
+  phone?: string | null;
+  website?: string | null;
+  image_url?: string | null;
+  attributes?: Record<string, unknown> | null;
+  details?: Record<string, unknown> | null;
+  status: string;
+  organization_name?: string | null;
+  region_name?: string | null;
+  moderation_comment?: string | null;
+  created_by_user_id?: string | null;
+  telegram_id?: string | number | null;
+  telegram_username?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
 function Stage2ContentScreen({ navigate }: AdminProps) {
   const adminKey = "";
-  const [pending, setPending] = useState<Array<{ id: string; name: string; category_slug: string; subcategory?: string | null; address: string; status: string; organization_name?: string; region_name?: string; moderation_comment?: string | null }>>([]);
+  const [pending, setPending] = useState<ModerationPlace[]>([]);
+  const [selectedModeration, setSelectedModeration] = useState<ModerationPlace | null>(null);
   const [moderationCategories, setModerationCategories] = useState<Record<string, string>>({});
   const [qrRows, setQrRows] = useState<Array<{ id: string; start_param: string; type: string; source: string; active: boolean; region_name: string; place_name?: string | null; place_id?: string | null }>>([]);
   const [approvedPlaces, setApprovedPlaces] = useState<Array<{ id: string; name: string; category_slug: string; region_name: string }>>([]);
@@ -1626,11 +1654,66 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
               <small>Тип: {row.subcategory || "не вказано"}</small>
             </div>
             <span>{row.address}</span><Status tone={row.status === "rejected" ? "red" : "orange"}>{row.status}</Status>
-            <div className="ad-row-actions"><button className="ad-text-btn" onClick={() => void moderate(row.id,"approved")}>Approve</button><button className="ad-text-btn is-danger" onClick={() => void moderate(row.id,"rejected")}>Reject</button></div>
+            <div className="ad-row-actions">
+              <button className="ad-text-btn" onClick={() => setSelectedModeration(row)}><Eye size={14}/> Переглянути</button>
+              <button className="ad-text-btn" onClick={() => void moderate(row.id,"approved")}>Approve</button>
+              <button className="ad-text-btn is-danger" onClick={() => void moderate(row.id,"rejected")}>Reject</button>
+            </div>
           </TableRow>)}
           {!pending.length ? <div className="ad-stage2-empty-row">Черга модерації порожня</div> : null}
         </AdminTable>
       </section>
+
+      {selectedModeration ? (() => {
+        const details = selectedModeration.details && typeof selectedModeration.details === "object" ? selectedModeration.details : {};
+        const gallery = Array.isArray(details.gallery) ? details.gallery.map((item) => String(item || "")).filter(Boolean) : [];
+        const images = Array.from(new Set([selectedModeration.image_url || "", ...gallery].filter(Boolean)));
+        const submitterName = [selectedModeration.first_name, selectedModeration.last_name].filter(Boolean).join(" ") || selectedModeration.telegram_username || "Користувач Telegram";
+        const selectedCategory = moderationCategories[selectedModeration.id] || selectedModeration.category_slug;
+        const selectedCategoryLabel = stage2Categories.find((item) => item.slug === selectedCategory)?.name || selectedCategory;
+        const createdLabel = selectedModeration.created_at ? new Date(selectedModeration.created_at).toLocaleString("uk-UA") : "—";
+        const coordsOk = Number.isFinite(Number(selectedModeration.lat)) && Number.isFinite(Number(selectedModeration.lng));
+        const mapsUrl = coordsOk ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${selectedModeration.lat},${selectedModeration.lng}`)}` : "";
+        return <div className="ad-stage2-moderation-modal" role="dialog" aria-modal="true" aria-label="Перегляд закладу на модерації" onMouseDown={(event)=>{if(event.currentTarget===event.target)setSelectedModeration(null);}}>
+          <section className="ad-stage2-moderation-modal__card">
+            <header>
+              <div><small>Заявка користувача</small><h2>{selectedModeration.name}</h2><p>{selectedModeration.subcategory || "Тип не вказано"} · {selectedModeration.region_name || "Регіон не визначено"}</p></div>
+              <button type="button" aria-label="Закрити" onClick={()=>setSelectedModeration(null)}><X size={21}/></button>
+            </header>
+            <div className="ad-stage2-moderation-modal__body">
+              <section className="ad-stage2-moderation-summary">
+                <div><span>Куди потрапить</span><strong>{selectedCategoryLabel}</strong><small>Розділ можна змінити у таблиці перед Approve.</small></div>
+                <div><span>Статус</span><strong>{selectedModeration.status}</strong><small>Подано: {createdLabel}</small></div>
+                <div><span>Хто додав</span><strong>{submitterName}</strong><small>{selectedModeration.telegram_username ? `@${selectedModeration.telegram_username.replace(/^@/, "")}` : selectedModeration.telegram_id ? `Telegram ID: ${selectedModeration.telegram_id}` : "Telegram-профіль без username"}</small></div>
+              </section>
+
+              <section className="ad-stage2-moderation-info-grid">
+                <article><span>Назва</span><strong>{selectedModeration.name}</strong></article>
+                <article><span>Тип</span><strong>{selectedModeration.subcategory || "Не вказано"}</strong></article>
+                <article className="is-wide"><span>Опис</span><p>{selectedModeration.description || "Опис не додано"}</p></article>
+                <article className="is-wide"><span>Адреса</span><p>{selectedModeration.address || "Адресу не визначено"}</p>{coordsOk ? <small>{Number(selectedModeration.lat).toFixed(6)}, {Number(selectedModeration.lng).toFixed(6)}</small> : null}</article>
+                <article><span>Телефон</span><strong>{selectedModeration.phone || "Не вказано"}</strong></article>
+                <article><span>Сайт</span>{selectedModeration.website ? <a href={selectedModeration.website} target="_blank" rel="noreferrer">{selectedModeration.website}</a> : <strong>Не вказано</strong>}</article>
+              </section>
+
+              <section className="ad-stage2-moderation-gallery">
+                <div className="ad-stage2-moderation-gallery__head"><div><strong>Фото</strong><small>{images.length ? `${images.length} фото від користувача` : "Фото не додано"}</small></div></div>
+                {images.length ? <div className="ad-stage2-moderation-gallery__grid">{images.map((src,index)=><a href={src} target="_blank" rel="noreferrer" key={`${index}-${src.slice(0,30)}`}><img src={src} alt={`${selectedModeration.name} — фото ${index+1}`} /></a>)}</div> : <div className="ad-stage2-moderation-gallery__empty"><ImagePlus size={28}/><span>Користувач не прикріпив фотографії.</span></div>}
+              </section>
+
+              {selectedModeration.moderation_comment ? <div className="ad-stage2-moderation-comment"><strong>Попередній коментар модерації</strong><p>{selectedModeration.moderation_comment}</p></div> : null}
+            </div>
+            <footer>
+              <div>{mapsUrl ? <a className="ad-stage2-moderation-map-link" href={mapsUrl} target="_blank" rel="noreferrer"><MapPin size={15}/> Відкрити точку на мапі</a> : null}</div>
+              <div className="ad-stage2-moderation-modal__actions">
+                <OutlineButton onClick={()=>setSelectedModeration(null)}>Закрити</OutlineButton>
+                <button className="ad-stage2-moderation-reject" type="button" onClick={()=>{const id=selectedModeration.id;setSelectedModeration(null);void moderate(id,"rejected");}}>Reject</button>
+                <PrimaryButton onClick={()=>{const id=selectedModeration.id;setSelectedModeration(null);void moderate(id,"approved");}}>Approve</PrimaryButton>
+              </div>
+            </footer>
+          </section>
+        </div>;
+      })() : null}
 
       <section className="ad-stage2-grid ad-stage2-grid--content">
         <div className="ad-stage2-card ad-stage2-card--stacked">

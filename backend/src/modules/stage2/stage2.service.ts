@@ -648,25 +648,10 @@ export class Stage2Service {
         }
       }
 
-      // Free public-media fallback: Wikipedia nearby/page images first, then Openverse.
-      // It does not require another API key and only accepts title/coordinate matches that are sufficiently close,
-      // so we avoid showing a random stock photo for a similarly named business.
-      if (!imageUrl && name) {
-        try {
-          const publicMedia = await this.publicMedia.lookup({ name, address, lat, lng });
-          if (publicMedia.imageUrl) {
-            imageUrl = publicMedia.imageUrl;
-            photoProvider = publicMedia.provider;
-            photoSourceUrl = publicMedia.sourceUrl;
-            photoAttribution = publicMedia.attribution;
-            photoError = null;
-          } else if (publicMedia.error) {
-            photoError = [photoError, publicMedia.error].filter(Boolean).join(" ").slice(0, 500);
-          }
-        } catch (error) {
-          photoError = [photoError, `Public media: ${error instanceof Error ? error.message : String(error)}`].filter(Boolean).join(" ").slice(0, 500);
-        }
-      }
+      // Do not query public photo providers while enriching map/list batches.
+      // A single map can contain 20-30 POIs and firing Wikipedia/Openverse requests for every marker
+      // quickly triggers provider rate limits. Public-media lookup is intentionally deferred until
+      // the user opens one concrete place in place(), where only one location is enriched.
 
       let result: Record<string, unknown> = {
         ...base,
@@ -1419,8 +1404,9 @@ export class Stage2Service {
 
   async adminPending() {
     const result = await this.db.query(
-      `SELECT p.id,p.name,p.category_slug,p.subcategory,p.address,p.status,p.moderation_comment,p.created_at,p.updated_at,
-              o.name organization_name,u.telegram_username,u.first_name,u.last_name,r.name region_name
+      `SELECT p.id,p.name,p.category_slug,p.subcategory,p.description,p.address,p.lat,p.lng,p.phone,p.website,p.image_url,
+              p.attributes,p.details,p.status,p.moderation_comment,p.created_by_user_id,p.created_at,p.updated_at,
+              o.name organization_name,u.telegram_id,u.telegram_username,u.first_name,u.last_name,r.name region_name
        FROM places p LEFT JOIN organizations o ON o.id=p.organization_id LEFT JOIN users u ON u.id=COALESCE(o.owner_user_id,p.created_by_user_id) JOIN regions r ON r.id=p.region_id
        WHERE p.status IN ('draft','pending','rejected') ORDER BY p.updated_at DESC`,
     );

@@ -399,7 +399,7 @@ function googleReviewsForPlace(place?: Stage2Place | null): GoogleReviewView[] {
   });
 }
 
-const GOOGLE_PLACE_DETAIL_CACHE_PREFIX = "gid-external-place-detail-v2:";
+const GOOGLE_PLACE_DETAIL_CACHE_PREFIX = "gid-external-place-detail-v3:";
 const GOOGLE_PLACE_DETAIL_CACHE_TTL_MS = 10 * 60 * 1000;
 
 function googlePlaceDetailCacheKey(placeId: string, lat?: number, lng?: number) {
@@ -422,7 +422,7 @@ function writeGooglePlaceDetailCache(key: string, value: Stage2Place) {
   try { window.sessionStorage.setItem(key, JSON.stringify({ value, at: Date.now() })); } catch { /* cache is optional */ }
 }
 
-const PLACE_CARD_ENRICH_CACHE_PREFIX = "gid-place-card-enrich-v3:";
+const PLACE_CARD_ENRICH_CACHE_PREFIX = "gid-place-card-enrich-v4:";
 const PLACE_CARD_ENRICH_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
 function mergeStage2Place(base: Stage2Place, update: Stage2Place): Stage2Place {

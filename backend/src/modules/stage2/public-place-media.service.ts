@@ -30,6 +30,16 @@ export type PublicPlaceMedia = {
   error: string | null;
 };
 
+class PublicMediaHttpError extends Error {
+  constructor(
+    readonly status: number,
+    readonly retryAfterMs: number,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
 const STOP_WORDS = new Set([
   "the", "and", "of", "in", "at", "на", "у", "в", "і", "та", "для", "з", "із", "по", "проспект", "вулиця", "street", "avenue",
   "готель", "hotel", "ресторан", "restaurant", "кафе", "cafe", "магазин", "shop", "аптека", "pharmacy",
@@ -65,16 +75,41 @@ function distanceMeters(lat1: number, lng1: number, lat2: number, lng2: number) 
   return 2 * r * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+function sleep(ms: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
+}
+
 @Injectable()
 export class PublicPlaceMediaService {
   private readonly cache = new Map<string, { value: PublicPlaceMedia; expiresAt: number }>();
-  private readonly ttlMs = 24 * 60 * 60 * 1000;
+  private readonly successTtlMs = 24 * 60 * 60 * 1000;
+  private readonly failureTtlMs = 15 * 60 * 1000;
+  private nextRequestAt = 0;
+  private wikipediaCooldownUntil = 0;
+  private openverseCooldownUntil = 0;
+  private requestStartQueue: Promise<void> = Promise.resolve();
 
   private cacheKey(input: { name: string; address?: string; lat?: number; lng?: number }) {
     return [normalize(input.name), normalize(input.address || ""), Number(input.lat).toFixed(4), Number(input.lng).toFixed(4)].join("|");
   }
 
+  private async waitForRequestSlot() {
+    const previous = this.requestStartQueue;
+    let release!: () => void;
+    this.requestStartQueue = new Promise<void>((resolve) => { release = resolve; });
+    await previous;
+    try {
+      const waitMs = Math.max(0, this.nextRequestAt - Date.now());
+      if (waitMs > 0) await sleep(waitMs);
+      // Public endpoints are deliberately paced. One opened place should never fan out into a burst.
+      this.nextRequestAt = Date.now() + 750;
+    } finally {
+      release();
+    }
+  }
+
   private async fetchJson<T>(url: string, timeoutMs = 5500): Promise<T> {
+    await this.waitForRequestSlot();
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
@@ -82,10 +117,17 @@ export class PublicPlaceMediaService {
         signal: controller.signal,
         headers: {
           Accept: "application/json",
-          "User-Agent": "GidTourist/1.0 (public place media lookup)",
+          "User-Agent": "GidTourist/1.0 (contact: support@gid-tourist.local)",
         },
       });
-      if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+      if (!response.ok) {
+        const retryAfter = Number(response.headers.get("retry-after") ?? 0);
+        throw new PublicMediaHttpError(
+          response.status,
+          Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 0,
+          `${response.status} ${response.statusText}`,
+        );
+      }
       return await response.json() as T;
     } finally {
       clearTimeout(timer);
@@ -109,81 +151,71 @@ export class PublicPlaceMediaService {
   }
 
   private async wikipedia(input: { name: string; lat?: number; lng?: number }): Promise<PublicPlaceMedia | null> {
-    const endpoints = ["https://uk.wikipedia.org/w/api.php", "https://en.wikipedia.org/w/api.php"];
-    const errors: string[] = [];
-    for (const endpoint of endpoints) {
-      try {
-        const search = new URLSearchParams({
-          action: "query",
-          format: "json",
-          generator: "search",
-          gsrsearch: input.name,
-          gsrnamespace: "0",
-          gsrlimit: "8",
-          prop: "pageimages|coordinates|info",
-          piprop: "thumbnail",
-          pithumbsize: "1400",
-          inprop: "url",
-          redirects: "1",
-        });
-        const data = await this.fetchJson<WikiResponse>(`${endpoint}?${search.toString()}`);
-        let pages = Object.values(data.query?.pages ?? {});
-        let best = this.bestWikipediaPage(input.name, pages, input.lat, input.lng);
-
-        if (!best && Number.isFinite(input.lat) && Number.isFinite(input.lng)) {
-          const nearby = new URLSearchParams({
-            action: "query",
-            format: "json",
-            generator: "geosearch",
-            ggscoord: `${input.lat}|${input.lng}`,
-            ggsradius: "1200",
-            ggslimit: "12",
-            prop: "pageimages|coordinates|info",
-            piprop: "thumbnail",
-            pithumbsize: "1400",
-            inprop: "url",
-          });
-          const nearData = await this.fetchJson<WikiResponse>(`${endpoint}?${nearby.toString()}`);
-          pages = Object.values(nearData.query?.pages ?? {});
-          best = this.bestWikipediaPage(input.name, pages, input.lat, input.lng);
-        }
-        if (best?.thumbnail?.source) {
-          return {
-            imageUrl: best.thumbnail.source,
-            provider: "wikipedia",
-            sourceUrl: best.fullurl || null,
-            attribution: best.title ? `Wikipedia · ${best.title}` : "Wikipedia",
-            error: null,
-          };
-        }
-      } catch (error) {
-        errors.push(error instanceof Error ? error.message : String(error));
+    if (Date.now() < this.wikipediaCooldownUntil) return null;
+    // One search request per opened place. The old search+geosearch flow multiplied calls and caused 429s.
+    const endpoint = "https://uk.wikipedia.org/w/api.php";
+    try {
+      const search = new URLSearchParams({
+        action: "query",
+        format: "json",
+        generator: "search",
+        gsrsearch: input.name,
+        gsrnamespace: "0",
+        gsrlimit: "6",
+        prop: "pageimages|coordinates|info",
+        piprop: "thumbnail",
+        pithumbsize: "1400",
+        inprop: "url",
+        redirects: "1",
+        origin: "*",
+      });
+      const data = await this.fetchJson<WikiResponse>(`${endpoint}?${search.toString()}`);
+      const pages = Object.values(data.query?.pages ?? {});
+      const best = this.bestWikipediaPage(input.name, pages, input.lat, input.lng);
+      if (!best?.thumbnail?.source) return null;
+      return {
+        imageUrl: best.thumbnail.source,
+        provider: "wikipedia",
+        sourceUrl: best.fullurl || null,
+        attribution: best.title ? `Wikipedia · ${best.title}` : "Wikipedia",
+        error: null,
+      };
+    } catch (error) {
+      if (error instanceof PublicMediaHttpError && error.status === 429) {
+        this.wikipediaCooldownUntil = Date.now() + Math.max(error.retryAfterMs, 30 * 60 * 1000);
       }
+      throw error;
     }
-    if (errors.length) throw new Error(`Wikipedia: ${errors.join(" | ")}`);
-    return null;
   }
 
   private async openverse(input: { name: string; address?: string }): Promise<PublicPlaceMedia | null> {
+    if (Date.now() < this.openverseCooldownUntil) return null;
     const locationHint = (input.address || "").split(",").slice(0, 2).join(" ");
     const query = [input.name, locationHint].filter(Boolean).join(" ").trim();
     if (!query) return null;
-    const params = new URLSearchParams({ q: query, page_size: "10" });
-    const data = await this.fetchJson<OpenverseResponse>(`https://api.openverse.org/v1/images/?${params.toString()}`);
-    const best = (data.results ?? [])
-      .map((item) => ({ item, score: tokenScore(input.name, item.title || "") }))
-      .filter(({ item, score }) => score >= 0.67 && Boolean(item.thumbnail || item.url))
-      .sort((a, b) => b.score - a.score)[0]?.item;
-    if (!best) return null;
-    const license = [best.license, best.license_version].filter(Boolean).join(" ").trim();
-    const attribution = [best.creator || "Openverse", license || null].filter(Boolean).join(" · ");
-    return {
-      imageUrl: best.thumbnail || best.url || null,
-      provider: "openverse",
-      sourceUrl: best.foreign_landing_url || null,
-      attribution,
-      error: null,
-    };
+    try {
+      const params = new URLSearchParams({ q: query, page_size: "8" });
+      const data = await this.fetchJson<OpenverseResponse>(`https://api.openverse.org/v1/images/?${params.toString()}`);
+      const best = (data.results ?? [])
+        .map((item) => ({ item, score: tokenScore(input.name, item.title || "") }))
+        .filter(({ item, score }) => score >= 0.67 && Boolean(item.thumbnail || item.url))
+        .sort((a, b) => b.score - a.score)[0]?.item;
+      if (!best) return null;
+      const license = [best.license, best.license_version].filter(Boolean).join(" ").trim();
+      const attribution = [best.creator || "Openverse", license || null].filter(Boolean).join(" · ");
+      return {
+        imageUrl: best.thumbnail || best.url || null,
+        provider: "openverse",
+        sourceUrl: best.foreign_landing_url || null,
+        attribution,
+        error: null,
+      };
+    } catch (error) {
+      if (error instanceof PublicMediaHttpError && error.status === 429) {
+        this.openverseCooldownUntil = Date.now() + Math.max(error.retryAfterMs, 30 * 60 * 1000);
+      }
+      throw error;
+    }
   }
 
   async lookup(input: { name: string; address?: string; lat?: number; lng?: number }): Promise<PublicPlaceMedia> {
@@ -193,18 +225,26 @@ export class PublicPlaceMediaService {
 
     const errors: string[] = [];
     let result: PublicPlaceMedia | null = null;
-    try { result = await this.wikipedia(input); } catch (error) { errors.push(error instanceof Error ? error.message : String(error)); }
-    if (!result) {
+
+    // Openverse is one request and is tried first. Wikipedia is now only a secondary fallback.
+    if (Date.now() >= this.openverseCooldownUntil) {
       try { result = await this.openverse(input); } catch (error) { errors.push(`Openverse: ${error instanceof Error ? error.message : String(error)}`); }
     }
+    if (!result && Date.now() >= this.wikipediaCooldownUntil) {
+      try { result = await this.wikipedia(input); } catch (error) { errors.push(`Wikipedia: ${error instanceof Error ? error.message : String(error)}`); }
+    }
+
+    if (!result && Date.now() < this.openverseCooldownUntil) errors.push("Openverse тимчасово призупинено після 429; повторна спроба буде пізніше.");
+    if (!result && Date.now() < this.wikipediaCooldownUntil) errors.push("Wikipedia тимчасово призупинено після 429; повторна спроба буде пізніше.");
+
     const value = result ?? {
       imageUrl: null,
       provider: null,
       sourceUrl: null,
       attribution: null,
-      error: errors.length ? errors.join(" | ").slice(0, 500) : "Wikipedia/Openverse не знайшли достатньо точного фото для цієї локації.",
+      error: errors.length ? errors.join(" | ").slice(0, 500) : "Openverse/Wikipedia не знайшли достатньо точного фото для цієї локації.",
     };
-    this.cache.set(key, { value, expiresAt: Date.now() + this.ttlMs });
+    this.cache.set(key, { value, expiresAt: Date.now() + (result ? this.successTtlMs : this.failureTtlMs) });
     return value;
   }
 }
