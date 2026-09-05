@@ -438,7 +438,7 @@ function mergeStage2Place(base: Stage2Place, update: Stage2Place): Stage2Place {
 }
 
 function mergeStage2PlaceUpdates(current: Stage2Place[], updates: Stage2Place[]) {
-  const byId = new Map(updates.map((item) => [item.id, item]));
+  const byId = new globalThis.Map<string, Stage2Place>(updates.map((item) => [item.id, item]));
   return current.map((item) => {
     const update = byId.get(item.id);
     return update ? mergeStage2Place(item, update) : item;
@@ -510,7 +510,7 @@ function revealPlacesProgressively(
   const tick = () => {
     if (isCancelled()) return;
     setPlaces((previous) => {
-      const previousById = new Map(previous.map((place) => [place.id, place]));
+      const previousById = new globalThis.Map<string, Stage2Place>(previous.map((place) => [place.id, place]));
       return source.slice(0, count).map((place) => {
         const existing = previousById.get(place.id);
         return existing ? mergeStage2Place(place, existing) : place;
