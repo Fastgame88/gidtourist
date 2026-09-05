@@ -1329,6 +1329,139 @@ function Stage2QrPreview({ value }: { value: string }) {
   return <div className="ad-stage2-qr-preview__code" ref={ref} aria-label="QR-код точки входу" />;
 }
 
+
+const TEMPLATE_AMENITY_OPTIONS = [
+  "Номери", "Паркінг", "Wi‑Fi", "Сніданок", "Меню", "Дитяче меню", "Мангал", "SPA",
+  "Рушники", "Душ", "Гід", "Трансфер", "Групи", "Активності", "Інструктор",
+  "Оплата карткою", "Самовивіз", "Багаж", "Дитяче крісло", "Подарунки", "Локальні товари",
+];
+
+const TEMPLATE_SERVICE_OPTIONS = [
+  "Сніданок", "Прибирання", "Сауна", "Басейн", "Трансфер", "Мангал", "Чан", "Основне меню",
+  "Сніданки", "Доставка", "Їжа з собою", "Дитяче меню", "Кава", "Десерти", "Напої", "Закуски",
+  "Жива музика", "Продаж у магазині", "Самовивіз", "Сувеніри", "Подарунки", "Локальні товари",
+  "Ліки", "Товари для здоровʼя", "Масаж", "Екскурсія", "Гід", "Квадроцикли", "Рафтинг",
+  "Зіплайн", "Джип-тур", "Таксі", "Оренда авто",
+];
+
+const TEMPLATE_FIELD_OPTIONS: Array<[string, string]> = [
+  ["room_count", "Кількість номерів / кімнат"],
+  ["opened_year", "Рік відкриття"],
+  ["languages", "Мови обслуговування"],
+  ["accommodation_type", "Тип розміщення"],
+  ["capacity", "Місткість / кількість місць"],
+  ["average_check", "Середній чек"],
+  ["cuisine", "Кухня / тип кухні"],
+  ["format", "Формат закладу"],
+  ["store_format", "Формат магазину"],
+  ["assortment", "Основний асортимент"],
+  ["local_goods", "Локальні товари"],
+  ["delivery", "Доставка / самовивіз"],
+  ["payment_methods", "Способи оплати"],
+  ["duration", "Тривалість"],
+  ["price_info", "Вартість"],
+  ["group_size", "Розмір групи"],
+  ["difficulty", "Складність"],
+  ["age_limit", "Вікові обмеження"],
+  ["season", "Сезонність"],
+  ["vehicle_type", "Тип транспорту"],
+  ["service_area", "Зона роботи"],
+];
+
+function commaList(value: string) {
+  return Array.from(new Set(value.split(",").map((item) => item.trim()).filter(Boolean)));
+}
+
+function updateCommaList(value: string, item: string, checked: boolean) {
+  const current = commaList(value);
+  const next = checked ? Array.from(new Set([...current, item])) : current.filter((entry) => entry !== item);
+  return next.join(", ");
+}
+
+function templateFieldEntries(value: string) {
+  return value.split(";").map((item) => item.trim()).filter(Boolean).map((item) => {
+    const [key, ...rest] = item.split("=");
+    return [key.trim(), rest.join("=").trim()] as [string, string];
+  }).filter(([key, label]) => Boolean(key && label));
+}
+
+function toggleTemplateField(value: string, key: string, label: string, checked: boolean) {
+  const entries = new Map(templateFieldEntries(value));
+  if (checked) entries.set(key, label);
+  else entries.delete(key);
+  return [...entries.entries()].map(([entryKey, entryLabel]) => `${entryKey}=${entryLabel}`).join("; ");
+}
+
+function AdminTemplateMultiSelect({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (value: string) => void;
+}) {
+  const selected = commaList(value);
+  const combined = Array.from(new Set([...options, ...selected]));
+  return (
+    <div className="ad-stage2-template-field">
+      <span>{label}</span>
+      <details className="ad-stage2-multiselect">
+        <summary>{selected.length ? selected.join(", ") : "Оберіть пункти"}</summary>
+        <div className="ad-stage2-multiselect__menu">
+          {combined.map((item) => (
+            <label key={`${label}-${item}`}>
+              <input
+                type="checkbox"
+                checked={selected.includes(item)}
+                onChange={(event) => onChange(updateCommaList(value, item, event.target.checked))}
+              />
+              <span>{item}</span>
+            </label>
+          ))}
+        </div>
+      </details>
+    </div>
+  );
+}
+
+function AdminTemplateFieldsSelect({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const selectedEntries = templateFieldEntries(value);
+  const selectedKeys = new Set(selectedEntries.map(([key]) => key));
+  const knownKeys = new Set(TEMPLATE_FIELD_OPTIONS.map(([key]) => key));
+  const options = [
+    ...TEMPLATE_FIELD_OPTIONS,
+    ...selectedEntries.filter(([key]) => !knownKeys.has(key)),
+  ];
+  return (
+    <div className="ad-stage2-template-field">
+      <span>Додаткові поля, які заповнюватиме партнер</span>
+      <details className="ad-stage2-multiselect">
+        <summary>
+          {selectedEntries.length
+            ? selectedEntries.map(([, label]) => label).join(", ")
+            : "Оберіть потрібні поля"}
+        </summary>
+        <div className="ad-stage2-multiselect__menu">
+          {options.map(([key, label]) => (
+            <label key={`template-field-${key}`}>
+              <input
+                type="checkbox"
+                checked={selectedKeys.has(key)}
+                onChange={(event) => onChange(toggleTemplateField(value, key, label, event.target.checked))}
+              />
+              <span>{label}</span>
+            </label>
+          ))}
+        </div>
+      </details>
+      <small>Технічні назви полів зберігаються автоматично — адміну їх вводити не потрібно.</small>
+    </div>
+  );
+}
+
 function Stage2ContentScreen({ navigate }: AdminProps) {
   const adminKey = "";
   const [pending, setPending] = useState<Array<{ id: string; name: string; category_slug: string; subcategory?: string | null; address: string; status: string; organization_name?: string; region_name?: string; moderation_comment?: string | null }>>([]);
@@ -1339,6 +1472,7 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
   const [placeTemplates, setPlaceTemplates] = useState<Stage2PlaceTypeTemplate[]>([]);
   const [templateCategory, setTemplateCategory] = useState("hotel");
   const [templateType, setTemplateType] = useState("Готель");
+  const [creatingTemplateType, setCreatingTemplateType] = useState(false);
   const [templateTitle, setTemplateTitle] = useState("Новий готель");
   const [templateDescription, setTemplateDescription] = useState("Комфортний готель для відпочинку гостей.");
   const [templateAmenities, setTemplateAmenities] = useState("Номери, Паркінг, Wi‑Fi, Сніданок");
@@ -1542,20 +1676,100 @@ function Stage2ContentScreen({ navigate }: AdminProps) {
           <PrimaryButton onClick={() => void adminStage2Fetch("/admin/stage2/categories", adminKey,{method:"POST",body:JSON.stringify({slug:categorySlug,name:categoryName,subcategories:categorySubcategories.split(",").map((item)=>item.trim()).filter(Boolean)})}).then(()=>{setMessage("Категорію і підкатегорії збережено");return load();})}><Plus size={16}/> Зберегти</PrimaryButton>
           <div className="ad-stage2-template-editor">
             <strong>Шаблон типу закладу</strong>
-            <select value={templateCategory} onChange={(e)=>{ const value=e.target.value; setTemplateCategory(value); const first=placeTemplates.find((item)=>item.category_slug===value); if(first){setTemplateType(first.place_type);setTemplateTitle(first.default_title || "");setTemplateDescription(first.default_description || "");setTemplateAmenities((first.default_amenities || []).join(", "));setTemplateServices(first.default_services.join(", "));setTemplateFields(Object.entries(first.fields ?? {}).map(([key,label])=>`${key}=${String(label)}`).join("; "));} }}>
-              {stage2Categories.filter((item)=>item.slug!=="emergency").map((item)=><option key={item.slug} value={item.slug}>{item.name}</option>)}
-            </select>
-            <select value={templateType} onChange={(e)=>{ const value=e.target.value; setTemplateType(value); const current=placeTemplates.find((item)=>item.category_slug===templateCategory&&item.place_type===value); if(current){setTemplateTitle(current.default_title || "");setTemplateDescription(current.default_description || "");setTemplateAmenities((current.default_amenities || []).join(", "));setTemplateServices(current.default_services.join(", "));setTemplateFields(Object.entries(current.fields ?? {}).map(([key,label])=>`${key}=${String(label)}`).join("; "));} }}>
-              <option value="">Новий тип закладу</option>
-              {placeTemplates.filter((item)=>item.category_slug===templateCategory).map((item)=><option key={item.id} value={item.place_type}>{item.label}</option>)}
-            </select>
-            <input value={templateType} onChange={(e)=>setTemplateType(e.target.value)} placeholder="Тип / новий тип: Ресторан, Кафе, Магазин" />
-            <input value={templateTitle} onChange={(e)=>setTemplateTitle(e.target.value)} placeholder="Шаблон заголовка: Новий ресторан" />
-            <textarea value={templateDescription} onChange={(e)=>setTemplateDescription(e.target.value)} placeholder="Шаблон опису закладу" rows={3} />
-            <input value={templateAmenities} onChange={(e)=>setTemplateAmenities(e.target.value)} placeholder="Іконки / зручності через кому: Wi‑Fi, Паркінг, Меню" />
-            <input value={templateServices} onChange={(e)=>setTemplateServices(e.target.value)} placeholder="Детальні послуги через кому: Сніданок, Сауна, Трансфер" />
-            <input value={templateFields} onChange={(e)=>setTemplateFields(e.target.value)} placeholder="Поля: capacity=Кількість місць; cuisine=Кухня" />
-            <PrimaryButton onClick={() => void adminStage2Fetch("/admin/stage2/place-type-templates", adminKey,{method:"POST",body:JSON.stringify({category_slug:templateCategory,place_type:templateType,label:templateType,default_title:templateTitle,default_description:templateDescription,default_amenities:templateAmenities.split(",").map((item)=>item.trim()).filter(Boolean),default_services:templateServices.split(",").map((item)=>item.trim()).filter(Boolean),fields:Object.fromEntries(templateFields.split(";").map((item)=>item.trim()).filter(Boolean).map((item)=>{const [key,...rest]=item.split("=");return [key.trim(),rest.join("=").trim()]}).filter(([key,label])=>key&&label))})}).then(()=>{setMessage("Шаблон типу закладу збережено");return load();})}><Plus size={16}/> Зберегти шаблон</PrimaryButton>
+            <p>Оберіть розділ і тип закладу. Нижче задайте тільки зрозумілі адміну параметри — технічні ключі система збере сама.</p>
+
+            <label className="ad-stage2-template-field">
+              <span>Розділ</span>
+              <select value={templateCategory} onChange={(e)=>{
+                const value=e.target.value;
+                setTemplateCategory(value);
+                setCreatingTemplateType(false);
+                const first=placeTemplates.find((item)=>item.category_slug===value);
+                if(first){
+                  setTemplateType(first.place_type);
+                  setTemplateTitle(first.default_title || "");
+                  setTemplateDescription(first.default_description || "");
+                  setTemplateAmenities((first.default_amenities || []).join(", "));
+                  setTemplateServices(first.default_services.join(", "));
+                  setTemplateFields(Object.entries(first.fields ?? {}).map(([key,label])=>`${key}=${String(label)}`).join("; "));
+                } else {
+                  setTemplateType("");
+                  setTemplateTitle("");
+                  setTemplateDescription("");
+                  setTemplateAmenities("");
+                  setTemplateServices("");
+                  setTemplateFields("");
+                }
+              }}>
+                {stage2Categories.filter((item)=>item.slug!=="emergency").map((item)=><option key={item.slug} value={item.slug}>{item.name}</option>)}
+              </select>
+            </label>
+
+            <label className="ad-stage2-template-field">
+              <span>Тип закладу</span>
+              <select value={creatingTemplateType ? "__new__" : templateType} onChange={(e)=>{
+                const value=e.target.value;
+                if(value==="__new__"){
+                  setCreatingTemplateType(true);
+                  setTemplateType("");
+                  setTemplateTitle("");
+                  setTemplateDescription("");
+                  setTemplateAmenities("");
+                  setTemplateServices("");
+                  setTemplateFields("");
+                  return;
+                }
+                setCreatingTemplateType(false);
+                setTemplateType(value);
+                const current=placeTemplates.find((item)=>item.category_slug===templateCategory&&item.place_type===value);
+                if(current){
+                  setTemplateTitle(current.default_title || "");
+                  setTemplateDescription(current.default_description || "");
+                  setTemplateAmenities((current.default_amenities || []).join(", "));
+                  setTemplateServices(current.default_services.join(", "));
+                  setTemplateFields(Object.entries(current.fields ?? {}).map(([key,label])=>`${key}=${String(label)}`).join("; "));
+                }
+              }}>
+                <option value="" disabled>Оберіть тип закладу</option>
+                {placeTemplates.filter((item)=>item.category_slug===templateCategory).map((item)=><option key={item.id} value={item.place_type}>{item.label}</option>)}
+                <option value="__new__">+ Додати новий тип закладу</option>
+              </select>
+            </label>
+
+            {creatingTemplateType ? (
+              <label className="ad-stage2-template-field">
+                <span>Назва нового типу</span>
+                <input value={templateType} onChange={(e)=>setTemplateType(e.target.value)} placeholder="Наприклад: Готель, Кафе, Музей" />
+              </label>
+            ) : null}
+
+            <label className="ad-stage2-template-field">
+              <span>Назва за замовчуванням</span>
+              <input value={templateTitle} onChange={(e)=>setTemplateTitle(e.target.value)} placeholder="Наприклад: Новий готель" />
+            </label>
+
+            <label className="ad-stage2-template-field">
+              <span>Короткий опис за замовчуванням</span>
+              <textarea value={templateDescription} onChange={(e)=>setTemplateDescription(e.target.value)} placeholder="Коротка підказка для партнера, що написати про заклад" rows={3} />
+            </label>
+
+            <AdminTemplateMultiSelect
+              label="Зручності / основні характеристики"
+              value={templateAmenities}
+              options={TEMPLATE_AMENITY_OPTIONS}
+              onChange={setTemplateAmenities}
+            />
+
+            <AdminTemplateMultiSelect
+              label="Послуги закладу"
+              value={templateServices}
+              options={TEMPLATE_SERVICE_OPTIONS}
+              onChange={setTemplateServices}
+            />
+
+            <AdminTemplateFieldsSelect value={templateFields} onChange={setTemplateFields} />
+
+            <PrimaryButton disabled={!templateType.trim()} onClick={() => void adminStage2Fetch("/admin/stage2/place-type-templates", adminKey,{method:"POST",body:JSON.stringify({category_slug:templateCategory,place_type:templateType.trim(),label:templateType.trim(),default_title:templateTitle,default_description:templateDescription,default_amenities:commaList(templateAmenities),default_services:commaList(templateServices),fields:Object.fromEntries(templateFieldEntries(templateFields))})}).then(()=>{setMessage("Шаблон типу закладу збережено");setCreatingTemplateType(false);return load();})}><Plus size={16}/> Зберегти шаблон</PrimaryButton>
           </div>
         </div>
       </section>

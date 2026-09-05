@@ -608,12 +608,51 @@ const categories: Array<{
   { title: "Халепа?", note: "Допомога, аптеки, поліція, лікарі", slug: "emergency", tone: "emergency", icon: LifeBuoy },
 ];
 
+async function fetchOpenMeteoWeatherClient(lat: number, lng: number): Promise<Stage2Weather> {
+  const params = new URLSearchParams({
+    latitude: String(lat),
+    longitude: String(lng),
+    current: "temperature_2m,wind_speed_10m,weather_code",
+    hourly: "precipitation_probability",
+    daily: "sunset",
+    forecast_days: "1",
+    timezone: "auto",
+  });
+  const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`, { headers: { Accept: "application/json" } });
+  if (!response.ok) throw new Error(`Weather API ${response.status}`);
+  const data = await response.json() as {
+    current?: { time?: string; temperature_2m?: number; wind_speed_10m?: number; weather_code?: number };
+    hourly?: { time?: string[]; precipitation_probability?: number[] };
+    daily?: { sunset?: string[] };
+  };
+  const currentTime = String(data.current?.time ?? "");
+  const currentHour = currentTime ? `${currentTime.slice(0, 13)}:00` : "";
+  const hourIndexRaw = data.hourly?.time?.findIndex((item) => item === currentHour) ?? -1;
+  const hourIndex = hourIndexRaw >= 0 ? hourIndexRaw : 0;
+  const temperature = Number(data.current?.temperature_2m);
+  const wind = Number(data.current?.wind_speed_10m);
+  if (!Number.isFinite(temperature) || !Number.isFinite(wind)) throw new Error("Weather API returned incomplete data");
+  return {
+    temperature_c: temperature,
+    precipitation_probability: Number(data.hourly?.precipitation_probability?.[hourIndex] ?? 0) || 0,
+    wind_speed_kmh: wind,
+    sunset: String(data.daily?.sunset?.[0] ?? ""),
+    weather_code: Number(data.current?.weather_code ?? 0),
+    observed_at: currentTime,
+  };
+}
+
 function HomeScreen({ navigate }: { navigate: Navigate }) {
   const { context, language } = useTouristRuntime();
   const regionName = language === "en" ? (context?.region.nameEn || context?.region.name || "") : language === "pl" ? (context?.region.namePl || context?.region.name || "") : (context?.region.name || "");
   const contextPlace = context?.place;
-  const scanLat = Number(contextPlace?.lat ?? context?.region.lat);
-  const scanLng = Number(contextPlace?.lng ?? context?.region.lng);
+  const placeLat = Number(contextPlace?.lat);
+  const placeLng = Number(contextPlace?.lng);
+  const regionLat = Number(context?.region.lat);
+  const regionLng = Number(context?.region.lng);
+  const hasValidPlaceCoords = Number.isFinite(placeLat) && Number.isFinite(placeLng) && !(placeLat === 0 && placeLng === 0);
+  const scanLat = hasValidPlaceCoords ? placeLat : regionLat;
+  const scanLng = hasValidPlaceCoords ? placeLng : regionLng;
   const [weather, setWeather] = useState<Stage2Weather | null>(null);
   const [weatherFailed, setWeatherFailed] = useState(false);
 
@@ -631,11 +670,34 @@ function HomeScreen({ navigate }: { navigate: Navigate }) {
       }
     } catch { /* weather cache is optional */ }
     if (!hasFreshCache) setWeather(null);
-    void stage2Fetch<Stage2Weather>(`/weather?lat=${encodeURIComponent(String(scanLat))}&lng=${encodeURIComponent(String(scanLng))}`).then((value) => {
+    const saveWeather = (value: Stage2Weather) => {
       if (cancelled) return;
       setWeather(value);
-      try { window.sessionStorage.setItem(cacheKey, JSON.stringify({ value, at: Date.now() })); } catch { /* optional cache */ }
-    }).catch(() => { if (!cancelled) setWeatherFailed(true); });
+      setWeatherFailed(false);
+      try {
+        window.sessionStorage.setItem(cacheKey, JSON.stringify({ value, at: Date.now() }));
+        window.localStorage.setItem(cacheKey, JSON.stringify({ value, at: Date.now() }));
+      } catch { /* optional cache */ }
+    };
+    void stage2Fetch<Stage2Weather>(`/weather?lat=${encodeURIComponent(String(scanLat))}&lng=${encodeURIComponent(String(scanLng))}`)
+      .then(saveWeather)
+      .catch(async () => {
+        // If Railway cannot reach the weather endpoint, use Open-Meteo directly from the Mini App.
+        try {
+          const value = await fetchOpenMeteoWeatherClient(scanLat, scanLng);
+          saveWeather(value);
+        } catch {
+          if (cancelled) return;
+          try {
+            const stale = window.localStorage.getItem(cacheKey);
+            if (stale) {
+              const parsed = JSON.parse(stale) as { value?: Stage2Weather };
+              if (parsed.value) { setWeather(parsed.value); setWeatherFailed(false); return; }
+            }
+          } catch { /* no stale cache */ }
+          setWeatherFailed(true);
+        }
+      });
     return () => { cancelled = true; };
   }, [scanLat, scanLng]);
 
@@ -1578,7 +1640,7 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
         setNearbyError(message || "Невідома помилка сервісу місць");
         setNearbyLoading(false);
       });
-      if (hasCachedPlaces) loadFull();
+      if (hasCachedPlaces || activeCategory === "Усі") loadFull();
       else void stage2Fetch<Stage2Place[]>(`/places?${makeParams(4)}`).then((items) => {
         if (!cancelled && !fullResolved && items.length) { setNearbyPlaces(items); setNearbyLoading(false); }
       }).catch(() => undefined).finally(() => { if (!cancelled) loadFull(); });

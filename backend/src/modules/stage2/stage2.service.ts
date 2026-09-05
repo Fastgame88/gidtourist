@@ -65,6 +65,13 @@ type PlaceRow = {
   tags: string[];
 };
 
+
+type WeatherApiData = {
+  current?: { time?: string; temperature_2m?: number; wind_speed_10m?: number; weather_code?: number };
+  hourly?: { time?: string[]; precipitation_probability?: number[] };
+  daily?: { sunset?: string[] };
+};
+
 const PARTNER_SUBCATEGORY_ALIASES: Record<string, string[]> = {
   "Ресторани": ["ресторан", "кухн"], "Кафе": ["кафе", "кавʼ", "кав'", "coffee"], "Бари": ["бар"], "Піцерії": ["піц", "pizza"],
   "Кондитерські": ["кондитер", "десерт", "торт"], "Фастфуд": ["фаст", "fast food"], "Їжа з собою": ["з собою", "доставка"], "Традиційна кухня": ["україн", "гуцул", "традиц"],
@@ -93,6 +100,15 @@ function parseTelegramIds(value: unknown) {
 
 @Injectable()
 export class Stage2Service {
+  private readonly weatherCache = new Map<string, { value: {
+    temperature_c: number;
+    precipitation_probability: number;
+    wind_speed_kmh: number;
+    sunset: string;
+    weather_code: number;
+    observed_at: string;
+  }; expiresAt: number }>();
+
   constructor(private readonly db: DatabaseService, private readonly google: GooglePlacesService, private readonly geoapify: GeoapifyPlacesService) {}
 
   private async categoryForPlaceType(placeType: string, fallback = "hotel") {
@@ -306,6 +322,10 @@ export class Stage2Service {
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
       throw new BadRequestException("Valid lat/lng are required");
     }
+    const cacheKey = `${lat.toFixed(3)}:${lng.toFixed(3)}`;
+    const cached = this.weatherCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) return cached.value;
+
     const params = new URLSearchParams({
       latitude: String(lat),
       longitude: String(lng),
@@ -315,22 +335,44 @@ export class Stage2Service {
       forecast_days: "1",
       timezone: "auto",
     });
-    const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`, { headers: { Accept: "application/json" } });
-    if (!response.ok) throw new BadGatewayException(`Weather API ${response.status}`);
-    const data = await response.json() as {
-      current?: { time?: string; temperature_2m?: number; wind_speed_10m?: number; weather_code?: number };
-      hourly?: { time?: string[]; precipitation_probability?: number[] };
-      daily?: { sunset?: string[] };
+
+    const load = async (retry = true): Promise<WeatherApiData> => {
+      try {
+        const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`, {
+          headers: { Accept: "application/json" },
+          signal: AbortSignal.timeout(7000),
+        });
+        if (!response.ok) {
+          const body = await response.text().catch(() => "");
+          throw new Error(`Weather API ${response.status}${body ? `: ${body.slice(0, 180)}` : ""}`);
+        }
+        return await response.json() as WeatherApiData;
+      } catch (error) {
+        if (!retry) throw error;
+        await new Promise((resolve) => setTimeout(resolve, 450));
+        return load(false);
+      }
     };
+
+    let data: WeatherApiData;
+    try {
+      data = await load();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new BadGatewayException(`Weather API unavailable: ${message}`);
+    }
+
     const temperature = Number(data.current?.temperature_2m);
     const windSpeed = Number(data.current?.wind_speed_10m);
-    if (!data.current || !Number.isFinite(temperature) || !Number.isFinite(windSpeed)) throw new BadGatewayException("Weather API returned incomplete current conditions");
+    if (!data.current || !Number.isFinite(temperature) || !Number.isFinite(windSpeed)) {
+      throw new BadGatewayException("Weather API returned incomplete current conditions");
+    }
     const currentTime = String(data.current.time ?? "");
     const currentHour = currentTime ? `${currentTime.slice(0, 13)}:00` : "";
     const foundHourIndex = data.hourly?.time?.findIndex((item) => item === currentHour) ?? -1;
     const hourIndex = foundHourIndex >= 0 ? foundHourIndex : 0;
     const precipitation = Number(data.hourly?.precipitation_probability?.[hourIndex] ?? 0);
-    return {
+    const value = {
       temperature_c: temperature,
       precipitation_probability: Number.isFinite(precipitation) ? precipitation : 0,
       wind_speed_kmh: windSpeed,
@@ -338,6 +380,8 @@ export class Stage2Service {
       weather_code: Number(data.current?.weather_code ?? 0),
       observed_at: currentTime,
     };
+    this.weatherCache.set(cacheKey, { value, expiresAt: Date.now() + 10 * 60 * 1000 });
+    return value;
   }
 
   async context(startParam: string) {

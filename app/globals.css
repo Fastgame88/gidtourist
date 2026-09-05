@@ -28030,6 +28030,93 @@ button.gt-amenities-row {
   font-size: 12px;
   resize: vertical;
 }
+
+
+.ad-stage2-template-editor > p {
+  margin: -2px 0 4px;
+  color: #718078;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.ad-stage2-template-field {
+  display: grid;
+  gap: 6px;
+}
+.ad-stage2-template-field > span {
+  color: #37443c;
+  font-size: 11px;
+  font-weight: 800;
+}
+.ad-stage2-template-field > small {
+  margin-top: -1px;
+  color: #869189;
+  font-size: 9.5px;
+  line-height: 1.35;
+}
+.ad-stage2-template-field > input,
+.ad-stage2-template-field > select,
+.ad-stage2-template-field > textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+.ad-stage2-multiselect {
+  position: relative;
+  width: 100%;
+}
+.ad-stage2-multiselect > summary {
+  display: flex;
+  min-height: 43px;
+  box-sizing: border-box;
+  padding: 10px 36px 10px 12px;
+  align-items: center;
+  border: 1px solid #dfe5e1;
+  border-radius: 10px;
+  background: #fff;
+  color: #27342c;
+  font-size: 11px;
+  line-height: 1.35;
+  cursor: pointer;
+  list-style: none;
+}
+.ad-stage2-multiselect > summary::-webkit-details-marker { display: none; }
+.ad-stage2-multiselect > summary::after {
+  content: "⌄";
+  position: absolute;
+  right: 13px;
+  top: 9px;
+  color: #617067;
+  font-size: 18px;
+}
+.ad-stage2-multiselect[open] > summary::after { transform: rotate(180deg); }
+.ad-stage2-multiselect__menu {
+  display: grid;
+  max-height: 220px;
+  margin-top: 5px;
+  padding: 7px;
+  overflow: auto;
+  border: 1px solid #dfe5e1;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(28, 55, 39, .10);
+}
+.ad-stage2-multiselect__menu > label {
+  display: flex;
+  min-height: 34px;
+  padding: 6px 7px;
+  align-items: center;
+  gap: 8px;
+  border-radius: 7px;
+  color: #38453d;
+  font-size: 11px;
+  cursor: pointer;
+}
+.ad-stage2-multiselect__menu > label:hover { background: #f3f8f5; }
+.ad-stage2-multiselect__menu input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: #11a95b;
+}
 .gt-partner-amenity-editor {
   padding: 11px 12px 12px;
   border-bottom: 1px solid #edf1ee;

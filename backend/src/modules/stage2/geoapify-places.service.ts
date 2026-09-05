@@ -36,7 +36,7 @@ type GeoapifyRoutingResponse = {
 const SECTION_CATEGORIES: Record<string, string[]> = {
   all: [
     "catering", "commercial", "accommodation", "entertainment", "tourism", "leisure", "sport",
-    "public_transport", "service", "healthcare", "natural", "national_park", "parking",
+    "public_transport", "service", "healthcare", "natural", "parking",
   ],
   food: ["catering"],
   shop: ["commercial"],
@@ -285,31 +285,43 @@ export class GeoapifyPlacesService {
     const categories = isAll ? SECTION_CATEGORIES.all : preferredCategories;
     let features: GeoapifyFeature[] = [];
 
-    if (isFastPaint || radius < 2000) {
+    if (isAll) {
+      // Build "Усі" from a few proven parent-category groups instead of one very broad taxonomy
+      // request. This is more stable and keeps the result diverse (food/shops/tourism/services/nature).
+      const allGroups: string[][] = [
+        ["catering", "commercial"],
+        ["accommodation", "tourism", "entertainment", "leisure", "sport"],
+        ["public_transport", "service", "healthcare", "parking"],
+        ["natural"],
+      ];
+      const groupLimit = isFastPaint
+        ? 2
+        : Math.max(5, Math.min(20, Math.ceil(safeLimit / allGroups.length) + 2));
+      const settled = await Promise.allSettled(
+        allGroups.map((group) => requestAt(lat, lng, group, radius, groupLimit)),
+      );
+      for (const item of settled) {
+        if (item.status === "fulfilled") features.push(...(item.value.features ?? []));
+      }
+      if (!features.length) {
+        const errors = settled
+          .filter((item): item is PromiseRejectedResult => item.status === "rejected")
+          .map((item) => item.reason instanceof Error ? item.reason.message : String(item.reason));
+        if (errors.length) throw new BadGatewayException(`Geoapify "Усі" search failed: ${errors.join(" | ")}`);
+      }
+    } else if (isFastPaint || radius < 2000) {
       // One small centre request gives the user markers immediately.
       try {
         const data = await requestAt(lat, lng, categories, radius, safeLimit);
         features = data.features ?? [];
-        if (isAll && !features.length) {
-          const fallback = await requestAt(lat, lng, ["catering", "commercial", "tourism"], radius, safeLimit);
-          features = fallback.features ?? [];
-        }
       } catch (error) {
-        if (!isAll) {
-          const fallbackCategories = SECTION_CATEGORIES[section] ?? SECTION_CATEGORIES.all;
-          if (!subcategory || fallbackCategories.join(",") === categories.join(",")) throw error;
-          const fallback = await requestAt(lat, lng, fallbackCategories, radius, safeLimit);
-          features = fallback.features ?? [];
-        } else {
-          // Fast/short "Усі" must still render something even if one broad category key is rejected.
-          const fallback = await requestAt(lat, lng, ["catering", "commercial", "tourism"], radius, safeLimit);
-          features = fallback.features ?? [];
-        }
+        const fallbackCategories = SECTION_CATEGORIES[section] ?? SECTION_CATEGORIES.all;
+        if (!subcategory || fallbackCategories.join(",") === categories.join(",")) throw error;
+        const fallback = await requestAt(lat, lng, fallbackCategories, radius, safeLimit);
+        features = fallback.features ?? [];
       }
     } else {
-      // Centre + four cardinal circles. Their overlap covers the original circle much more evenly,
-      // so a 2–5 km radius actually contains establishments from the outer part instead of only
-      // the first dense block near the centre. All calls run in parallel.
+      // Centre + four cardinal circles improve coverage for 2–5 km category searches.
       const offset = radius * 0.52;
       const localRadius = radius * 0.78;
       const points = [
@@ -322,19 +334,6 @@ export class GeoapifyPlacesService {
       const perPoint = Math.max(8, Math.min(20, Math.ceil(safeLimit / points.length)));
       const settled = await Promise.allSettled(points.map((point) => requestAt(point.lat, point.lng, categories, localRadius, perPoint)));
       for (const item of settled) if (item.status === "fulfilled") features.push(...(item.value.features ?? []));
-
-      // "Усі" must never become empty because one broad taxonomy request was rejected. If every
-      // spread request failed/returned nothing, retry three proven parent-category groups at the
-      // original centre and merge whatever succeeds.
-      if (!features.length && isAll) {
-        const fallbackGroups = [
-          ["catering", "commercial"],
-          ["accommodation", "tourism", "entertainment", "leisure", "sport", "natural"],
-          ["public_transport", "service", "healthcare", "parking"],
-        ];
-        const fallbacks = await Promise.allSettled(fallbackGroups.map((group) => requestAt(lat, lng, group, radius, 20)));
-        for (const item of fallbacks) if (item.status === "fulfilled") features.push(...(item.value.features ?? []));
-      }
       if (!features.length) {
         const errors = settled.filter((item): item is PromiseRejectedResult => item.status === "rejected")
           .map((item) => item.reason instanceof Error ? item.reason.message : String(item.reason));
