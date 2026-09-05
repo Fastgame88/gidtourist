@@ -39,7 +39,7 @@ export type Stage2Place = {
   walking_duration_s?: number | null;
   is_open_now?: boolean | null;
   status?: string;
-  source?: "partner" | "google";
+  source?: "partner" | "google" | "geoapify";
   is_partner?: boolean;
 };
 

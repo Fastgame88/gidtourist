@@ -3,6 +3,7 @@ import { DatabaseService } from "../../database/database.service.js";
 import { makeId } from "../../common/id.js";
 import type { AuthUser } from "../../common/auth.guard.js";
 import { GooglePlacesService, type GoogleNearbyPlace } from "./google-places.service.js";
+import { GeoapifyPlacesService, type GeoapifyPlace } from "./geoapify-places.service.js";
 
 function num(value: unknown, fallback?: number) {
   const parsed = Number(value);
@@ -92,7 +93,7 @@ function parseTelegramIds(value: unknown) {
 
 @Injectable()
 export class Stage2Service {
-  constructor(private readonly db: DatabaseService, private readonly google: GooglePlacesService) {}
+  constructor(private readonly db: DatabaseService, private readonly google: GooglePlacesService, private readonly geoapify: GeoapifyPlacesService) {}
 
   private async categoryForPlaceType(placeType: string, fallback = "hotel") {
     const clean = placeType.trim();
@@ -195,6 +196,63 @@ export class Stage2Service {
       is_open_now: place.regularOpeningHours?.openNow ?? null,
       status: "external",
       source: "google" as const,
+      is_partner: false,
+    };
+  }
+
+  private geoapifyPlaceToStage2(place: GeoapifyPlace, lat?: number, lng?: number, requestedSection = "") {
+    const section = requestedSection && requestedSection !== "all" ? requestedSection : this.geoapify.mapSection(place.categories);
+    const distance = place.distance ?? (lat != null && lng != null ? distanceMeters(lat, lng, place.lat, place.lng) : null);
+    const googleSearch = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([place.name, place.formattedAddress].filter(Boolean).join(", "))}`;
+    const rawOpeningHours = String(place.openingHours ?? "").trim();
+    const workHours = rawOpeningHours
+      ? { raw: rawOpeningHours, weekdayDescriptions: [rawOpeningHours], ...(rawOpeningHours === "24/7" ? { always_open: true } : {}) }
+      : {};
+    const subcategory = this.geoapify.subcategory(place.categories);
+    return {
+      id: `geoapify_${place.placeId}`,
+      region_id: "geoapify",
+      category_slug: section,
+      category_name: section,
+      subcategory,
+      name: place.name || "Локація",
+      description: place.description || subcategory || "Geoapify / OpenStreetMap",
+      address: place.formattedAddress || "",
+      lat: Number(place.lat),
+      lng: Number(place.lng),
+      phone: place.phone ?? null,
+      telegram: null,
+      website: place.website ?? null,
+      image_url: place.imageUrl ?? null,
+      rating: 0,
+      review_count: 0,
+      price_level: null,
+      work_hours: workHours,
+      attributes: {
+        partner: false,
+        geoapify: true,
+        external_provider: "geoapify",
+        google_maps_uri: googleSearch,
+        google_reviews_uri: googleSearch,
+        internet_access: place.internetAccess ?? null,
+        wheelchair: place.wheelchair ?? null,
+        parking: place.parking ?? null,
+      },
+      details: {
+        geoapify_place_id: place.placeId,
+        external_provider: "geoapify",
+        google_maps_uri: googleSearch,
+        google_reviews_uri: googleSearch,
+        phone: place.phone ?? null,
+        google_weekday_descriptions: rawOpeningHours ? [rawOpeningHours] : [],
+        geoapify_categories: place.categories,
+      },
+      translations: {},
+      tags: place.categories,
+      distance_m: distance == null ? null : Math.round(distance),
+      is_open_now: rawOpeningHours === "24/7" ? true : null,
+      status: "external",
+      source: "geoapify" as const,
       is_partner: false,
     };
   }
@@ -336,11 +394,13 @@ export class Stage2Service {
     const kids = String(params.kids ?? "") === "true";
     const parking = String(params.parking ?? "") === "true";
     const partner = String(params.partner ?? "") === "true";
-    const googleLimit = Math.max(1, Math.min(Number(params.google_limit ?? 20) || 20, 40));
-    const googleSpread = String(params.google_spread ?? "") === "true";
+    // Keep the legacy query parameter names so the current frontend/routes do not change.
+    // They now mean "include external places"; Geoapify is the primary provider and Google is fallback only.
+    const externalLimit = Math.max(1, Math.min(Number(params.google_limit ?? 20) || 20, 40));
     const includeRoutes = String(params.include_routes ?? "true") !== "false";
-    const debugGoogle = String(params.debug_google ?? "") === "true";
-    const googleRequested = String(params.include_google ?? "") === "true";
+    const debugExternal = String(params.debug_google ?? "") === "true";
+    const externalRequested = String(params.include_google ?? "") === "true";
+    const externalSection = String(params.google_section ?? (category || "all"));
 
     let rows = await this.rawPlaces(regionId);
     rows = rows.filter((p) => !category || p.category_slug === category);
@@ -360,23 +420,59 @@ export class Stage2Service {
     const filtered = radius != null ? mapped.filter((p) => p.distance_m != null && p.distance_m <= radius) : mapped;
     const partnerRows = filtered.map((p) => ({ ...p, source: "partner" as const, is_partner: p.attributes?.partner === true }));
 
-    if (debugGoogle && googleRequested) {
+    if (debugExternal && externalRequested) {
       if (lat == null || lng == null || radius == null) {
-        throw new BadRequestException(`Google Places не запущено: некоректні координати або радіус (lat=${String(params.lat ?? "")}, lng=${String(params.lng ?? "")}, radius=${String(params.radius ?? "")})`);
+        throw new BadRequestException(`Сервіс місць не запущено: некоректні координати або радіус (lat=${String(params.lat ?? "")}, lng=${String(params.lng ?? "")}, radius=${String(params.radius ?? "")})`);
       }
-      if (!this.google.enabled()) {
-        throw new BadGatewayException("Google Places не запущено: на backend відсутній GOOGLE_MAPS_SERVER_API_KEY / GOOGLE_MAPS_API_KEY");
+      if (!this.geoapify.enabled() && !this.google.enabled()) {
+        throw new BadGatewayException("Сервіс місць не запущено: на backend відсутній GEOAPIFY_API_KEY (і немає Google fallback)");
       }
     }
 
-    const includeGoogle = googleRequested && lat != null && lng != null && radius != null && this.google.enabled();
-    if (includeGoogle) {
-      const googleSection = String(params.google_section ?? (category || "all"));
+    // Geoapify is primary for all tourist catalog/nearby searches. This removes Google Nearby Search
+    // from the normal flow and therefore avoids its SearchNearby quota/cost. Details/routes are loaded
+    // only when a concrete place is opened.
+    const includeGeoapify = externalRequested && lat != null && lng != null && radius != null && this.geoapify.enabled() && !partner;
+    if (includeGeoapify) {
       try {
-        const googlePlaces = await this.google.nearby(lat!, lng!, radius!, googleSection, subcategory, googleLimit, googleSpread);
-        if (debugGoogle && googlePlaces.length === 0 && partnerRows.length === 0) {
-          throw new BadGatewayException(`Google Places повернув 0 місць (section=${googleSection}, subcategory=${subcategory || "—"}, radius=${Math.round(radius!)} м, lat=${lat!.toFixed(6)}, lng=${lng!.toFixed(6)})`);
+        const geoPlaces = await this.geoapify.nearby(lat!, lng!, radius!, externalSection, subcategory, externalLimit, q);
+        const external = geoPlaces.map((item) => this.geoapifyPlaceToStage2(item, lat!, lng!, externalSection));
+        const selectedQuery = q.toLocaleLowerCase("uk");
+        const filteredExternal = external
+          .filter((place) => !selectedQuery || [place.name, place.description, place.address, place.subcategory, ...place.tags].join(" ").toLocaleLowerCase("uk").includes(selectedQuery))
+          // Geoapify/OSM does not provide Google-style user rating/price for every POI. Do not fabricate it.
+          // When a filter depends on unavailable data, keep only local partner rows whose data is known.
+          .filter(() => minRating == null && priceLevel == null && !kids && !parking)
+          .filter((place) => !openNow || place.is_open_now === true || place.is_open_now == null);
+        const deduped = filteredExternal.filter((externalPlace) => !partnerRows.some((partnerPlace) => {
+          const close = distanceMeters(Number(partnerPlace.lat), Number(partnerPlace.lng), externalPlace.lat, externalPlace.lng) < 35;
+          const firstWord = externalPlace.name.toLocaleLowerCase("uk").split(" ")[0] || "___";
+          return close && partnerPlace.name.toLocaleLowerCase("uk").includes(firstWord);
+        }));
+        const combined = [...partnerRows, ...deduped];
+        combined.sort((a, b) => (a.distance_m ?? 1e12) - (b.distance_m ?? 1e12) || Number(b.rating) - Number(a.rating));
+        return combined;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`[Geoapify Places /places diagnostic] ${message}`);
+        // When GEOAPIFY_API_KEY is configured, never spend Google Nearby quota behind the user's back.
+        // Keep the old Google provider only as a fallback for deployments where Geoapify is not configured.
+        if (debugExternal) {
+          if (error instanceof BadGatewayException || error instanceof BadRequestException) throw error;
+          throw new BadGatewayException(`Geoapify не завантажив місця: ${message}`);
         }
+        partnerRows.sort((a, b) => (a.distance_m ?? 1e12) - (b.distance_m ?? 1e12) || Number(b.rating) - Number(a.rating));
+        return partnerRows;
+      }
+    }
+
+    // Google fallback is intentionally preserved for a safe migration. It is reached only if
+    // Geoapify is unavailable/failed or GEOAPIFY_API_KEY is missing.
+    const includeGoogleFallback = externalRequested && !this.geoapify.enabled() && !partner && lat != null && lng != null && radius != null && this.google.enabled();
+    if (includeGoogleFallback) {
+      const googleSpread = String(params.google_spread ?? "") === "true";
+      try {
+        const googlePlaces = await this.google.nearby(lat!, lng!, radius!, externalSection, subcategory, externalLimit, googleSpread);
         const external = googlePlaces.map((item) => this.googlePlaceToStage2(item, lat!, lng!));
         const selectedQuery = q.toLocaleLowerCase("uk");
         const filteredExternal = external.filter((place) => !subcategory || this.google.matchesSubcategory(subcategory, String(place.tags[0] ?? ""), place.tags))
@@ -384,37 +480,24 @@ export class Stage2Service {
           .filter((place) => minRating == null || Number(place.rating) >= minRating)
           .filter((place) => priceLevel == null || place.price_level === priceLevel)
           .filter((place) => !openNow || place.is_open_now === true)
-          // Google Nearby does not return the partner/kids/parking attributes used by our local catalog.
-          // Treat unknown values as not matching instead of showing incorrect results.
-          .filter(() => !partner && !kids && !parking);
+          .filter(() => !kids && !parking);
         const deduped = filteredExternal.filter((googlePlace) => !partnerRows.some((partnerPlace) => distanceMeters(Number(partnerPlace.lat), Number(partnerPlace.lng), googlePlace.lat, googlePlace.lng) < 35 && partnerPlace.name.toLocaleLowerCase("uk").includes(googlePlace.name.toLocaleLowerCase("uk").split(" ")[0] || "___")));
-        let combined = [...partnerRows, ...deduped];
-        if (includeRoutes) {
-          try {
-            const routeMetrics = await this.google.walkingMatrix(lat!, lng!, combined.slice(0, 20).map((place) => ({ id: place.id, lat: Number(place.lat), lng: Number(place.lng) })));
-            const byId = new Map(routeMetrics.map((item) => [item.id, item]));
-            combined = combined.map((place) => {
-              const route = byId.get(place.id);
-              return route ? { ...place, distance_m: route.distance_m, walking_duration_s: route.walking_duration_s } : place;
-            });
-          } catch {
-            // Routes API is optional at runtime. Straight-line values remain available if it is not enabled.
-          }
-        }
+        const combined = [...partnerRows, ...deduped];
         combined.sort((a, b) => (a.distance_m ?? 1e12) - (b.distance_m ?? 1e12) || Number(b.rating) - Number(a.rating));
         return combined;
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        console.error(`[Google Places /places diagnostic] ${message}`);
-        if (debugGoogle) {
-          if (error instanceof BadGatewayException || error instanceof BadRequestException) throw error;
-          throw new BadGatewayException(`Google Places не завантажив місця: ${message}`);
+        console.error(`[Google Places fallback /places diagnostic] ${message}`);
+        if (debugExternal) {
+          throw new BadGatewayException(`Geoapify/Google fallback не завантажили місця: ${message}`);
         }
-        // Google Places is optional; partner catalog must remain available if quota/key is unavailable.
       }
     }
+
     let routedPartnerRows = partnerRows;
-    if (includeRoutes && lat != null && lng != null && partnerRows.length && this.google.enabled()) {
+    // Route API is not used for all external results. For a local partner list, keep existing optional
+    // Google batch route behavior; concrete external place routes are resolved in place().
+    if (includeRoutes && lat != null && lng != null && partnerRows.length && !this.geoapify.enabled() && this.google.enabled()) {
       try {
         const routeMetrics = await this.google.walkingMatrix(lat, lng, partnerRows.slice(0, 20).map((place) => ({ id: place.id, lat: Number(place.lat), lng: Number(place.lng) })));
         const byId = new Map(routeMetrics.map((item) => [item.id, item]));
@@ -430,12 +513,26 @@ export class Stage2Service {
 
   async place(id: string, publicOnly = true, originLat?: number, originLng?: number) {
     const withRoute = async <T extends { id: string; lat: number; lng: number; distance_m?: number | null }>(place: T) => {
-      if (!Number.isFinite(originLat) || !Number.isFinite(originLng) || !this.google.enabled()) return place;
+      if (!Number.isFinite(originLat) || !Number.isFinite(originLng)) return place;
+      // Prefer Geoapify Routing for a single opened place; this avoids Google Routes usage in the normal tourist flow.
+      if (this.geoapify.enabled()) {
+        try {
+          const route = await this.geoapify.walkingRoute(Number(originLat), Number(originLng), { id: place.id, lat: Number(place.lat), lng: Number(place.lng) });
+          if (route) return { ...place, distance_m: route.distance_m, walking_duration_s: route.walking_duration_s };
+        } catch { /* keep straight-line distance when Geoapify Routing is temporarily unavailable */ }
+        return place;
+      }
+      if (!this.google.enabled()) return place;
       try {
         const [route] = await this.google.walkingMatrix(Number(originLat), Number(originLng), [{ id: place.id, lat: Number(place.lat), lng: Number(place.lng) }]);
         return route ? { ...place, distance_m: route.distance_m, walking_duration_s: route.walking_duration_s } : place;
       } catch { return place; }
     };
+    if (id.startsWith("geoapify_")) {
+      const geoapifyId = id.slice("geoapify_".length);
+      const result = await this.geoapify.details(geoapifyId);
+      return withRoute(this.geoapifyPlaceToStage2(result, originLat, originLng));
+    }
     if (id.startsWith("google_")) {
       const googleId = id.slice("google_".length);
       const result = await this.google.details(googleId);
@@ -486,7 +583,7 @@ export class Stage2Service {
 
   async addFavorite(user: AuthUser, placeId: string) {
     const place = await this.place(placeId);
-    if (placeId.startsWith("google_")) {
+    if (placeId.startsWith("google_") || placeId.startsWith("geoapify_")) {
       await this.db.query(
         `INSERT INTO external_favorites(user_id,place_id,place_snapshot) VALUES($1,$2,$3::jsonb)
          ON CONFLICT(user_id,place_id) DO UPDATE SET place_snapshot=EXCLUDED.place_snapshot`,
@@ -499,7 +596,7 @@ export class Stage2Service {
   }
 
   async removeFavorite(user: AuthUser, placeId: string) {
-    if (placeId.startsWith("google_")) await this.db.query("DELETE FROM external_favorites WHERE user_id=$1 AND place_id=$2", [user.id, placeId]);
+    if (placeId.startsWith("google_") || placeId.startsWith("geoapify_")) await this.db.query("DELETE FROM external_favorites WHERE user_id=$1 AND place_id=$2", [user.id, placeId]);
     else await this.db.query("DELETE FROM favorites WHERE user_id=$1 AND place_id=$2", [user.id, placeId]);
     return { ok: true };
   }
