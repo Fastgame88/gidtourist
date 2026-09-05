@@ -97,6 +97,16 @@ function parseTelegramIds(value: unknown) {
   return Array.from(new Set(raw.map((item) => String(item).trim()).filter((item) => /^\d{5,20}$/.test(item))));
 }
 
+function externalPhotoErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  const lower = message.toLowerCase();
+  if (lower.includes("429") || lower.includes("resource_exhausted") || lower.includes("quota")) return "Google Place Photos недоступне: вичерпано квоту (429).";
+  if (lower.includes("403") || lower.includes("permission_denied") || lower.includes("api key")) return "Google Place Photos недоступне: перевірте API key, Billing та дозволи Places API (403).";
+  if (lower.includes("not configured")) return "Google-фото не перевірено: GOOGLE_MAPS_SERVER_API_KEY не налаштований.";
+  if (lower.includes("no photo") || lower.includes("has no photo")) return "Google Places знайшов заклад, але не повернув жодної фотографії.";
+  return `Google-фото не завантажено: ${message.slice(0, 220) || "невідома помилка"}`;
+}
+
 
 @Injectable()
 export class Stage2Service {
@@ -239,9 +249,9 @@ export class Stage2Service {
       phone: place.phone ?? null,
       telegram: null,
       website: place.website ?? null,
-      // External photos are intentionally disabled for now. Use the app's existing local
-      // placeholder until a separate, reliable/licensed photo source is selected.
-      image_url: null,
+      // Geoapify can expose Wikimedia/OSM media through wiki_and_media.image. Use it first;
+      // Google photo enrichment is added progressively only for cards that become visible.
+      image_url: place.imageUrl ?? null,
       rating: 0,
       review_count: 0,
       price_level: null,
@@ -254,6 +264,7 @@ export class Stage2Service {
         google_reviews_uri: googleSearch,
         google_review_enriched: false,
         google_place_id: null as string | null,
+        photo_provider: place.imageUrl ? "geoapify_wikimedia" : null,
         internet_access: place.internetAccess ?? null,
         wheelchair: place.wheelchair ?? null,
         parking: place.parking ?? null,
@@ -265,6 +276,10 @@ export class Stage2Service {
         google_reviews_uri: googleSearch,
         google_place_id: null as string | null,
         google_reviews: [] as unknown[],
+        google_photo_name: null as string | null,
+        google_photo_attributions: [] as unknown[],
+        google_enrichment_error: null as string | null,
+        photo_error: place.imageUrl ? null : "Geoapify/OSM не повернув фото для цієї локації; Google-фото буде перевірено після зіставлення закладу.",
         phone: place.phone ?? null,
         google_weekday_descriptions: rawOpeningHours ? [rawOpeningHours] : [],
         geoapify_categories: place.categories,
@@ -561,6 +576,72 @@ export class Stage2Service {
     return routedPartnerRows;
   }
 
+  async enrichPlaces(body: Record<string, unknown>) {
+    const raw = Array.isArray(body.places) ? body.places : [];
+    const inputs = raw.filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object" && !Array.isArray(item))).slice(0, 3);
+    if (!inputs.length) return [];
+
+    return Promise.all(inputs.map(async (base) => {
+      const id = String(base.id ?? "");
+      if (!id.startsWith("geoapify_") || !this.google.enabled()) return base;
+      const name = String(base.name ?? "").trim();
+      const address = String(base.address ?? "").trim();
+      const lat = Number(base.lat);
+      const lng = Number(base.lng);
+      if (!name || !Number.isFinite(lat) || !Number.isFinite(lng)) return base;
+      const attributes = base.attributes && typeof base.attributes === "object" && !Array.isArray(base.attributes) ? base.attributes as Record<string, unknown> : {};
+      const details = base.details && typeof base.details === "object" && !Array.isArray(base.details) ? base.details as Record<string, unknown> : {};
+      const existingImage = typeof base.image_url === "string" && base.image_url.trim() ? base.image_url.trim() : "";
+
+      try {
+        const google = await this.google.findByTextForCard(name, address, lat, lng);
+        const googleLat = Number(google?.location?.latitude);
+        const googleLng = Number(google?.location?.longitude);
+        const matchDistance = google && Number.isFinite(googleLat) && Number.isFinite(googleLng) ? distanceMeters(lat, lng, googleLat, googleLng) : 0;
+        if (!google || (matchDistance && matchDistance > 500)) {
+          return {
+            ...base,
+            details: { ...details, photo_error: existingImage ? null : "Google Places не знайшов достатньо точного збігу для цієї Geoapify-локації (до 500 м)." },
+          };
+        }
+
+        const photo = google.photos?.find((item) => Boolean(item.name?.trim()));
+        const photoName = photo?.name?.trim() || "";
+        const googleImage = photoName ? `/api/stage2/google/photo?name=${encodeURIComponent(photoName)}` : "";
+        const googleMapsUri = google.googleMapsLinks?.placeUri ?? google.googleMapsUri ?? attributes.google_maps_uri ?? null;
+        const googleReviewsUri = google.googleMapsLinks?.reviewsUri ?? googleMapsUri ?? attributes.google_reviews_uri ?? null;
+        return {
+          ...base,
+          image_url: existingImage || googleImage || null,
+          rating: Number(google.rating ?? base.rating ?? 0),
+          review_count: Number(google.userRatingCount ?? base.review_count ?? 0),
+          attributes: {
+            ...attributes,
+            google_review_enriched: true,
+            google_place_id: google.id ?? null,
+            google_maps_uri: googleMapsUri,
+            google_reviews_uri: googleReviewsUri,
+            photo_provider: existingImage ? (attributes.photo_provider ?? "geoapify_wikimedia") : googleImage ? "google" : null,
+          },
+          details: {
+            ...details,
+            google_place_id: google.id ?? null,
+            google_maps_uri: googleMapsUri,
+            google_reviews_uri: googleReviewsUri,
+            google_photo_name: photoName || null,
+            google_photo_attributions: photo?.authorAttributions ?? [],
+            photo_error: existingImage || googleImage ? null : "Geoapify/OSM і Google Places не повернули фото для цього закладу.",
+          },
+        };
+      } catch (error) {
+        return {
+          ...base,
+          details: { ...details, photo_error: existingImage ? null : externalPhotoErrorMessage(error), google_enrichment_error: error instanceof Error ? error.message.slice(0, 300) : String(error).slice(0, 300) },
+        };
+      }
+    }));
+  }
+
   async place(id: string, publicOnly = true, originLat?: number, originLng?: number) {
     const withRoute = async <T extends { id: string; lat: number; lng: number; distance_m?: number | null }>(place: T) => {
       if (!Number.isFinite(originLat) || !Number.isFinite(originLng)) return place;
@@ -585,8 +666,8 @@ export class Stage2Service {
       let enriched = base;
 
       // Geoapify remains the primary POI/map provider. Google is queried only after the user
-      // opens one concrete place, and only for rating/reviews/contact enrichment — never for
-      // Nearby Search or photos. The Google service caches this match for 30 minutes.
+      // opens one concrete place for reviews/contact data and, when Geoapify has no image, one
+      // main photo. Google is never used for Nearby Search. Matches are cached for 30 minutes.
       if (this.google.enabled()) {
         try {
           const google = await this.google.findByTextForReviews(base.name, base.address, Number(base.lat), Number(base.lng));
@@ -598,8 +679,12 @@ export class Stage2Service {
           if (google && (!matchDistance || matchDistance <= 500)) {
             const googleMapsUri = google.googleMapsLinks?.placeUri ?? google.googleMapsUri ?? base.attributes.google_maps_uri;
             const googleReviewsUri = google.googleMapsLinks?.reviewsUri ?? googleMapsUri ?? base.attributes.google_reviews_uri;
+            const googlePhoto = google.photos?.find((item) => Boolean(item.name?.trim()));
+            const googlePhotoName = googlePhoto?.name?.trim() || "";
+            const googleImage = googlePhotoName ? `/api/stage2/google/photo?name=${encodeURIComponent(googlePhotoName)}` : "";
             enriched = {
               ...base,
+              image_url: base.image_url || googleImage || null,
               rating: Number(google.rating ?? base.rating ?? 0),
               review_count: Number(google.userRatingCount ?? base.review_count ?? 0),
               phone: base.phone || google.nationalPhoneNumber || null,
@@ -612,6 +697,7 @@ export class Stage2Service {
                 google_place_id: google.id,
                 google_maps_uri: googleMapsUri,
                 google_reviews_uri: googleReviewsUri,
+                photo_provider: base.image_url ? (base.attributes.photo_provider ?? "geoapify_wikimedia") : googleImage ? "google" : null,
               },
               details: {
                 ...base.details,
@@ -620,11 +706,17 @@ export class Stage2Service {
                 google_reviews_uri: googleReviewsUri,
                 google_reviews: google.reviews ?? [],
                 google_weekday_descriptions: google.regularOpeningHours?.weekdayDescriptions ?? base.details.google_weekday_descriptions ?? [],
+                google_photo_name: googlePhotoName || null,
+                google_photo_attributions: googlePhoto?.authorAttributions ?? [],
+                photo_error: base.image_url || googleImage ? null : "Geoapify/OSM і Google Places не повернули фото для цього закладу.",
               },
             };
           }
         } catch (error) {
           console.warn(`[Google review enrichment] ${error instanceof Error ? error.message : String(error)}`);
+          if (!base.image_url) {
+            enriched = { ...base, details: { ...base.details, photo_error: externalPhotoErrorMessage(error), google_enrichment_error: error instanceof Error ? error.message.slice(0, 300) : String(error).slice(0, 300) } };
+          }
         }
       }
       return withRoute(enriched);

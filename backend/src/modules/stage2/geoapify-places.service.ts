@@ -256,7 +256,8 @@ export class GeoapifyPlacesService {
   async nearby(lat: number, lng: number, radius: number, section = "all", subcategory = "", limit = 20, name = ""): Promise<GeoapifyPlace[]> {
     const preferredCategories = this.categoriesFor(section, subcategory);
     const cleanName = name.trim();
-    const requestedLimit = Math.max(1, Math.round(limit || 20));
+    const requestedLimit = Math.max(1, Math.min(100, Math.round(limit || 20)));
+    const outputLimit = requestedLimit;
     const isFastPaint = requestedLimit <= 4;
     // For large radii a single proximity-sorted page gets saturated by the city centre and
     // practically never reaches POIs 2–5 km away. Keep the first-paint request tiny, then
@@ -286,28 +287,60 @@ export class GeoapifyPlacesService {
     let features: GeoapifyFeature[] = [];
 
     if (isAll) {
-      // Build "Усі" from a few proven parent-category groups instead of one very broad taxonomy
-      // request. This is more stable and keeps the result diverse (food/shops/tourism/services/nature).
+      // "Усі" must have a genuinely fast first paint. Do one tiny request first instead of
+      // waiting for all category groups; the client then replaces it with the richer background page.
       const allGroups: string[][] = [
         ["catering", "commercial"],
         ["accommodation", "tourism", "entertainment", "leisure", "sport"],
         ["public_transport", "service", "healthcare", "parking"],
         ["natural"],
       ];
-      const groupLimit = isFastPaint
-        ? 2
-        : Math.max(5, Math.min(20, Math.ceil(safeLimit / allGroups.length) + 2));
-      const settled = await Promise.allSettled(
-        allGroups.map((group) => requestAt(lat, lng, group, radius, groupLimit)),
-      );
-      for (const item of settled) {
-        if (item.status === "fulfilled") features.push(...(item.value.features ?? []));
-      }
-      if (!features.length) {
-        const errors = settled
-          .filter((item): item is PromiseRejectedResult => item.status === "rejected")
-          .map((item) => item.reason instanceof Error ? item.reason.message : String(item.reason));
-        if (errors.length) throw new BadGatewayException(`Geoapify "Усі" search failed: ${errors.join(" | ")}`);
+      if (isFastPaint) {
+        try {
+          const fast = await requestAt(lat, lng, allGroups[0], radius, Math.max(1, Math.min(safeLimit, 3)));
+          features = fast.features ?? [];
+        } catch {
+          const fallback = await requestAt(lat, lng, allGroups[1], radius, Math.max(1, Math.min(safeLimit, 3)));
+          features = fallback.features ?? [];
+        }
+      } else {
+        const groupLimit = Math.max(5, Math.min(20, Math.ceil(safeLimit / allGroups.length) + 2));
+        const centreSettled = await Promise.allSettled(
+          allGroups.map((group) => requestAt(lat, lng, group, radius, groupLimit)),
+        );
+        for (const item of centreSettled) {
+          if (item.status === "fulfilled") features.push(...(item.value.features ?? []));
+        }
+
+        // A proximity-sorted centre query is naturally dominated by the nearest streets.
+        // For 2–5 km add one outer sample for each category family. Run it in a second wave so
+        // the Geoapify Free-plan 5 req/s limit is not hit by eight simultaneous requests.
+        let outerSettled: PromiseSettledResult<GeoapifyFeatureCollection>[] = [];
+        if (radius >= 2000) {
+          await new Promise((resolve) => setTimeout(resolve, 1050));
+          const offset = radius * 0.56;
+          const outerPoints = [
+            offsetPoint(lat, lng, offset, 0),
+            offsetPoint(lat, lng, -offset, 0),
+            offsetPoint(lat, lng, 0, offset),
+            offsetPoint(lat, lng, 0, -offset),
+          ];
+          const outerRadius = radius * 0.72;
+          const outerLimit = Math.max(6, Math.min(14, Math.ceil(safeLimit / 8) + 2));
+          outerSettled = await Promise.allSettled(
+            allGroups.map((group, index) => requestAt(outerPoints[index].lat, outerPoints[index].lng, group, outerRadius, outerLimit)),
+          );
+          for (const item of outerSettled) {
+            if (item.status === "fulfilled") features.push(...(item.value.features ?? []));
+          }
+        }
+
+        if (!features.length) {
+          const errors = [...centreSettled, ...outerSettled]
+            .filter((item): item is PromiseRejectedResult => item.status === "rejected")
+            .map((item) => item.reason instanceof Error ? item.reason.message : String(item.reason));
+          if (errors.length) throw new BadGatewayException(`Geoapify "Усі" search failed: ${errors.join(" | ")}`);
+        }
       }
     } else if (isFastPaint || radius < 2000) {
       // One small centre request gives the user markers immediately.
@@ -354,7 +387,10 @@ export class GeoapifyPlacesService {
     }
     const result = [...byId.values()]
       .sort((a, b) => Number(a.distance ?? Infinity) - Number(b.distance ?? Infinity))
-      .slice(0, safeLimit);
+      // `safeLimit` is only the internal sampling budget used to cover a large radius.
+      // Return exactly the page size requested by the client so 5 km never explodes into 60–80
+      // markers/Google enrichments at once.
+      .slice(0, outputLimit);
     this.nearbyCache.set(cacheKey, { value: result, expiresAt: Date.now() + this.nearbyCacheTtlMs });
     return result;
   }

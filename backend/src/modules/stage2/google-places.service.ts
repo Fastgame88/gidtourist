@@ -144,9 +144,11 @@ export class GooglePlacesService {
   private readonly detailsCache = new Map<string, { value: GoogleNearbyPlace; expiresAt: number }>();
   private readonly nearbyCache = new Map<string, { value: GoogleNearbyPlace[]; expiresAt: number }>();
   private readonly textReviewCache = new Map<string, { value: GoogleNearbyPlace | null; expiresAt: number }>();
+  private readonly textCardCache = new Map<string, { value: GoogleNearbyPlace | null; expiresAt: number }>();
   private readonly detailsCacheTtlMs = 10 * 60 * 1000;
   private readonly nearbyCacheTtlMs = 5 * 60 * 1000;
   private readonly textReviewCacheTtlMs = 30 * 60 * 1000;
+  private readonly textCardCacheTtlMs = 6 * 60 * 60 * 1000;
 
   private async googleFetch<T>(url: string, init: RequestInit): Promise<T> {
     const key = this.key();
@@ -225,6 +227,42 @@ export class GooglePlacesService {
     }).slice(0, 8);
   }
 
+  async findByTextForCard(name: string, address: string, lat?: number, lng?: number): Promise<GoogleNearbyPlace | null> {
+    const cleanName = name.trim();
+    const cleanAddress = address.trim();
+    if (!cleanName) return null;
+    const cacheKey = `${cleanName.toLocaleLowerCase("uk")}|${cleanAddress.toLocaleLowerCase("uk")}|${Number(lat ?? 0).toFixed(3)}|${Number(lng ?? 0).toFixed(3)}`;
+    const cached = this.textCardCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) return cached.value;
+
+    // This lightweight match is used only to enrich cards that are already visible.
+    // Do not request review text, phone, opening hours or other heavy fields here.
+    const body: Record<string, unknown> = {
+      textQuery: [cleanName, cleanAddress].filter(Boolean).join(", "),
+      languageCode: "uk",
+      regionCode: "UA",
+      pageSize: 1,
+    };
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      body.locationBias = { circle: { center: { latitude: Number(lat), longitude: Number(lng) }, radius: 1500 } };
+    }
+    type TextSearchResponse = { places?: GoogleNearbyPlace[] };
+    const data = await this.googleFetch<TextSearchResponse>(
+      "https://places.googleapis.com/v1/places:searchText",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.googleMapsUri,places.googleMapsLinks,places.photos",
+        },
+        body: JSON.stringify(body),
+      },
+    );
+    const value = data.places?.[0] ?? null;
+    this.textCardCache.set(cacheKey, { value, expiresAt: Date.now() + this.textCardCacheTtlMs });
+    return value;
+  }
+
   async findByTextForReviews(name: string, address: string, lat?: number, lng?: number): Promise<GoogleNearbyPlace | null> {
     const cleanName = name.trim();
     const cleanAddress = address.trim();
@@ -243,7 +281,7 @@ export class GooglePlacesService {
       body.locationBias = { circle: { center: { latitude: Number(lat), longitude: Number(lng) }, radius: 1500 } };
     }
     type TextSearchResponse = { places?: GoogleNearbyPlace[] };
-    const fieldMask = "places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.regularOpeningHours,places.googleMapsUri,places.googleMapsLinks,places.websiteUri,places.nationalPhoneNumber,places.reviews";
+    const fieldMask = "places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.regularOpeningHours,places.googleMapsUri,places.googleMapsLinks,places.websiteUri,places.nationalPhoneNumber,places.photos,places.reviews";
     const requestSearch = (payload: Record<string, unknown>) => this.googleFetch<TextSearchResponse>(
       "https://places.googleapis.com/v1/places:searchText",
       {
@@ -342,14 +380,11 @@ export class GooglePlacesService {
     // Reuse the cached full Place Details response when available. This avoids a second
     // Place Details call just to obtain photos after the user has opened the same place.
     const place = await this.details(placeId);
-    const photoNames = (place.photos ?? []).map((photo) => photo.name?.trim() || "").filter(Boolean).slice(0, 5);
-    if (!photoNames.length) throw new BadGatewayException("Google place has no photo");
-    let lastError: unknown;
-    for (const photoName of photoNames) {
-      try { return await this.photoData(photoName); }
-      catch (error) { lastError = error; }
-    }
-    throw lastError instanceof Error ? lastError : new BadGatewayException("Google place photos are unavailable");
+    const photoName = (place.photos ?? []).map((photo) => photo.name?.trim() || "").find(Boolean) || "";
+    if (!photoName) throw new BadGatewayException("Google place has no photo");
+    // One place card/detail = at most one main photo request. Do not cascade through 5 photos,
+    // which previously amplified quota usage and made failures much slower.
+    return this.photoData(photoName);
   }
 
 

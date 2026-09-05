@@ -20,6 +20,7 @@ type MapRuntime = {
   circle: any;
   picked: any;
   markers: any[];
+  markerById: Map<string, any>;
   clickListener?: any;
 };
 
@@ -212,7 +213,7 @@ export function RealMap({
         zIndex: 1000,
         icon: { path: maps.SymbolPath.CIRCLE, scale: compact ? 5 : 7, fillColor: "#1677ff", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 3 },
       });
-      const runtime: MapRuntime = { provider: "google", map, api: maps, user, circle, picked: null, markers: [] };
+      const runtime: MapRuntime = { provider: "google", map, api: maps, user, circle, picked: null, markers: [], markerById: new Map() };
       if (pickable && !compact) {
         runtime.clickListener = map.addListener("click", (event: any) => {
           const lat = Number(event.latLng?.lat?.() ?? 0);
@@ -234,7 +235,7 @@ export function RealMap({
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap contributors" }).addTo(map);
       const circle = compact ? null : L.circle([center.lat, center.lng], { radius, color: "#20b364", weight: 1, opacity: 0.4, fillOpacity: 0.04 }).addTo(map);
       const user = L.circleMarker([center.lat, center.lng], { radius: compact ? 5 : 8, color: "#ffffff", weight: 3, fillColor: "#1677ff", fillOpacity: 1 }).addTo(map).bindTooltip("Ваше місцезнаходження");
-      const runtime: MapRuntime = { provider: "leaflet", map, api: L, user, circle, picked: null, markers: [] };
+      const runtime: MapRuntime = { provider: "leaflet", map, api: L, user, circle, picked: null, markers: [], markerById: new Map() };
       if (pickable && !compact) {
         map.on("click", (event: any) => {
           const lat = Number(event.latlng?.lat ?? 0);
@@ -284,11 +285,21 @@ export function RealMap({
     const runtime = runtimeRef.current;
     if (!runtime) return;
     const visible = places.filter((place) => Number.isFinite(Number(place.lat)) && Number.isFinite(Number(place.lng))).slice(0, compact ? 8 : 40);
+    const visibleIds = new Set(visible.map((place) => place.id));
 
-    if (runtime.provider === "google") {
-      runtime.markers.forEach((marker) => marker.setMap?.(null));
-      runtime.markers = visible.map((place) => {
-        const partner = place.is_partner === true || place.source === "partner" || place.attributes?.partner === true;
+    // Reconcile markers by place id. Progressive list updates now add only the new 2–3 markers
+    // instead of deleting and recreating every existing marker on every batch/rating update.
+    for (const [id, marker] of runtime.markerById.entries()) {
+      if (visibleIds.has(id)) continue;
+      if (runtime.provider === "google") marker.setMap?.(null);
+      else runtime.map.removeLayer?.(marker);
+      runtime.markerById.delete(id);
+    }
+
+    for (const place of visible) {
+      if (runtime.markerById.has(place.id)) continue;
+      const partner = place.is_partner === true || place.source === "partner" || place.attributes?.partner === true;
+      if (runtime.provider === "google") {
         const marker = new runtime.api.Marker({
           map: runtime.map,
           position: { lat: Number(place.lat), lng: Number(place.lng) },
@@ -297,20 +308,16 @@ export function RealMap({
           icon: { url: placeMarkerSvg(place), scaledSize: new runtime.api.Size(compact ? 21 : 28, compact ? 25 : 33), anchor: new runtime.api.Point(compact ? 10 : 14, compact ? 24 : 32) },
         });
         if (!compact) marker.addListener("click", () => onSelectRef.current?.(place));
-        return marker;
-      });
-      return;
+        runtime.markerById.set(place.id, marker);
+      } else {
+        const icon = runtime.api.icon({ iconUrl: placeMarkerSvg(place), iconSize: compact ? [21, 25] : [28, 33], iconAnchor: compact ? [10, 24] : [14, 32] });
+        const marker = runtime.api.marker([Number(place.lat), Number(place.lng)], { icon }).addTo(runtime.map);
+        marker.bindTooltip(partner ? `★ Партнер · ${place.name}` : place.name);
+        if (!compact) marker.on("click", () => onSelectRef.current?.(place));
+        runtime.markerById.set(place.id, marker);
+      }
     }
-
-    runtime.markers.forEach((marker) => runtime.map.removeLayer?.(marker));
-    runtime.markers = visible.map((place) => {
-      const partner = place.is_partner === true || place.source === "partner" || place.attributes?.partner === true;
-      const icon = runtime.api.icon({ iconUrl: placeMarkerSvg(place), iconSize: compact ? [21, 25] : [28, 33], iconAnchor: compact ? [10, 24] : [14, 32] });
-      const marker = runtime.api.marker([Number(place.lat), Number(place.lng)], { icon }).addTo(runtime.map);
-      marker.bindTooltip(partner ? `★ Партнер · ${place.name}` : place.name);
-      if (!compact) marker.on("click", () => onSelectRef.current?.(place));
-      return marker;
-    });
+    runtime.markers = [...runtime.markerById.values()];
   }, [places, compact, readyVersion]);
 
   return <div ref={ref} className={`gt-real-map ${className}`.trim()} aria-label="Інтерактивна карта" />;

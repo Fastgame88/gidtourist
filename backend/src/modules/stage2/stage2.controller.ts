@@ -51,6 +51,9 @@ export class Stage2Controller {
   @Get("places")
   places(@Query() query: Record<string, unknown>) { return this.service.places(query); }
 
+  @Post("places/enrich")
+  enrichPlaces(@Body() body: Record<string, unknown>) { return this.service.enrichPlaces(body); }
+
   @Get("weather")
   weather(@Query("lat") lat = "", @Query("lng") lng = "") { return this.service.weather(Number(lat), Number(lng)); }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import {
   Ambulance,
   ArrowDownToLine,
@@ -308,6 +308,13 @@ function googlePlaceId(place?: Stage2Place | null) {
   return place.id.startsWith("google_") ? place.id.slice("google_".length) : "";
 }
 
+function hasGooglePhotoCandidate(place?: Stage2Place | null) {
+  if (!place) return false;
+  if (place.source === "google" || place.attributes?.google === true || place.id.startsWith("google_")) return true;
+  const photoName = typeof place.details?.google_photo_name === "string" ? place.details.google_photo_name.trim() : "";
+  return Boolean(photoName);
+}
+
 function isGeoapifyPlace(place?: Stage2Place | null) {
   return Boolean(place && (place.source === "geoapify" || place.attributes?.geoapify === true || place.id.startsWith("geoapify_")));
 }
@@ -412,6 +419,110 @@ function writeGooglePlaceDetailCache(key: string, value: Stage2Place) {
   try { window.sessionStorage.setItem(key, JSON.stringify({ value, at: Date.now() })); } catch { /* cache is optional */ }
 }
 
+const PLACE_CARD_ENRICH_CACHE_PREFIX = "gid-place-card-enrich-v1:";
+const PLACE_CARD_ENRICH_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+
+function mergeStage2Place(base: Stage2Place, update: Stage2Place): Stage2Place {
+  const updateRating = Number(update.rating ?? 0);
+  const baseRating = Number(base.rating ?? 0);
+  return {
+    ...base,
+    ...update,
+    rating: updateRating > 0 ? updateRating : baseRating,
+    review_count: Number(update.review_count ?? base.review_count ?? 0),
+    image_url: update.image_url || base.image_url || null,
+    work_hours: update.work_hours && Object.keys(update.work_hours).length ? update.work_hours : base.work_hours,
+    attributes: { ...(base.attributes ?? {}), ...(update.attributes ?? {}) },
+    details: { ...(base.details ?? {}), ...(update.details ?? {}) },
+  };
+}
+
+function mergeStage2PlaceUpdates(current: Stage2Place[], updates: Stage2Place[]) {
+  const byId = new Map(updates.map((item) => [item.id, item]));
+  return current.map((item) => {
+    const update = byId.get(item.id);
+    return update ? mergeStage2Place(item, update) : item;
+  });
+}
+
+function readPlaceCardEnrichment(id: string) {
+  try {
+    const raw = window.sessionStorage.getItem(`${PLACE_CARD_ENRICH_CACHE_PREFIX}${id}`);
+    if (!raw) return null as Stage2Place | null;
+    const parsed = JSON.parse(raw) as { value?: Stage2Place; at?: number };
+    if (parsed.value && Date.now() - Number(parsed.at || 0) < PLACE_CARD_ENRICH_CACHE_TTL_MS) return parsed.value;
+    window.sessionStorage.removeItem(`${PLACE_CARD_ENRICH_CACHE_PREFIX}${id}`);
+  } catch { /* cache is optional */ }
+  return null;
+}
+
+function writePlaceCardEnrichment(value: Stage2Place) {
+  try { window.sessionStorage.setItem(`${PLACE_CARD_ENRICH_CACHE_PREFIX}${value.id}`, JSON.stringify({ value, at: Date.now() })); } catch { /* cache is optional */ }
+}
+
+type PlaceStateUpdater = Dispatch<SetStateAction<Stage2Place[]>>;
+
+async function enrichPlaceCardsProgressively(
+  source: Stage2Place[],
+  setPlaces: PlaceStateUpdater,
+  isCancelled: () => boolean,
+  seen: Set<string>,
+) {
+  const candidates = source.filter((place) => isGeoapifyPlace(place));
+  for (let index = 0; index < candidates.length; index += 3) {
+    if (isCancelled()) return;
+    const batch = candidates.slice(index, index + 3).filter((place) => !seen.has(place.id));
+    if (!batch.length) continue;
+    batch.forEach((place) => seen.add(place.id));
+
+    const cached: Stage2Place[] = [];
+    const missing: Stage2Place[] = [];
+    for (const place of batch) {
+      const value = readPlaceCardEnrichment(place.id);
+      if (value) cached.push(value);
+      else missing.push(place);
+    }
+    if (cached.length && !isCancelled()) setPlaces((previous) => mergeStage2PlaceUpdates(previous, cached));
+
+    if (missing.length) {
+      try {
+        const enriched = await stage2Fetch<Stage2Place[]>("/places/enrich", { method: "POST", body: JSON.stringify({ places: missing }) });
+        if (isCancelled()) return;
+        enriched.forEach(writePlaceCardEnrichment);
+        setPlaces((previous) => mergeStage2PlaceUpdates(previous, enriched));
+      } catch (error) {
+        console.warn("[Place card enrichment]", error instanceof Error ? error.message : String(error));
+      }
+    }
+    if (index + 3 < candidates.length) await new Promise((resolve) => window.setTimeout(resolve, missing.length ? 650 : 45));
+  }
+}
+
+function revealPlacesProgressively(
+  source: Stage2Place[],
+  setPlaces: PlaceStateUpdater,
+  isCancelled: () => boolean,
+  batchSize = 3,
+  intervalMs = 110,
+) {
+  if (!source.length) { setPlaces(() => []); return; }
+  let count = Math.min(batchSize, source.length);
+  const tick = () => {
+    if (isCancelled()) return;
+    setPlaces((previous) => {
+      const previousById = new Map(previous.map((place) => [place.id, place]));
+      return source.slice(0, count).map((place) => {
+        const existing = previousById.get(place.id);
+        return existing ? mergeStage2Place(place, existing) : place;
+      });
+    });
+    if (count >= source.length) return;
+    count = Math.min(source.length, count + batchSize);
+    window.setTimeout(tick, intervalMs);
+  };
+  tick();
+}
+
 function photoDiagnosticMessage(raw: string, status?: number, contentType?: string) {
   const clean = raw.replace(/\s+/g, " ").trim();
   const lower = clean.toLowerCase();
@@ -454,7 +565,7 @@ async function diagnoseRemoteImage(url: string) {
   }
 }
 
-function RemotePlaceImage({ url, alt = "", className, google = false, googlePlaceId: googleId = "", eager = false, fallback, diagnostics = false }: { url?: string | null; alt?: string; className: string; google?: boolean; googlePlaceId?: string; eager?: boolean; fallback?: ReactNode; diagnostics?: boolean }) {
+function RemotePlaceImage({ url, alt = "", className, google = false, googlePlaceId: googleId = "", eager = false, fallback, diagnostics = false, diagnosticHint = "" }: { url?: string | null; alt?: string; className: string; google?: boolean; googlePlaceId?: string; eager?: boolean; fallback?: ReactNode; diagnostics?: boolean; diagnosticHint?: string }) {
   const fallbackUrl = google && googleId ? `/api/stage2/google/place-photo?id=${encodeURIComponent(googleId)}` : "";
   // Prefer the fresh photo resource already returned with Nearby Search / Place Details.
   // If it fails or is absent, fall back to resolving a fresh resource by stable Place ID.
@@ -474,16 +585,16 @@ function RemotePlaceImage({ url, alt = "", className, google = false, googlePlac
     const failedUrl = activeUrl;
     const nextIndex = candidateIndex + 1;
     setCandidateIndex(nextIndex);
-    if (!diagnostics || !google || nextIndex < candidates.length || !failedUrl) return;
+    if (!diagnostics || nextIndex < candidates.length || !failedUrl) return;
     setDiagnosing(true);
     void diagnoseRemoteImage(failedUrl).then((message) => setDiagnostic(message)).finally(() => setDiagnosing(false));
   };
 
   if (activeUrl) return <img src={activeUrl} alt={alt} className={className} loading={eager ? "eager" : "lazy"} decoding="async" onError={handleImageError} />;
-  if (google) return (
-    <span className={`${className} gt-real-place-image-placeholder ${diagnostics ? "gt-real-place-image-placeholder--diagnostic" : ""}`} aria-label="Фото Google недоступне">
+  if (google || diagnostics) return (
+    <span className={`${className} gt-real-place-image-placeholder ${diagnostics ? "gt-real-place-image-placeholder--diagnostic" : ""}`} aria-label="Фото недоступне">
       <ImageIcon size={25} />
-      {diagnostics ? <span className="gt-photo-diagnostic"><strong>Фото не завантажилось</strong><small>{diagnosing ? "Перевіряємо причину…" : diagnostic || "Google не повернув зображення."}</small></span> : null}
+      {diagnostics ? <span className="gt-photo-diagnostic"><strong>Фото не завантажилось</strong><small>{diagnosing ? "Перевіряємо причину…" : diagnostic || diagnosticHint || "Geoapify/Google не повернули зображення для цієї локації."}</small></span> : null}
     </span>
   );
   return <>{fallback ?? <span className={`${className} gt-real-place-image-placeholder`}><ImageIcon size={25} /></span>}</>;
@@ -1426,6 +1537,8 @@ function DynamicCategoryScreen({ navigate, config }: { navigate: Navigate; confi
     if (!runtime.context) return;
     let cancelled = false;
     let fullResolved = false;
+    const enrichmentSeen = new Set<string>();
+    const isCancelled = () => cancelled;
     const timer = window.setTimeout(() => {
       const point = runtime.location ?? { lat: Number(runtime.context!.place?.lat ?? runtime.context!.region.lat), lng: Number(runtime.context!.place?.lng ?? runtime.context!.region.lng) };
       const makeParams = (limit: number) => {
@@ -1443,28 +1556,34 @@ function DynamicCategoryScreen({ navigate, config }: { navigate: Navigate; confi
       };
       const cacheKey = `gid-category-cache:${config.category}:${point.lat.toFixed(3)}:${point.lng.toFixed(3)}:${selectedChip}:${query.trim().toLocaleLowerCase("uk")}`;
       let hasCachedPlaces = false;
+      let cachedPlaces: Stage2Place[] = [];
       try {
         const cached = window.sessionStorage.getItem(cacheKey);
         if (cached) {
           const parsed = JSON.parse(cached) as Stage2Place[];
-          if (Array.isArray(parsed) && parsed.length) { hasCachedPlaces = true; setPlaces(parsed); setLoading(false); }
+          if (Array.isArray(parsed) && parsed.length) { hasCachedPlaces = true; cachedPlaces = parsed; revealPlacesProgressively(parsed, setPlaces, isCancelled); setLoading(false); }
         }
       } catch { /* cache is optional */ }
       if (!hasCachedPlaces) setLoading(true);
+      if (cachedPlaces.length) void enrichPlaceCardsProgressively(cachedPlaces, setPlaces, isCancelled, enrichmentSeen);
 
-      // Paint a tiny first page first, then start the distributed full Geoapify request.
-      // The Free plan allows 5 requests/sec; sequencing avoids firing the fast request together
-      // with the five 2–15 km spread requests and prevents avoidable 429/retry delays.
+      // First paint is only 3 POIs. The full page is revealed in batches of 3 so Leaflet never
+      // has to create 20–30 markers in one frame; Google rating/photo enrichment is staggered too.
       const loadFull = () => void stage2Fetch<Stage2Place[]>(`/places?${makeParams(20)}`).then((items) => {
         if (cancelled) return;
         fullResolved = true;
-        setPlaces(items);
+        revealPlacesProgressively(items, setPlaces, isCancelled);
         setLoading(false);
         try { window.sessionStorage.setItem(cacheKey, JSON.stringify(items)); } catch { /* cache is optional */ }
+        void enrichPlaceCardsProgressively(items, setPlaces, isCancelled, enrichmentSeen);
       }).catch(() => { if (!cancelled) setLoading(false); });
       if (hasCachedPlaces) loadFull();
-      else void stage2Fetch<Stage2Place[]>(`/places?${makeParams(4)}`).then((items) => {
-        if (!cancelled && !fullResolved && items.length) { setPlaces(items); setLoading(false); }
+      else void stage2Fetch<Stage2Place[]>(`/places?${makeParams(3)}`).then((items) => {
+        if (!cancelled && !fullResolved && items.length) {
+          setPlaces(items);
+          setLoading(false);
+          void enrichPlaceCardsProgressively(items, setPlaces, isCancelled, enrichmentSeen);
+        }
       }).catch(() => undefined).finally(() => { if (!cancelled) loadFull(); });
 
       if (query.trim()) void trackEvent("search_used", { regionId: runtime.context?.region.id, payload: { q: query.trim(), category: config.category } });
@@ -1498,7 +1617,7 @@ function DynamicCategoryScreen({ navigate, config }: { navigate: Navigate; confi
               key={place.id}
               photo={placePhotoFallback(place)}
               imageUrl={place.image_url}
-              google={place.source === "google" || place.attributes?.google === true}
+              google={hasGooglePhotoCandidate(place)}
               googlePlaceId={googlePlaceId(place)}
               eager={index < 4}
               title={place.name}
@@ -1600,6 +1719,8 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
     if (!runtime.context || !center) return;
     let cancelled = false;
     let fullResolved = false;
+    const enrichmentSeen = new Set<string>();
+    const isCancelled = () => cancelled;
     const timer = window.setTimeout(() => {
       const makeParams = (limit: number) => {
         const params = new URLSearchParams({ region_id: runtime.context!.region.id, lat: String(center.lat), lng: String(center.lng), radius: String(radius) });
@@ -1617,22 +1738,30 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
       };
       const cacheKey = `gid-nearby-cache:${center.lat.toFixed(3)}:${center.lng.toFixed(3)}:${radius}:${activeCategory}:${activeSubcategory}:${query.trim().toLocaleLowerCase("uk")}`;
       let hasCachedPlaces = false;
+      let cachedPlaces: Stage2Place[] = [];
       try {
         const cached = window.sessionStorage.getItem(cacheKey);
         if (cached) {
           const parsed = JSON.parse(cached) as Stage2Place[];
-          if (Array.isArray(parsed) && parsed.length) { hasCachedPlaces = true; setNearbyPlaces(parsed); setNearbyLoading(false); }
+          if (Array.isArray(parsed) && parsed.length) {
+            hasCachedPlaces = true;
+            cachedPlaces = parsed;
+            revealPlacesProgressively(parsed, setNearbyPlaces, isCancelled);
+            setNearbyLoading(false);
+          }
         }
       } catch { /* optional cache */ }
       if (!hasCachedPlaces) setNearbyLoading(true);
       setNearbyError("");
+      if (cachedPlaces.length) void enrichPlaceCardsProgressively(cachedPlaces, setNearbyPlaces, isCancelled, enrichmentSeen);
 
-      const loadFull = () => void stage2Fetch<Stage2Place[]>(`/places?${makeParams(20)}`).then((items) => {
+      const loadFull = () => void stage2Fetch<Stage2Place[]>(`/places?${makeParams(30)}`).then((items) => {
         if (cancelled) return;
         fullResolved = true;
-        setNearbyPlaces(items);
+        revealPlacesProgressively(items, setNearbyPlaces, isCancelled);
         setNearbyLoading(false);
         try { window.sessionStorage.setItem(cacheKey, JSON.stringify(items)); } catch { /* optional cache */ }
+        void enrichPlaceCardsProgressively(items, setNearbyPlaces, isCancelled, enrichmentSeen);
       }).catch((error) => {
         if (cancelled) return;
         const message = error instanceof Error ? error.message : String(error);
@@ -1640,9 +1769,16 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
         setNearbyError(message || "Невідома помилка сервісу місць");
         setNearbyLoading(false);
       });
-      if (hasCachedPlaces || activeCategory === "Усі") loadFull();
-      else void stage2Fetch<Stage2Place[]>(`/places?${makeParams(4)}`).then((items) => {
-        if (!cancelled && !fullResolved && items.length) { setNearbyPlaces(items); setNearbyLoading(false); }
+
+      // Always show 2–3 markers first, including the "Усі" tab. The full 2–5 km result can
+      // continue loading in the background without leaving the map empty for several seconds.
+      if (hasCachedPlaces) loadFull();
+      else void stage2Fetch<Stage2Place[]>(`/places?${makeParams(3)}`).then((items) => {
+        if (!cancelled && !fullResolved && items.length) {
+          setNearbyPlaces(items);
+          setNearbyLoading(false);
+          void enrichPlaceCardsProgressively(items, setNearbyPlaces, isCancelled, enrichmentSeen);
+        }
       }).catch(() => undefined).finally(() => { if (!cancelled) loadFull(); });
     }, query.trim() ? 160 : 0);
     return () => { cancelled = true; window.clearTimeout(timer); };
@@ -1731,7 +1867,7 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
             ))}
           </div>
           {previewPlace ? <div className="gt-map-place-preview" role="dialog" aria-label={`Перегляд ${previewPlace.name}`}>
-            <RemotePlaceImage url={previewPlace.image_url} className="gt-map-place-preview__image" google={previewPlace.source === "google" || previewPlace.attributes?.google === true} googlePlaceId={googlePlaceId(previewPlace)} eager fallback={<Thumb name={placePhotoFallback(previewPlace)} />} />
+            <RemotePlaceImage url={previewPlace.image_url} className="gt-map-place-preview__image" google={hasGooglePhotoCandidate(previewPlace)} googlePlaceId={googlePlaceId(previewPlace)} eager fallback={<Thumb name={placePhotoFallback(previewPlace)} />} />
             <div className="gt-map-place-preview__copy">
               <strong>{previewPlace.name}</strong>
               <small>{previewPlace.subcategory ? translateKnownLabel(runtime.language, previewPlace.subcategory) : (previewPlace.category_name || previewPlace.address)}</small>
@@ -1755,7 +1891,7 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
             <div className="gt-nearby-design__cards">
               {nearbyPlaces.map((place) => (
                 <button type="button" className="gt-nearby-design__card" key={place.id} onClick={() => openPlace(place)}>
-                  <RemotePlaceImage url={place.image_url} className="gt-photo gt-nearby-design__remote-photo" google={place.source === "google" || place.attributes?.google === true} googlePlaceId={googlePlaceId(place)} fallback={<Thumb name={placePhotoFallback(place)} />} />
+                  <RemotePlaceImage url={place.image_url} className="gt-photo gt-nearby-design__remote-photo" google={hasGooglePhotoCandidate(place)} googlePlaceId={googlePlaceId(place)} fallback={<Thumb name={placePhotoFallback(place)} />} />
                   <span className="gt-nearby-design__card-copy">
                     <strong>{place.name}{place.is_partner || place.attributes?.partner === true ? <i className="gt-nearby-partner-badge">{tr(runtime.language, "Партнер", "Partner", "Partner")}</i> : null}</strong><small>{place.subcategory || place.category_name}</small>
                     <span><b><Star size={12} fill="currentColor" /> {placeRatingLabel(place, false)}</b><em>{distanceLabel(place.distance_m, runtime.language)} · {walkLabel(place.distance_m, place.walking_duration_s, runtime.language)}</em></span>
@@ -1862,7 +1998,7 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
   return (
     <div className="tourist-screen gt-screen">
       <section className={`gt-place-hero ${current.image_url ? "has-real-photo" : ""}`}>
-        {current.image_url || current.source === "google" || current.source === "geoapify" ? <RemotePlaceImage key={current.id} url={current.image_url} alt={current.name} className="gt-place-hero__image" google={current.source === "google" || current.attributes?.google === true} googlePlaceId={googlePlaceId(current)} eager diagnostics={current.source === "google" || current.attributes?.google === true} fallback={<Thumb name={placePhotoFallback(current)} />} /> : null}
+        {current.image_url || current.source === "google" || current.source === "geoapify" ? <RemotePlaceImage key={current.id} url={current.image_url} alt={current.name} className="gt-place-hero__image" google={hasGooglePhotoCandidate(current)} googlePlaceId={googlePlaceId(current)} eager diagnostics={current.source === "google" || current.source === "geoapify" || current.attributes?.google === true} diagnosticHint={typeof current.details?.photo_error === "string" ? current.details.photo_error : ""} fallback={<Thumb name={placePhotoFallback(current)} />} /> : null}
         <span className="gt-place-hero__shade" aria-hidden="true" />
         {current.attributes?.verified === true ? <span className="gt-pill gt-pill--glass"><BadgeCheck size={16} /> {tr(runtime.language, "Перевірено", "Verified", "Zweryfikowano")}</span> : null}
         <div>
@@ -1998,6 +2134,8 @@ function TransferScreen({ navigate }: { navigate: Navigate }) {
     if (!runtime.context) return;
     let cancelled = false;
     let fullResolved = false;
+    const enrichmentSeen = new Set<string>();
+    const isCancelled = () => cancelled;
     const timer = window.setTimeout(() => {
       const point = runtime.location ?? { lat: Number(runtime.context!.place?.lat ?? runtime.context!.region.lat), lng: Number(runtime.context!.place?.lng ?? runtime.context!.region.lng) };
       const makeParams = (limit: number) => {
@@ -2010,18 +2148,29 @@ function TransferScreen({ navigate }: { navigate: Navigate }) {
       };
       const cacheKey = `gid-transfer-cache:${point.lat.toFixed(3)}:${point.lng.toFixed(3)}:${chip}:${query.trim().toLocaleLowerCase("uk")}`;
       let hasCachedPlaces = false;
+      let cachedPlaces: Stage2Place[] = [];
       try {
         const cached = window.sessionStorage.getItem(cacheKey);
-        if (cached) { const parsed = JSON.parse(cached) as Stage2Place[]; if (Array.isArray(parsed) && parsed.length) { hasCachedPlaces = true; setPlaces(parsed); setApiLoaded(true); setTransferLoading(false); } }
+        if (cached) {
+          const parsed = JSON.parse(cached) as Stage2Place[];
+          if (Array.isArray(parsed) && parsed.length) {
+            hasCachedPlaces = true; cachedPlaces = parsed; revealPlacesProgressively(parsed, setPlaces, isCancelled); setApiLoaded(true); setTransferLoading(false);
+          }
+        }
       } catch { /* optional cache */ }
       if (!hasCachedPlaces) setTransferLoading(true);
+      if (cachedPlaces.length) void enrichPlaceCardsProgressively(cachedPlaces, setPlaces, isCancelled, enrichmentSeen);
       const loadFull = () => void stage2Fetch<Stage2Place[]>(`/places?${makeParams(20)}`).then((items) => {
-        if (cancelled) return; fullResolved = true; setPlaces(items); setApiLoaded(true); setTransferLoading(false);
+        if (cancelled) return; fullResolved = true; revealPlacesProgressively(items, setPlaces, isCancelled); setApiLoaded(true); setTransferLoading(false);
         try { window.sessionStorage.setItem(cacheKey, JSON.stringify(items)); } catch { /* ignore */ }
+        void enrichPlaceCardsProgressively(items, setPlaces, isCancelled, enrichmentSeen);
       }).catch(() => { if (!cancelled) { setApiLoaded(true); setTransferLoading(false); } });
       if (hasCachedPlaces) loadFull();
-      else void stage2Fetch<Stage2Place[]>(`/places?${makeParams(4)}`).then((items) => {
-        if (!cancelled && !fullResolved && items.length) { setPlaces(items); setApiLoaded(true); setTransferLoading(false); }
+      else void stage2Fetch<Stage2Place[]>(`/places?${makeParams(3)}`).then((items) => {
+        if (!cancelled && !fullResolved && items.length) {
+          setPlaces(items); setApiLoaded(true); setTransferLoading(false);
+          void enrichPlaceCardsProgressively(items, setPlaces, isCancelled, enrichmentSeen);
+        }
       }).catch(() => undefined).finally(() => { if (!cancelled) loadFull(); });
     }, query.trim() ? 160 : 0);
     return () => { cancelled = true; window.clearTimeout(timer); };
@@ -2035,7 +2184,7 @@ function TransferScreen({ navigate }: { navigate: Navigate }) {
     distance: distanceLabel(place.distance_m, runtime.language),
     walk: walkLabel(place.distance_m, place.walking_duration_s, runtime.language),
     walking: false,
-    google: place.source === "google" || place.attributes?.google === true,
+    google: hasGooglePhotoCandidate(place),
     googlePlaceId: googlePlaceId(place),
     eager: index < 4,
     tags: (visiblePlaceTags(place).length ? visiblePlaceTags(place).map((tag) => translateKnownLabel(runtime.language, tag)) : [place.subcategory ? translateKnownLabel(runtime.language, place.subcategory) : tr(runtime.language, "Трансфер", "Transfer", "Transport")]).slice(0, 3),
