@@ -165,7 +165,7 @@ export class GeoapifyPlacesService {
   private readonly detailsCache = new Map<string, { value: GeoapifyPlace; expiresAt: number }>();
   private readonly routeCache = new Map<string, { value: GeoapifyRouteMetric; expiresAt: number }>();
   private readonly nearbyCacheTtlMs = 10 * 60 * 1000;
-  private readonly detailsCacheTtlMs = 10 * 60 * 1000;
+  private readonly detailsCacheTtlMs = 60 * 60 * 1000;
   private readonly routeCacheTtlMs = 10 * 60 * 1000;
 
   private key() {
@@ -244,7 +244,7 @@ export class GeoapifyPlacesService {
       website: asString(props.website) || null,
       phone,
       openingHours: asString(props.opening_hours) || null,
-      imageUrl: asString(wiki?.image) || null,
+      imageUrl: asString(wiki?.image) || asString(props.image) || null,
       description: asString(props.description) || null,
       internetAccess: typeof props.internet_access === "boolean" ? props.internet_access : null,
       wheelchair: typeof props.wheelchair === "boolean" || typeof props.wheelchair === "string" ? props.wheelchair as boolean | string : null,

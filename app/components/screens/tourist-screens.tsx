@@ -310,6 +310,9 @@ function googlePlaceId(place?: Stage2Place | null) {
 
 function hasGooglePhotoCandidate(place?: Stage2Place | null) {
   if (!place) return false;
+  // Geoapify places now use only Geoapify/OSM/Wikimedia media. Do not fall back to Google Photo,
+  // even when an old cached enrichment still contains a Google photo resource name.
+  if (place.source === "geoapify" || place.attributes?.geoapify === true || place.id.startsWith("geoapify_")) return false;
   if (place.source === "google" || place.attributes?.google === true || place.id.startsWith("google_")) return true;
   const photoName = typeof place.details?.google_photo_name === "string" ? place.details.google_photo_name.trim() : "";
   return Boolean(photoName);
@@ -419,7 +422,7 @@ function writeGooglePlaceDetailCache(key: string, value: Stage2Place) {
   try { window.sessionStorage.setItem(key, JSON.stringify({ value, at: Date.now() })); } catch { /* cache is optional */ }
 }
 
-const PLACE_CARD_ENRICH_CACHE_PREFIX = "gid-place-card-enrich-v1:";
+const PLACE_CARD_ENRICH_CACHE_PREFIX = "gid-place-card-enrich-v2:";
 const PLACE_CARD_ENRICH_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
 function mergeStage2Place(base: Stage2Place, update: Stage2Place): Stage2Place {
@@ -594,7 +597,7 @@ function RemotePlaceImage({ url, alt = "", className, google = false, googlePlac
   if (google || diagnostics) return (
     <span className={`${className} gt-real-place-image-placeholder ${diagnostics ? "gt-real-place-image-placeholder--diagnostic" : ""}`} aria-label="Фото недоступне">
       <ImageIcon size={25} />
-      {diagnostics ? <span className="gt-photo-diagnostic"><strong>Фото не завантажилось</strong><small>{diagnosing ? "Перевіряємо причину…" : diagnostic || diagnosticHint || "Geoapify/Google не повернули зображення для цієї локації."}</small></span> : null}
+      {diagnostics ? <span className="gt-photo-diagnostic"><strong>Фото не завантажилось</strong><small>{diagnosing ? "Перевіряємо причину…" : diagnostic || diagnosticHint || "Geoapify Place Details / OSM / Wikimedia не повернули зображення для цієї локації."}</small></span> : null}
     </span>
   );
   return <>{fallback ?? <span className={`${className} gt-real-place-image-placeholder`}><ImageIcon size={25} /></span>}</>;
