@@ -64,7 +64,6 @@ import {
   Share2,
   ShieldCheck,
   ShoppingBag,
-  SlidersHorizontal,
   Sparkles,
   Star,
   Stethoscope,
@@ -78,6 +77,7 @@ import {
   WalletCards,
   Wifi,
   Wrench,
+  X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -155,58 +155,6 @@ function Chips({ items, selected, onSelect, displayLabel }: { items: string[]; s
           </button>
         );
       })}
-    </div>
-  );
-}
-
-type PlaceFilterState = {
-  openNow: boolean;
-  minRating: number | "";
-  priceLevel: number | "";
-  kids: boolean;
-  parking: boolean;
-  partner: boolean;
-  distance: number;
-};
-
-const DEFAULT_PLACE_FILTERS: PlaceFilterState = { openNow: false, minRating: "", priceLevel: "", kids: false, parking: false, partner: false, distance: 15000 };
-
-function placeFilterCount(filters: PlaceFilterState, includeDistance = true) {
-  return Number(filters.openNow) + Number(Boolean(filters.minRating)) + Number(Boolean(filters.priceLevel)) + Number(filters.kids) + Number(filters.parking) + Number(filters.partner) + Number(includeDistance && filters.distance !== 15000);
-}
-
-function appendPlaceFilters(params: URLSearchParams, filters: PlaceFilterState) {
-  if (filters.openNow) params.set("open_now", "true");
-  if (filters.minRating) params.set("min_rating", String(filters.minRating));
-  if (filters.priceLevel) params.set("price_level", String(filters.priceLevel));
-  if (filters.kids) params.set("kids", "true");
-  if (filters.parking) params.set("parking", "true");
-  if (filters.partner) params.set("partner", "true");
-}
-
-function PlaceFilters({ filters, onChange, language, showDistance = true }: { filters: PlaceFilterState; onChange: (next: PlaceFilterState) => void; language: TouristLanguage; showDistance?: boolean }) {
-  const [expanded, setExpanded] = useState(false);
-  const count = placeFilterCount(filters, showDistance);
-  const toggle = (key: "openNow" | "kids" | "parking" | "partner") => onChange({ ...filters, [key]: !filters[key] });
-  return (
-    <div className={`gt-stage2-filters ${expanded ? "is-expanded" : ""}`}>
-      <button type="button" className={`gt-stage2-filters__trigger ${count ? "has-active" : ""}`} onClick={() => setExpanded((value) => !value)} aria-expanded={expanded}>
-        <SlidersHorizontal size={18} /><span>{tr(language, "Фільтри", "Filters", "Filtry")}</span>{count ? <b>{count}</b> : null}<ChevronRight size={17} />
-      </button>
-      {expanded ? <div className="gt-stage2-filters__panel">
-        <button type="button" className={filters.openNow ? "is-active" : ""} onClick={() => toggle("openNow")}><Clock3 size={16} />{tr(language, "Відкрито зараз", "Open now", "Otwarte teraz")}</button>
-        <button type="button" className={filters.minRating === 4 ? "is-active" : ""} onClick={() => onChange({ ...filters, minRating: filters.minRating === 4 ? "" : 4 })}><Star size={16} />4.0+</button>
-        <button type="button" className={filters.kids ? "is-active" : ""} onClick={() => toggle("kids")}><UsersRound size={16} />{tr(language, "З дітьми", "Kid-friendly", "Dla dzieci")}</button>
-        <button type="button" className={filters.parking ? "is-active" : ""} onClick={() => toggle("parking")}><CarFront size={16} />{tr(language, "Парковка", "Parking", "Parking")}</button>
-        <button type="button" className={filters.partner ? "is-active" : ""} onClick={() => toggle("partner")}><BadgeCheck size={16} />{tr(language, "Партнер", "Partner", "Partner")}</button>
-        <label className="gt-stage2-filters__price"><span>{tr(language, "Ціна", "Price", "Cena")}</span><select value={filters.priceLevel} onChange={(event) => onChange({ ...filters, priceLevel: event.target.value ? Number(event.target.value) : "" })}>
-          <option value="">{tr(language, "Будь-яка", "Any", "Dowolna")}</option><option value="1">₴</option><option value="2">₴₴</option><option value="3">₴₴₴</option><option value="4">₴₴₴₴</option>
-        </select></label>
-        {showDistance ? <label className="gt-stage2-filters__price"><span>{tr(language, "Відстань", "Distance", "Odległość")}</span><select value={filters.distance} onChange={(event) => onChange({ ...filters, distance: Number(event.target.value) })}>
-          <option value="500">500 m</option><option value="1000">1 km</option><option value="2000">2 km</option><option value="5000">5 km</option><option value="15000">15 km</option>
-        </select></label> : null}
-        {count ? <button type="button" className="gt-stage2-filters__reset" onClick={() => onChange(DEFAULT_PLACE_FILTERS)}>{tr(language, "Скинути", "Reset", "Wyczyść")}</button> : null}
-      </div> : null}
     </div>
   );
 }
@@ -409,7 +357,39 @@ function googleReviewsUri(place?: Stage2Place | null) {
   return placeId ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name || place.address || `${place.lat},${place.lng}`)}&query_place_id=${encodeURIComponent(placeId)}` : "";
 }
 
-const GOOGLE_PLACE_DETAIL_CACHE_PREFIX = "gid-google-place-detail:";
+type GoogleReviewView = {
+  author: string;
+  rating: number;
+  text: string;
+  time: string;
+  uri: string;
+};
+
+function googleReviewsForPlace(place?: Stage2Place | null): GoogleReviewView[] {
+  const raw = Array.isArray(place?.details?.google_reviews)
+    ? place.details.google_reviews as Array<Record<string, unknown>>
+    : [];
+  return raw.flatMap((review) => {
+    const textObject = review.text && typeof review.text === "object" ? review.text as Record<string, unknown> : {};
+    const originalTextObject = review.originalText && typeof review.originalText === "object" ? review.originalText as Record<string, unknown> : {};
+    const authorObject = review.authorAttribution && typeof review.authorAttribution === "object" ? review.authorAttribution as Record<string, unknown> : {};
+    const text = [textObject.text, originalTextObject.text, review.text]
+      .map((value) => typeof value === "string" ? value.trim() : "")
+      .find(Boolean) || "";
+    if (!text) return [];
+    const author = typeof authorObject.displayName === "string" && authorObject.displayName.trim()
+      ? authorObject.displayName.trim()
+      : "Google";
+    const rating = Number(review.rating ?? 0);
+    const time = typeof review.relativePublishTimeDescription === "string"
+      ? review.relativePublishTimeDescription
+      : typeof review.publishTime === "string" ? review.publishTime.slice(0, 10) : "";
+    const uri = typeof review.googleMapsUri === "string" ? review.googleMapsUri : "";
+    return [{ author, rating: Number.isFinite(rating) ? rating : 0, text, time, uri }];
+  });
+}
+
+const GOOGLE_PLACE_DETAIL_CACHE_PREFIX = "gid-external-place-detail-v2:";
 const GOOGLE_PLACE_DETAIL_CACHE_TTL_MS = 10 * 60 * 1000;
 
 function googlePlaceDetailCacheKey(placeId: string, lat?: number, lng?: number) {
@@ -1371,7 +1351,6 @@ function DynamicCategoryScreen({ navigate, config }: { navigate: Navigate; confi
   const [places, setPlaces] = useState<Stage2Place[]>([]);
   const [category, setCategory] = useState<Stage2Category | null>(null);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState<PlaceFilterState>(DEFAULT_PLACE_FILTERS);
 
   useEffect(() => {
     let cancelled = false;
@@ -1384,21 +1363,23 @@ function DynamicCategoryScreen({ navigate, config }: { navigate: Navigate; confi
   useEffect(() => {
     if (!runtime.context) return;
     let cancelled = false;
+    let fullResolved = false;
     const timer = window.setTimeout(() => {
       const point = runtime.location ?? { lat: Number(runtime.context!.place?.lat ?? runtime.context!.region.lat), lng: Number(runtime.context!.place?.lng ?? runtime.context!.region.lng) };
-      const params = new URLSearchParams({ region_id: runtime.context!.region.id, category: config.category });
-      if (query.trim()) params.set("q", query.trim());
-      if (selectedChip !== "Усі") params.set("subcategory", selectedChip);
-      appendPlaceFilters(params, filters);
-      params.set("lat", String(point.lat));
-      params.set("lng", String(point.lng));
-      params.set("radius", String(filters.distance));
-      params.set("include_google", "true");
-      params.set("google_section", config.category);
-      params.set("google_limit", "20");
-      params.set("include_routes", "false");
-      const filterKey = `${Number(filters.openNow)}:${filters.minRating || 0}:${filters.priceLevel || 0}:${Number(filters.kids)}:${Number(filters.parking)}:${Number(filters.partner)}:${filters.distance}`;
-      const cacheKey = `gid-category-cache:${config.category}:${point.lat.toFixed(3)}:${point.lng.toFixed(3)}:${selectedChip}:${query.trim().toLocaleLowerCase("uk")}:${filterKey}`;
+      const makeParams = (limit: number) => {
+        const params = new URLSearchParams({ region_id: runtime.context!.region.id, category: config.category });
+        if (query.trim()) params.set("q", query.trim());
+        if (selectedChip !== "Усі") params.set("subcategory", selectedChip);
+        params.set("lat", String(point.lat));
+        params.set("lng", String(point.lng));
+        params.set("radius", "15000");
+        params.set("include_google", "true");
+        params.set("google_section", config.category);
+        params.set("google_limit", String(limit));
+        params.set("include_routes", "false");
+        return params;
+      };
+      const cacheKey = `gid-category-cache:${config.category}:${point.lat.toFixed(3)}:${point.lng.toFixed(3)}:${selectedChip}:${query.trim().toLocaleLowerCase("uk")}`;
       let hasCachedPlaces = false;
       try {
         const cached = window.sessionStorage.getItem(cacheKey);
@@ -1409,17 +1390,25 @@ function DynamicCategoryScreen({ navigate, config }: { navigate: Navigate; confi
       } catch { /* cache is optional */ }
       if (!hasCachedPlaces) setLoading(true);
 
-      void stage2Fetch<Stage2Place[]>(`/places?${params}`).then((items) => {
+      // Paint a tiny first page first, then start the distributed full Geoapify request.
+      // The Free plan allows 5 requests/sec; sequencing avoids firing the fast request together
+      // with the five 2–15 km spread requests and prevents avoidable 429/retry delays.
+      const loadFull = () => void stage2Fetch<Stage2Place[]>(`/places?${makeParams(20)}`).then((items) => {
         if (cancelled) return;
+        fullResolved = true;
         setPlaces(items);
         setLoading(false);
         try { window.sessionStorage.setItem(cacheKey, JSON.stringify(items)); } catch { /* cache is optional */ }
       }).catch(() => { if (!cancelled) setLoading(false); });
+      if (hasCachedPlaces) loadFull();
+      else void stage2Fetch<Stage2Place[]>(`/places?${makeParams(4)}`).then((items) => {
+        if (!cancelled && !fullResolved && items.length) { setPlaces(items); setLoading(false); }
+      }).catch(() => undefined).finally(() => { if (!cancelled) loadFull(); });
 
       if (query.trim()) void trackEvent("search_used", { regionId: runtime.context?.region.id, payload: { q: query.trim(), category: config.category } });
     }, query.trim() ? 180 : 0);
     return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [runtime.context, runtime.location, query, selectedChip, config.category, filters]);
+  }, [runtime.context, runtime.location, query, selectedChip, config.category]);
 
   const chips = ["Усі", ...((category?.subcategories?.length ? category.subcategories : config.fallbackChips).filter((item) => item !== "Усі"))];
   const title = runtime.language === "en" ? config.titleEn : runtime.language === "pl" ? config.titlePl : config.title;
@@ -1439,7 +1428,6 @@ function DynamicCategoryScreen({ navigate, config }: { navigate: Navigate; confi
         <CategoryHeader icon={config.icon} title={title} subtitle={subtitle} tone={config.tone} onMap={() => navigate("tourist", "nearby")} />
         <SearchBar placeholder={placeholder} value={query} onChange={setQuery} />
         <Chips items={chips} selected={selectedChip} onSelect={setSelectedChip} displayLabel={(item) => translateKnownLabel(runtime.language, item)} />
-        <PlaceFilters filters={filters} onChange={setFilters} language={runtime.language} />
         <MapStrip real places={places} />
         <SectionTitle title={sectionTitle} action={`${places.length}`} />
         <div className="gt-place-list">
@@ -1463,7 +1451,7 @@ function DynamicCategoryScreen({ navigate, config }: { navigate: Navigate; confi
             />
           ))}
           {loading && !places.length ? Array.from({ length: 4 }).map((_, index) => <div className="gt-place-row gt-place-row--skeleton" key={`loading-${index}`}><span className="gt-place-row__skeleton-photo"/><span className="gt-place-row__skeleton-copy"><i/><i/><i/></span></div>) : null}
-          {!loading && !places.length ? <div className="gt-stage2-empty">{tr(runtime.language, "За цими фільтрами місць не знайдено", "No places match these filters", "Brak miejsc pasujących do filtrów")}</div> : null}
+          {!loading && !places.length ? <div className="gt-stage2-empty">{tr(runtime.language, "Місць не знайдено", "No places found", "Nie znaleziono miejsc")}</div> : null}
         </div>
       </main>
     </div>
@@ -1490,7 +1478,6 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
   const [nearbyLoading, setNearbyLoading] = useState(true);
   const [nearbyError, setNearbyError] = useState("");
   const [previewPlace, setPreviewPlace] = useState<Stage2Place | null>(null);
-  const [filters, setFilters] = useState<PlaceFilterState>(DEFAULT_PLACE_FILTERS);
   const categoryScrollRef = useRef<HTMLDivElement | null>(null);
   const subcategoryScrollRef = useRef<HTMLDivElement | null>(null);
   const sheetTouchStartY = useRef<number | null>(null);
@@ -1550,22 +1537,23 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
   useEffect(() => {
     if (!runtime.context || !center) return;
     let cancelled = false;
+    let fullResolved = false;
     const timer = window.setTimeout(() => {
-      const params = new URLSearchParams({ region_id: runtime.context!.region.id, lat: String(center.lat), lng: String(center.lng), radius: String(radius) });
-      const googleSection = activeTone === "fun" ? "entertainment" : activeTone === "all" ? "all" : activeTone;
-      params.set("include_google", "true");
-      params.set("debug_google", "true");
-      params.set("google_section", googleSection);
-      params.set("google_limit", radius >= 1000 && !activeSubcategory ? "40" : "20");
-      params.set("include_routes", "false");
-      if (radius >= 1000 && !activeSubcategory) params.set("google_spread", "true");
-      if (activeCategoryMeta?.slug) params.set("category", activeCategoryMeta.slug);
-      else if (activeCategory !== "Усі") params.set("category", "__google__");
-      if (activeSubcategory) params.set("subcategory", activeSubcategory);
-      if (query.trim()) params.set("q", query.trim());
-      appendPlaceFilters(params, filters);
-      const filterKey = `${Number(filters.openNow)}:${filters.minRating || 0}:${filters.priceLevel || 0}:${Number(filters.kids)}:${Number(filters.parking)}:${Number(filters.partner)}:${filters.distance}`;
-      const cacheKey = `gid-nearby-cache:${center.lat.toFixed(3)}:${center.lng.toFixed(3)}:${radius}:${activeCategory}:${activeSubcategory}:${query.trim().toLocaleLowerCase("uk")}:${filterKey}`;
+      const makeParams = (limit: number) => {
+        const params = new URLSearchParams({ region_id: runtime.context!.region.id, lat: String(center.lat), lng: String(center.lng), radius: String(radius) });
+        const googleSection = activeTone === "fun" ? "entertainment" : activeTone === "all" ? "all" : activeTone;
+        params.set("include_google", "true");
+        params.set("debug_google", "true");
+        params.set("google_section", googleSection);
+        params.set("google_limit", String(limit));
+        params.set("include_routes", "false");
+        if (activeCategoryMeta?.slug) params.set("category", activeCategoryMeta.slug);
+        else if (activeCategory !== "Усі") params.set("category", "__google__");
+        if (activeSubcategory) params.set("subcategory", activeSubcategory);
+        if (query.trim()) params.set("q", query.trim());
+        return params;
+      };
+      const cacheKey = `gid-nearby-cache:${center.lat.toFixed(3)}:${center.lng.toFixed(3)}:${radius}:${activeCategory}:${activeSubcategory}:${query.trim().toLocaleLowerCase("uk")}`;
       let hasCachedPlaces = false;
       try {
         const cached = window.sessionStorage.getItem(cacheKey);
@@ -1577,8 +1565,9 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
       if (!hasCachedPlaces) setNearbyLoading(true);
       setNearbyError("");
 
-      void stage2Fetch<Stage2Place[]>(`/places?${params}`).then((items) => {
+      const loadFull = () => void stage2Fetch<Stage2Place[]>(`/places?${makeParams(20)}`).then((items) => {
         if (cancelled) return;
+        fullResolved = true;
         setNearbyPlaces(items);
         setNearbyLoading(false);
         try { window.sessionStorage.setItem(cacheKey, JSON.stringify(items)); } catch { /* optional cache */ }
@@ -1589,9 +1578,13 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
         setNearbyError(message || "Невідома помилка сервісу місць");
         setNearbyLoading(false);
       });
+      if (hasCachedPlaces) loadFull();
+      else void stage2Fetch<Stage2Place[]>(`/places?${makeParams(4)}`).then((items) => {
+        if (!cancelled && !fullResolved && items.length) { setNearbyPlaces(items); setNearbyLoading(false); }
+      }).catch(() => undefined).finally(() => { if (!cancelled) loadFull(); });
     }, query.trim() ? 160 : 0);
     return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [runtime.context, center?.lat, center?.lng, radius, activeCategoryMeta?.slug, activeCategory, activeTone, activeSubcategory, query, filters]);
+  }, [runtime.context, center?.lat, center?.lng, radius, activeCategoryMeta?.slug, activeCategory, activeTone, activeSubcategory, query]);
 
   const openPlace = (place: Stage2Place) => {
     runtime.setSelectedPlace(place);
@@ -1658,7 +1651,6 @@ function NearbyScreen({ navigate }: { navigate: Navigate }) {
               <button type="button" className="gt-nearby-design__subcategories-next" aria-label={tr(runtime.language, "Наступні підкатегорії", "Next subcategories", "Następne podkategorie")} onClick={() => subcategoryScrollRef.current?.scrollBy({ left: 250, behavior: "smooth" })}><ChevronRight size={20} /></button>
             </div>
           ) : null}
-          <PlaceFilters filters={filters} onChange={setFilters} language={runtime.language} showDistance={false} />
         </section>
 
         <section className="gt-nearby-design__map gt-nearby-design__map--live" aria-label={tr(runtime.language, "Карта місць поруч", "Nearby places map", "Mapa miejsc w pobliżu")}>
@@ -1723,6 +1715,7 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
   const [place, setPlace] = useState<Stage2Place | null>(() => runtime.selectedPlace);
   const [placeLoading, setPlaceLoading] = useState(false);
   const [favorite, setFavorite] = useState(false);
+  const [reviewsOpen, setReviewsOpen] = useState(false);
   const fallbackId = runtime.selectedPlaceId || runtime.selectedPlace?.id || runtime.context?.place?.id || "";
 
   useEffect(() => {
@@ -1761,6 +1754,7 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
   const phone = phoneForPlace(current);
   const phoneHref = telHref(phone);
   const reviewsHref = googleReviewsUri(current) || (typeof current.attributes?.google_maps_uri === "string" ? current.attributes.google_maps_uri : "");
+  const googleReviews = googleReviewsForPlace(current);
   const fallbackStraightDistance = runtime.location ? Math.round((() => {
     const r=6371000,toRad=(v:number)=>v*Math.PI/180,dLat=toRad(Number(current.lat)-runtime.location!.lat),dLng=toRad(Number(current.lng)-runtime.location!.lng);
     const a=Math.sin(dLat/2)**2+Math.cos(toRad(runtime.location!.lat))*Math.cos(toRad(Number(current.lat)))*Math.sin(dLng/2)**2; return 2*r*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
@@ -1783,6 +1777,10 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
   };
 
   const openReviews = () => {
+    if (googleReviews.length) {
+      setReviewsOpen(true);
+      return;
+    }
     if (!reviewsHref) return;
     window.open(reviewsHref, "_blank", "noopener,noreferrer");
   };
@@ -1812,7 +1810,7 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
       </section>
       <main className="gt-content gt-content--overlap">
         <div className="gt-place-summary">
-          <button type="button" className="gt-place-summary__reviews-button" onClick={openReviews} aria-disabled={!reviewsHref}><Star size={19} fill="currentColor" /><strong>{placeRatingLabel(current, false)}</strong><small>{Number(current.rating || 0) > 0 ? `${current.review_count || 0} ${tr(runtime.language, "відгуків", "reviews", "opinii")} · Google` : tr(runtime.language, "Відкрити відгуки Google", "Open Google reviews", "Otwórz opinie Google")}</small></button>
+          <button type="button" className="gt-place-summary__reviews-button" onClick={openReviews} aria-disabled={!reviewsHref && !googleReviews.length}><Star size={19} fill="currentColor" /><strong>{placeRatingLabel(current, false)}</strong><small>{Number(current.rating || 0) > 0 ? `${current.review_count || 0} ${tr(runtime.language, "відгуків", "reviews", "opinii")} · Google` : tr(runtime.language, "Відкрити відгуки Google", "Open Google reviews", "Otwórz opinie Google")}</small></button>
           <span><Clock3 size={19} /><strong>{current.is_open_now === true ? tr(runtime.language, "Відкрито", "Open", "Otwarte") : current.is_open_now === false ? tr(runtime.language, "Зачинено", "Closed", "Zamknięte") : tr(runtime.language, "Графік", "Hours", "Godziny")}</strong><small>{daily?.to ? `${tr(runtime.language, "до", "until", "do")} ${daily.to}` : tr(runtime.language, "див. нижче", "see below", "zobacz niżej")}</small></span>
           <span><MapPin size={19} /><strong>{distance}</strong><small><WalkingIcon size={12} /> {walkingTime} {tr(runtime.language, "пішки", "walk", "pieszo")}</small></span>
         </div>
@@ -1836,6 +1834,22 @@ function PlaceScreen({ navigate }: { navigate: Navigate }) {
         {visiblePlaceTags(current).length ? <div className="gt-stage2-place-tags">{visiblePlaceTags(current).map((tag) => <span key={tag}>{tag}</span>)}</div> : null}
         <button type="button" className="gt-primary-button" onClick={openRoute}>{tr(runtime.language, "Побудувати маршрут", "Build route", "Wyznacz trasę")} <Navigation size={20} /></button>
       </main>
+      {reviewsOpen ? <div className="gt-reviews-modal" role="dialog" aria-modal="true" aria-label={tr(runtime.language, "Відгуки Google", "Google reviews", "Opinie Google")} onClick={() => setReviewsOpen(false)}>
+        <section onClick={(event) => event.stopPropagation()}>
+          <header>
+            <div><strong>{tr(runtime.language, "Відгуки Google", "Google reviews", "Opinie Google")}</strong><small>{placeRatingLabel(current, false)} · {current.review_count || googleReviews.length} {tr(runtime.language, "відгуків", "reviews", "opinii")}</small></div>
+            <button type="button" aria-label={tr(runtime.language, "Закрити", "Close", "Zamknij")} onClick={() => setReviewsOpen(false)}><X size={19} /></button>
+          </header>
+          <div className="gt-google-reviews__list">
+            {googleReviews.map((review, index) => <article key={`${review.author}-${review.time}-${index}`}>
+              <div><strong>{review.author}</strong><span><Star size={14} fill="currentColor" /> {review.rating > 0 ? review.rating.toFixed(1) : "Google"}</span></div>
+              <p>{review.text}</p>
+              {review.time ? <small>{review.time}</small> : null}
+            </article>)}
+          </div>
+          {reviewsHref ? <button type="button" className="gt-primary-button" onClick={() => window.open(reviewsHref, "_blank", "noopener,noreferrer")}>{tr(runtime.language, "Всі відгуки в Google", "All reviews on Google", "Wszystkie opinie w Google")} <ExternalLink size={18} /></button> : null}
+        </section>
+      </div> : null}
     </div>
   );
 }
@@ -1911,7 +1925,6 @@ function TransferScreen({ navigate }: { navigate: Navigate }) {
   const [apiLoaded, setApiLoaded] = useState(false);
   const [transferLoading, setTransferLoading] = useState(true);
   const [transferCategory, setTransferCategory] = useState<Stage2Category | null>(null);
-  const [filters, setFilters] = useState<PlaceFilterState>(DEFAULT_PLACE_FILTERS);
 
   useEffect(() => {
     let cancelled = false;
@@ -1922,29 +1935,35 @@ function TransferScreen({ navigate }: { navigate: Navigate }) {
   useEffect(() => {
     if (!runtime.context) return;
     let cancelled = false;
+    let fullResolved = false;
     const timer = window.setTimeout(() => {
       const point = runtime.location ?? { lat: Number(runtime.context!.place?.lat ?? runtime.context!.region.lat), lng: Number(runtime.context!.place?.lng ?? runtime.context!.region.lng) };
-      const params = new URLSearchParams({ region_id: runtime.context!.region.id, category: "transfer" });
-      params.set("lat", String(point.lat)); params.set("lng", String(point.lng)); params.set("radius", String(filters.distance));
-      params.set("include_google", "true"); params.set("google_section", "transfer"); params.set("google_limit", "20"); params.set("include_routes", "false");
-      if (query.trim()) params.set("q", query.trim());
-      if (chip !== "Усі") params.set("subcategory", chip);
-      appendPlaceFilters(params, filters);
-      const filterKey = `${Number(filters.openNow)}:${filters.minRating || 0}:${filters.priceLevel || 0}:${Number(filters.kids)}:${Number(filters.parking)}:${Number(filters.partner)}:${filters.distance}`;
-      const cacheKey = `gid-transfer-cache:${point.lat.toFixed(3)}:${point.lng.toFixed(3)}:${chip}:${query.trim().toLocaleLowerCase("uk")}:${filterKey}`;
+      const makeParams = (limit: number) => {
+        const params = new URLSearchParams({ region_id: runtime.context!.region.id, category: "transfer" });
+        params.set("lat", String(point.lat)); params.set("lng", String(point.lng)); params.set("radius", "15000");
+        params.set("include_google", "true"); params.set("google_section", "transfer"); params.set("google_limit", String(limit)); params.set("include_routes", "false");
+        if (query.trim()) params.set("q", query.trim());
+        if (chip !== "Усі") params.set("subcategory", chip);
+        return params;
+      };
+      const cacheKey = `gid-transfer-cache:${point.lat.toFixed(3)}:${point.lng.toFixed(3)}:${chip}:${query.trim().toLocaleLowerCase("uk")}`;
       let hasCachedPlaces = false;
       try {
         const cached = window.sessionStorage.getItem(cacheKey);
         if (cached) { const parsed = JSON.parse(cached) as Stage2Place[]; if (Array.isArray(parsed) && parsed.length) { hasCachedPlaces = true; setPlaces(parsed); setApiLoaded(true); setTransferLoading(false); } }
       } catch { /* optional cache */ }
       if (!hasCachedPlaces) setTransferLoading(true);
-      void stage2Fetch<Stage2Place[]>(`/places?${params}`).then((items) => {
-        if (cancelled) return; setPlaces(items); setApiLoaded(true); setTransferLoading(false);
+      const loadFull = () => void stage2Fetch<Stage2Place[]>(`/places?${makeParams(20)}`).then((items) => {
+        if (cancelled) return; fullResolved = true; setPlaces(items); setApiLoaded(true); setTransferLoading(false);
         try { window.sessionStorage.setItem(cacheKey, JSON.stringify(items)); } catch { /* ignore */ }
       }).catch(() => { if (!cancelled) { setApiLoaded(true); setTransferLoading(false); } });
+      if (hasCachedPlaces) loadFull();
+      else void stage2Fetch<Stage2Place[]>(`/places?${makeParams(4)}`).then((items) => {
+        if (!cancelled && !fullResolved && items.length) { setPlaces(items); setApiLoaded(true); setTransferLoading(false); }
+      }).catch(() => undefined).finally(() => { if (!cancelled) loadFull(); });
     }, query.trim() ? 160 : 0);
     return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [runtime.context, runtime.location, query, chip, filters]);
+  }, [runtime.context, runtime.location, query, chip]);
 
   const display = places.map((place, index) => ({
     image: place.image_url || "",
@@ -1966,14 +1985,13 @@ function TransferScreen({ navigate }: { navigate: Navigate }) {
         <CategoryHeader icon={CarFront} title={tr(runtime.language, "Трансфер", "Transfer", "Transport")} subtitle={tr(runtime.language, "Транспортні послуги та перевезення", "Transport services and rides", "Usługi transportowe i przejazdy")} tone="teal" onMap={() => navigate("tourist", "nearby")} />
         <SearchBar placeholder={tr(runtime.language, "Пошук трансферу або маршруту", "Search transfer or route", "Szukaj transportu lub trasy")} value={query} onChange={setQuery} />
         <div className="gt-transfer-reference-chips"><Chips items={["Усі", ...((transferCategory?.subcategories?.length ? transferCategory.subcategories : ["Таксі", "Автостанції", "Парковки", "Оренда авто", "Заправки"]).filter((item) => item !== "Усі"))]} selected={chip} onSelect={setChip} displayLabel={(item) => translateKnownLabel(runtime.language, item)} /></div>
-        <PlaceFilters filters={filters} onChange={setFilters} language={runtime.language} />
         <MapStrip real places={places} />
         <SectionTitle title={tr(runtime.language, "Трансфери поруч", "Transfers nearby", "Transport w pobliżu")} action={`${display.length}`} />
         <div className="gt-transfer-reference-list">
           {display.map((place, index) => <TransferReferenceRow key={`${place.title}-${index}`} place={place} onClick={places[index] ? () => { runtime.setSelectedPlace(places[index]); navigate("tourist", "place"); } : undefined} />)}
           {transferLoading && !display.length ? Array.from({ length: 4 }).map((_, index) => <div className="gt-transfer-reference-row gt-place-row--skeleton" key={`transfer-loading-${index}`}><span className="gt-place-row__skeleton-photo"/><span className="gt-place-row__skeleton-copy"><i/><i/><i/></span></div>) : null}
         </div>
-        {apiLoaded && !transferLoading && !places.length ? <div className="gt-stage2-empty">{tr(runtime.language, "За цими фільтрами трансферів не знайдено", "No transfers match these filters", "Brak transportu pasującego do filtrów")}</div> : null}
+        {apiLoaded && !transferLoading && !places.length ? <div className="gt-stage2-empty">{tr(runtime.language, "Трансферів не знайдено", "No transfers found", "Nie znaleziono transportu")}</div> : null}
       </main>
     </div>
   );

@@ -223,7 +223,9 @@ export class Stage2Service {
       phone: place.phone ?? null,
       telegram: null,
       website: place.website ?? null,
-      image_url: place.imageUrl ?? null,
+      // External photos are intentionally disabled for now. Use the app's existing local
+      // placeholder until a separate, reliable/licensed photo source is selected.
+      image_url: null,
       rating: 0,
       review_count: 0,
       price_level: null,
@@ -531,7 +533,53 @@ export class Stage2Service {
     if (id.startsWith("geoapify_")) {
       const geoapifyId = id.slice("geoapify_".length);
       const result = await this.geoapify.details(geoapifyId);
-      return withRoute(this.geoapifyPlaceToStage2(result, originLat, originLng));
+      const base = this.geoapifyPlaceToStage2(result, originLat, originLng);
+      let enriched = base;
+
+      // Geoapify remains the primary POI/map provider. Google is queried only after the user
+      // opens one concrete place, and only for rating/reviews/contact enrichment — never for
+      // Nearby Search or photos. The Google service caches this match for 30 minutes.
+      if (this.google.enabled()) {
+        try {
+          const google = await this.google.findByTextForReviews(base.name, base.address, Number(base.lat), Number(base.lng));
+          const googleLat = Number(google?.location?.latitude);
+          const googleLng = Number(google?.location?.longitude);
+          const matchDistance = google && Number.isFinite(googleLat) && Number.isFinite(googleLng)
+            ? distanceMeters(Number(base.lat), Number(base.lng), googleLat, googleLng)
+            : 0;
+          if (google && (!matchDistance || matchDistance <= 500)) {
+            const googleMapsUri = google.googleMapsLinks?.placeUri ?? google.googleMapsUri ?? base.attributes.google_maps_uri;
+            const googleReviewsUri = google.googleMapsLinks?.reviewsUri ?? googleMapsUri ?? base.attributes.google_reviews_uri;
+            enriched = {
+              ...base,
+              rating: Number(google.rating ?? base.rating ?? 0),
+              review_count: Number(google.userRatingCount ?? base.review_count ?? 0),
+              phone: base.phone || google.nationalPhoneNumber || null,
+              website: base.website || google.websiteUri || null,
+              work_hours: google.regularOpeningHours ?? base.work_hours,
+              is_open_now: google.regularOpeningHours?.openNow ?? base.is_open_now,
+              attributes: {
+                ...base.attributes,
+                google_review_enriched: true,
+                google_place_id: google.id,
+                google_maps_uri: googleMapsUri,
+                google_reviews_uri: googleReviewsUri,
+              },
+              details: {
+                ...base.details,
+                google_place_id: google.id,
+                google_maps_uri: googleMapsUri,
+                google_reviews_uri: googleReviewsUri,
+                google_reviews: google.reviews ?? [],
+                google_weekday_descriptions: google.regularOpeningHours?.weekdayDescriptions ?? base.details.google_weekday_descriptions ?? [],
+              },
+            };
+          }
+        } catch (error) {
+          console.warn(`[Google review enrichment] ${error instanceof Error ? error.message : String(error)}`);
+        }
+      }
+      return withRoute(enriched);
     }
     if (id.startsWith("google_")) {
       const googleId = id.slice("google_".length);

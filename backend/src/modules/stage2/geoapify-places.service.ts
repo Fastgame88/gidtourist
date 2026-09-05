@@ -35,7 +35,7 @@ type GeoapifyRoutingResponse = {
 
 const SECTION_CATEGORIES: Record<string, string[]> = {
   all: [
-    "catering", "commercial", "entertainment", "tourism", "leisure", "sport",
+    "catering", "commercial", "accommodation", "entertainment", "tourism", "leisure", "sport",
     "public_transport", "service", "healthcare", "natural", "national_park", "parking",
   ],
   food: ["catering"],
@@ -143,12 +143,28 @@ function stringArray(value: unknown) {
   return Array.isArray(value) ? value.map(asString).filter(Boolean) : [];
 }
 
+function straightDistanceMeters(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const toRad = (value: number) => value * Math.PI / 180;
+  const earth = 6371000;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return Math.round(2 * earth * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+
+function offsetPoint(lat: number, lng: number, eastMeters: number, northMeters: number) {
+  const latDelta = northMeters / 111320;
+  const lngScale = Math.max(0.2, Math.cos(lat * Math.PI / 180));
+  const lngDelta = eastMeters / (111320 * lngScale);
+  return { lat: lat + latDelta, lng: lng + lngDelta };
+}
+
 @Injectable()
 export class GeoapifyPlacesService {
   private readonly nearbyCache = new Map<string, { value: GeoapifyPlace[]; expiresAt: number }>();
   private readonly detailsCache = new Map<string, { value: GeoapifyPlace; expiresAt: number }>();
   private readonly routeCache = new Map<string, { value: GeoapifyRouteMetric; expiresAt: number }>();
-  private readonly nearbyCacheTtlMs = 5 * 60 * 1000;
+  private readonly nearbyCacheTtlMs = 10 * 60 * 1000;
   private readonly detailsCacheTtlMs = 10 * 60 * 1000;
   private readonly routeCacheTtlMs = 10 * 60 * 1000;
 
@@ -239,18 +255,26 @@ export class GeoapifyPlacesService {
 
   async nearby(lat: number, lng: number, radius: number, section = "all", subcategory = "", limit = 20, name = ""): Promise<GeoapifyPlace[]> {
     const preferredCategories = this.categoriesFor(section, subcategory);
-    const safeLimit = Math.max(1, Math.min(Math.round(limit || 20), 40));
     const cleanName = name.trim();
-    const cacheKey = [lat.toFixed(4), lng.toFixed(4), Math.round(radius), preferredCategories.join(","), safeLimit, cleanName.toLocaleLowerCase("uk")].join(":");
+    const requestedLimit = Math.max(1, Math.round(limit || 20));
+    const isFastPaint = requestedLimit <= 4;
+    // For large radii a single proximity-sorted page gets saturated by the city centre and
+    // practically never reaches POIs 2–5 km away. Keep the first-paint request tiny, then
+    // distribute the full request over the radius with the same total credit scale.
+    const radiusLimit = radius >= 5000 ? 80 : radius >= 2000 ? 60 : radius >= 1000 ? 50 : 30;
+    const safeLimit = isFastPaint ? requestedLimit : Math.max(1, Math.min(Math.max(requestedLimit, radiusLimit), 100));
+    const isAll = section === "all" && !subcategory;
+    const categoryKey = isAll ? SECTION_CATEGORIES.all.join(",") : preferredCategories.join(",");
+    const cacheKey = [lat.toFixed(4), lng.toFixed(4), Math.round(radius), categoryKey, safeLimit, cleanName.toLocaleLowerCase("uk")].join(":");
     const cached = this.nearbyCache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now()) return cached.value;
 
-    const request = async (categories: string[]) => {
+    const requestAt = async (pointLat: number, pointLng: number, categories: string[], requestRadius: number, requestLimit: number) => {
       const params = new URLSearchParams({
         categories: categories.join(","),
-        filter: `circle:${lng},${lat},${Math.max(50, Math.round(radius))}`,
-        bias: `proximity:${lng},${lat}`,
-        limit: String(safeLimit),
+        filter: `circle:${pointLng},${pointLat},${Math.max(50, Math.round(requestRadius))}`,
+        bias: `proximity:${pointLng},${pointLat}`,
+        limit: String(Math.max(1, Math.min(requestLimit, 100))),
         lang: "uk",
         apiKey: this.key(),
       });
@@ -258,17 +282,80 @@ export class GeoapifyPlacesService {
       return this.requestJson<GeoapifyFeatureCollection>(`https://api.geoapify.com/v2/places?${params.toString()}`);
     };
 
-    let data: GeoapifyFeatureCollection;
-    try {
-      data = await request(preferredCategories);
-    } catch (error) {
-      // Category taxonomies evolve. If a very specific category chip becomes unsupported,
-      // fall back to the stable parent section instead of making the whole client list empty.
-      const fallbackCategories = SECTION_CATEGORIES[section] ?? SECTION_CATEGORIES.all;
-      if (!subcategory || fallbackCategories.join(",") === preferredCategories.join(",")) throw error;
-      data = await request(fallbackCategories);
+    const categories = isAll ? SECTION_CATEGORIES.all : preferredCategories;
+    let features: GeoapifyFeature[] = [];
+
+    if (isFastPaint || radius < 2000) {
+      // One small centre request gives the user markers immediately.
+      try {
+        const data = await requestAt(lat, lng, categories, radius, safeLimit);
+        features = data.features ?? [];
+        if (isAll && !features.length) {
+          const fallback = await requestAt(lat, lng, ["catering", "commercial", "tourism"], radius, safeLimit);
+          features = fallback.features ?? [];
+        }
+      } catch (error) {
+        if (!isAll) {
+          const fallbackCategories = SECTION_CATEGORIES[section] ?? SECTION_CATEGORIES.all;
+          if (!subcategory || fallbackCategories.join(",") === categories.join(",")) throw error;
+          const fallback = await requestAt(lat, lng, fallbackCategories, radius, safeLimit);
+          features = fallback.features ?? [];
+        } else {
+          // Fast/short "Усі" must still render something even if one broad category key is rejected.
+          const fallback = await requestAt(lat, lng, ["catering", "commercial", "tourism"], radius, safeLimit);
+          features = fallback.features ?? [];
+        }
+      }
+    } else {
+      // Centre + four cardinal circles. Their overlap covers the original circle much more evenly,
+      // so a 2–5 km radius actually contains establishments from the outer part instead of only
+      // the first dense block near the centre. All calls run in parallel.
+      const offset = radius * 0.52;
+      const localRadius = radius * 0.78;
+      const points = [
+        { lat, lng },
+        offsetPoint(lat, lng, offset, 0),
+        offsetPoint(lat, lng, -offset, 0),
+        offsetPoint(lat, lng, 0, offset),
+        offsetPoint(lat, lng, 0, -offset),
+      ];
+      const perPoint = Math.max(8, Math.min(20, Math.ceil(safeLimit / points.length)));
+      const settled = await Promise.allSettled(points.map((point) => requestAt(point.lat, point.lng, categories, localRadius, perPoint)));
+      for (const item of settled) if (item.status === "fulfilled") features.push(...(item.value.features ?? []));
+
+      // "Усі" must never become empty because one broad taxonomy request was rejected. If every
+      // spread request failed/returned nothing, retry three proven parent-category groups at the
+      // original centre and merge whatever succeeds.
+      if (!features.length && isAll) {
+        const fallbackGroups = [
+          ["catering", "commercial"],
+          ["accommodation", "tourism", "entertainment", "leisure", "sport", "natural"],
+          ["public_transport", "service", "healthcare", "parking"],
+        ];
+        const fallbacks = await Promise.allSettled(fallbackGroups.map((group) => requestAt(lat, lng, group, radius, 20)));
+        for (const item of fallbacks) if (item.status === "fulfilled") features.push(...(item.value.features ?? []));
+      }
+      if (!features.length) {
+        const errors = settled.filter((item): item is PromiseRejectedResult => item.status === "rejected")
+          .map((item) => item.reason instanceof Error ? item.reason.message : String(item.reason));
+        if (errors.length) throw new BadGatewayException(`Geoapify nearby spread search failed: ${errors.join(" | ")}`);
+      }
     }
-    const result = (data.features ?? []).map((feature) => this.featureToPlace(feature)).filter((item): item is GeoapifyPlace => Boolean(item));
+
+    const byId = new Map<string, GeoapifyPlace>();
+    for (const feature of features) {
+      const place = this.featureToPlace(feature);
+      if (!place) continue;
+      // Geoapify's `distance` is measured from each query's bias point. For distributed requests
+      // always recalculate it from the user's real centre before filtering/sorting.
+      place.distance = straightDistanceMeters(lat, lng, place.lat, place.lng);
+      if (place.distance > radius + 25) continue;
+      const previous = byId.get(place.placeId);
+      if (!previous || Number(place.distance) < Number(previous.distance ?? Infinity)) byId.set(place.placeId, place);
+    }
+    const result = [...byId.values()]
+      .sort((a, b) => Number(a.distance ?? Infinity) - Number(b.distance ?? Infinity))
+      .slice(0, safeLimit);
     this.nearbyCache.set(cacheKey, { value: result, expiresAt: Date.now() + this.nearbyCacheTtlMs });
     return result;
   }

@@ -143,8 +143,10 @@ export class GooglePlacesService {
   // while keeping Places data fresh. These caches disappear on backend restart.
   private readonly detailsCache = new Map<string, { value: GoogleNearbyPlace; expiresAt: number }>();
   private readonly nearbyCache = new Map<string, { value: GoogleNearbyPlace[]; expiresAt: number }>();
+  private readonly textReviewCache = new Map<string, { value: GoogleNearbyPlace | null; expiresAt: number }>();
   private readonly detailsCacheTtlMs = 10 * 60 * 1000;
   private readonly nearbyCacheTtlMs = 5 * 60 * 1000;
+  private readonly textReviewCacheTtlMs = 30 * 60 * 1000;
 
   private async googleFetch<T>(url: string, init: RequestInit): Promise<T> {
     const key = this.key();
@@ -221,6 +223,59 @@ export class GooglePlacesService {
         secondary_text: prediction.structuredFormat?.secondaryText?.text || "",
       }];
     }).slice(0, 8);
+  }
+
+  async findByTextForReviews(name: string, address: string, lat?: number, lng?: number): Promise<GoogleNearbyPlace | null> {
+    const cleanName = name.trim();
+    const cleanAddress = address.trim();
+    if (!cleanName) return null;
+    const cacheKey = `${cleanName.toLocaleLowerCase("uk")}|${cleanAddress.toLocaleLowerCase("uk")}|${Number(lat ?? 0).toFixed(3)}|${Number(lng ?? 0).toFixed(3)}`;
+    const cached = this.textReviewCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) return cached.value;
+
+    const body: Record<string, unknown> = {
+      textQuery: [cleanName, cleanAddress].filter(Boolean).join(", "),
+      languageCode: "uk",
+      regionCode: "UA",
+      pageSize: 1,
+    };
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      body.locationBias = { circle: { center: { latitude: Number(lat), longitude: Number(lng) }, radius: 1500 } };
+    }
+    type TextSearchResponse = { places?: GoogleNearbyPlace[] };
+    const fieldMask = "places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.regularOpeningHours,places.googleMapsUri,places.googleMapsLinks,places.websiteUri,places.nationalPhoneNumber,places.reviews";
+    const requestSearch = (payload: Record<string, unknown>) => this.googleFetch<TextSearchResponse>(
+      "https://places.googleapis.com/v1/places:searchText",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Deliberately no photos here: Google is used only as review/rating enrichment
+          // for a place the user actually opened.
+          "X-Goog-FieldMask": fieldMask,
+        },
+        body: JSON.stringify(payload),
+      },
+    );
+
+    const primary = await requestSearch(body);
+    let value = primary.places?.[0] ?? null;
+    const hasReviewText = value?.reviews?.some((review) => Boolean(review.text?.text?.trim() || review.originalText?.text?.trim()));
+    // Google can return the rating/count but omit localized review text. Retry once without
+    // languageCode only for an opened place; the final value is then cached for 30 minutes.
+    if (value && Number(value.userRatingCount ?? 0) > 0 && !hasReviewText) {
+      try {
+        const fallbackBody = { ...body };
+        delete fallbackBody.languageCode;
+        const fallback = await requestSearch(fallbackBody);
+        const fallbackValue = fallback.places?.[0];
+        if (fallbackValue?.reviews?.some((review) => Boolean(review.text?.text?.trim() || review.originalText?.text?.trim()))) {
+          value = { ...value, reviews: fallbackValue.reviews };
+        }
+      } catch { /* keep the localized result and the exact Google reviews link */ }
+    }
+    this.textReviewCache.set(cacheKey, { value, expiresAt: Date.now() + this.textReviewCacheTtlMs });
+    return value;
   }
 
   async details(placeId: string): Promise<GoogleNearbyPlace> {
