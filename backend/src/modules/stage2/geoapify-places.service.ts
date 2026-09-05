@@ -143,6 +143,34 @@ function stringArray(value: unknown) {
   return Array.isArray(value) ? value.map(asString).filter(Boolean) : [];
 }
 
+
+function commonsImageUrl(value: unknown) {
+  const raw = asString(value);
+  if (!raw) return "";
+  if (/^https?:\/\//i.test(raw)) return raw;
+  const file = raw.replace(/^wikimedia_commons\s*[:=]\s*/i, "").replace(/^File:/i, "").trim();
+  if (!file || /^Category:/i.test(raw)) return "";
+  return `https://commons.wikimedia.org/wiki/Special:Redirect/file/${encodeURIComponent(file)}`;
+}
+
+function wikipediaRef(value: unknown) {
+  const raw = asString(value);
+  if (!raw) return null;
+  try {
+    if (/^https?:\/\//i.test(raw)) {
+      const url = new URL(raw);
+      const lang = url.hostname.split(".")[0] || "uk";
+      const marker = "/wiki/";
+      const idx = url.pathname.indexOf(marker);
+      const title = idx >= 0 ? decodeURIComponent(url.pathname.slice(idx + marker.length)) : "";
+      return title ? { lang, title } : null;
+    }
+  } catch {}
+  const match = raw.match(/^([a-z]{2,3}):(.*)$/i);
+  if (match) return { lang: match[1].toLowerCase(), title: match[2].trim() };
+  return { lang: "uk", title: raw };
+}
+
 function straightDistanceMeters(lat1: number, lng1: number, lat2: number, lng2: number) {
   const toRad = (value: number) => value * Math.PI / 180;
   const earth = 6371000;
@@ -251,6 +279,31 @@ export class GeoapifyPlacesService {
       parking: asRecord(props.parking) ?? null,
       raw: props,
     };
+  }
+
+  private async resolveMediaImage(props: Record<string, unknown>) {
+    const wiki = asRecord(props.wiki_and_media);
+    const datasource = asRecord(props.datasource);
+    const raw = asRecord(datasource?.raw);
+    const direct = asString(wiki?.image) || asString(props.image) || asString(raw?.image);
+    if (direct) return direct;
+
+    const commons = commonsImageUrl(wiki?.wikimedia_commons) || commonsImageUrl(raw?.wikimedia_commons);
+    if (commons) return commons;
+
+    const ref = wikipediaRef(wiki?.wikipedia) || wikipediaRef(raw?.wikipedia);
+    if (!ref) return "";
+    try {
+      const url = `https://${ref.lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(ref.title.replace(/ /g, "_"))}`;
+      const response = await fetch(url, { headers: { Accept: "application/json" } });
+      if (!response.ok) return "";
+      const data = await response.json() as Record<string, unknown>;
+      const thumbnail = asRecord(data.thumbnail);
+      const original = asRecord(data.originalimage);
+      return asString(original?.source) || asString(thumbnail?.source);
+    } catch {
+      return "";
+    }
   }
 
   async nearby(lat: number, lng: number, radius: number, section = "all", subcategory = "", limit = 20, name = ""): Promise<GeoapifyPlace[]> {
@@ -405,6 +458,10 @@ export class GeoapifyPlacesService {
     const feature = (data.features ?? []).find((item) => item.properties?.feature_type === "details") ?? data.features?.[0];
     const place = feature ? this.featureToPlace(feature) : null;
     if (!place) throw new NotFoundException("Geoapify place not found");
+    if (!place.imageUrl && feature?.properties) {
+      const resolved = await this.resolveMediaImage(feature.properties);
+      if (resolved) place.imageUrl = resolved;
+    }
     this.detailsCache.set(clean, { value: place, expiresAt: Date.now() + this.detailsCacheTtlMs });
     return place;
   }

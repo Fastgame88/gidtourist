@@ -4,6 +4,7 @@ import { Stage2Controller } from "./stage2.controller.js";
 import { Stage2Service } from "./stage2.service.js";
 import { GooglePlacesService } from "./google-places.service.js";
 import { GeoapifyPlacesService } from "./geoapify-places.service.js";
+import { OutscraperPlacesService } from "./outscraper-places.service.js";
 
-@Module({ controllers: [Stage2Controller], providers: [Stage2Service, GooglePlacesService, GeoapifyPlacesService, SessionGuard, AdminKeyGuard] })
+@Module({ controllers: [Stage2Controller], providers: [Stage2Service, GooglePlacesService, GeoapifyPlacesService, OutscraperPlacesService, SessionGuard, AdminKeyGuard] })
 export class Stage2Module {}

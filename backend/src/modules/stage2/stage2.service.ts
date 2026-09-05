@@ -4,6 +4,7 @@ import { makeId } from "../../common/id.js";
 import type { AuthUser } from "../../common/auth.guard.js";
 import { GooglePlacesService, type GoogleNearbyPlace } from "./google-places.service.js";
 import { GeoapifyPlacesService, type GeoapifyPlace } from "./geoapify-places.service.js";
+import { OutscraperPlacesService, type OutscraperPlace } from "./outscraper-places.service.js";
 
 function num(value: unknown, fallback?: number) {
   const parsed = Number(value);
@@ -119,7 +120,7 @@ export class Stage2Service {
     observed_at: string;
   }; expiresAt: number }>();
 
-  constructor(private readonly db: DatabaseService, private readonly google: GooglePlacesService, private readonly geoapify: GeoapifyPlacesService) {}
+  constructor(private readonly db: DatabaseService, private readonly google: GooglePlacesService, private readonly geoapify: GeoapifyPlacesService, private readonly outscraper: OutscraperPlacesService) {}
 
   private async categoryForPlaceType(placeType: string, fallback = "hotel") {
     const clean = placeType.trim();
@@ -265,6 +266,7 @@ export class Stage2Service {
         google_review_enriched: false,
         google_place_id: null as string | null,
         photo_provider: place.imageUrl ? "geoapify_wikimedia" : null,
+        enrichment_provider: null as string | null,
         internet_access: place.internetAccess ?? null,
         wheelchair: place.wheelchair ?? null,
         parking: place.parking ?? null,
@@ -279,7 +281,9 @@ export class Stage2Service {
         google_photo_name: null as string | null,
         google_photo_attributions: [] as unknown[],
         google_enrichment_error: null as string | null,
-        photo_error: place.imageUrl ? null : "Geoapify Place Details не повернув поле wiki_and_media.image для цієї локації.",
+        outscraper_enriched: false,
+        outscraper_enrichment_error: null as string | null,
+        photo_error: place.imageUrl ? null : "Geoapify Place Details не повернув фото для цієї локації.",
         phone: place.phone ?? null,
         google_weekday_descriptions: rawOpeningHours ? [rawOpeningHours] : [],
         geoapify_categories: place.categories,
@@ -581,7 +585,23 @@ export class Stage2Service {
     const inputs = raw.filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object" && !Array.isArray(item))).slice(0, 3);
     if (!inputs.length) return [];
 
-    return Promise.all(inputs.map(async (base) => {
+    const externalInputs = inputs.map((base) => ({
+      name: String(base.name ?? "").trim(),
+      address: String(base.address ?? "").trim(),
+      lat: Number(base.lat),
+      lng: Number(base.lng),
+    }));
+    let outscraperMatches: Array<OutscraperPlace | null> = inputs.map(() => null);
+    let outscraperError = "";
+    if (this.outscraper.enabled()) {
+      try {
+        outscraperMatches = await this.outscraper.batchLookup(externalInputs);
+      } catch (error) {
+        outscraperError = error instanceof Error ? error.message.slice(0, 300) : String(error).slice(0, 300);
+      }
+    }
+
+    return Promise.all(inputs.map(async (base, index) => {
       const id = String(base.id ?? "");
       if (!id.startsWith("geoapify_")) return base;
       const geoapifyId = id.slice("geoapify_".length);
@@ -592,48 +612,94 @@ export class Stage2Service {
       const attributes = base.attributes && typeof base.attributes === "object" && !Array.isArray(base.attributes) ? base.attributes as Record<string, unknown> : {};
       const details = base.details && typeof base.details === "object" && !Array.isArray(base.details) ? base.details as Record<string, unknown> : {};
       let imageUrl = typeof base.image_url === "string" && base.image_url.trim() ? base.image_url.trim() : "";
+      let photoProvider = imageUrl ? "geoapify_wikimedia" : null;
       let photoError: string | null = imageUrl ? null : "Geoapify Place Details ще не перевірявся для цього фото.";
 
-      // Photos are resolved only through Geoapify Place Details. It may expose an OSM/Wikimedia
-      // image in wiki_and_media.image. This request is cached in GeoapifyPlacesService and the
-      // client asks for enrichment progressively in batches of at most three cards.
       if (!imageUrl) {
         try {
           const geoDetails = await this.geoapify.details(geoapifyId);
           imageUrl = geoDetails.imageUrl?.trim() || "";
-          photoError = imageUrl
-            ? null
-            : "Geoapify Place Details відповів успішно, але для цього закладу немає wiki_and_media.image (OSM/Wikimedia не містить фото).";
+          if (imageUrl) {
+            photoProvider = "geoapify_wikimedia";
+            photoError = null;
+          } else {
+            photoError = "Geoapify/OSM/Wikimedia не містить фото для цієї локації.";
+          }
         } catch (error) {
-          photoError = `Не вдалося отримати фото через Geoapify Place Details: ${error instanceof Error ? error.message.slice(0, 260) : String(error).slice(0, 260)}`;
+          photoError = `Не вдалося перевірити фото через Geoapify: ${error instanceof Error ? error.message.slice(0, 240) : String(error).slice(0, 240)}`;
         }
       }
 
       let result: Record<string, unknown> = {
         ...base,
         image_url: imageUrl || null,
-        attributes: {
-          ...attributes,
-          photo_provider: imageUrl ? "geoapify_wikimedia" : null,
-        },
+        attributes: { ...attributes, photo_provider: photoProvider },
         details: {
           ...details,
           google_photo_name: null,
           google_photo_attributions: [],
           photo_error: photoError,
+          outscraper_enrichment_error: outscraperError || null,
         },
       };
 
-      // Keep Google only for rating/review enrichment when it is available. A Google 403 must not
-      // affect image loading because photos are handled independently by Geoapify above.
-      if (!this.google.enabled() || !name || !Number.isFinite(lat) || !Number.isFinite(lng)) return result;
+      const scraped = outscraperMatches[index];
+      if (scraped) {
+        if (!imageUrl && scraped.photo) {
+          imageUrl = scraped.photo;
+          photoProvider = "outscraper_google_maps";
+          photoError = null;
+        }
+        const mapsUri = scraped.locationLink ?? attributes.google_maps_uri ?? null;
+        const reviewsUri = scraped.reviewsLink ?? mapsUri ?? attributes.google_reviews_uri ?? null;
+        result = {
+          ...result,
+          image_url: imageUrl || null,
+          rating: Number(scraped.rating ?? base.rating ?? 0),
+          review_count: Number(scraped.reviews ?? base.review_count ?? 0),
+          phone: base.phone || scraped.phone || null,
+          website: base.website || scraped.site || null,
+          attributes: {
+            ...(result.attributes as Record<string, unknown>),
+            google_review_enriched: Boolean(scraped.rating != null || scraped.reviews > 0),
+            google_place_id: scraped.placeId,
+            google_maps_uri: mapsUri,
+            google_reviews_uri: reviewsUri,
+            photo_provider: photoProvider,
+            enrichment_provider: "outscraper",
+          },
+          details: {
+            ...(result.details as Record<string, unknown>),
+            google_place_id: scraped.placeId,
+            google_maps_uri: mapsUri,
+            google_reviews_uri: reviewsUri,
+            photo_error: photoError,
+            outscraper_enriched: true,
+            outscraper_enrichment_error: null,
+          },
+        };
+        return result;
+      }
+
+      // Official Google Places remains only a fallback. If it is disabled/403, the card still
+      // works with Geoapify data; reliable Google Maps ratings/photos require OUTSCRAPER_API_KEY.
+      if (!this.google.enabled() || !name || !Number.isFinite(lat) || !Number.isFinite(lng)) {
+        return {
+          ...result,
+          details: {
+            ...(result.details as Record<string, unknown>),
+            photo_error: imageUrl ? null : (this.outscraper.enabled()
+              ? photoError
+              : `${photoError ?? "Фото не знайдено."} Для фото/рейтингу Google Maps без Places API додайте OUTSCRAPER_API_KEY.`),
+          },
+        };
+      }
       try {
         const google = await this.google.findByTextForCard(name, address, lat, lng);
         const googleLat = Number(google?.location?.latitude);
         const googleLng = Number(google?.location?.longitude);
         const matchDistance = google && Number.isFinite(googleLat) && Number.isFinite(googleLng) ? distanceMeters(lat, lng, googleLat, googleLng) : 0;
         if (!google || (matchDistance && matchDistance > 500)) return result;
-
         const googleMapsUri = google.googleMapsLinks?.placeUri ?? google.googleMapsUri ?? attributes.google_maps_uri ?? null;
         const googleReviewsUri = google.googleMapsLinks?.reviewsUri ?? googleMapsUri ?? attributes.google_reviews_uri ?? null;
         result = {
@@ -646,6 +712,7 @@ export class Stage2Service {
             google_place_id: google.id ?? null,
             google_maps_uri: googleMapsUri,
             google_reviews_uri: googleReviewsUri,
+            enrichment_provider: "google_places",
           },
           details: {
             ...(result.details as Record<string, unknown>),
@@ -691,8 +758,51 @@ export class Stage2Service {
       const base = this.geoapifyPlaceToStage2(result, originLat, originLng);
       let enriched = base;
 
-      // Geoapify remains the primary POI/map/photo provider. Google is queried only after the user
-      // opens one concrete place for reviews/contact data. Google Photo is not used for Geoapify places.
+      // Outscraper is an optional low-cost Google Maps enrichment fallback. Geoapify itself does not
+      // expose user review ratings for normal POIs, and many OSM records do not contain photos.
+      // Keep the POI/navigation source Geoapify, but fill rating/review count/main photo from Outscraper
+      // when OUTSCRAPER_API_KEY is configured. Results are cached inside OutscraperPlacesService.
+      if (this.outscraper.enabled()) {
+        try {
+          const scraped = await this.outscraper.lookup({ name: base.name, address: base.address, lat: Number(base.lat), lng: Number(base.lng) });
+          if (scraped) {
+            const imageUrl = base.image_url || scraped.photo || null;
+            const mapsUri = scraped.locationLink ?? base.attributes.google_maps_uri;
+            const reviewsUri = scraped.reviewsLink ?? mapsUri ?? base.attributes.google_reviews_uri;
+            enriched = {
+              ...base,
+              image_url: imageUrl,
+              rating: Number(scraped.rating ?? base.rating ?? 0),
+              review_count: Number(scraped.reviews ?? base.review_count ?? 0),
+              phone: base.phone || scraped.phone || null,
+              website: base.website || scraped.site || null,
+              attributes: {
+                ...base.attributes,
+                google_review_enriched: Boolean(scraped.rating != null || scraped.reviews > 0),
+                google_place_id: scraped.placeId,
+                google_maps_uri: mapsUri,
+                google_reviews_uri: reviewsUri,
+                photo_provider: imageUrl ? (base.image_url ? (base.attributes.photo_provider ?? "geoapify_wikimedia") : "outscraper_google_maps") : null,
+                enrichment_provider: "outscraper",
+              },
+              details: {
+                ...base.details,
+                google_place_id: scraped.placeId,
+                google_maps_uri: mapsUri,
+                google_reviews_uri: reviewsUri,
+                photo_error: imageUrl ? null : "Geoapify/OSM/Wikimedia та Outscraper не повернули фото для цього закладу.",
+                outscraper_enriched: true,
+                outscraper_enrichment_error: null,
+              },
+            };
+          }
+        } catch (error) {
+          enriched = { ...enriched, details: { ...enriched.details, outscraper_enrichment_error: error instanceof Error ? error.message.slice(0, 300) : String(error).slice(0, 300) } };
+        }
+      }
+
+      // Official Google remains optional only for review texts/opening-hours enrichment. A 403 must
+      // never erase rating/photo already obtained from Outscraper or Geoapify.
       if (this.google.enabled()) {
         try {
           const google = await this.google.findByTextForReviews(base.name, base.address, Number(base.lat), Number(base.lng));
@@ -706,11 +816,11 @@ export class Stage2Service {
             const googleReviewsUri = google.googleMapsLinks?.reviewsUri ?? googleMapsUri ?? base.attributes.google_reviews_uri;
             enriched = {
               ...base,
-              image_url: base.image_url || null,
-              rating: Number(google.rating ?? base.rating ?? 0),
-              review_count: Number(google.userRatingCount ?? base.review_count ?? 0),
-              phone: base.phone || google.nationalPhoneNumber || null,
-              website: base.website || google.websiteUri || null,
+              image_url: enriched.image_url || null,
+              rating: Number(google.rating ?? enriched.rating ?? 0),
+              review_count: Number(google.userRatingCount ?? enriched.review_count ?? 0),
+              phone: enriched.phone || google.nationalPhoneNumber || null,
+              website: enriched.website || google.websiteUri || null,
               work_hours: google.regularOpeningHours ?? base.work_hours,
               is_open_now: google.regularOpeningHours?.openNow ?? base.is_open_now,
               attributes: {
@@ -719,7 +829,7 @@ export class Stage2Service {
                 google_place_id: google.id,
                 google_maps_uri: googleMapsUri,
                 google_reviews_uri: googleReviewsUri,
-                photo_provider: base.image_url ? (base.attributes.photo_provider ?? "geoapify_wikimedia") : null,
+                photo_provider: enriched.image_url ? (enriched.attributes.photo_provider ?? "outscraper_google_maps") : null,
               },
               details: {
                 ...base.details,
@@ -730,7 +840,7 @@ export class Stage2Service {
                 google_weekday_descriptions: google.regularOpeningHours?.weekdayDescriptions ?? base.details.google_weekday_descriptions ?? [],
                 google_photo_name: null,
                 google_photo_attributions: [],
-                photo_error: base.image_url ? null : "Geoapify Place Details відповів успішно, але для цього закладу немає wiki_and_media.image (OSM/Wikimedia не містить фото).",
+                photo_error: enriched.image_url ? null : (enriched.details.photo_error ?? "Geoapify/OSM/Wikimedia не містить фото для цього закладу."),
               },
             };
           }
