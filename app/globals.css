@@ -29202,7 +29202,10 @@ button.gt-amenities-row {
   backdrop-filter: blur(3px);
 }
 .ad-stage2-moderation-modal__card {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   width: min(980px, 96vw);
+  height: min(88vh, 860px);
   max-height: min(88vh, 860px);
   overflow: hidden;
   border: 1px solid #e4ebe6;
@@ -29219,7 +29222,14 @@ button.gt-amenities-row {
   padding: 18px 22px;
 }
 .ad-stage2-moderation-modal__card > header { border-bottom: 1px solid #edf1ee; }
-.ad-stage2-moderation-modal__card > footer { border-top: 1px solid #edf1ee; }
+.ad-stage2-moderation-modal__card > footer {
+  position: relative;
+  z-index: 3;
+  flex: 0 0 auto;
+  border-top: 1px solid #edf1ee;
+  background: #fff;
+  box-shadow: 0 -8px 24px rgba(18, 48, 33, .05);
+}
 .ad-stage2-moderation-modal__card > header > div { min-width: 0; }
 .ad-stage2-moderation-modal__card > header small { color: #0aa15a; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
 .ad-stage2-moderation-modal__card > header h2 { margin: 3px 0 2px; color: #1d2922; font-size: 24px; line-height: 1.15; }
@@ -29238,9 +29248,10 @@ button.gt-amenities-row {
 }
 .ad-stage2-moderation-modal__body {
   display: grid;
+  min-height: 0;
   gap: 18px;
-  max-height: calc(min(88vh, 860px) - 154px);
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 20px 22px 24px;
 }
 .ad-stage2-moderation-summary {
@@ -29329,10 +29340,10 @@ button.gt-amenities-row {
 
 @media (max-width: 760px) {
   .ad-stage2-moderation-modal { padding: 10px; }
-  .ad-stage2-moderation-modal__card { width: 100%; max-height: 94vh; border-radius: 14px; }
+  .ad-stage2-moderation-modal__card { width: 100%; height: 94vh; max-height: 94vh; border-radius: 14px; }
   .ad-stage2-moderation-modal__card > header,
   .ad-stage2-moderation-modal__card > footer { padding: 14px; }
-  .ad-stage2-moderation-modal__body { max-height: calc(94vh - 142px); padding: 14px; }
+  .ad-stage2-moderation-modal__body { min-height: 0; max-height: none; padding: 14px; }
   .ad-stage2-moderation-summary { grid-template-columns: 1fr; }
   .ad-stage2-moderation-info-grid { grid-template-columns: 1fr; }
   .ad-stage2-moderation-info-grid article.is-wide { grid-column: auto; }
